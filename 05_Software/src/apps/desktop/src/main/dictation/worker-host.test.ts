@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { resolveAdvanced } from "@vera/shared";
 import { afterEach, expect, it, vi } from "vitest";
 import { transcribeInWorker } from "./worker-host.js";
 
@@ -57,4 +58,23 @@ it("terminates the worker on abort, deadline, early exit and invalid response", 
     await settled;
   }
   expect(workers.terminate).toHaveBeenCalledTimes(4);
+});
+
+it.each([
+  [undefined, 120],
+  [45, 45],
+] as const)("allows a stalled transcription %s seconds or the inherited limit", async (setting, seconds) => {
+  vi.useFakeTimers();
+  const deadline =
+    setting === undefined
+      ? undefined
+      : resolveAdvanced("dictationTranscriptionTimeout", { app: { dictationTranscriptionTimeout: setting } })
+          .value * 1000;
+  const result = transcribeInWorker(model, Float32Array.of(0.2), new AbortController().signal, deadline);
+  const failed = expect(result).rejects.toThrow("Local dictation worker did not complete");
+  await vi.advanceTimersByTimeAsync(seconds * 1000 - 1);
+  expect(workers.terminate).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1);
+  await failed;
+  expect(workers.terminate).toHaveBeenCalledOnce();
 });

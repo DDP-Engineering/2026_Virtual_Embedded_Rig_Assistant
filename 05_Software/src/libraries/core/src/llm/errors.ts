@@ -26,6 +26,14 @@ export function timeoutError(milliseconds: number): VeraError {
     params: { reason: "timeout", seconds: Math.max(1, Math.round(milliseconds / 1000)) },
   };
 }
+
+export function providerDiscoveryTimeoutError(milliseconds: number): VeraError {
+  return {
+    code: "PROVIDER",
+    messageKey: "provider.discoveryTimeout",
+    params: { seconds: milliseconds / 1000 },
+  };
+}
 function openCodeError(failure: ProviderFailure, raw: string): VeraError | undefined {
   const source = failure.openCode;
   if (!source || failure.status === 401) return undefined;

@@ -408,7 +408,8 @@
     "rateLimitWithRetry": "Provider rate limit. Retry after: {{retryAfter}}.",
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
     "failure": "Provider error: {{message}}",
-    "timeout": "The model did not respond within {{seconds}} s."
+    "timeout": "The model did not respond within {{seconds}} s.",
+    "discoveryTimeout": "Model discovery did not finish within {{seconds}} s."
   },
   "chatDetail": {
     "label": "Detail level",
@@ -1737,6 +1738,17 @@
   },
   "advanced": {
     "show": "Show advanced settings",
+    "modifiedOnly": "Only modified values",
+    "noModified": "No modified values.",
+    "automatic": "Automatic",
+    "groups": {
+      "agent": "Agent and context",
+      "tools": "Tools and terminals",
+      "documents": "Documents",
+      "providers": "Providers and browser",
+      "dictation": "Dictation",
+      "interface": "Interface and maintenance"
+    },
     "reset": "Reset",
     "inherited": "{{value}} ({{source}})",
     "source": {
@@ -1747,6 +1759,7 @@
     },
     "range": "Use a whole number from {{min}} to {{max}}.",
     "timing": {
+      "nextOperation": "Applies to the next operation",
       "live": "Applies right away",
       "new": "Applies to the next terminal, worker, run or opened session",
       "reindex": "Applies after reindexing",
@@ -1754,6 +1767,9 @@
       "restart": "Applies after restarting VERA"
     },
     "settings": {
+      "providerDiscoveryTimeout": "Model discovery timeout (s)",
+      "browserNavigationTimeout": "Browser navigation timeout (s)",
+      "dictationTranscriptionTimeout": "Transcription timeout (s)",
       "toolCallsPerTurn": "Tool calls per turn",
       "noOutputTimeout": "Model no-output timeout (s)",
       "headerWait": "Hosted header wait (s)",
@@ -1762,7 +1778,7 @@
       "summaryPasses": "Summary passes per request",
       "calibrationMargin": "Calibration margin (%)",
       "providerTokenCounts": "Use provider token counts",
-      "delegations": "Delegated sessions at once",
+      "delegations": "Delegated sessions per workbench",
       "concurrentTurns": "Concurrent turns",
       "compactionTrigger": "Compaction trigger (%)",
       "recentTailTokens": "Recent history kept verbatim (tokens)",
@@ -1782,7 +1798,7 @@
       "backgroundPrograms": "Background programs per session",
       "runLogsKept": "Run logs kept",
       "runLogMB": "Run log size (MiB)",
-      "programTimeout": "Program timeout ceiling (s)",
+      "programTimeout": "Default program timeout (s)",
       "commandTimeout": "Shell command timeout ceiling (s)",
       "textFileMB": "Maximum text file size (MiB)",
       "docVolumeFiles": "Volume warning: files",
@@ -1803,6 +1819,9 @@
       "pageSize": "Rows per page"
     },
     "about": {
+      "providerDiscoveryTimeout": "Time to detect models in LM Studio and provider catalogs, including loading the list.",
+      "browserNavigationTimeout": "Time to open a page or follow a link. Automatic keeps the built-in deadlines.",
+      "dictationTranscriptionTimeout": "Maximum time for a local transcription, including loading the Whisper model.",
       "toolCallsPerTurn": "Tool calls one agent turn may make before it stops with a limit.",
       "noOutputTimeout": "Seconds a hosted model may send nothing before the request ends with a timeout. Custom endpoints keep their own response timeout.",
       "headerWait": "Seconds to wait for a hosted provider to start answering. Custom endpoints keep their own response timeout.",
@@ -1811,7 +1830,7 @@
       "summaryPasses": "Summaries one request may make before it is sent. Long sessions reopened after a restart need more.",
       "calibrationMargin": "Headroom over the count calibrated from provider reports: 110 counts 1.1 times. A higher value avoids context-limit errors.",
       "providerTokenCounts": "Count requests with the ratio the provider reported. Off uses the conservative estimate.",
-      "delegations": "Delegated sessions that may run at the same time.",
+      "delegations": "Delegated sessions that may run at the same time in one workbench.",
       "concurrentTurns": "Agent turns that may run at the same time across all open workbenches, delegated sessions included.",
       "compactionTrigger": "Percent of the input budget above which earlier history is summarized.",
       "recentTailTokens": "Tokens of the most recent history kept word for word while the request fits, at most a fifth of the input budget.",
@@ -1831,7 +1850,7 @@
       "backgroundPrograms": "Background runs one conversation may have at once.",
       "runLogsKept": "Run logs a workbench keeps; older ones are removed.",
       "runLogMB": "Output one run log keeps on disk.",
-      "programTimeout": "Longest run of a plugin program when the plugin sets no timeout.",
+      "programTimeout": "Time limit for programs without a timeout in the plugin rule or program.",
       "commandTimeout": "Longest foreground shell command.",
       "textFileMB": "Text documents larger than this are not indexed. PDF and Office files use Maximum file size in Documents.",
       "docVolumeFiles": "Selected documents above which the Documents preview warns.",

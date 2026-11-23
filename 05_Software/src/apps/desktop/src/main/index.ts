@@ -369,7 +369,8 @@ const settings = new SettingsService({
 const dictation = new DictationModels(dataLocations.paths.userData, settings);
 const capture = new CaptureJobs(
   () => dictation.resolveSelected(),
-  transcribeInWorker,
+  (model, pcm, signal) =>
+    transcribeInWorker(model, pcm, signal, appAdvanced("dictationTranscriptionTimeout") * 1000),
   (id) => emitAppEvent({ topic: "app", id: "app", event: { type: "dictation.interrupted", id } }),
 );
 const focusedRenderer = () =>
@@ -699,14 +700,25 @@ const sessionOptions: Omit<
   managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
   browser: (owner, sessionId) =>
-    new AgentBrowser({ workbenchId: owner.config.id, sessionId }, browserHost, browserAccess, (tool) => {
-      try {
-        const shown = workbench().getSnapshot();
-        return workbenchKey(shown) !== workbenchKey(owner) || shown.config.tools.disabled.includes(tool);
-      } catch {
-        return true;
-      }
-    }),
+    new AgentBrowser(
+      { workbenchId: owner.config.id, sessionId },
+      browserHost,
+      browserAccess,
+      (tool) => {
+        try {
+          const shown = workbench().getSnapshot();
+          return workbenchKey(shown) !== workbenchKey(owner) || shown.config.tools.disabled.includes(tool);
+        } catch {
+          return true;
+        }
+      },
+      () => {
+        const timeout = resolveAdvanced("browserNavigationTimeout", {
+          app: settings.get().settings.advanced,
+        });
+        return timeout.source === "default" ? undefined : timeout.value * 1000;
+      },
+    ),
   parts: partsAccess.provider,
   downloads: (root) =>
     new WebDownloads(root, {

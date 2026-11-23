@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-634d3ec2"
+
+title = "Filter Advanced settings to edited and overridden values"
+
+status = "active"
+
+requirement = "When Only modified values is selected, VERA shall show saved application overrides and pending field edits, including resets and invalid drafts, in their existing groups."
+
+verification = "Filter settings with a stored override, reset it in the draft, and check that it stays visible until saved or canceled; the filter itself does not change the save payload."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

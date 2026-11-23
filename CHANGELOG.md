@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Organize Advanced settings and configure browser navigation, dictation and model discovery deadlines.
 - Send follow-ups to delegated sessions and authorize Full Access launches with independent session modes.
 
 - Open local Git file history from Files in a tab beside Chat.

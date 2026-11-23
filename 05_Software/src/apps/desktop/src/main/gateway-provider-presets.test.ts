@@ -1,8 +1,71 @@
-import { type LlmEvent, type LlmRequest, resolveCuratedConnection } from "@vera/core";
+import { type LlmEvent, type LlmGateway, type LlmRequest, resolveCuratedConnection } from "@vera/core";
 import { describe, expect, it, vi } from "vitest";
 import { answer, toolCall } from "./direct-provider-streams.test-support.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { providerSettingsHarness } from "./provider-settings.test-support.js";
+
+it.each([
+  [10_000, 10],
+  [undefined, 30],
+] as const)(
+  "ends a stalled diagnostic stream using an endpoint timeout of %s or the app limit",
+  async (endpointTimeout, seconds) => {
+    const h = providerSettingsHarness();
+    await h.settings.load();
+    await h.settings.update({ advanced: { noOutputTimeout: 30 } });
+    let upstream: AbortSignal | undefined;
+    const api: LlmGateway = {
+      selectedModel: () => "example",
+      capabilities: () => ({
+        contextWindow: 8192,
+        maxOutputTokens: 256,
+        supportsTools: false,
+        input: ["text"],
+        safetyMargin: 256,
+        inputBudget: 7680,
+      }),
+      models: async () => ({ models: [], reachability: "pass" }),
+      responseTimeoutMs: () => endpointTimeout,
+      async *stream({ signal }) {
+        upstream = signal;
+        await new Promise<void>((resolve) =>
+          signal.addEventListener("abort", () => resolve(), { once: true }),
+        );
+      },
+    };
+    const gateway = new ProviderGateway(
+      h.settings,
+      h.credentials,
+      h.service,
+      {
+        now: () => new Date(0),
+        sleep: async () => {},
+      },
+      api,
+    );
+    vi.useFakeTimers();
+    try {
+      const result = gateway.test("openai");
+      await vi.advanceTimersByTimeAsync(seconds * 1000 - 1);
+      expect(upstream?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(upstream?.aborted).toBe(true);
+      expect((await result).steps).toMatchObject([
+        { step: "reachability", status: "pass" },
+        {
+          step: "authentication",
+          status: "fail",
+          error: { messageKey: "provider.timeout", params: { seconds } },
+        },
+        { step: "tools", status: "skipped" },
+        { step: "streaming", status: "skipped" },
+      ]);
+    } finally {
+      await gateway.close();
+      vi.useRealTimers();
+    }
+  },
+);
 
 const hfModel = "deepseek-ai/DeepSeek-V4.1-Flash";
 const nimModel = "meta/muse-glimmer-30b";

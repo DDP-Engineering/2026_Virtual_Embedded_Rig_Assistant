@@ -109,6 +109,62 @@ const echo = {
   description: "Echo text",
   parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
 };
+
+it("uses one current Advanced deadline across all curated model discovery pages", async () => {
+  const service = hosted[0];
+  let startNextPage!: (request: Request) => void;
+  const reachedNextPage = new Promise<Request>((resolve) => {
+    startNextPage = resolve;
+  });
+  const cancel = vi.fn();
+  let paginate = false;
+  const h = await setup((request) => {
+    if (!paginate) return Response.json(service.catalog);
+    if (!new URL(request.url).searchParams.has("pageToken"))
+      return Response.json({ ...service.catalog, nextPageToken: "next-page" });
+    return new Response(
+      new ReadableStream({ pull: () => startNextPage(request), cancel }, { highWaterMark: 0 }),
+    );
+  });
+  const timeout = vi.spyOn(AbortSignal, "timeout");
+  try {
+    const request = { preset: selection(service), apiKey: secret(service) };
+    await expect(h.gateway.discoverPreset(request)).resolves.toMatchObject({ status: "discovered" });
+    expect(timeout).toHaveBeenLastCalledWith(10_000);
+    await h.settings.update({ advanced: { providerDiscoveryTimeout: 45 } });
+    paginate = true;
+    const deadline = new AbortController();
+    timeout.mockClear().mockReturnValueOnce(deadline.signal);
+    const result = h.gateway.discoverPreset(request);
+    const secondPage = await reachedNextPage;
+    deadline.abort();
+    expect(secondPage.signal.aborted).toBe(true);
+    await expect(result).resolves.toMatchObject({
+      status: "failed",
+      error: { messageKey: "provider.discoveryTimeout", params: { seconds: 45 } },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(timeout).toHaveBeenLastCalledWith(45_000);
+    expect(timeout).toHaveBeenCalledOnce();
+  } finally {
+    timeout.mockRestore();
+    await h.gateway.close();
+  }
+});
+
+it("reports a failed catalog without waiting for body cancellation", async () => {
+  const service = hosted[0];
+  const cancel = vi.fn(() => new Promise<void>(() => {}));
+  const h = await setup(() => new Response(new ReadableStream({ cancel }), { status: 502 }));
+  try {
+    await expect(
+      h.gateway.discoverPreset({ preset: selection(service), apiKey: secret(service) }),
+    ).resolves.toMatchObject({ status: "failed", error: { code: "PROVIDER" } });
+    expect(cancel).toHaveBeenCalledOnce();
+  } finally {
+    await h.gateway.close();
+  }
+});
 const prompt = (id: string, model: string, signal = new AbortController().signal): LlmRequest => ({
   model: `${id}/${model}`,
   system: "Complete the request.",

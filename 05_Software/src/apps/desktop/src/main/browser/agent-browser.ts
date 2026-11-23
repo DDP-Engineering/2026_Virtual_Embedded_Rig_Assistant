@@ -3,7 +3,7 @@ import type { AgentBrowserPort, BrowserCall, BrowserToolName, BrowserToolResult 
 import type { BrowserFailureCode, BrowserSessionView } from "@vera/shared";
 import type { Page } from "playwright-core";
 import { BrowserError } from "./failure.js";
-import { type BrowserHost, type BrowserSession, untilAborted } from "./host.js";
+import { type BrowserHost, type BrowserSession, browserLimits, untilAborted } from "./host.js";
 import { browserUrl } from "./network.js";
 import { inspectPage, navigatePage, scrollPage } from "./page-reading.js";
 import type { BrowserAccessPolicy, BrowserOwner } from "./policy.js";
@@ -26,6 +26,10 @@ interface Tab {
 
 type Access = Pick<BrowserAccessPolicy, "authorization" | "origins">;
 
+function configuredNavigationTimeout(error: unknown, navigationMs: number | undefined) {
+  return navigationMs !== undefined && error instanceof BrowserError && error.code === "operation-timeout";
+}
+
 /** Restricts every browser operation to the lease and tabs of a single VERA session. */
 export class AgentBrowser implements AgentBrowserPort {
   private browser: BrowserSession | undefined;
@@ -42,6 +46,7 @@ export class AgentBrowser implements AgentBrowserPort {
     private readonly host: Pick<BrowserHost, "open" | "closeSession">,
     private readonly policy: Access,
     private readonly disabled: (tool: BrowserToolName) => boolean,
+    private readonly navigationTimeout: () => number | undefined = () => undefined,
   ) {}
 
   available(tool: BrowserToolName): boolean {
@@ -117,14 +122,20 @@ export class AgentBrowser implements AgentBrowserPort {
   }
 
   private enqueue(call: BrowserCall, caller: AbortSignal, grant: AbortSignal) {
-    const delay = call.name === "browser_open" ? browserAgentLimits.openMs : browserAgentLimits.operationMs;
+    const opening = call.name === "browser_open";
+    const navigationMs = opening || call.name === "browser_follow" ? this.navigationTimeout() : undefined;
+    const delay = opening
+      ? navigationMs === undefined
+        ? browserAgentLimits.openMs
+        : browserLimits.startupMs + navigationMs
+      : (navigationMs ?? browserAgentLimits.operationMs);
     const timeout = new AbortController();
     const timer = setTimeout(() => timeout.abort(), delay);
     timer.unref();
     const closing = call.name === "browser_close";
     // Startup can release its own failed lease. Let BrowserHost report that failure.
     const signal = AbortSignal.any(
-      closing || call.name === "browser_open" ? [caller, timeout.signal] : [caller, timeout.signal, grant],
+      closing || opening ? [caller, timeout.signal] : [caller, timeout.signal, grant],
     );
     let running = false;
     let abort: () => void = () => {};
@@ -143,7 +154,11 @@ export class AgentBrowser implements AgentBrowserPort {
       if (this.policy.authorization(this.owner) !== grant || this.disabled(call.name))
         throw new BrowserError("policy-denied");
       running = true;
-      const result = await Promise.race([this.perform(call, signal), cancelled]);
+      const operation = this.perform(call, signal, navigationMs).catch((error: unknown) => {
+        if (configuredNavigationTimeout(error, navigationMs)) timeout.abort();
+        throw error;
+      });
+      const result = await Promise.race([operation, cancelled]);
       if (!closing && (this.policy.authorization(this.owner) !== grant || this.disabled(call.name)))
         throw new BrowserError("policy-denied");
       return result;
@@ -162,10 +177,14 @@ export class AgentBrowser implements AgentBrowserPort {
     });
   }
 
-  private async perform(call: BrowserCall, signal: AbortSignal): Promise<BrowserToolResult> {
+  private async perform(
+    call: BrowserCall,
+    signal: AbortSignal,
+    navigationMs: number | undefined,
+  ): Promise<BrowserToolResult> {
     switch (call.name) {
       case "browser_open":
-        return this.open(call.args.url, signal);
+        return this.open(call.args.url, signal, navigationMs);
       case "browser_tabs": {
         const tabs = this.ownedTabs();
         return {
@@ -205,12 +224,12 @@ export class AgentBrowser implements AgentBrowserPort {
         const tab = this.selected();
         const destination = tab.links.get(call.args.ref);
         if (!destination) throw new BrowserError("stale-reference");
-        return this.navigate(tab, this.authorize(destination), signal);
+        return this.navigate(tab, this.authorize(destination), signal, navigationMs);
       }
     }
   }
 
-  private async open(value: string, signal: AbortSignal) {
+  private async open(value: string, signal: AbortSignal, navigationMs: number | undefined) {
     const url = this.authorize(value);
     const browser = this.browser ?? (await this.host.open(this.owner, signal));
     signal.throwIfAborted();
@@ -239,18 +258,20 @@ export class AgentBrowser implements AgentBrowserPort {
     const tab = this.remember(page);
     try {
       if (!this.available("browser_open")) throw new BrowserError("policy-denied");
-      const location = await this.navigate(tab, url, signal);
+      const location = await this.navigate(tab, url, signal, navigationMs);
       this.select(tab);
       return location;
     } catch (error) {
-      if (!signal.aborted) await browser.discardTab(page);
+      // The operation deadline owns session cancellation and cannot wait for tab disposal.
+      if (!signal.aborted && !page.isClosed() && !configuredNavigationTimeout(error, navigationMs))
+        await browser.discardTab(page);
       throw error;
     }
   }
 
-  private async navigate(tab: Tab, url: string, signal: AbortSignal) {
+  private async navigate(tab: Tab, url: string, signal: AbortSignal, navigationMs: number | undefined) {
     tab.links.clear();
-    const finalUrl = await navigatePage(tab.page, url);
+    const finalUrl = await navigatePage(tab.page, url, navigationMs);
     signal.throwIfAborted();
     return { tabId: tab.id, url: this.location(tab, finalUrl) };
   }

@@ -408,7 +408,8 @@
     "rateLimitWithRetry": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
     "context": "Der Anbieter hat die Kontextgröße abgelehnt. Eingabe reduzieren oder das konfigurierte Fenster prüfen.",
     "failure": "Anbieterfehler: {{message}}",
-    "timeout": "Das Modell hat nicht innerhalb von {{seconds}} s geantwortet."
+    "timeout": "Das Modell hat nicht innerhalb von {{seconds}} s geantwortet.",
+    "discoveryTimeout": "Die Modellsuche wurde nicht innerhalb von {{seconds}} s abgeschlossen."
   },
   "chatDetail": {
     "label": "Detailgrad",
@@ -1737,6 +1738,17 @@
   },
   "advanced": {
     "show": "Erweiterte Einstellungen anzeigen",
+    "modifiedOnly": "Nur geänderte Werte",
+    "noModified": "Keine geänderten Werte.",
+    "automatic": "Automatisch",
+    "groups": {
+      "agent": "Agent und Kontext",
+      "tools": "Werkzeuge und Terminals",
+      "documents": "Dokumente",
+      "providers": "Anbieter und Browser",
+      "dictation": "Diktat",
+      "interface": "Oberfläche und Wartung"
+    },
     "reset": "Zurücksetzen",
     "inherited": "{{value}} ({{source}})",
     "source": {
@@ -1747,6 +1759,7 @@
     },
     "range": "Verwenden Sie eine ganze Zahl von {{min}} bis {{max}}.",
     "timing": {
+      "nextOperation": "Gilt ab dem nächsten Vorgang",
       "live": "Gilt sofort",
       "new": "Gilt für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung",
       "reindex": "Gilt nach dem Neuindizieren",
@@ -1754,6 +1767,9 @@
       "restart": "Gilt nach einem Neustart von VERA"
     },
     "settings": {
+      "providerDiscoveryTimeout": "Zeitlimit für Modellsuche (s)",
+      "browserNavigationTimeout": "Zeitlimit für Browser-Navigation (s)",
+      "dictationTranscriptionTimeout": "Zeitlimit für Transkription (s)",
       "toolCallsPerTurn": "Werkzeugaufrufe pro Durchlauf",
       "noOutputTimeout": "Zeitlimit ohne Modellausgabe (s)",
       "headerWait": "Wartezeit auf Antwort-Header gehosteter Anbieter (s)",
@@ -1762,7 +1778,7 @@
       "summaryPasses": "Zusammenfassungsdurchläufe pro Anfrage",
       "calibrationMargin": "Kalibrierungsreserve (%)",
       "providerTokenCounts": "Token-Zählung des Anbieters verwenden",
-      "delegations": "Gleichzeitige delegierte Sitzungen",
+      "delegations": "Delegierte Sitzungen pro Workbench",
       "concurrentTurns": "Gleichzeitige Durchläufe",
       "compactionTrigger": "Kompaktierungsschwelle (%)",
       "recentTailTokens": "Wörtlich behaltener jüngster Verlauf (Token)",
@@ -1782,7 +1798,7 @@
       "backgroundPrograms": "Hintergrundprogramme pro Sitzung",
       "runLogsKept": "Behaltene Lauf-Logs",
       "runLogMB": "Größe eines Lauf-Logs (MiB)",
-      "programTimeout": "Zeitobergrenze für Programme (s)",
+      "programTimeout": "Standardzeitlimit für Programme (s)",
       "commandTimeout": "Zeitobergrenze für Shell-Befehle (s)",
       "textFileMB": "Maximale Textdateigröße (MiB)",
       "docVolumeFiles": "Volumenwarnung: Dateien",
@@ -1803,6 +1819,9 @@
       "pageSize": "Zeilen pro Seite"
     },
     "about": {
+      "providerDiscoveryTimeout": "Zeit zum Ermitteln von Modellen in LM Studio und Anbieterkatalogen einschließlich Laden der Liste.",
+      "browserNavigationTimeout": "Zeit zum Öffnen einer Seite oder Folgen eines Links. Automatisch behält die eingebauten Fristen bei.",
+      "dictationTranscriptionTimeout": "Höchstdauer für eine lokale Transkription einschließlich Laden des Whisper-Modells.",
       "toolCallsPerTurn": "Werkzeugaufrufe, die ein Agentendurchlauf ausführen darf, bevor er mit einem Limit endet.",
       "noOutputTimeout": "Sekunden, die ein gehostetes Modell nichts senden darf, bevor die Anfrage mit einer Zeitüberschreitung endet. Eigene Endpunkte behalten ihr eigenes Zeitlimit.",
       "headerWait": "Sekunden, die auf den Antwortbeginn eines gehosteten Anbieters gewartet wird. Eigene Endpunkte behalten ihr eigenes Zeitlimit.",
@@ -1811,7 +1830,7 @@
       "summaryPasses": "Zusammenfassungen, die eine Anfrage vor dem Senden erstellen darf. Lange, nach einem Neustart geöffnete Sitzungen brauchen mehr.",
       "calibrationMargin": "Reserve über der aus Anbieterangaben kalibrierten Zählung: 110 zählt 1,1-fach. Ein höherer Wert vermeidet Kontextlimit-Fehler.",
       "providerTokenCounts": "Anfragen mit dem vom Anbieter gemeldeten Verhältnis zählen. Aus verwendet die konservative Schätzung.",
-      "delegations": "Delegierte Sitzungen, die gleichzeitig laufen dürfen.",
+      "delegations": "Anzahl delegierter Sitzungen, die in einer Workbench gleichzeitig laufen dürfen.",
       "concurrentTurns": "Agentendurchläufe, die in allen geöffneten Workbenches gleichzeitig laufen dürfen, delegierte Sitzungen eingeschlossen.",
       "compactionTrigger": "Prozent des Eingabebudgets, ab dem der frühere Verlauf zusammengefasst wird.",
       "recentTailTokens": "Token des jüngsten Verlaufs, die wörtlich erhalten bleiben, solange die Anfrage passt, höchstens ein Fünftel des Eingabebudgets.",
@@ -1831,7 +1850,7 @@
       "backgroundPrograms": "Hintergrundläufe, die eine Unterhaltung gleichzeitig haben darf.",
       "runLogsKept": "Lauf-Logs, die eine Workbench behält; ältere werden gelöscht.",
       "runLogMB": "Ausgabe, die ein Lauf-Log auf dem Datenträger behält.",
-      "programTimeout": "Längster Lauf eines Plugin-Programms, wenn das Plugin keine Zeit festlegt.",
+      "programTimeout": "Zeitlimit für Programme ohne Vorgabe im Programm oder in der Plugin-Regel.",
       "commandTimeout": "Längster Shell-Befehl im Vordergrund.",
       "textFileMB": "Größere Textdokumente werden nicht indiziert. PDF- und Office-Dateien verwenden die maximale Dateigröße unter Dokumente.",
       "docVolumeFiles": "Ausgewählte Dokumente, ab denen die Dokumentvorschau warnt.",

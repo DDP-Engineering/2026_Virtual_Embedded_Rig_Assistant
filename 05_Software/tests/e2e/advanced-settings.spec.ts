@@ -32,11 +32,32 @@ test("Show advanced settings reveals the Advanced sections and a session value i
   await expect(page.locator("[data-show-advanced]")).toBeChecked();
   const appField = page.locator(`[data-settings-section="advanced"] ${toolCalls}`);
   await expect(appField).toHaveAttribute("placeholder", "50 (default)");
+  const providers = page.locator('[data-advanced-group="providers"]');
+  await expect(providers).toHaveJSProperty("open", false);
+  await providers.locator("summary").click();
+  await expect(providers).toHaveJSProperty("open", true);
   // ADV-03 application settings show their defaults (REQ-UX-9ea9184f).
   await expect(
     page.locator('[data-settings-section="advanced"] [data-advanced-field="downloadMB"] input'),
   ).toHaveAttribute("placeholder", "100 (default)");
+  await expect(providers.locator('[data-advanced-field="browserNavigationTimeout"] input')).toHaveAttribute(
+    "placeholder",
+    "Automatic (default)",
+  );
+  const scroll = page.locator("[data-advanced-scroll]");
+  const save = page.locator("[data-settings-save]");
+  const saveTop = (await save.boundingBox())?.y;
+  await scroll.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  expect(await scroll.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect((await save.boundingBox())?.y).toBe(saveTop);
+  await expect(save).toBeInViewport();
+  await expect(page.locator("[data-settings-cancel]")).toBeInViewport();
   await appField.fill("90");
+  await page.locator("[data-advanced-modified]").check();
+  await expect(page.locator("[data-advanced-field]")).toHaveCount(1);
+  await expect(appField).toHaveValue("90");
   // Nothing is written until the page header Save (REQ-UX-032aab57).
   await page.locator("[data-settings-save]").click();
   await expect(page.locator("[data-settings-save]")).toBeDisabled();

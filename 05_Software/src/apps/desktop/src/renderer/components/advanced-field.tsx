@@ -49,6 +49,7 @@ export function AdvancedField({
   const timings = {
     live: t("advanced.timing.live"),
     new: t("advanced.timing.new"),
+    nextOperation: t("advanced.timing.nextOperation"),
     reindex: t("advanced.timing.reindex"),
     reopen: t("advanced.timing.reopen"),
     restart: t("advanced.timing.restart"),
@@ -65,6 +66,10 @@ export function AdvancedField({
       about: t("advanced.about.noOutputTimeout"),
     },
     headerWait: { name: t("advanced.settings.headerWait"), about: t("advanced.about.headerWait") },
+    providerDiscoveryTimeout: {
+      name: t("advanced.settings.providerDiscoveryTimeout"),
+      about: t("advanced.about.providerDiscoveryTimeout"),
+    },
     backgroundCompaction: {
       name: t("advanced.settings.backgroundCompaction"),
       about: t("advanced.about.backgroundCompaction"),
@@ -118,6 +123,10 @@ export function AdvancedField({
     },
     webReadChars: { name: t("advanced.settings.webReadChars"), about: t("advanced.about.webReadChars") },
     webTimeout: { name: t("advanced.settings.webTimeout"), about: t("advanced.about.webTimeout") },
+    browserNavigationTimeout: {
+      name: t("advanced.settings.browserNavigationTimeout"),
+      about: t("advanced.about.browserNavigationTimeout"),
+    },
     downloadMB: { name: t("advanced.settings.downloadMB"), about: t("advanced.about.downloadMB") },
     downloadTimeout: {
       name: t("advanced.settings.downloadTimeout"),
@@ -155,6 +164,10 @@ export function AdvancedField({
     embeddingIdle: {
       name: t("advanced.settings.embeddingIdle"),
       about: t("advanced.about.embeddingIdle"),
+    },
+    dictationTranscriptionTimeout: {
+      name: t("advanced.settings.dictationTranscriptionTimeout"),
+      about: t("advanced.about.dictationTranscriptionTimeout"),
     },
     terminals: { name: t("advanced.settings.terminals"), about: t("advanced.about.terminals") },
     terminalBufferK: {
@@ -197,7 +210,10 @@ export function AdvancedField({
   const shown = (current: AdvancedValue) =>
     typeof current === "boolean" ? (current ? t("advanced.on") : t("advanced.off")) : current;
   const inheritedText = t("advanced.inherited", {
-    value: shown(inherited.value),
+    value:
+      setting === "browserNavigationTimeout" && inherited.source === "default"
+        ? t("advanced.automatic")
+        : shown(inherited.value),
     source: sources[inherited.source],
   });
   const reset = (

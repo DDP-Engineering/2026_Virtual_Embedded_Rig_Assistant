@@ -7,6 +7,7 @@ import {
   resolveModelReference,
   resolveProviderBinding,
   testConnection,
+  timedGateway,
 } from "@vera/core";
 import {
   acceptsImages,
@@ -80,7 +81,12 @@ export class ProviderGateway {
   }
   discover(request: ProviderDiscoveryRequest) {
     return this.track(() =>
-      discoverProvider(request, { settings: this.settings, credentials: this.credentials }),
+      discoverProvider(request, {
+        settings: this.settings,
+        credentials: this.credentials,
+        signal: this.lifetime.signal,
+        ...(this.fetcher ? { fetch: this.fetcher } : {}),
+      }),
     );
   }
   discoverPreset(input: CuratedDiscoveryRequest): Promise<CuratedDiscovery> {
@@ -110,6 +116,9 @@ export class ProviderGateway {
           key,
           {
             scrub: (text) => this.credentials.scrub(text),
+            timeoutMs:
+              resolveAdvanced("providerDiscoveryTimeout", { app: this.settings.get().settings.advanced })
+                .value * 1000,
             ...(this.fetcher ? { fetch: this.fetcher } : {}),
           },
           signal,
@@ -138,7 +147,8 @@ export class ProviderGateway {
   }
   test(id: string, model?: string): Promise<ProviderTestResult> {
     return this.track(async () => {
-      const before = this.settings.get().settings.providers.custom.find((c) => `custom:${c.slug}` === id);
+      const settings = this.settings.get().settings;
+      const before = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
       const resolved = before?.preset ? resolveCuratedConnection(before, this.providers.presets) : undefined;
       const slot = resolved?.slot;
       const profile = resolved?.binding.models?.find(({ id }) => id === (model ?? before?.model));
@@ -147,7 +157,7 @@ export class ProviderGateway {
       const testKey = slot ? await this.credentials.read(slot, { signal: this.lifetime.signal }) : undefined;
       const result = providerTestResultSchema.parse(
         await testConnection(
-          this.api,
+          timedGateway(this.api, resolveAdvanced("noOutputTimeout", { app: settings.advanced }).value * 1000),
           id,
           model,
           this.lifetime.signal,
@@ -165,7 +175,12 @@ export class ProviderGateway {
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");
-      if (before && (!model || model === before.model) && tools?.status !== "skipped") {
+      if (
+        before &&
+        (!model || model === before.model) &&
+        tools?.status !== "skipped" &&
+        tools?.error?.messageKey !== "provider.timeout"
+      ) {
         if (!before.preset) await this.providers.recordToolSupport(before, tools?.status === "pass");
         // A manual entry without a profile can receive a fallback model response.
         // Hosted models report capabilities from catalog fields and exact documented profiles.

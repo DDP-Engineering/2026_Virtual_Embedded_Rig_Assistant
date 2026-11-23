@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  advancedSettings,
   bindProviderWorkspace,
   type CuratedDiscovery,
   type CuratedModel,
@@ -15,7 +16,7 @@ import {
 } from "@vera/shared";
 import { z } from "zod";
 import { parseDirectCatalog } from "./direct-catalog.js";
-import { mapProviderError } from "./errors.js";
+import { mapProviderError, providerDiscoveryTimeoutError } from "./errors.js";
 import { parseFireworksPage, parseHostedCatalog } from "./hosted-catalog.js";
 import { parseOpenCodeCatalog } from "./opencode.js";
 import { scrub } from "./scrub.js";
@@ -170,7 +171,7 @@ export function curatedTokenLimits(
 export async function discoverPresetModels(
   binding: ProviderBinding,
   key: string | undefined,
-  host: { fetch?: typeof fetch; scrub(text: string): string },
+  host: { fetch?: typeof fetch; scrub(text: string): string; timeoutMs?: number },
   signal?: AbortSignal,
 ): Promise<CuratedDiscovery> {
   if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
@@ -192,7 +193,8 @@ export async function discoverPresetModels(
       }),
     };
   }
-  const timeout = AbortSignal.timeout(10000);
+  const timeoutMs = host.timeoutMs ?? advancedSettings.providerDiscoveryTimeout.default * 1000;
+  const timeout = AbortSignal.timeout(timeoutMs);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const url = new URL(endpoint);
   if (nativeStudio) url.search = "page_size=100&capabilities=TG";
@@ -210,21 +212,20 @@ export async function discoverPresetModels(
           headers: { Authorization: `Bearer ${key}` },
         });
       } catch {
+        requestSignal.throwIfAborted();
         return {
           status: "failed",
-          error: signal?.aborted
-            ? veraError("DENIED")
-            : mapProviderError("", redact, endpoint, { offline: true }),
+          error: mapProviderError("", redact, endpoint, { offline: true }),
         };
       }
-      signal?.throwIfAborted();
+      requestSignal.throwIfAborted();
       if (!response.ok) {
         const body =
           opencode || qwenCloud || keyScope
             ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
             : undefined;
-        if (!opencode && !qwenCloud && !keyScope) await response.body?.cancel();
-        signal?.throwIfAborted();
+        if (!opencode && !qwenCloud && !keyScope) void response.body?.cancel().catch(() => {});
+        requestSignal.throwIfAborted();
         const error = mapProviderError("", redact, endpoint, {
           status: response.status,
           ...(keyScope ? { scoped: { operation: "catalog", body } } : {}),
@@ -273,7 +274,7 @@ export async function discoverPresetModels(
         : (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
       const models =
         keyScope === "mimo-api" ? ids.filter((id) => binding.models?.some((model) => model.id === id)) : ids;
-      signal?.throwIfAborted();
+      requestSignal.throwIfAborted();
       if (
         models.some((id) => redact(id) !== id) ||
         profiles?.some(
@@ -288,7 +289,11 @@ export async function discoverPresetModels(
       return { status: "discovered", models: [...new Set(models)], ...(profiles ? { profiles } : {}) };
     }
   } catch {
-    return { status: "failed", error: veraError(signal?.aborted ? "DENIED" : "PROVIDER") };
+    if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
+    return {
+      status: "failed",
+      error: timeout.aborted ? providerDiscoveryTimeoutError(timeoutMs) : veraError("PROVIDER"),
+    };
   }
 }
 

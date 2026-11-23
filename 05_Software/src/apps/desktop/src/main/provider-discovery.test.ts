@@ -34,6 +34,46 @@ function host() {
   const fetch = vi.fn(async () => Response.json(body));
   return { settings: { get: () => ({ settings }) }, credentials, fetch };
 }
+
+it("uses the saved discovery timeout and cancels a stalled LM Studio catalog body", async () => {
+  const h = host();
+  h.settings.get().settings.advanced = { providerDiscoveryTimeout: 45 };
+  const controller = new AbortController();
+  const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+  const cancel = vi.fn();
+  h.fetch.mockResolvedValue(new Response(new ReadableStream({ cancel })));
+  try {
+    const result = discoverProvider({ endpoint: "http://localhost:1234" }, h);
+    const actualDeadline = timeout.mock.lastCall?.[0];
+    await Promise.resolve();
+    controller.abort();
+    expect(actualDeadline).toBe(45_000);
+    await expect(result).rejects.toMatchObject({
+      messageKey: "provider.discoveryTimeout",
+      params: { seconds: 45 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  } finally {
+    timeout.mockRestore();
+  }
+});
+
+it("rejects an oversized catalog without waiting for body cancellation", async () => {
+  const h = host();
+  const cancel = vi.fn(() => new Promise<void>(() => {}));
+  h.fetch.mockResolvedValue(
+    new Response(
+      new ReadableStream({
+        start: (stream) => stream.enqueue(new Uint8Array(2 * 1024 * 1024 + 1)),
+        cancel,
+      }),
+    ),
+  );
+  await expect(discoverProvider({ endpoint: "http://localhost:1234" }, h)).rejects.toMatchObject({
+    code: "PROVIDER",
+  });
+  expect(cancel).toHaveBeenCalledOnce();
+});
 it("discovers current LM Studio metadata without inference, persisting keys or returning embeddings", async () => {
   const h = host();
   const result = await discoverProvider({ endpoint: "http://127.0.0.1:1234", apiKey: "private-key" }, h);

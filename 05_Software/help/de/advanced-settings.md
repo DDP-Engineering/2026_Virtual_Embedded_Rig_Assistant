@@ -2,6 +2,8 @@
 
 Erweiterte Einstellungen passen Grenzen an, die die meisten Benutzer nie ändern müssen. Sie sind ausgeblendet, bis Sie **Erweiterte Einstellungen anzeigen** unter **Einstellungen** → **Erweitert** einschalten. Das Ausschalten blendet sie nur aus: bereits gesetzte Werte gelten weiter.
 
+Öffnen Sie in den Anwendungseinstellungen eine Gruppe, um ihre Einstellungen anzuzeigen. **Nur geänderte Werte** zeigt gespeicherte Abweichungen und ausstehende Änderungen einschließlich zurückgesetzter Werte.
+
 ## Wo sie sich befinden
 
 - **Einstellungen** → **Erweitert**: Werte für die ganze Anwendung.
@@ -27,6 +29,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Werkzeugaufrufe pro Durchlauf | Anwendung, Workbench, Sitzung | 10–500 | 50 | Sofort |
 | Zeitlimit ohne Modellausgabe (s) | Anwendung, Sitzung | 30–3600 | 300 | Sofort |
 | Wartezeit auf Antwort-Header gehosteter Anbieter (s) | Anwendung | 10–300 | 30 | Sofort |
+| Zeitlimit für Modellsuche (s) | Anwendung | 5–120 | 10 | Ab dem nächsten Vorgang |
 | Kompaktierung im Hintergrund | Anwendung, Workbench | Ein / Aus | Ein | Sofort |
 | Kompaktierungsschwelle (%) | Anwendung, Workbench | 50–95 | 80 | Sofort |
 | Wörtlich behaltener jüngster Verlauf (Token) | Anwendung, Workbench | 0–100000 | 20000 | Sofort |
@@ -34,7 +37,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Zusammenfassungsdurchläufe pro Anfrage | Anwendung | 1–10 | 5 | Sofort |
 | Kalibrierungsreserve (%) | Anwendung | 100–150 | 110 | Sofort |
 | Token-Zählung des Anbieters verwenden | Anwendung | Ein / Aus | Ein | Sofort |
-| Gleichzeitige delegierte Sitzungen | Anwendung | 1–8 | 3 | Sofort |
+| Delegierte Sitzungen pro Workbench | Anwendung | 1–8 | 3 | Sofort |
 | Gleichzeitige Durchläufe | Anwendung | 1–16 | 3 | Sofort |
 | Automatische Kompaktierung | Sitzung | Ein / Aus | Ein | Sofort |
 | Größe eines Werkzeugergebnisses (Zeichen) | Anwendung | 8000–128000 | 32000 | Sofort |
@@ -47,12 +50,13 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Websuche-Ergebnisse | Anwendung | 1–8 | 5 | Sofort |
 | Web-Lesegröße (Zeichen) | Anwendung | 1000–16000 | 12000 | Sofort |
 | Zeitlimit für Webanfragen (s) | Anwendung | 5–120 | 30 | Sofort |
+| Zeitlimit für Browser-Navigation (s) | Anwendung | 5–60 | Automatisch | Ab dem nächsten Vorgang |
 | Downloadgröße (MiB) | Anwendung | 10–1000 | 100 | Sofort |
 | Zeitlimit für Downloads (s) | Anwendung | 30–1800 | 120 | Sofort |
 | Hintergrundprogramme pro Sitzung | Anwendung | 1–16 | 4 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Behaltene Lauf-Logs | Anwendung | 20–2000 | 200 | Sofort |
 | Größe eines Lauf-Logs (MiB) | Anwendung | 8–1024 | 64 | Sofort |
-| Zeitobergrenze für Programme (s) | Anwendung, Workbench | 60–3600 | 600 | Sofort |
+| Standardzeitlimit für Programme (s) | Anwendung, Workbench | 60–3600 | 600 | Sofort |
 | Zeitobergrenze für Shell-Befehle (s) | Anwendung, Workbench | 60–3600 | 600 | Sofort |
 | Maximale Textdateigröße (MiB) | Workbench | 1–64 | 20 | Nach dem Neuindizieren |
 | Volumenwarnung: Dateien | Anwendung, Workbench | 500–100000 | 2000 | Sofort |
@@ -61,6 +65,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Zeitlimit für die Dokumentextraktion (s) | Anwendung | 30–1800 | 120 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Indizierungspause (ms) | Anwendung | 250–10000 | 1000 | Sofort |
 | Leerlaufzeit des Embedding-Workers (s) | Anwendung | 10–600 | 60 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
+| Zeitlimit für Transkription (s) | Anwendung | 30–300 | 120 | Ab dem nächsten Vorgang |
 | Terminals pro Workbench | Anwendung | 1–16 | 8 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Terminalpuffer (Ki Zeichen) | Anwendung | 64–1024 | 256 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Terminal-Verlauf (Zeilen) | Anwendung | 1000–50000 | 3000 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
@@ -80,7 +85,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 
 **Token-Zählung.** VERA zählt eine Anfrage mit dem Verhältnis, das der Anbieter für frühere Anfragen gemeldet hat, plus der **Kalibrierungsreserve**: 110 zählt 1,1-fach. Erhöhen Sie die Reserve, wenn Kontextlimit-Fehler auftreten. Schalten Sie **Token-Zählung des Anbieters verwenden** aus, wenn ein Anbieter einen falschen Verbrauch meldet; VERA zählt dann mit seiner konservativen Schätzung.
 
-**Gleichzeitige delegierte Sitzungen** gibt an, wie viele delegierte Sitzungen gleichzeitig laufen dürfen. Eine weitere wird abgelehnt, bis eine endet.
+**Delegierte Sitzungen pro Workbench** gibt an, wie viele delegierte Sitzungen gleichzeitig in einer Workbench laufen dürfen. Eine weitere wird abgelehnt, bis eine endet.
 
 **Gleichzeitige Durchläufe** gibt an, wie viele Agentendurchläufe in allen geöffneten Workbenches gleichzeitig laufen dürfen, delegierte Sitzungen eingeschlossen. Ein Durchlauf, der auf Ihre Genehmigung wartet, zählt, bis er endet. Am Limit wird eine neue Nachricht nicht gesendet und bleibt mit ihren Anhängen im Eingabefeld; sobald ein Durchlauf endet, zeigt VERA an, dass ein Durchlauf starten kann, und Sie senden sie erneut. Eine Nachricht an eine Sitzung, deren Durchlauf läuft, schließt sich diesem Durchlauf an und wird immer angenommen. Eine delegierte Sitzung, die am Limit gestartet wird, wird sofort abgelehnt. Ein kleinerer Wert beendet keinen laufenden Durchlauf; er gilt ab der nächsten Nachricht.
 
@@ -88,7 +93,9 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 
 **Desktop.** **Terminals pro Workbench** begrenzt die offenen Terminals; ein kleinerer Wert schließt keines, aber ein neues wird abgelehnt, solange die Grenze erreicht ist. **Terminalpuffer** ist die Ausgabe, die jedes Terminal behält, gelesen beim Öffnen, und **Terminal-Verlauf**, wie viele Zeilen seine Ansicht zurückscrollt. **Terminalausgabe für den Agenten** ist, wie viel der neuesten Ausgabe ein Lesen des Agenten liefert; die **Größe eines Werkzeugergebnisses** begrenzt sie weiterhin. **Intervall der Updateprüfung** und **Intervall der Plugin-Katalogprüfung** legen fest, wie oft VERA prüft; eine gespeicherte Änderung startet die neue Wartezeit, ohne sofort zu prüfen. **Aufbewahrung der Logs** ist die Zahl der täglichen Logdateien, die VERA behält. **Zuerst gezeigte Verlaufszeilen** und **Verlaufszeilen pro Nachladen** legen fest, wie viele der neuesten Nachrichten eine Unterhaltung beim Öffnen sofort zeigt und wie viele ältere sie danach jeweils im Hintergrund hinzufügt, bis alle angezeigt sind. **Zeilen pro Seite** ist die Größe, mit der Listen beginnen; eine in einer Liste gewählte Größe bleibt für diese Liste.
 
-**Werkzeuge, Programme und Web.** **Größe eines Werkzeugergebnisses** begrenzt jedes Werkzeugergebnis, das das Modell erhält; ein Wert unter der **Lesegröße** kürzt auch Lesevorgänge. **Lesefenster**, **Grep-Ergebnisse**, **Websuche-Ergebnisse** und **Web-Lesegröße** sind sowohl die Menge, wenn der Agent keine nennt, als auch das Höchste, das er anfordern kann. Grep überspringt Dateien, die größer als die **Dateigröße für grep** sind. **Worker-Frist** begrenzt jede Textsuche oder Log-Analyse; eine bereits laufende behält ihre Frist. **Downloadgröße** wird in der Download-Freigabe angezeigt und bleibt an sie gebunden: Eine spätere Änderung ändert einen freigegebenen Download nicht, und eine größere Datei endet mit „Download exceeds the size limit.“ **Zeitlimit für Downloads** begrenzt die Übertragung; das Lesen des Texts eines heruntergeladenen PDFs behält seine eigene Frist. **Zeitobergrenze für Programme** gilt für Plugin-Programme, deren Plugin keine eigene Zeit festlegt; **Zeitobergrenze für Shell-Befehle** begrenzt jeden Shell-Befehl im Vordergrund und steht in seiner Freigabe. **Hintergrundprogramme pro Sitzung** begrenzt die Hintergrundläufe einer Unterhaltung; ein weiterer wird als beschäftigt abgelehnt.
+**Werkzeuge, Programme und Web.** **Größe eines Werkzeugergebnisses** begrenzt jedes Werkzeugergebnis, das das Modell erhält; ein Wert unter der **Lesegröße** kürzt auch Lesevorgänge. **Lesefenster**, **Grep-Ergebnisse**, **Websuche-Ergebnisse** und **Web-Lesegröße** sind sowohl die Menge, wenn der Agent keine nennt, als auch das Höchste, das er anfordern kann. Grep überspringt Dateien, die größer als die **Dateigröße für grep** sind. **Worker-Frist** begrenzt jede Textsuche oder Log-Analyse; eine bereits laufende behält ihre Frist. **Downloadgröße** wird in der Download-Freigabe angezeigt und bleibt an sie gebunden: Eine spätere Änderung ändert einen freigegebenen Download nicht, und eine größere Datei endet mit „Download exceeds the size limit.“ **Zeitlimit für Downloads** begrenzt die Übertragung; das Lesen des Texts eines heruntergeladenen PDFs behält seine eigene Frist. **Standardzeitlimit für Programme** gilt, wenn weder die Plugin-Regel noch das Programm eine Frist festlegt; **Zeitobergrenze für Shell-Befehle** begrenzt jeden Shell-Befehl im Vordergrund und steht in seiner Freigabe. **Hintergrundprogramme pro Sitzung** begrenzt die Hintergrundläufe einer Unterhaltung; ein weiterer wird als beschäftigt abgelehnt.
+
+Das **Zeitlimit für Modellsuche** gilt für den Katalog von LM Studio oder eines vorkonfigurierten Anbieters einschließlich aller Seiten. Der Verbindungstest verwendet für jede Modellprüfung die Antwortfrist des Modells oder die Inaktivitätsfrist der Anwendung. Das **Zeitlimit für Browser-Navigation** gilt beim Öffnen einer Seite oder Folgen eines Links. Automatisch gelten 35 s beim Öffnen einschließlich Start und 12 s beim Folgen. Der Browser-Proxy begrenzt zusätzlich jede einzelne Anfrage. Das **Zeitlimit für Transkription** umfasst das Laden von Whisper und die Verarbeitung der Aufnahme.
 
 ## Jetzt kompaktieren
 

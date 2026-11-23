@@ -2,6 +2,8 @@
 
 Setările avansate reglează limite pe care majoritatea utilizatorilor nu trebuie să le schimbe. Sunt ascunse până activezi **Arată setările avansate** în **Setări** → **Avansat**. Dezactivarea comutatorului doar le ascunde: valorile setate deja se aplică în continuare.
 
+În pagina aplicației, deschide un grup ca să vezi setările lui. **Doar valori modificate** arată valorile personalizate salvate și modificările în curs, inclusiv resetările.
+
 ## Unde se găsesc
 
 - **Setări** → **Avansat**: valori pentru toată aplicația.
@@ -27,6 +29,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Apeluri de instrumente pe tură | aplicație, workbench, sesiune | 10–500 | 50 | Imediat |
 | Timp fără răspuns de la model (s) | aplicație, sesiune | 30–3600 | 300 | Imediat |
 | Așteptarea antetelor la furnizori găzduiți (s) | aplicație | 10–300 | 30 | Imediat |
+| Timp maxim de detectare a modelelor (s) | aplicație | 5–120 | 10 | La următoarea operație |
 | Compactare în fundal | aplicație, workbench | Activat / Dezactivat | Activat | Imediat |
 | Prag de compactare (%) | aplicație, workbench | 50–95 | 80 | Imediat |
 | Istoric recent păstrat întocmai (tokeni) | aplicație, workbench | 0–100000 | 20000 | Imediat |
@@ -34,7 +37,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Treceri de rezumare pe cerere | aplicație | 1–10 | 5 | Imediat |
 | Marjă de calibrare (%) | aplicație | 100–150 | 110 | Imediat |
 | Folosește numărarea tokenilor de la furnizor | aplicație | Activat / Dezactivat | Activat | Imediat |
-| Sesiuni delegate simultan | aplicație | 1–8 | 3 | Imediat |
+| Sesiuni delegate per workbench | aplicație | 1–8 | 3 | Imediat |
 | Ture simultane | aplicație | 1–16 | 3 | Imediat |
 | Compactare automată | sesiune | Activat / Dezactivat | Activat | Imediat |
 | Mărimea rezultatului unui instrument (caractere) | aplicație | 8000–128000 | 32000 | Imediat |
@@ -47,12 +50,13 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Rezultate căutare web | aplicație | 1–8 | 5 | Imediat |
 | Mărimea citirii web (caractere) | aplicație | 1000–16000 | 12000 | Imediat |
 | Timp de așteptare pentru cereri web (s) | aplicație | 5–120 | 30 | Imediat |
+| Timp maxim de navigare în browser (s) | aplicație | 5–60 | Automat | La următoarea operație |
 | Mărimea descărcării (MiB) | aplicație | 10–1000 | 100 | Imediat |
 | Limita de timp a descărcării (s) | aplicație | 30–1800 | 120 | Imediat |
 | Programe în fundal pe sesiune | aplicație | 1–16 | 4 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Loguri de rulare păstrate | aplicație | 20–2000 | 200 | Imediat |
 | Mărimea logului de rulare (MiB) | aplicație | 8–1024 | 64 | Imediat |
-| Plafonul de timp pentru programe (s) | aplicație, workbench | 60–3600 | 600 | Imediat |
+| Timp implicit pentru programe (s) | aplicație, workbench | 60–3600 | 600 | Imediat |
 | Plafonul de timp pentru comenzi shell (s) | aplicație, workbench | 60–3600 | 600 | Imediat |
 | Mărimea maximă a fișierelor text (MiB) | workbench | 1–64 | 20 | După reindexare |
 | Avertisment de volum: fișiere | aplicație, workbench | 500–100000 | 2000 | Imediat |
@@ -61,6 +65,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Limita de timp pentru extragerea documentelor (s) | aplicație | 30–1800 | 120 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Pauza de indexare (ms) | aplicație | 250–10000 | 1000 | Imediat |
 | Timpul de inactivitate al procesului de embedding (s) | aplicație | 10–600 | 60 | La următorul terminal, proces, rulare sau sesiune deschisă |
+| Timp maxim de transcriere (s) | aplicație | 30–300 | 120 | La următoarea operație |
 | Terminale pe workbench | aplicație | 1–16 | 8 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Memoria terminalului (Ki caractere) | aplicație | 64–1024 | 256 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Istoricul terminalului (linii) | aplicație | 1000–50000 | 3000 | La următorul terminal, proces, rulare sau sesiune deschisă |
@@ -80,7 +85,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 
 **Numărarea tokenilor.** VERA numără o cerere cu raportul raportat de furnizor pentru cererile anterioare, plus **Marja de calibrare**: 110 numără de 1,1 ori. Mărește marja când apar erori de limită de context. Dezactivează **Folosește numărarea tokenilor de la furnizor** când un furnizor raportează greșit consumul; VERA numără atunci cu estimarea sa conservatoare.
 
-**Sesiuni delegate simultan** este câte sesiuni delegate pot rula în același timp. O sesiune în plus este refuzată până se termină una.
+**Sesiuni delegate per workbench** este câte sesiuni delegate pot rula în același timp într-un workbench. O sesiune în plus este refuzată până se termină una.
 
 **Ture simultane** este câte ture ale agentului pot rula în același timp în toate workbench-urile deschise, inclusiv sesiunile delegate. O tură care așteaptă aprobarea ta contează până se termină. La limită, un mesaj nou nu este trimis și rămâne în caseta de mesaj, cu atașamentele lui; după ce se termină o tură, VERA arată că poate începe o tură și îl trimiți din nou. Un mesaj către o sesiune a cărei tură rulează se alătură acelei ture și este acceptat întotdeauna. O sesiune delegată pornită la limită este refuzată imediat. Micșorarea valorii nu oprește nicio tură în curs; se aplică de la mesajul următor.
 
@@ -88,7 +93,9 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 
 **Desktop.** **Terminale pe workbench** limitează terminalele deschise; micșorarea nu închide niciunul, dar unul nou este refuzat cât timp limita este atinsă. **Memoria terminalului** este câtă ieșire păstrează fiecare terminal, citită la deschidere, iar **Istoricul terminalului** câte linii poți derula înapoi. **Ieșirea terminalului pentru agent** este cât din ieșirea recentă a unui terminal primește agentul la o citire; **Mărimea rezultatului unui instrument** o limitează în continuare. **Intervalul verificării actualizărilor** și **Intervalul verificării catalogului de pluginuri** stabilesc cât de des verifică VERA; o modificare salvată pornește noua așteptare fără o verificare imediată. **Păstrarea logurilor** este câte fișiere zilnice de log păstrează VERA. **Rânduri de conversație afișate la început** și **Rânduri de conversație pe încărcare** stabilesc câte dintre cele mai noi mesaje arată o conversație imediat la deschidere și câte mesaje mai vechi adaugă apoi odată, în fundal, până le arată pe toate. **Rânduri pe pagină** este mărimea cu care pornesc listele; o mărime aleasă într-o listă rămâne pentru acea listă.
 
-**Instrumente, programe și web.** **Mărimea rezultatului unui instrument** limitează orice rezultat de instrument primit de model; o mărime sub **Mărimea textului citit** scurtează și citirile. **Fereastra de citire**, **Rezultate grep**, **Rezultate căutare web** și **Mărimea citirii web** sunt și cantitatea folosită când agentul nu cere una, și maximul pe care îl poate cere. Grep sare peste fișierele mai mari decât **Mărimea fișierelor pentru grep**. **Termen pentru procese worker** limitează fiecare căutare de text sau analiză de log; una deja pornită își păstrează termenul. **Mărimea descărcării** apare în aprobarea descărcării și rămâne legată de ea: o modificare ulterioară nu schimbă o descărcare aprobată, iar un fișier mai mare se oprește cu „Download exceeds the size limit.” **Limita de timp a descărcării** limitează transferul; citirea textului unui PDF descărcat își păstrează propriul termen. **Plafonul de timp pentru programe** se aplică programelor de plugin al căror plugin nu stabilește un timp propriu; **Plafonul de timp pentru comenzi shell** limitează orice comandă shell în prim-plan și apare în aprobarea ei. **Programe în fundal pe sesiune** limitează rulările în fundal ale unei conversații; una în plus este refuzată ca ocupat.
+**Instrumente, programe și web.** **Mărimea rezultatului unui instrument** limitează orice rezultat de instrument primit de model; o mărime sub **Mărimea textului citit** scurtează și citirile. **Fereastra de citire**, **Rezultate grep**, **Rezultate căutare web** și **Mărimea citirii web** sunt și cantitatea folosită când agentul nu cere una, și maximul pe care îl poate cere. Grep sare peste fișierele mai mari decât **Mărimea fișierelor pentru grep**. **Termen pentru procese worker** limitează fiecare căutare de text sau analiză de log; una deja pornită își păstrează termenul. **Mărimea descărcării** apare în aprobarea descărcării și rămâne legată de ea: o modificare ulterioară nu schimbă o descărcare aprobată, iar un fișier mai mare se oprește cu „Download exceeds the size limit.” **Limita de timp a descărcării** limitează transferul; citirea textului unui PDF descărcat își păstrează propriul termen. **Timp implicit pentru programe** se aplică atunci când nici regula pluginului, nici programul nu stabilește un timp; **Plafonul de timp pentru comenzi shell** limitează orice comandă shell în prim-plan și apare în aprobarea ei. **Programe în fundal pe sesiune** limitează rulările în fundal ale unei conversații; una în plus este refuzată ca ocupat.
+
+**Timp maxim de detectare a modelelor** acoperă catalogul LM Studio sau catalogul furnizorului predefinit, inclusiv încărcarea tuturor paginilor. Testul conexiunii folosește timpul de răspuns al modelului sau limita de inactivitate a aplicației pentru fiecare probă de model. **Timp maxim de navigare în browser** acoperă deschiderea paginilor și urmarea linkurilor. În modul automat, deschiderea are 35 s, inclusiv pornirea, iar urmarea unui link are 12 s. Proxy-ul browserului aplică separat o limită fiecărei cereri. **Timp maxim de transcriere** include încărcarea Whisper și procesarea înregistrării.
 
 ## Compactează acum
 

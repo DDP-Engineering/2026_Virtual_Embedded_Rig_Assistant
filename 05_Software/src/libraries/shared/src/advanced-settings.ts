@@ -4,7 +4,7 @@ import { z } from "zod";
 export const advancedScopes = ["app", "workbench", "session"] as const;
 export type AdvancedScope = (typeof advancedScopes)[number];
 /** When a changed value takes effect, shown next to each field. */
-export type AdvancedTiming = "live" | "new" | "reindex" | "reopen" | "restart";
+export type AdvancedTiming = "live" | "new" | "nextOperation" | "reindex" | "reopen" | "restart";
 
 interface IntSetting {
   kind: "int";
@@ -58,6 +58,8 @@ export const advancedSettings = {
   noOutputTimeout: int(30, 3600, 300, ["app", "session"]),
   /** Seconds to wait for hosted response headers; custom endpoints keep their own wait. */
   headerWait: int(10, 300, 30, ["app"]),
+  /** Seconds to discover available models when configuring a provider. */
+  providerDiscoveryTimeout: int(5, 120, 10, ["app"], "nextOperation"),
   /** Summarize a finished conversation after a turn, instead of at the next request. */
   backgroundCompaction: toggle(true, ["app", "workbench"]),
   /** Characters of each tool result a summary request carries. */
@@ -98,6 +100,8 @@ export const advancedSettings = {
   webReadChars: int(1000, 16000, 12000, ["app"]),
   /** Seconds a web search or read request may take. */
   webTimeout: int(5, 120, 30, ["app"]),
+  /** Seconds for Interactive Browser navigation when explicitly set. Inherit keeps the operation defaults. */
+  browserNavigationTimeout: int(5, 60, 12, ["app"], "nextOperation"),
   /** MiB one web_download may fetch; bound into its approval. */
   downloadMB: int(10, 1000, 100, ["app"]),
   /** Seconds one web_download may take to transfer; PDF text extraction keeps its own deadline. */
@@ -126,6 +130,8 @@ export const advancedSettings = {
   indexingPause: int(250, 10000, 1000, ["app"]),
   /** Seconds an idle embedding worker is kept before it is retired. */
   embeddingIdle: int(10, 600, 60, ["app"], "new"),
+  /** Seconds a local transcription may take, including worker startup and model loading. */
+  dictationTranscriptionTimeout: int(30, 300, 120, ["app"], "nextOperation"),
   /** Terminals one workbench may have open; lowering it closes none. */
   terminals: int(1, 16, 8, ["app"], "new"),
   /** Ki characters of output a terminal keeps, read when it opens. */

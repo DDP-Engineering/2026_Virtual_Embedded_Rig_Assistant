@@ -58,7 +58,9 @@ of workbench and chat-provider settings.
   before submission and when the renderer loses ownership. Native blur, navigation, renderer
   loss, close and shutdown invalidate the job. A stalled acquisition releases the job on
   timeout or cancellation, and any subsequently acquired stream is stopped on arrival.
-- PCM is mono at 16 kHz and limited to 30 seconds. Connection and inference have deadlines.
+- PCM is mono at 16 kHz and limited to 30 seconds. The connection has its own deadline.
+  Each transcription reads the app Advanced `dictationTranscriptionTimeout` (30–300 s,
+  default 120) and includes loading the model in that worker deadline (REQ-FUNC-5c15647d).
   Audio stays in memory. The worker checks the pinned file set and hashes before load, disables
   remote model access and exits before the next job starts.
 - Explicit language goes directly to transcription. Automatic language selects the highest

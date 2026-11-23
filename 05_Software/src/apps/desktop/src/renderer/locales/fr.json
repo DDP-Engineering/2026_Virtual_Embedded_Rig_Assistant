@@ -408,7 +408,8 @@
     "rateLimitWithRetry": "Limite de débit du fournisseur. Réessayer après : {{retryAfter}}.",
     "context": "Le fournisseur a refusé la taille du contexte. Réduisez l’entrée ou vérifiez la fenêtre configurée.",
     "failure": "Erreur du fournisseur : {{message}}",
-    "timeout": "Le modèle n’a pas répondu dans un délai de {{seconds}} s."
+    "timeout": "Le modèle n’a pas répondu dans un délai de {{seconds}} s.",
+    "discoveryTimeout": "La détection des modèles ne s’est pas terminée en {{seconds}} s."
   },
   "chatDetail": {
     "label": "Niveau de détail",
@@ -1737,6 +1738,17 @@
   },
   "advanced": {
     "show": "Afficher les paramètres avancés",
+    "modifiedOnly": "Valeurs modifiées uniquement",
+    "noModified": "Aucune valeur modifiée.",
+    "automatic": "Automatique",
+    "groups": {
+      "agent": "Agent et contexte",
+      "tools": "Outils et terminaux",
+      "documents": "Documents",
+      "providers": "Fournisseurs et navigateur",
+      "dictation": "Dictée",
+      "interface": "Interface et maintenance"
+    },
     "reset": "Réinitialiser",
     "inherited": "{{value}} ({{source}})",
     "source": {
@@ -1747,6 +1759,7 @@
     },
     "range": "Utilisez un nombre entier de {{min}} à {{max}}.",
     "timing": {
+      "nextOperation": "S’applique à la prochaine opération",
       "live": "S’applique immédiatement",
       "new": "S’applique au prochain terminal, worker, exécution ou session ouverte",
       "reindex": "S’applique après la réindexation",
@@ -1754,6 +1767,9 @@
       "restart": "S’applique après le redémarrage de VERA"
     },
     "settings": {
+      "providerDiscoveryTimeout": "Délai de détection des modèles (s)",
+      "browserNavigationTimeout": "Délai de navigation du navigateur (s)",
+      "dictationTranscriptionTimeout": "Délai de transcription (s)",
       "toolCallsPerTurn": "Appels d’outils par tour",
       "noOutputTimeout": "Délai sans sortie du modèle (s)",
       "headerWait": "Attente des en-têtes des fournisseurs hébergés (s)",
@@ -1762,7 +1778,7 @@
       "summaryPasses": "Passes de résumé par requête",
       "calibrationMargin": "Marge de calibrage (%)",
       "providerTokenCounts": "Utiliser le décompte de jetons du fournisseur",
-      "delegations": "Sessions déléguées simultanées",
+      "delegations": "Sessions déléguées par banc de travail",
       "concurrentTurns": "Tours simultanés",
       "compactionTrigger": "Seuil de compactage (%)",
       "recentTailTokens": "Historique récent conservé tel quel (jetons)",
@@ -1782,7 +1798,7 @@
       "backgroundPrograms": "Programmes en arrière-plan par session",
       "runLogsKept": "Journaux d’exécution conservés",
       "runLogMB": "Taille d’un journal d’exécution (Mio)",
-      "programTimeout": "Plafond de durée des programmes (s)",
+      "programTimeout": "Délai par défaut des programmes (s)",
       "commandTimeout": "Plafond de durée des commandes shell (s)",
       "textFileMB": "Taille maximale des fichiers texte (Mio)",
       "docVolumeFiles": "Avertissement de volume : fichiers",
@@ -1803,6 +1819,9 @@
       "pageSize": "Lignes par page"
     },
     "about": {
+      "providerDiscoveryTimeout": "Délai de détection des modèles dans LM Studio et les catalogues, chargement de la liste compris.",
+      "browserNavigationTimeout": "Délai d’ouverture d’une page ou de suivi d’un lien. Le mode automatique conserve les délais intégrés.",
+      "dictationTranscriptionTimeout": "Délai d’une transcription locale, chargement du modèle Whisper compris.",
       "toolCallsPerTurn": "Appels d’outils qu’un tour de l’agent peut effectuer avant de s’arrêter sur une limite.",
       "noOutputTimeout": "Secondes pendant lesquelles un modèle hébergé peut ne rien envoyer avant que la requête se termine par un dépassement de délai. Les points de terminaison personnalisés gardent leur propre délai.",
       "headerWait": "Secondes d’attente avant qu’un fournisseur hébergé commence à répondre. Les points de terminaison personnalisés gardent leur propre délai.",
@@ -1811,7 +1830,7 @@
       "summaryPasses": "Résumés qu’une requête peut produire avant d’être envoyée. Les longues sessions rouvertes après un redémarrage en demandent davantage.",
       "calibrationMargin": "Marge au-dessus du décompte calibré d’après le fournisseur : 110 compte 1,1 fois. Une valeur plus élevée évite les erreurs de limite de contexte.",
       "providerTokenCounts": "Compter les requêtes avec le rapport indiqué par le fournisseur. Désactivé utilise l’estimation prudente.",
-      "delegations": "Sessions déléguées pouvant s’exécuter en même temps.",
+      "delegations": "Nombre de sessions déléguées pouvant s’exécuter simultanément dans un même banc de travail.",
       "concurrentTurns": "Tours de l’agent pouvant s’exécuter en même temps dans tous les bancs ouverts, sessions déléguées comprises.",
       "compactionTrigger": "Pourcentage du budget d’entrée au-delà duquel l’historique antérieur est résumé.",
       "recentTailTokens": "Jetons de l’historique le plus récent conservés tels quels tant que la requête tient, au plus un cinquième du budget d’entrée.",
@@ -1831,7 +1850,7 @@
       "backgroundPrograms": "Exécutions en arrière-plan qu’une conversation peut avoir en même temps.",
       "runLogsKept": "Journaux d’exécution qu’un banc conserve ; les plus anciens sont supprimés.",
       "runLogMB": "Sortie qu’un journal d’exécution conserve sur le disque.",
-      "programTimeout": "Exécution la plus longue d’un programme de plugin quand le plugin ne fixe pas de durée.",
+      "programTimeout": "Délai pour les programmes sans durée fixée dans leur configuration ni dans la règle du plugin.",
       "commandTimeout": "Commande shell au premier plan la plus longue.",
       "textFileMB": "Les documents texte plus grands ne sont pas indexés. Les fichiers PDF et Office utilisent la taille maximale de fichier dans Documents.",
       "docVolumeFiles": "Documents sélectionnés au-delà desquels l’aperçu des Documents avertit.",

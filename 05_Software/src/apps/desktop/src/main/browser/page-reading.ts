@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import type { Page, Response } from "playwright-core";
+import { errors, type Page, type Response } from "playwright-core";
 import { z } from "zod";
 import { BrowserError } from "./failure.js";
 import { browserNavigationErrorHeader, readableBrowserType } from "./network.js";
@@ -30,7 +30,7 @@ function navigationError(response: Response) {
   }
 }
 
-export async function navigatePage(page: Page, url: string): Promise<string> {
+export async function navigatePage(page: Page, url: string, timeout = 0): Promise<string> {
   let blocked: BrowserError | undefined;
   const report = (response: Response) => {
     const request = response.request();
@@ -44,7 +44,7 @@ export async function navigatePage(page: Page, url: string): Promise<string> {
   };
   page.on("response", report);
   try {
-    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 0 });
+    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout });
     if (blocked) throw blocked;
     if (response) {
       const status = response.status();
@@ -57,6 +57,7 @@ export async function navigatePage(page: Page, url: string): Promise<string> {
     if (page.isClosed()) throw new BrowserError("page-closed");
     if (blocked) throw blocked;
     if (error instanceof BrowserError) throw error;
+    if (error instanceof errors.TimeoutError) throw new BrowserError("operation-timeout");
     if (
       error instanceof Error &&
       /net::ERR_(TUNNEL_CONNECTION_FAILED|BLOCKED_BY_ADMINISTRATOR)/.test(error.message)

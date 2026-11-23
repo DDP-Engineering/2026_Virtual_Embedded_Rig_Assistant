@@ -10,6 +10,17 @@ import {
 } from "./advanced-settings.js";
 
 describe("Advanced settings registry", () => {
+  it.each([
+    ["browserNavigationTimeout", 5, 60, 12],
+    ["dictationTranscriptionTimeout", 30, 300, 120],
+    ["providerDiscoveryTimeout", 5, 120, 10],
+  ] as const)("validates %s as an application deadline of %s–%s seconds", (key, min, max, fallback) => {
+    expect(resolveAdvanced(key, {})).toEqual({ value: fallback, source: "default" });
+    expect(resolveAdvanced(key, { app: { [key]: max } })).toEqual({ value: max, source: "app" });
+    expect(advancedPatchSchema("app").safeParse({ [key]: min - 1 }).success).toBe(false);
+    expect(advancedPatchSchema("workbench").safeParse({ [key]: min }).success).toBe(false);
+  });
+
   it("registers Tool calls per turn for every scope, 10 to 500, default 50, applied live", () => {
     expect(advancedSettings.toolCallsPerTurn).toMatchObject({
       kind: "int",

@@ -1,8 +1,9 @@
-import type { SettingsService } from "@vera/core";
+import { providerDiscoveryTimeoutError, type SettingsService } from "@vera/core";
 import {
   type ProviderDiscoveryRequest,
   providerDiscoveryRequestSchema,
   providerDiscoverySchema,
+  resolveAdvanced,
   veraError,
   veraErrorSchema,
 } from "@vera/shared";
@@ -40,6 +41,7 @@ export async function discoverProvider(
     credentials: Pick<CredentialFile, "registerSecret" | "read" | "containsSecret">;
     settings: Pick<SettingsService, "get">;
     fetch?: typeof fetch;
+    signal?: AbortSignal;
   },
 ) {
   if (typeof input.apiKey === "string") host.credentials.registerSecret(input.apiKey);
@@ -56,7 +58,13 @@ export async function discoverProvider(
     const credential = await host.credentials.read(request.savedId);
     if (credential?.type === "api_key") key = credential.key;
   }
-  const signal = AbortSignal.timeout(10000);
+  const seconds = resolveAdvanced("providerDiscoveryTimeout", {
+    app: host.settings.get().settings.advanced,
+  }).value;
+  const deadline = AbortSignal.timeout(seconds * 1000);
+  const signal = host.signal ? AbortSignal.any([host.signal, deadline]) : deadline;
+  const interruption = () =>
+    host.signal?.aborted ? veraError("DENIED") : providerDiscoveryTimeoutError(seconds * 1000);
   let response: Response;
   try {
     response = await (host.fetch ?? fetch)(`${origin}/api/v1/models`, {
@@ -65,23 +73,27 @@ export async function discoverProvider(
       headers: key ? { Authorization: `Bearer ${key}` } : {},
     });
   } catch {
-    throw veraError("OFFLINE");
+    throw signal.aborted ? interruption() : veraError("OFFLINE");
   }
+  if (signal.aborted) throw interruption();
   if (response.status === 401 || response.status === 403) throw veraError("DENIED");
   if (response.status === 404) throw veraError("NOT_FOUND");
   if (!response.ok) throw veraError("PROVIDER");
   if (!response.body) throw veraError("PROVIDER");
   const reader = response.body.getReader();
+  const cancel = () => void reader.cancel().catch(() => {});
+  signal.addEventListener("abort", cancel, { once: true });
   const decoder = new TextDecoder();
   let text = "",
     length = 0;
   try {
     for (;;) {
       const chunk = await reader.read();
+      if (signal.aborted) throw interruption();
       if (chunk.done) break;
       length += chunk.value.byteLength;
       if (length > 2 * 1024 * 1024) {
-        await reader.cancel();
+        cancel();
         throw veraError("PROVIDER");
       }
       text += decoder.decode(chunk.value, { stream: true });
@@ -108,9 +120,11 @@ export async function discoverProvider(
     if (new Set(models.map((m) => m.id)).size !== models.length) throw veraError("PROVIDER");
     return providerDiscoverySchema.parse({ baseUrl: `${origin}/v1`, models });
   } catch (error) {
+    if (signal.aborted) throw interruption();
     if (veraErrorSchema.safeParse(error).success) throw error;
     throw veraError("PROVIDER");
   } finally {
+    signal.removeEventListener("abort", cancel);
     reader.releaseLock();
   }
 }

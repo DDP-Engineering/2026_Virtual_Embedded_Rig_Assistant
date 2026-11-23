@@ -7,10 +7,10 @@ title = "Limit concurrent delegated sessions by the resolved value"
 status = "active"
 
 requirement = """
-When a delegated session is requested, VERA shall refuse it with BUSY while the resolved Delegated sessions at once value, an integer from 1 to 8 with default 3, are already running.
+When a delegated session is requested, VERA shall refuse it with BUSY when the number of active delegated sessions in that workbench reaches Delegated sessions per workbench, an application setting from 1 to 8 with default 3.
 """
 
-verification = "With 1, a second delegation while one runs is refused with BUSY and a third after the first finishes is admitted; with the default, a fourth concurrent one is refused."
+verification = "With 1, a second delegation in the same workbench while one runs is refused with BUSY and a third after the first finishes is admitted; with the default, a fourth concurrent one is refused."
 
 affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/delegation.ts", "05_Software/src/libraries/core/src/index.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-23

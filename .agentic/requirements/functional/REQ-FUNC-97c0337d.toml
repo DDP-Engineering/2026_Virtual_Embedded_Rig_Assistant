@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-97c0337d"
+
+title = "Apply the model discovery timeout"
+
+status = "active"
+
+requirement = "When LM Studio or curated provider model discovery makes a network request, VERA shall apply the application model discovery time limit of 5 to 120 seconds with default 10 to the catalog fetch including its response body and continuation pages."
+
+verification = "Change the saved setting and observe the deadline in both discovery flows, including a stalled catalog body and a default operation."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/main/provider-discovery.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-discovery.test.ts", "05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

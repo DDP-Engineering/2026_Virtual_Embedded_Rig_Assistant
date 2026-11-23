@@ -408,7 +408,8 @@
     "rateLimitWithRetry": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
     "failure": "Eroare furnizor: {{message}}",
-    "timeout": "Modelul nu a răspuns în {{seconds}} s."
+    "timeout": "Modelul nu a răspuns în {{seconds}} s.",
+    "discoveryTimeout": "Detectarea modelelor nu s-a încheiat în {{seconds}} s."
   },
   "chatDetail": {
     "label": "Nivel de detaliu",
@@ -1737,6 +1738,17 @@
   },
   "advanced": {
     "show": "Arată setările avansate",
+    "modifiedOnly": "Doar valori modificate",
+    "noModified": "Nu există valori modificate.",
+    "automatic": "Automat",
+    "groups": {
+      "agent": "Agent și context",
+      "tools": "Instrumente și terminale",
+      "documents": "Documente",
+      "providers": "Furnizori și browser",
+      "dictation": "Dictare",
+      "interface": "Interfață și întreținere"
+    },
     "reset": "Resetează",
     "inherited": "{{value}} ({{source}})",
     "source": {
@@ -1747,6 +1759,7 @@
     },
     "range": "Folosește un număr întreg de la {{min}} la {{max}}.",
     "timing": {
+      "nextOperation": "Se aplică de la următoarea operație",
       "live": "Se aplică imediat",
       "new": "Se aplică la următorul terminal, proces, rulare sau sesiune deschisă",
       "reindex": "Se aplică după reindexare",
@@ -1754,6 +1767,9 @@
       "restart": "Se aplică după repornirea VERA"
     },
     "settings": {
+      "providerDiscoveryTimeout": "Timp maxim de detectare a modelelor (s)",
+      "browserNavigationTimeout": "Timp maxim de navigare în browser (s)",
+      "dictationTranscriptionTimeout": "Timp maxim de transcriere (s)",
       "toolCallsPerTurn": "Apeluri de instrumente pe tură",
       "noOutputTimeout": "Timp fără răspuns de la model (s)",
       "headerWait": "Așteptarea antetelor la furnizori găzduiți (s)",
@@ -1762,7 +1778,7 @@
       "summaryPasses": "Treceri de rezumare pe cerere",
       "calibrationMargin": "Marjă de calibrare (%)",
       "providerTokenCounts": "Folosește numărarea tokenilor de la furnizor",
-      "delegations": "Sesiuni delegate simultan",
+      "delegations": "Sesiuni delegate per workbench",
       "concurrentTurns": "Ture simultane",
       "compactionTrigger": "Prag de compactare (%)",
       "recentTailTokens": "Istoric recent păstrat întocmai (tokeni)",
@@ -1782,7 +1798,7 @@
       "backgroundPrograms": "Programe în fundal pe sesiune",
       "runLogsKept": "Loguri de rulare păstrate",
       "runLogMB": "Mărimea logului de rulare (MiB)",
-      "programTimeout": "Plafonul de timp pentru programe (s)",
+      "programTimeout": "Timp implicit pentru programe (s)",
       "commandTimeout": "Plafonul de timp pentru comenzi shell (s)",
       "textFileMB": "Mărimea maximă a fișierelor text (MiB)",
       "docVolumeFiles": "Avertisment de volum: fișiere",
@@ -1803,6 +1819,9 @@
       "pageSize": "Rânduri pe pagină"
     },
     "about": {
+      "providerDiscoveryTimeout": "Timp pentru detectarea modelelor din LM Studio și cataloagele furnizorilor, inclusiv încărcarea listei.",
+      "browserNavigationTimeout": "Timp pentru deschiderea unei pagini sau urmarea unui link. Opțiunea automată păstrează limitele încorporate.",
+      "dictationTranscriptionTimeout": "Timp maxim pentru o transcriere locală, inclusiv încărcarea modelului Whisper.",
       "toolCallsPerTurn": "Câte apeluri de instrumente poate face agentul într-o tură înainte să se oprească la limită.",
       "noOutputTimeout": "Câte secunde poate un model găzduit să nu trimită nimic înainte ca cererea să se încheie cu timeout. Endpoint-urile personalizate își păstrează propriul timeout.",
       "headerWait": "Câte secunde se așteaptă ca un furnizor găzduit să înceapă să răspundă. Endpoint-urile personalizate își păstrează propriul timeout.",
@@ -1811,7 +1830,7 @@
       "summaryPasses": "Câte rezumate poate face o cerere înainte de a fi trimisă. Sesiunile lungi redeschise după o repornire au nevoie de mai multe.",
       "calibrationMargin": "Rezervă peste numărarea calibrată din raportările furnizorului: 110 numără de 1,1 ori. O valoare mai mare evită erorile de limită de context.",
       "providerTokenCounts": "Numără cererile cu raportul raportat de furnizor. Dezactivat folosește estimarea conservatoare.",
-      "delegations": "Câte sesiuni delegate pot rula în același timp.",
+      "delegations": "Numărul de sesiuni delegate care pot rula simultan în același workbench.",
       "concurrentTurns": "Câte ture ale agentului pot rula în același timp în toate workbench-urile deschise, inclusiv sesiunile delegate.",
       "compactionTrigger": "Procentul din bugetul de intrare peste care istoricul anterior este rezumat.",
       "recentTailTokens": "Tokenii celui mai recent istoric păstrați întocmai cât timp cererea încape, cel mult o cincime din bugetul de intrare.",
@@ -1831,7 +1850,7 @@
       "backgroundPrograms": "Câte rulări în fundal poate avea simultan o conversație.",
       "runLogsKept": "Câte loguri de rulare păstrează un workbench; cele mai vechi sunt șterse.",
       "runLogMB": "Câtă ieșire păstrează pe disc logul unei rulări.",
-      "programTimeout": "Cea mai lungă rulare a unui program de plugin când pluginul nu stabilește un timp.",
+      "programTimeout": "Limită pentru programele fără un timp stabilit în regula pluginului sau în program.",
       "commandTimeout": "Cea mai lungă comandă shell în prim-plan.",
       "textFileMB": "Documentele text mai mari nu sunt indexate. PDF-urile și fișierele Office folosesc Mărimea maximă a fișierului din Documente.",
       "docVolumeFiles": "Câte documente selectate declanșează avertismentul din previzualizarea Documentelor.",

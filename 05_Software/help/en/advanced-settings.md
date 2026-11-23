@@ -2,6 +2,8 @@
 
 Advanced settings tune limits that most people never need to change. They are hidden until you turn on **Show advanced settings** in **Settings** → **Advanced**. Turning the switch off only hides them: values you already set keep applying.
 
+On the application page, open a group to see its settings. **Only modified values** shows saved overrides and pending edits, including resets.
+
 ## Where they are
 
 - **Settings** → **Advanced**: values for the whole application.
@@ -27,6 +29,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Tool calls per turn | application, workbench, session | 10–500 | 50 | Right away |
 | Model no-output timeout (s) | application, session | 30–3600 | 300 | Right away |
 | Hosted header wait (s) | application | 10–300 | 30 | Right away |
+| Model discovery timeout (s) | application | 5–120 | 10 | For the next operation |
 | Background compaction | application, workbench | On / Off | On | Right away |
 | Compaction trigger (%) | application, workbench | 50–95 | 80 | Right away |
 | Recent history kept verbatim (tokens) | application, workbench | 0–100000 | 20000 | Right away |
@@ -34,7 +37,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Summary passes per request | application | 1–10 | 5 | Right away |
 | Calibration margin (%) | application | 100–150 | 110 | Right away |
 | Use provider token counts | application | On / Off | On | Right away |
-| Delegated sessions at once | application | 1–8 | 3 | Right away |
+| Delegated sessions per workbench | application | 1–8 | 3 | Right away |
 | Concurrent turns | application | 1–16 | 3 | Right away |
 | Automatic compaction | session | On / Off | On | Right away |
 | Tool result size (characters) | application | 8000–128000 | 32000 | Right away |
@@ -47,12 +50,13 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Web search results | application | 1–8 | 5 | Right away |
 | Web read size (characters) | application | 1000–16000 | 12000 | Right away |
 | Web request timeout (s) | application | 5–120 | 30 | Right away |
+| Browser navigation timeout (s) | application | 5–60 | Automatic | For the next operation |
 | Download size (MiB) | application | 10–1000 | 100 | Right away |
 | Download time limit (s) | application | 30–1800 | 120 | Right away |
 | Background programs per session | application | 1–16 | 4 | For the next terminal, worker, run or opened session |
 | Run logs kept | application | 20–2000 | 200 | Right away |
 | Run log size (MiB) | application | 8–1024 | 64 | Right away |
-| Program timeout ceiling (s) | application, workbench | 60–3600 | 600 | Right away |
+| Default program timeout (s) | application, workbench | 60–3600 | 600 | Right away |
 | Shell command timeout ceiling (s) | application, workbench | 60–3600 | 600 | Right away |
 | Maximum text file size (MiB) | workbench | 1–64 | 20 | After reindexing |
 | Volume warning: files | application, workbench | 500–100000 | 2000 | Right away |
@@ -61,6 +65,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Document extraction time limit (s) | application | 30–1800 | 120 | For the next terminal, worker, run or opened session |
 | Indexing pause (ms) | application | 250–10000 | 1000 | Right away |
 | Embedding worker idle time (s) | application | 10–600 | 60 | For the next terminal, worker, run or opened session |
+| Transcription timeout (s) | application | 30–300 | 120 | For the next operation |
 | Terminals per workbench | application | 1–16 | 8 | For the next terminal, worker, run or opened session |
 | Terminal buffer (Ki characters) | application | 64–1024 | 256 | For the next terminal, worker, run or opened session |
 | Terminal scrollback (lines) | application | 1000–50000 | 3000 | For the next terminal, worker, run or opened session |
@@ -80,7 +85,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 
 **Token counting.** VERA counts a request with the ratio the provider reported for earlier requests, plus the **Calibration margin**: 110 counts 1.1 times. Raise the margin when context-limit errors appear. Turn **Use provider token counts** off when a provider reports wrong usage; VERA then counts with its conservative estimate.
 
-**Delegated sessions at once** is how many delegated sessions may run at the same time. A further one is refused until one finishes.
+**Delegated sessions per workbench** is how many delegated sessions may run at the same time within one workbench. A further one is refused until one finishes.
 
 **Concurrent turns** is how many agent turns may run at the same time across all open workbenches, delegated sessions included. A turn waiting for your approval counts until it ends. At the limit, a new message is not sent and stays in the message box with its attachments; once a turn ends, VERA shows that a turn can start and you send it again. A message to a session whose turn is running joins that turn and is always accepted. A delegated session started at the limit is refused at once. Lowering the value stops no running turn; it applies to the next message.
 
@@ -88,7 +93,9 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 
 **Desktop.** **Terminals per workbench** limits the open terminals; lowering it closes none, but a new one is refused while the limit is reached. **Terminal buffer** is how much output each terminal keeps, read when it opens, and **Terminal scrollback** how many lines its view scrolls back. **Terminal output for the agent** is how much of a terminal's latest output one agent read returns; the **Tool result size** still bounds it. **Update check interval** and **Plugin catalog check interval** set how often VERA checks; a saved change starts the new wait without checking at once. **Log retention** is how many daily log files VERA keeps. **Transcript rows first shown** and **Transcript rows per load** set how many of the newest messages a conversation shows at once when it opens, and how many older ones it then adds at a time in the background until all are shown. **Rows per page** is where lists start; a size picked in a list stays for that list.
 
-**Tools, programs and web.** **Tool result size** bounds every tool result the model receives; a size below the **Read output size** also shortens reads. **Read window**, **Grep results**, **Web search results** and **Web read size** are both the amount used when the agent asks for none and the most it can ask for. Grep skips files larger than **Grep file size**. **Worker deadline** bounds each text search or log analysis; one already running keeps its deadline. **Download size** is shown in the download approval and stays bound to it: a later change does not alter an approved download, and a larger file stops with "Download exceeds the size limit." **Download time limit** bounds the transfer; reading the text of a downloaded PDF keeps its own deadline. **Program timeout ceiling** applies to plugin programs whose plugin sets no timeout of its own; **Shell command timeout ceiling** caps every foreground shell command and is shown in its approval. **Background programs per session** limits background runs of one conversation; a further one is refused as busy.
+**Tools, programs and web.** **Tool result size** bounds every tool result the model receives; a size below the **Read output size** also shortens reads. **Read window**, **Grep results**, **Web search results** and **Web read size** are both the amount used when the agent asks for none and the most it can ask for. Grep skips files larger than **Grep file size**. **Worker deadline** bounds each text search or log analysis; one already running keeps its deadline. **Download size** is shown in the download approval and stays bound to it: a later change does not alter an approved download, and a larger file stops with "Download exceeds the size limit." **Download time limit** bounds the transfer; reading the text of a downloaded PDF keeps its own deadline. **Default program timeout** applies when neither the plugin rule nor the program sets a timeout; **Shell command timeout ceiling** caps every foreground shell command and is shown in its approval. **Background programs per session** limits background runs of one conversation; a further one is refused as busy.
+
+**Model discovery timeout** covers the LM Studio or curated provider catalog, including loading all pages. The connection test uses the model’s response timeout or the application’s no-output timeout for each model probe. **Browser navigation timeout** covers opening pages and following links. Automatic uses 35 s for opening (including startup) and 12 s for following. The browser’s proxy still applies its own limit to each request. **Transcription timeout** includes loading Whisper and processing the recording.
 
 ## Compact now
 

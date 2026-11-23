@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-6c38608e"
+
+title = "Group application Advanced settings"
+
+status = "active"
+
+requirement = "When application Advanced settings are shown, VERA shall display each application field in one localized collapsible group with the save and cancel actions visible while the fields scroll."
+
+verification = "Open the panel at a bounded viewport, expand and collapse a group, and check that the fields scroll while the actions remain visible."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/help/en/advanced-settings.md", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/tests/e2e/advanced-settings.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

@@ -43,6 +43,7 @@ export * from "./knowledge/selection.js";
 export * from "./knowledge/viewer.js";
 export * from "./knowledge/worker-host.js";
 export * from "./llm/connection.js";
+export { providerDiscoveryTimeoutError } from "./llm/errors.js";
 export * from "./llm/gateway.js";
 export * from "./llm/preset-connection.js";
 export * from "./llm/providers.js";
@@ -80,6 +81,7 @@ export {
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
 export * from "./sessions/service.js";
+export { timedGateway } from "./sessions/timed-gateway.js";
 export * from "./settings/masking.js";
 export * from "./settings/service.js";
 export * from "./skills/catalog.js";

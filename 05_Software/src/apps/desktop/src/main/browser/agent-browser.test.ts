@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import type { BrowserCall } from "@vera/core";
-import type { Page } from "playwright-core";
+import { errors, type Page } from "playwright-core";
 import { afterEach, expect, it, vi } from "vitest";
 import { AgentBrowser, browserAgentLimits } from "./agent-browser.js";
 import { BrowserError } from "./failure.js";
@@ -37,19 +37,22 @@ class FakePage extends EventEmitter {
   bringToFront = vi.fn(async () => {});
 }
 
-function harness(disabled = () => false) {
+function harness(disabled = () => false, navigationTimeout?: () => number | undefined) {
   const grant = new AbortController();
   const closed = new AbortController();
   const all: FakePage[] = [];
+  const prepareTab = vi.fn<(page: FakePage) => void>();
+  const discardTab = vi.fn((page: Page) => page.close());
   const host = {
     open: vi.fn(
       async (): Promise<BrowserSession> => ({
         closed: closed.signal,
-        discardTab: (page) => page.close(),
+        discardTab,
         tabs: () => all.filter((page) => !page.closed) as unknown as Page[],
         async newTab() {
           const page = new FakePage();
           all.push(page);
+          prepareTab(page);
           return page as unknown as Page;
         },
         async close() {
@@ -67,15 +70,111 @@ function harness(disabled = () => false) {
     authorization: () => (grant.signal.aborted ? undefined : grant.signal),
     origins: () => [new URL(url).origin],
   };
-  const browser = new AgentBrowser(owner, host, access, disabled);
+  const browser = new AgentBrowser(owner, host, access, disabled, navigationTimeout);
   const run = (name: BrowserCall["name"], args = {}, signal = new AbortController().signal) =>
     browser.execute({ name, args } as BrowserCall, signal);
-  return { host, run, all, browser, grant, closed };
+  return { host, run, all, browser, grant, closed, prepareTab, discardTab };
 }
 
 afterEach(() => {
   vi.resetAllMocks();
   vi.useRealTimers();
+});
+
+it("captures the configured deadline for open and follow and restores automatic navigation on reset", async () => {
+  let deadline: number | undefined = 20_000;
+  const h = harness(undefined, () => deadline);
+  await expect(h.run("browser_open", { url })).resolves.toMatchObject({ url });
+  expect(h.all[0]?.goto).toHaveBeenLastCalledWith(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "",
+    text: "",
+    links: [{ url: nextUrl, label: "Next" }],
+    truncated: false,
+  });
+  const snapshot = await h.run("browser_snapshot");
+  if (!("links" in snapshot)) throw Error("Missing snapshot");
+  deadline = 25_000;
+  await expect(h.run("browser_follow", { ref: snapshot.links[0]?.ref })).resolves.toMatchObject({
+    url: nextUrl,
+  });
+  expect(h.all[0]?.goto).toHaveBeenLastCalledWith(nextUrl, {
+    waitUntil: "domcontentloaded",
+    timeout: 25_000,
+  });
+  deadline = undefined;
+  await expect(h.run("browser_open", { url })).resolves.toMatchObject({ url });
+  expect(h.all[1]?.goto).toHaveBeenLastCalledWith(url, { waitUntil: "domcontentloaded", timeout: 0 });
+});
+
+it("reports a configured navigation timeout and closes the browser session", async () => {
+  const h = harness(undefined, () => 20_000);
+  await h.run("browser_open", { url });
+  const page = h.all[0];
+  if (!page) throw Error("Missing opened page");
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "",
+    text: "",
+    links: [{ url: nextUrl, label: "Next" }],
+    truncated: false,
+  });
+  const snapshot = await h.run("browser_snapshot");
+  if (!("links" in snapshot)) throw Error("Missing snapshot");
+  page.goto.mockRejectedValueOnce(new errors.TimeoutError("Navigation timed out"));
+  await expect(h.run("browser_follow", { ref: snapshot.links[0]?.ref })).resolves.toMatchObject({
+    isError: true,
+    code: "operation-timeout",
+  });
+  expect(h.host.closeSession).toHaveBeenCalledExactlyOnceWith(owner);
+});
+
+it("reports an open navigation timeout without waiting for tab discard", async () => {
+  const h = harness(undefined, () => 5_000);
+  h.prepareTab.mockImplementation((page) => {
+    page.goto.mockRejectedValueOnce(new errors.TimeoutError("Navigation timed out"));
+  });
+  h.discardTab.mockImplementation(() => new Promise(() => {}));
+  await expect(h.run("browser_open", { url })).resolves.toMatchObject({
+    isError: true,
+    code: "operation-timeout",
+  });
+  expect(h.discardTab).not.toHaveBeenCalled();
+  expect(h.host.closeSession).toHaveBeenCalledExactlyOnceWith(owner);
+});
+
+it("retains the inherited open and follow deadlines", async () => {
+  vi.useFakeTimers();
+  const opening = harness();
+  opening.prepareTab.mockImplementation((page) => {
+    page.goto.mockImplementation(() => new Promise(() => {}));
+  });
+  const open = opening.run("browser_open", { url });
+  await vi.advanceTimersByTimeAsync(34_999);
+  expect(opening.host.closeSession).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1);
+  await expect(open).resolves.toMatchObject({ code: "operation-timeout" });
+  expect(opening.host.closeSession).toHaveBeenCalledExactlyOnceWith(owner);
+
+  const following = harness();
+  await following.run("browser_open", { url });
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "",
+    text: "",
+    links: [{ url: nextUrl, label: "Next" }],
+    truncated: false,
+  });
+  const snapshot = await following.run("browser_snapshot");
+  if (!("links" in snapshot)) throw Error("Missing snapshot");
+  following.all[0]?.goto.mockImplementation(() => new Promise(() => {}));
+  const follow = following.run("browser_follow", { ref: snapshot.links[0]?.ref });
+  await vi.advanceTimersByTimeAsync(11_999);
+  expect(following.host.closeSession).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1);
+  await expect(follow).resolves.toMatchObject({ code: "operation-timeout" });
+  expect(following.host.closeSession).toHaveBeenCalledExactlyOnceWith(owner);
 });
 
 it("serializes tabs and invalidates stale, crossed and navigated snapshot references", async () => {

@@ -62,6 +62,11 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
     like an out-of-range one (REQ-DATA-96ef3dd6). The pilot is `toolCallsPerTurn` (10–500, default 50, live).
   - **Renderer store:** `renderer/hooks/app-advanced.ts` holds the saved application values, set by usePreferences from
     the settings snapshot; lists, the transcript and the terminal tab read it (defaults before it is set).
+  - **Application editor:** six collapsible groups scroll below the page actions. The modified-values filter shows
+    stored overrides and pending edits including resets. Filtering changes the view only (REQ-UX-6c38608e,
+    REQ-UX-634d3ec2).
+  - **Desktop deadlines:** model discovery, browser navigation and dictation transcription read app values for
+    each new operation. The browser uses its built-in open and follow deadlines when the setting is inherited.
   - **Concurrent turns:** `concurrentTurns` (app scope only, 1-16, default 3) bounds agent turns across every open workbench; main reads it at each admission and announces a saved change through `session.capacity` (see [Sessions](sessions.md)).
   - **Resolver:** `resolveAdvanced` picks session > workbench > app > default and skips invalid values, reporting each ignored key by name (REQ-DATA-33a90ef2).
   - **Removed key:** the former `limits.maxToolCallsPerTurn` no longer exists. A settings file that still has `limits` fails the strict schema, which applies the no-migration rule.

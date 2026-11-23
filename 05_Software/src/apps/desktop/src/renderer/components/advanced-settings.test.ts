@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // REQ-UX-fcd1ad10 REQ-UX-9ea9184f REQ-UX-6a8a987d
 import userEvent from "@testing-library/user-event";
-import { defaultSettings } from "@vera/shared";
+import { advancedKeys, advancedSettings, defaultSettings } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -132,4 +132,58 @@ it("labels the fields in Romanian", async () => {
   );
   expect(container.querySelector("label")?.textContent).toBe("Apeluri de instrumente pe tură");
   expect(input().placeholder).toBe("50 (implicit)");
+});
+
+it("groups settings and retains a reset in the modified-values view until saved", async () => {
+  const update = vi.fn();
+  const settings = {
+    ...defaultSettings("00000000-0000-4000-8000-000000000000"),
+    showAdvanced: true,
+    advanced: { providerDiscoveryTimeout: 40 },
+  };
+  await act(async () =>
+    root.render(createElement(AdvancedSettingsPanel, { settings, disabled: false, update })),
+  );
+  const fields = () =>
+    [...container.querySelectorAll("[data-advanced-field]")].map((field) =>
+      field.getAttribute("data-advanced-field"),
+    );
+  expect(fields().sort()).toEqual(
+    advancedKeys.filter((key) => (advancedSettings[key].scopes as readonly string[]).includes("app")).sort(),
+  );
+  const group = container.querySelector<HTMLDetailsElement>('[data-advanced-group="providers"]');
+  expect(group?.open).toBe(false);
+  const user = userEvent.setup();
+  await act(async () => user.click(group?.querySelector("summary") as HTMLElement));
+  expect(group?.open).toBe(true);
+  const agent = () => container.querySelector<HTMLDetailsElement>('[data-advanced-group="agent"]');
+  const save = container.querySelector<HTMLButtonElement>("[data-settings-save]");
+  const cancel = container.querySelector<HTMLButtonElement>("[data-settings-cancel]");
+  await act(async () => user.type(input(), "1"));
+  await act(async () => user.click(agent()?.querySelector("summary") as HTMLElement));
+  expect(agent()?.open).toBe(false);
+  await act(async () => user.click(container.querySelector("[data-advanced-modified]") as HTMLInputElement));
+  expect(fields()).toEqual(["toolCallsPerTurn", "providerDiscoveryTimeout"]);
+  expect(agent()?.open).toBe(true);
+  expect(input().value).toBe("1");
+  expect(input().getAttribute("aria-invalid")).toBe("true");
+  expect(save?.disabled).toBe(true);
+  await act(async () => user.click(cancel as HTMLButtonElement));
+  expect(fields()).toEqual(["providerDiscoveryTimeout"]);
+  await act(async () => user.click(reset()));
+  expect(input().value).toBe("");
+  expect(fields()).toEqual(["providerDiscoveryTimeout"]);
+  await act(async () => user.click(save as HTMLButtonElement));
+  expect(update).toHaveBeenLastCalledWith({ advanced: { providerDiscoveryTimeout: null } });
+  await act(async () =>
+    root.render(
+      createElement(AdvancedSettingsPanel, {
+        settings: { ...settings, advanced: {} },
+        disabled: false,
+        update,
+      }),
+    ),
+  );
+  expect(fields()).toEqual([]);
+  expect(container.querySelector('[role="status"]')?.textContent).toBe("No modified values.");
 });

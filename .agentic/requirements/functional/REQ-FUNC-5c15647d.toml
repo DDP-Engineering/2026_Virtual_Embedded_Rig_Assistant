@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-5c15647d"
+
+title = "Apply the dictation transcription timeout"
+
+status = "active"
+
+requirement = "When a local transcription starts, VERA shall bound it using the application transcription time limit of 30 to 300 seconds with default 120, including loading the model."
+
+verification = "Start a stalled transcription after changing the setting and assert that it times out at the captured value, with the 120 second default retained."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/worker-host.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

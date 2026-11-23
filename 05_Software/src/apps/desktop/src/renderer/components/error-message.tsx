@@ -59,6 +59,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "provider.context": t("provider.context", options),
     "provider.failure": t("provider.failure", options),
     "provider.timeout": t("provider.timeout", options),
+    "provider.discoveryTimeout": t("provider.discoveryTimeout", options),
     "context.budget_exceeded": t("context.budget_exceeded", options),
     "approval.confirmMismatch": t("approval.confirmMismatch"),
     "documents.textBinary": t("documents.textBinary"),

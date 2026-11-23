@@ -83,8 +83,10 @@ both release the grant and window. Chat Stop uses the existing turn abort.
   scripts, protocol upgrades, attachments and encoded responses are denied.
 - Agent browser calls serialize by VERA session. Close has a reserved queue slot.
   The lease admits 80 other calls with 35 seconds for open and 12 for other
-  calls including queue time. Active cancellation or timeout closes the owned
-  browser. A snapshot uses a fixed isolated-world reader for bounded top-level
+  calls including queue time by default. A saved application `browserNavigationTimeout`
+  (5–60 s) bounds page navigation for open and follow, with the open operation
+  retaining a separate startup allowance (REQ-FUNC-d078ff53). Active cancellation
+  or timeout closes the owned browser. A snapshot uses a fixed isolated-world reader for bounded top-level
   viewport text and links. The 24,000-byte result marks page content untrusted.
   Navigation, tab selection, scroll and a new snapshot retire prior references.
 - Policy refusals and unsupported document responses produce a proxy-owned

@@ -16,8 +16,11 @@ Core delegated turns use the same workbench session service, gateway and event h
 
 Desktop dictation manages two pinned Whisper models in application data. The desktop stack supplies
 session-bound capture, gesture-scoped microphone permission, bounded mono PCM and single-job
-offline inference with automatic or explicit language. The chat composer uses configurable hold or
+offline inference with automatic or explicit language and an application transcription deadline.
+The chat composer uses configurable hold or
 toggle gestures and inserts editable text into the initiating draft for explicit Send.
+Application Advanced groups controls by purpose and can show saved overrides and pending edits.
+Its desktop time limits cover Interactive Browser navigation, dictation and explicit model discovery.
 
 ## Supported operation
 

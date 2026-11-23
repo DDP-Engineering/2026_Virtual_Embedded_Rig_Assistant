@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-d078ff53"
+
+title = "Apply the Interactive Browser navigation timeout"
+
+status = "active"
+
+requirement = "When a new Interactive Browser navigation starts, VERA shall apply the saved application navigation timeout of 5 to 60 seconds to page navigation for both opening and following, retaining the existing automatic deadlines when inherited."
+
+verification = "Set a navigation value, exercise open and follow, and observe the configured deadline independently of startup; reset and observe the inherited operation deadlines."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/main/browser/page-reading.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

@@ -2,6 +2,8 @@
 
 Les paramètres avancés règlent des limites que la plupart des utilisateurs n’ont jamais besoin de modifier. Ils sont masqués jusqu’à ce que vous activiez **Afficher les paramètres avancés** dans **Paramètres** → **Avancé**. Désactiver l’interrupteur ne fait que les masquer : les valeurs déjà définies continuent de s’appliquer.
 
+Dans les paramètres de l’application, ouvrez un groupe pour afficher ses réglages. **Valeurs modifiées uniquement** affiche les valeurs personnalisées enregistrées et les modifications en cours, y compris les réinitialisations.
+
 ## Où les trouver
 
 - **Paramètres** → **Avancé** : valeurs pour toute l’application.
@@ -27,6 +29,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Appels d’outils par tour | application, banc, session | 10–500 | 50 | Immédiatement |
 | Délai sans sortie du modèle (s) | application, session | 30–3600 | 300 | Immédiatement |
 | Attente des en-têtes des fournisseurs hébergés (s) | application | 10–300 | 30 | Immédiatement |
+| Délai de détection des modèles (s) | application | 5–120 | 10 | À la prochaine opération |
 | Compactage en arrière-plan | application, banc | Activé / Désactivé | Activé | Immédiatement |
 | Seuil de compactage (%) | application, banc | 50–95 | 80 | Immédiatement |
 | Historique récent conservé tel quel (jetons) | application, banc | 0–100000 | 20000 | Immédiatement |
@@ -34,7 +37,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Passes de résumé par requête | application | 1–10 | 5 | Immédiatement |
 | Marge de calibrage (%) | application | 100–150 | 110 | Immédiatement |
 | Utiliser le décompte de jetons du fournisseur | application | Activé / Désactivé | Activé | Immédiatement |
-| Sessions déléguées simultanées | application | 1–8 | 3 | Immédiatement |
+| Sessions déléguées par banc de travail | application | 1–8 | 3 | Immédiatement |
 | Tours simultanés | application | 1–16 | 3 | Immédiatement |
 | Compactage automatique | session | Activé / Désactivé | Activé | Immédiatement |
 | Taille d’un résultat d’outil (caractères) | application | 8000–128000 | 32000 | Immédiatement |
@@ -47,12 +50,13 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Résultats de recherche web | application | 1–8 | 5 | Immédiatement |
 | Taille de lecture web (caractères) | application | 1000–16000 | 12000 | Immédiatement |
 | Délai des requêtes web (s) | application | 5–120 | 30 | Immédiatement |
+| Délai de navigation du navigateur (s) | application | 5–60 | Automatique | À la prochaine opération |
 | Taille de téléchargement (Mio) | application | 10–1000 | 100 | Immédiatement |
 | Durée limite d’un téléchargement (s) | application | 30–1800 | 120 | Immédiatement |
 | Programmes en arrière-plan par session | application | 1–16 | 4 | Au prochain terminal, worker, exécution ou session ouverte |
 | Journaux d’exécution conservés | application | 20–2000 | 200 | Immédiatement |
 | Taille d’un journal d’exécution (Mio) | application | 8–1024 | 64 | Immédiatement |
-| Plafond de durée des programmes (s) | application, banc | 60–3600 | 600 | Immédiatement |
+| Délai par défaut des programmes (s) | application, banc | 60–3600 | 600 | Immédiatement |
 | Plafond de durée des commandes shell (s) | application, banc | 60–3600 | 600 | Immédiatement |
 | Taille maximale des fichiers texte (Mio) | banc | 1–64 | 20 | Après la réindexation |
 | Avertissement de volume : fichiers | application, banc | 500–100000 | 2000 | Immédiatement |
@@ -61,6 +65,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Durée limite d’extraction des documents (s) | application | 30–1800 | 120 | Au prochain terminal, worker, exécution ou session ouverte |
 | Pause d’indexation (ms) | application | 250–10000 | 1000 | Immédiatement |
 | Inactivité du worker d’embedding (s) | application | 10–600 | 60 | Au prochain terminal, worker, exécution ou session ouverte |
+| Délai de transcription (s) | application | 30–300 | 120 | À la prochaine opération |
 | Terminaux par banc | application | 1–16 | 8 | Au prochain terminal, worker, exécution ou session ouverte |
 | Mémoire du terminal (Ki caractères) | application | 64–1024 | 256 | Au prochain terminal, worker, exécution ou session ouverte |
 | Historique du terminal (lignes) | application | 1000–50000 | 3000 | Au prochain terminal, worker, exécution ou session ouverte |
@@ -80,7 +85,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 
 **Décompte des jetons.** VERA compte une requête avec le rapport indiqué par le fournisseur pour les requêtes précédentes, plus la **Marge de calibrage** : 110 compte 1,1 fois. Augmentez la marge quand des erreurs de limite de contexte apparaissent. Désactivez **Utiliser le décompte de jetons du fournisseur** quand un fournisseur indique une consommation erronée ; VERA compte alors avec son estimation prudente.
 
-**Sessions déléguées simultanées** est le nombre de sessions déléguées pouvant s’exécuter en même temps. Une session supplémentaire est refusée jusqu’à ce qu’une autre se termine.
+**Sessions déléguées par banc de travail** est le nombre de sessions déléguées pouvant s’exécuter en même temps dans un même banc de travail. Une session supplémentaire est refusée jusqu’à ce qu’une autre se termine.
 
 **Tours simultanés** est le nombre de tours de l’agent pouvant s’exécuter en même temps dans tous les bancs de travail ouverts, sessions déléguées comprises. Un tour qui attend votre approbation compte jusqu’à sa fin. À la limite, un nouveau message n’est pas envoyé et reste dans la zone de saisie avec ses pièces jointes ; dès qu’un tour se termine, VERA indique qu’un tour peut démarrer et vous l’envoyez à nouveau. Un message adressé à une session dont le tour est en cours rejoint ce tour et est toujours accepté. Une session déléguée lancée à la limite est refusée immédiatement. Une valeur plus basse n’arrête aucun tour en cours ; elle s’applique au message suivant.
 
@@ -88,7 +93,9 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 
 **Bureau.** **Terminaux par banc** limite les terminaux ouverts ; une valeur plus basse n’en ferme aucun, mais un nouveau est refusé tant que la limite est atteinte. **Mémoire du terminal** est la sortie que chaque terminal garde, lue à son ouverture, et **Historique du terminal** le nombre de lignes que son affichage fait défiler en arrière. **Sortie du terminal pour l’agent** est la part de la sortie récente qu’une lecture de l’agent renvoie ; la **Taille d’un résultat d’outil** la limite toujours. **Intervalle de vérification des mises à jour** et **Intervalle de vérification du catalogue de plugins** fixent la fréquence des vérifications ; une modification enregistrée démarre la nouvelle attente sans vérifier aussitôt. **Conservation des journaux** est le nombre de fichiers journaux quotidiens que VERA garde. **Lignes de conversation affichées d’abord** et **Lignes de conversation par chargement** fixent combien des messages les plus récents une conversation affiche dès l’ouverture, puis combien de messages plus anciens elle ajoute à chaque fois en arrière-plan jusqu’à les afficher tous. **Lignes par page** est la taille de départ des listes ; une taille choisie dans une liste reste pour cette liste.
 
-**Outils, programmes et web.** **Taille d’un résultat d’outil** borne chaque résultat d’outil que le modèle reçoit ; une taille inférieure à la **Taille de lecture** raccourcit aussi les lectures. **Fenêtre de lecture**, **Résultats grep**, **Résultats de recherche web** et **Taille de lecture web** sont à la fois la quantité utilisée quand l’agent n’en demande aucune et le maximum qu’il peut demander. Grep ignore les fichiers plus grands que la **Taille de fichier pour grep**. **Délai des workers** borne chaque recherche de texte ou analyse de journal ; une tâche déjà en cours garde son délai. **Taille de téléchargement** s’affiche dans l’approbation du téléchargement et y reste liée : un changement ultérieur ne modifie pas un téléchargement approuvé, et un fichier plus grand s’arrête avec « Download exceeds the size limit. » **Durée limite d’un téléchargement** borne le transfert ; la lecture du texte d’un PDF téléchargé garde son propre délai. **Plafond de durée des programmes** s’applique aux programmes de plugin dont le plugin ne fixe pas de durée ; **Plafond de durée des commandes shell** borne chaque commande shell au premier plan et s’affiche dans son approbation. **Programmes en arrière-plan par session** limite les exécutions en arrière-plan d’une conversation ; une exécution supplémentaire est refusée comme occupée.
+**Outils, programmes et web.** **Taille d’un résultat d’outil** borne chaque résultat d’outil que le modèle reçoit ; une taille inférieure à la **Taille de lecture** raccourcit aussi les lectures. **Fenêtre de lecture**, **Résultats grep**, **Résultats de recherche web** et **Taille de lecture web** sont à la fois la quantité utilisée quand l’agent n’en demande aucune et le maximum qu’il peut demander. Grep ignore les fichiers plus grands que la **Taille de fichier pour grep**. **Délai des workers** borne chaque recherche de texte ou analyse de journal ; une tâche déjà en cours garde son délai. **Taille de téléchargement** s’affiche dans l’approbation du téléchargement et y reste liée : un changement ultérieur ne modifie pas un téléchargement approuvé, et un fichier plus grand s’arrête avec « Download exceeds the size limit. » **Durée limite d’un téléchargement** borne le transfert ; la lecture du texte d’un PDF téléchargé garde son propre délai. **Délai par défaut des programmes** s’applique lorsque ni la règle du plugin ni le programme ne fixe de durée ; **Plafond de durée des commandes shell** borne chaque commande shell au premier plan et s’affiche dans son approbation. **Programmes en arrière-plan par session** limite les exécutions en arrière-plan d’une conversation ; une exécution supplémentaire est refusée comme occupée.
+
+Le **Délai de détection des modèles** couvre le catalogue LM Studio ou celui d’un fournisseur prédéfini, toutes pages comprises. Le test de connexion utilise le délai de réponse du modèle ou le délai d’inactivité de l’application pour chaque essai du modèle. Le **Délai de navigation du navigateur** s’applique à l’ouverture d’une page et au suivi d’un lien. Le mode automatique laisse 35 s à l’ouverture, démarrage compris, et 12 s au suivi d’un lien. Le proxy du navigateur limite chaque requête séparément. Le **Délai de transcription** comprend le chargement de Whisper et le traitement de l’enregistrement.
 
 ## Compacter maintenant
 

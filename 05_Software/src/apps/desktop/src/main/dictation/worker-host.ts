@@ -1,5 +1,5 @@
 import { Worker } from "node:worker_threads";
-import { type DictationTranscript, dictationTranscriptSchema } from "@vera/shared";
+import { advancedSettings, type DictationTranscript, dictationTranscriptSchema } from "@vera/shared";
 import type { LocalDictationModel } from "./models.js";
 
 /** Runs one bounded CPU job and releases its worker before admitting another. */
@@ -7,7 +7,7 @@ export async function transcribeInWorker(
   model: LocalDictationModel,
   pcm: Float32Array,
   signal: AbortSignal,
-  deadlineMs = 120_000,
+  deadlineMs = advancedSettings.dictationTranscriptionTimeout.default * 1000,
 ): Promise<DictationTranscript> {
   signal.throwIfAborted();
   if (!(pcm.buffer instanceof ArrayBuffer)) throw new Error("Invalid dictation buffer");

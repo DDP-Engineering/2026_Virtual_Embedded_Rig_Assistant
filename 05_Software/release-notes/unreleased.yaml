@@ -88,10 +88,10 @@ entries:
   - category: improved
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:
-      en: Compact panels, clearer run cards, centered chat and renamed Instructions and skills tab.
-      ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skill-uri.
-      de: Kompakte Panels, klare Laufkarten, zentrierter Chat und der Tab Anweisungen und Skills.
-      fr: Panneaux compacts, exécutions lisibles, chat centré et onglet Instructions et compétences.
+      en: Compact panels, clearer runs, centered chat, Skills tab, grouped Advanced with filter and timeouts.
+      ro: Panouri compacte, rulări clare, chat centrat, filă Skills și setări avansate grupate cu filtru.
+      de: Kompakte Panels, klare Läufe, Chat mittig, Skills-Tab, erweiterte Gruppen mit Filter und Fristen.
+      fr: Panneaux compacts, exécutions claires, chat centré, onglet Compétences et réglages avancés filtrés.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

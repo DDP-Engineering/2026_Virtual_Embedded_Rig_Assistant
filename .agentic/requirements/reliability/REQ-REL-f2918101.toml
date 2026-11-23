@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-f2918101"
+
+title = "Apply the model no-output timeout to provider tests"
+
+status = "active"
+
+requirement = "If a provider connection test stream stops yielding output or reporting activity for the endpoint response timeout or inherited application no-output timeout, VERA shall terminate that stream and report a timeout on its test step."
+
+verification = "Hold an authentication probe and advance to the saved response limit; assert the typed timeout, skipped next steps, and interrupted upstream signal."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/src/llm/connection.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23
