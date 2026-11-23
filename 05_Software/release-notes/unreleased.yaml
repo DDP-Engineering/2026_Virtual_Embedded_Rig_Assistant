@@ -60,10 +60,10 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Grouped model choices, translated tool labels, readable plans and details without empty blocks.
-      ro: Modele grupate, etichete de instrumente traduse, planuri lizibile și detalii fără blocuri goale.
-      de: Gruppierte Modelle, übersetzte Werkzeugtexte, lesbare Pläne und Details ohne leere Ausgaben.
-      fr: Modèles groupés, outils traduits, plans lisibles et détails sans blocs de sortie vides.
+      en: Grouped models, translated tool labels, readable plans, no empty blocks and clearer citations.
+      ro: Modele grupate, etichete traduse, planuri lizibile, fără blocuri goale și citări mai clare.
+      de: Modellgruppen, übersetzte Tooltexte, lesbare Pläne, keine Leerblöcke und klarere Quellenangaben.
+      fr: Modèles groupés, outils traduits, plans lisibles, sans blocs vides, citations plus claires.
   - category: fixed
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:

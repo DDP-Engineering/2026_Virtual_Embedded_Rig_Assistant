@@ -31,7 +31,7 @@ export const helpTool: ToolDefinition = {
   name: "help",
   class: "read",
   description:
-    "Read VERA's own user help: how VERA works, its screens, settings, permissions, providers and plugins. Without arguments it lists the help pages and the help of the plugins enabled in this workbench; with page or plugin it returns that page's Markdown. Cite the returned ref as [[ref]].",
+    "Read VERA's own user help: how VERA works, its screens, settings, permissions, providers and plugins. Without arguments it lists the help pages and the help of the plugins enabled in this workbench; with page or plugin it returns that page's Markdown. Cite the exact returned ref inside double square brackets. For example, if the tool returns help:permissions, write [[help:permissions]].",
   params,
   async execute(ctx, raw) {
     const host = ctx.help;

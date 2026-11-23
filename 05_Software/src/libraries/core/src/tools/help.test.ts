@@ -61,6 +61,7 @@ it("lists app pages and enabled plugins' help with help refs in the interface la
 
 it("reads an app or plugin page in the requested language, else the interface language, else English", async () => {
   const { ctx } = context("fr");
+  expect(helpTool.description).toContain("if the tool returns help:permissions, write [[help:permissions]]");
   expect(await run(ctx, { page: "permissions" })).toEqual({
     ref: "help:permissions",
     title: "Autorisations",

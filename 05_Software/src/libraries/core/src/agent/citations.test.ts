@@ -110,6 +110,21 @@ it("validates issued confined line refs and rejects fabricated, absent, binary a
     expect(await validateCitations(root, refs.map((ref) => `[[${ref}]]`).join(" "), messages)).toEqual(
       refs.map((ref, i) => ({ ref, valid: i === 0 || i === 5 })),
     );
+    expect(
+      await validateCitations(
+        root,
+        "[[ref]] [[board.txt#L1-L2|Board]] [[ref:board.txt#L1-L2]] [[1]](board.txt#L1-L2) [[Board setup]]",
+        messages,
+      ),
+    ).toEqual(
+      ["ref", "board.txt#L1-L2|Board", "ref:board.txt#L1-L2", "1", "Board setup"].map((ref) => ({
+        ref,
+        valid: false,
+      })),
+    );
+    expect(
+      await validateCitations(root, "[[ref](board.txt#L1-L2)] 【board.txt#L1-L2】 board.txt#L1-L2", messages),
+    ).toEqual([]);
     const result = messages[0];
     if (result?.role === "toolResult") result.isError = true;
     expect(await validateCitations(root, "[[board.txt#L1-L2]]", messages)).toEqual([
