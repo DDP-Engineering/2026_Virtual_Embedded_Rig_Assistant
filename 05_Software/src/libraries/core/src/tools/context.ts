@@ -11,6 +11,7 @@ import type { SkillCatalog } from "../skills/catalog.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
+import type { AskUser } from "./ask-user.js";
 import type { AgentBrowserPort } from "./browser.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
 import type { DelegatedSessionToolHost } from "./delegated-sessions.js";
@@ -40,6 +41,7 @@ export interface ToolContext {
   change?: ChangeHost;
   artifacts?: ArtifactHost;
   todos?: TodoHost;
+  askUser?: AskUser;
   knowledge?: DocumentKnowledge;
   web?: WebProvider;
   browser?: AgentBrowserPort;

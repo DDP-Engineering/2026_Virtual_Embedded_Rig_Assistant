@@ -284,6 +284,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.item.detail"
     | "session.rename"
     | "session.bookmark"
+    | "session.question.answer"
     | "session.plan.comment.save"
     | "session.plan.comment.delete"
     | "session.plan.review"

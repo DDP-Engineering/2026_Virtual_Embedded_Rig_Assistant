@@ -4,6 +4,7 @@ import {
   documentVolumeLimitFor,
   type EmbeddingModelId,
   embeddingModelIds,
+  questionTimeoutLimits,
   type WorkbenchConfig,
 } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
@@ -256,6 +257,45 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
+              <label className="workbench-question-toggle">
+                <span>{t("question.timeoutEnabled")}</span>
+                <input
+                  type="checkbox"
+                  checked={config.agent.question_timeout_minutes != null}
+                  onChange={(event) => {
+                    const question_timeout_minutes = event.currentTarget.checked
+                      ? questionTimeoutLimits.initial
+                      : null;
+                    setConfig((current) => ({
+                      ...current,
+                      agent: { ...current.agent, question_timeout_minutes },
+                    }));
+                  }}
+                />
+              </label>
+              {config.agent.question_timeout_minutes != null && (
+                <label>
+                  <span>{t("question.timeoutMinutes")}</span>
+                  <input
+                    type="number"
+                    min={questionTimeoutLimits.min}
+                    max={questionTimeoutLimits.max}
+                    step={1}
+                    value={
+                      Number.isNaN(config.agent.question_timeout_minutes)
+                        ? ""
+                        : config.agent.question_timeout_minutes
+                    }
+                    onChange={(event) => {
+                      const question_timeout_minutes = event.currentTarget.valueAsNumber;
+                      setConfig((current) => ({
+                        ...current,
+                        agent: { ...current.agent, question_timeout_minutes },
+                      }));
+                    }}
+                  />
+                </label>
+              )}
               {agentActions}
               {workbenchId && removeCommandPrefix && (
                 <WorkbenchCommandPrefixes

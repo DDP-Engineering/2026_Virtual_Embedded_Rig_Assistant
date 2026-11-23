@@ -40,6 +40,8 @@ core validates and persists ([workbench](workbench.md)).
 - New/Edit Workbench → Interface saves the per-workbench Files Git checkbox with the same draft. It defaults off and opens the [Files Git overlay](files-git-status.md) when the Files view is mounted.
 - New/Edit Workbench → Agent and chat edits `chat.detail` (`verbose`, `normal`, `minimal`, default `normal`) as part of the same unsaved configuration draft and create/update payload. Cancel leaves the saved value unchanged; read-only workbenches disable editing. Tests: `workbench-chat.test.ts`, native chat-detail.spec.ts.
 
+- Agent and chat includes a workbench-level question timeout switch, off by default. Enabling starts the editable delay at five minutes. Create and Save reject values outside 1 through 1440 whole minutes.
+
 ## Invariants
 
 - A desktop notification click uses the same unsaved Workbench and Settings editor guard before
@@ -59,6 +61,7 @@ core validates and persists ([workbench](workbench.md)).
 | Sidebar groups, pinning, editor behavior | workbench-navigation.tsx, workbench-editor.tsx | `05_Software/tests/e2e/workbench-navigation.spec.ts`; core workbench tests (durable registry and ownership) |
 | Tools section | shared/src/tools.ts, renderer/components/workbench-tools.tsx | tests/e2e/workbench-tools.spec.ts; workbench-tools.test.ts |
 | Sidebar session activity, Open/Stop, capacity count | workbench-activity.tsx, workbench-navigation.tsx, hooks/use-session-activity.ts, App.tsx | renderer workbench-activity.test.ts; native tests/e2e/background-sessions.spec.ts |
+| Question timeout and activity focus | workbench-config-form.tsx, workbench-activity.tsx, App.tsx, session/question-focus.ts | tests/e2e/session-question.spec.ts; shared question-settings.test.ts |
 | Chat detail selector | workbench-config-form.tsx | workbench-chat.test.ts; tests/e2e/chat-detail.spec.ts |
 | Embedding model selection and confirmation | workbench-config-form.tsx, workbench-editor.tsx, embedding-switch-dialog.tsx | tests/e2e/embedding-models.spec.ts |
 

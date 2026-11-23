@@ -119,7 +119,11 @@ export function App() {
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
   const [notificationToken, setNotificationToken] = useState<string>();
-  const [linkedTranscript, setLinkedTranscript] = useState<string>();
+  const [linkedTranscript, setLinkedTranscript] = useState<{
+    sessionId: string;
+    workbenchId: string | undefined;
+    questionId: string | undefined;
+  }>();
   const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
   const composerFocusSequence = useRef(0);
   // Docs tree entries attached to each session's next message (TASK-2fef1397).
@@ -165,6 +169,7 @@ export function App() {
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
+        setLinkedTranscript(undefined);
         if (active) {
           // A copied workbench can reuse the stored id, but its Files data belongs to the old folder.
           client.removeQueries({
@@ -190,6 +195,7 @@ export function App() {
    * the user opened while the close was pending, such as New Workbench or Plugins, stays open.
    */
   const benchClosed = useCallback(() => {
+    setLinkedTranscript(undefined);
     setActiveSession(undefined);
     setChat(false);
     client.setQueryData(["workbench.active"], null);
@@ -217,8 +223,8 @@ export function App() {
    * forward; callers have already confirmed leaving a dirty editor.
    */
   const openSession = useCallback(
-    (id: string, linked = false, workbenchId = benchId) => {
-      setLinkedTranscript(linked ? id : undefined);
+    (id: string, linked = false, workbenchId = benchId, questionId?: string) => {
+      setLinkedTranscript(linked ? { sessionId: id, workbenchId, questionId } : undefined);
       setComposerFocus(undefined);
       setActiveSession(id);
       setChat(true);
@@ -243,7 +249,7 @@ export function App() {
     [leaveEditor, openSession],
   );
   const clearLinkedTranscript = useCallback((id: string) => {
-    setLinkedTranscript((current) => (current === id ? undefined : current));
+    setLinkedTranscript((current) => (current?.sessionId === id ? undefined : current));
   }, []);
   const selectLinkedSession = useCallback(
     (id: string) => {
@@ -635,16 +641,16 @@ export function App() {
             benchClosed();
           })
         }
-        openSession={async (folder, id) => {
+        openSession={async (folder, id, questionId) => {
           if (!leaveEditor()) return false;
           if (folder === activeWorkbench?.folder) {
-            openSession(id, true);
+            openSession(id, true, activeWorkbench.config.id, questionId);
             return true;
           }
           return operation(async () => {
             const snapshot = await api.invoke("workbench.open", { folder });
             benchChanged(snapshot);
-            openSession(id, true, snapshot.config.id);
+            openSession(id, true, snapshot.config.id, questionId);
             await recent.refetch();
           });
         }}
@@ -995,7 +1001,12 @@ export function App() {
                           delegationParent={delegationParent}
                           delegationChildren={delegationChildren}
                           selectLinkedSession={selectLinkedSession}
-                          focusTranscript={linkedTranscript === activeSession && !!activeSession}
+                          focusTranscript={
+                            !!linkedTranscript &&
+                            linkedTranscript.sessionId === activeSession &&
+                            linkedTranscript.workbenchId === benchId
+                          }
+                          questionFocusId={linkedTranscript?.questionId}
                           transcriptOpened={clearLinkedTranscript}
                           composerFocusRequest={
                             composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0

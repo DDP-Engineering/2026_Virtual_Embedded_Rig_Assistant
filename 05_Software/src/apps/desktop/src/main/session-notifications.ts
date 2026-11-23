@@ -40,6 +40,7 @@ export class SessionNotifications {
   ) {}
 
   observe(workbench: Workbench, sessionId: string, event: LiveSessionActivity): void {
+    if (event.type === "question.requested" || event.type === "question.settled") return;
     // Even Electron's capability query can register a persistent Windows toast activator.
     if (this.host.platform === "win32" && this.host.portable) return;
     const workbenchId = workbench.config.id;

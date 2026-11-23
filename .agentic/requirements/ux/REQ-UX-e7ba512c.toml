@@ -1,0 +1,41 @@
+schema = 1
+
+id = "REQ-UX-e7ba512c"
+
+title = "Identify and focus waiting questions in workbench activity"
+
+status = "active"
+
+requirement = "While an interactive session is waiting for a question answer, the workbench activity interface shall identify it and open the question only if that exact session and question are still pending."
+
+verification = "Open a pending question from another workbench and assert focus targets that card while a stale request skips the card."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/session.ts",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/apps/desktop/src/main/session-notifications.ts",
+  "05_Software/src/apps/desktop/src/renderer/App.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/question-focus.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx",
+  "05_Software/src/apps/desktop/src/renderer/hooks/use-session-events.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/renderer/components/session/question-card.test.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/session/transcript-progressive.test.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts",
+  "05_Software/tests/e2e/session-question.spec.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

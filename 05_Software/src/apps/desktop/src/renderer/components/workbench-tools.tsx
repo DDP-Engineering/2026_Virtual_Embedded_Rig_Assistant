@@ -40,6 +40,7 @@ export function WorkbenchTools({
   const id = useId();
   const descriptions: Record<BuiltinToolName, string> = {
     terminal_read: t("workbenchTools.terminal_read"),
+    ask_user: t("workbenchTools.ask_user"),
     read: t("workbenchTools.read"),
     view_image: t("workbenchTools.view_image"),
     list: t("workbenchTools.list"),

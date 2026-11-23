@@ -44,6 +44,12 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 **Oprește** încheie execuția curentă. Și Escape întreabă **Oprești execuția curentă?**. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
 
+## Răspunde la o întrebare
+
+Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
+
+În setările **Agent și chat** ale workbench-ului, opțiunea **Folosește răspunsurile recomandate după un interval** este dezactivată implicit. Activeaz-o și stabilește un număr întreg de la 1 la 1440 de minute. Cardul afișează termenul când se poate aplica o recomandare validă, iar conversația marchează răspunsul automat. Timpul continuă să curgă în fundal și la reîncărcarea interfeței. Operațiunile care necesită aprobare o cer separat.
+
 ## Urmărește sesiunile delegate
 
 Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișează fiecare sesiune copil și starea sa. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația. **Sesiune părinte** revine la sesiunea părinte.

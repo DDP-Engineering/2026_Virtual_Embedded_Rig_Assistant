@@ -44,6 +44,12 @@ Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d�
 
 **Arrêter** termine le tour en cours. Escape demande aussi **Arrêter le tour en cours ?**. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
 
+## Répondre à une question
+
+Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
+
+Dans les réglages **Agent et chat** du banc de travail, l’option **Utiliser les réponses recommandées après un délai** est désactivée par défaut. Activez-la et choisissez un nombre entier de 1 à 1440 minutes. Lorsqu’une recommandation est valide, la carte affiche l’échéance et la conversation indique les réponses automatiques. Le délai continue en arrière-plan et pendant le rechargement de l’interface. Les opérations soumises à approbation la demandent séparément.
+
 ## Suivre les sessions déléguées
 
 Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent affiche chaque session enfant et son état. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation. **Session parente** permet de revenir au chat parent.

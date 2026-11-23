@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./styles/themes.css";
 
+.question-card,
 .approval-card {
   border: 0.125rem solid var(--primary);
   border-radius: var(--radius);
@@ -8,8 +9,36 @@
   margin-top: 0.75rem;
   min-width: 0;
 }
+.question-card h3,
+.question-card p,
+.question-card label,
 .approval-card h4 {
   overflow-wrap: anywhere;
+}
+.question-card fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.question-card label,
+.question-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.question-card input[type="text"] {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.question-card:focus-visible {
+  outline: 0.125rem solid var(--primary);
+  outline-offset: 0.125rem;
+}
+.workbench-question-toggle > input {
+  justify-self: start;
 }
 .approval-diff {
   white-space: pre-wrap;
@@ -3278,6 +3307,9 @@ legend {
   width: 1rem;
   height: 1rem;
 }
+.workbench-activity[data-activity="awaiting_question"] > summary,
+.session-activity[data-session-activity="awaiting_question"],
+.workbench-activity-session[data-status="awaiting_question"] > button:first-child > svg,
 .workbench-activity[data-activity="awaiting_approval"] > summary,
 .session-activity[data-session-activity="awaiting_approval"],
 .workbench-activity-session[data-status="awaiting_approval"] > button:first-child > svg {

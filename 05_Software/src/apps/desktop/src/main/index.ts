@@ -1588,8 +1588,16 @@ ipcMain.handle(
           folder: snapshot.folder,
           foreground,
           sessions: sessions.map((item) => {
-            const { id, title, status } = sanitizeSessionSummary(item, sessionContent(snapshot));
-            return { id, title, status: status as "running" | "awaiting_approval" };
+            const { id, title, status, pendingQuestionId } = sanitizeSessionSummary(
+              item,
+              sessionContent(snapshot),
+            );
+            return {
+              id,
+              title,
+              status: status as "running" | "awaiting_approval",
+              ...(pendingQuestionId && { pendingQuestionId }),
+            };
           }),
         })),
       "session.export": async ({ sessionId, format }) => {
@@ -1745,6 +1753,12 @@ ipcMain.handle(
       // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) =>
         router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" }),
+      "session.question.answer": ({ sessionId, workbenchId, questionId, reply }) => {
+        const route = router.session(sessionId, workbenchId);
+        router.verify(route);
+        route.runtime.sessions.answerQuestion({ workbenchId, db: route.db }, sessionId, questionId, reply);
+        return {};
+      },
       "session.approval.decide": (request) =>
         router.inSession(
           request.sessionId,

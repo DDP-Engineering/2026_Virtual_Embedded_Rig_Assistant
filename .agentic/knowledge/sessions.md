@@ -95,6 +95,9 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 - readPermissions allows read classes for explicitly injected hosts. Session wrapper consults the injected PermissionEngine and scrubs tool output and write-preparation errors through its host. An injected engine receives prepared ChangeRequest before the write is admitted; read-only mode filters write tools and rejects them at approval/execution. Prepared records retain provider call IDs and active turn identity; per-turn sequential runtime execution consumes each prepared closure once.
 - waitReady resolves guarded pending-change recovery; desktop/CLI await it before exposing snapshots or starting turns. Core execution also gates gateway/tool dispatch on readiness. host.writeQueue shares admission with all sessions/app saves; standalone SessionService owns one queue. close drains turns/readiness/write admission before storage closes.
 
+- Ordinary desktop turns offer `ask_user` when enabled in workbench Tools. It serializes with other session tools, returns a typed choice, free-text answer or cancellation, and never enters ApprovalGate. Pending and settled events replay through the session hub, render in each chat detail level, and mark user and automatic outcomes in the transcript and export. The CLI and delegated or plan-review turns do not offer this interactive tool.
+- `session.question.answer` binds the exact workbench, session and question. Main dispatches to the already-live service before queued turn preparation, and the runtime compares arrival with the deadline. Each question has one timer or waits without one, and the turn’s abort cancels it. Changing the permission mode leaves the wait pending. A restart recovers an interrupted question as stopped. `onActivity` includes request and settlement. The typed live request includes the exact IDs and a pending predicate for desktop integrations.
+
 ## Invariants
 
 - Full pi messages and results persist independently of transient model request reduction. User/assistant completion synchronizes the verbatim transcript; source-order completed tool messages persist before the next provider response, alongside native provider-ID tool_calls rows. Multi-row transitions are transactional; live delivery follows persistence.
@@ -112,6 +115,8 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 - Full SQLite message rows and transcript snapshots remain verbatim. Summary calls share the durable dispatch barrier, timeout/abort and scrubbed gateway. Optional usage compactionStatus/requestViewTokens/calibration replay through the shared reducer.
 
 - Pending queue lives in durable message.queued events with user timestamp/text/ID. Optional user pending/timestamp fields replay through shared state; a directly sent prompt's message.user event carries its send time (runtime clock, epoch ms) as optional `timestamp`, a delivered queued item keeps its queue time, and events recorded without one fold to a user item without a time; message.delivered atomically persists the admitted transcript batch and clears its markers before gateway dispatch. Stop/limits/recovery retain unapplied pending messages for the next request. Closing refuses new sends while draining accepted work.
+
+- Question cards and Activity focus share the event-derived question ID and check the requested workbench, session, active turn and pending outcome. Activity focus brings the exact pending card into the initial transcript window for long conversations. The main-owned wait survives a renderer reload or background workbench. It reads the optional timeout from its own workbench once at request time.
 
 ## Change map
 

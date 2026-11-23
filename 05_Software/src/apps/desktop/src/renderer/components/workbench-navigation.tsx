@@ -42,7 +42,7 @@ export function WorkbenchNavigation({
   remove: (folder: string) => void;
   close?: () => void;
   /** Shows a running or awaiting session in its workbench, bringing a background one forward. */
-  openSession?: (folder: string, sessionId: string) => Promise<boolean>;
+  openSession?: (folder: string, sessionId: string, questionId?: string) => Promise<boolean>;
   /** Stops one session's turn wherever it runs; the shown workbench stays. */
   stopSession?: (sessionId: string) => void;
   children: ReactNode;
@@ -233,8 +233,8 @@ export function WorkbenchNavigation({
                 <WorkbenchActivity
                   activity={busy}
                   disabled={disabled}
-                  open={(sessionId) =>
-                    void openSession?.(entry.folder, sessionId).then((ok) => {
+                  open={(sessionId, questionId) =>
+                    void openSession?.(entry.folder, sessionId, questionId).then((ok) => {
                       if (ok) expand(entry.folder, true);
                     })
                   }

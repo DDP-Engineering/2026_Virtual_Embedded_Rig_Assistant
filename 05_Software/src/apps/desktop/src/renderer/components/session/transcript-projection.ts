@@ -46,6 +46,7 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
     a.program?.risk !== "device-write" &&
     a.program?.risk !== "irreversible";
   const approvals = new Set(state.approvals.filter((a) => !routineByMode(a)).map((a) => a.callId));
+  const questions = new Set(state.questions.map(({ callId }) => callId));
   let group: Extract<Row, { kind: "group" }> | undefined;
   let turnNotices: Map<string, NoticeRow> | undefined;
   for (const item of state.items) {
@@ -62,6 +63,7 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
       item.kind === "tool" &&
       item.status !== "error" &&
       !approvals.has(item.id) &&
+      !questions.has(item.id) &&
       !(item.name === "web_download" && item.status === "ok");
     if (!routine || detail === "verbose") {
       rows.push({ kind: "item", item });

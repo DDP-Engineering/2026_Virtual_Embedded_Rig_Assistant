@@ -24,4 +24,6 @@ export function successfulOrdinaryTurn(
 export type LiveSessionActivity =
   | { type: "turn.completed"; turnId: string }
   | { type: "approval.requested"; approvalId: string; pending: () => boolean }
-  | { type: "approval.decided"; approvalId: string };
+  | { type: "approval.decided"; approvalId: string }
+  | { type: "question.requested"; questionId: string; turnId: string; pending: () => boolean }
+  | { type: "question.settled"; questionId: string; turnId: string };

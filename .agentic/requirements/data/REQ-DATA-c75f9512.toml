@@ -1,0 +1,32 @@
+schema = 1
+
+id = "REQ-DATA-c75f9512"
+
+title = "Validate and persist the optional question timeout per workbench"
+
+status = "active"
+
+requirement = "Where a workbench enables a question timeout, VERA shall persist its whole-minute value from 1 through 1440 in that workbench with a disabled default."
+
+verification = "Validate limits and save/reopen independent workbenches with enabled and default settings."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/workbench.ts",
+  "05_Software/src/libraries/shared/src/session-questions.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx",
+]
+
+linked_tests = [
+  "05_Software/src/libraries/shared/src/question-settings.test.ts",
+  "05_Software/tests/e2e/session-question.spec.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

@@ -1,0 +1,36 @@
+schema = 1
+
+id = "REQ-UX-59e93f91"
+
+title = "Show and answer structured questions in the conversation"
+
+status = "active"
+
+requirement = "While a structured question is pending, the conversation shall present its choices, mark the recommendation, show any deadline, and submit only after an explicit choice, free text or cancellation action."
+
+verification = "Interact with the card and assert selection alone makes no request, then verify explicit submission and loaded outcomes."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/renderer/components/session/question-card.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/transcript-projection.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx",
+  "05_Software/src/apps/desktop/src/renderer/locales/",
+  "05_Software/src/apps/desktop/src/renderer/styles.css",
+  "05_Software/help/",
+  "05_Software/release-notes/unreleased.yaml",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/renderer/components/session/question-card.test.ts",
+  "05_Software/tests/e2e/session-question.spec.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

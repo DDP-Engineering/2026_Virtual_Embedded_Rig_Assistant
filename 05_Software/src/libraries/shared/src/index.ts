@@ -44,6 +44,7 @@ export * from "./providers.js";
 export * from "./refs.js";
 export * from "./session.js";
 export * from "./session-export.js";
+export * from "./session-questions.js";
 export * from "./session-state.js";
 export * from "./settings.js";
 export * from "./skills.js";

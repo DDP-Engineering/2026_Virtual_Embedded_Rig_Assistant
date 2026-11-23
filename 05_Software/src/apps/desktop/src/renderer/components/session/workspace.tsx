@@ -17,6 +17,7 @@ import { ErrorMessage } from "../error-message.js";
 import { BrowserControls } from "./browser-controls.js";
 import { Composer, type ComposerState } from "./composer.js";
 import { DelegationLinks } from "./delegation-links.js";
+import { pendingQuestionFocus } from "./question-focus.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
@@ -36,6 +37,7 @@ export function SessionWorkspace({
   delegationChildren = [],
   selectLinkedSession,
   focusTranscript = false,
+  questionFocusId,
   transcriptOpened,
   composerFocusRequest = 0,
   composerFocused,
@@ -53,6 +55,7 @@ export function SessionWorkspace({
   delegationChildren?: readonly SessionSummary[] | undefined;
   selectLinkedSession?: (id: string) => void;
   focusTranscript?: boolean;
+  questionFocusId?: string | undefined;
   transcriptOpened?: (id: string) => void;
   composerFocusRequest?: number;
   /** Called once a focus request is taken, so the app drops it and never replays it. */
@@ -116,20 +119,39 @@ export function SessionWorkspace({
   const tabs = useDocumentTabs();
   const shown = !tabs || tabs.active === CHAT;
   const selectTab = tabs?.select;
-  const pendingTranscriptFocus = useRef(false);
+  const pendingTranscriptFocus = useRef<
+    { sessionId: string; workbenchId: string; questionId: string | undefined } | undefined
+  >(undefined);
   useEffect(() => {
     if (!id || !focusTranscript) return;
-    pendingTranscriptFocus.current = true;
+    pendingTranscriptFocus.current = { sessionId: id, workbenchId, questionId: questionFocusId };
     selectTab?.(CHAT);
     transcriptOpened?.(id);
-  }, [id, focusTranscript, selectTab, transcriptOpened]);
-  const snapshotReady = !!view;
+  }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened]);
   useEffect(() => {
-    void focusTranscript;
-    if (!pendingTranscriptFocus.current || !snapshotReady || !shown) return;
-    heading.current?.focus();
-    pendingTranscriptFocus.current = false;
-  }, [focusTranscript, snapshotReady, shown]);
+    void focusTranscript; // A new request can arrive in an already loaded conversation.
+    const target = pendingTranscriptFocus.current;
+    if (!target || !id || !view || !shown) return;
+    pendingTranscriptFocus.current = undefined;
+    if (target.sessionId !== id || target.workbenchId !== workbenchId) return;
+    const card =
+      target.questionId === undefined || readOnly
+        ? undefined
+        : pendingQuestionFocus(
+            { ...target, questionId: target.questionId },
+            workbenchId,
+            id,
+            view.state,
+            workspace.current,
+          );
+    (card ?? heading.current)?.focus();
+  }, [id, workbenchId, view, shown, focusTranscript, readOnly]);
+  const waitingFocus = pendingTranscriptFocus.current;
+  const revealQuestionId = focusTranscript
+    ? questionFocusId
+    : waitingFocus?.sessionId === id && waitingFocus?.workbenchId === workbenchId
+      ? waitingFocus.questionId
+      : undefined;
   // A request is taken once: it shows the Chat tab once and focuses the composer when it can.
   const pendingFocus = useRef(false);
   useEffect(() => {
@@ -347,6 +369,7 @@ export function SessionWorkspace({
           workbenchId={workbenchId}
           detail={detail}
           state={view.state}
+          revealQuestionId={revealQuestionId}
           reasoning={view.reasoning}
           updates={view.updates}
           retry={() => void retryRequest()}

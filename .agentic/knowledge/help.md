@@ -81,6 +81,8 @@ the same source tree through `import.meta.glob`. Packaging (`02_Tools/release/pa
   with `language: "en"`; NOT_FOUND when neither exists.
 - Shared helpers `helpTitle`, `helpLinks`, `orderHelpPages`; constants `helpLanguages`, `HELP_PAGE_BYTES` (256 KiB).
 
+- The chat-and-sessions page explains structured choices, cancellation, workbench activity, the automatic-answer timeout and the separate approval flow in all four languages.
+
 ## Invariants
 
 - Page names match `^[a-z0-9][a-z0-9-]{0,63}$` and languages are en/ro/de/fr; anything else is INVALID at the schema

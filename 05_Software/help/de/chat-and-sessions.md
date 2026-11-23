@@ -44,6 +44,12 @@ Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten
 
 **Stoppen** beendet den laufenden Durchlauf. Auch Escape fragt **Laufenden Durchlauf stoppen?**. Bereits abgeschlossene Arbeit, etwa angewendete Dateiänderungen, bleibt erhalten.
 
+## Eine Frage beantworten
+
+Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Klicke dann auf **Antwort senden**. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
+
+In den Workbench-Einstellungen unter **Agent und Chat** ist **Empfohlene Antworten nach einer Wartezeit übernehmen** standardmäßig aus. Nach dem Einschalten sind 1 bis 1440 ganze Minuten erlaubt. Bei gültiger Empfehlung zeigt die Karte den Zeitpunkt an, und der Chat kennzeichnet automatische Antworten. Die Zeit läuft im Hintergrund und beim Neuladen weiter. Genehmigungspflichtige Vorgänge fragen weiterhin gesondert nach.
+
 ## Delegierte Sitzungen verfolgen
 
 Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordneten Chat jede untergeordnete Sitzung mit ihrem Status an. Wähle eine Sitzung aus, um ihren Chat zu öffnen und den Verlauf zu verfolgen. **Übergeordnete Sitzung** führt zurück.

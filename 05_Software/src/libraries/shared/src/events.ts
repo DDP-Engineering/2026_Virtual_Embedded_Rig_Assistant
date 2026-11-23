@@ -30,6 +30,7 @@ import {
   todoItemsSchema,
   turnCapacitySchema,
 } from "./session.js";
+import { questionIdSchema, questionOutcomeSchema, questionRequestSchema } from "./session-questions.js";
 import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
 import {
@@ -138,6 +139,13 @@ export const usageEventSchema = z.strictObject({
     .optional(),
 });
 export const sessionEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("question.requested"), question: questionRequestSchema }),
+  z.strictObject({
+    type: z.literal("question.settled"),
+    questionId: questionIdSchema,
+    turnId: z.string().min(1),
+    outcome: questionOutcomeSchema,
+  }),
   z.strictObject({
     type: z.literal("session.updated"),
     title: z.string().max(60).optional(),

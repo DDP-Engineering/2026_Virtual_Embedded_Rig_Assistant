@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Manage background chats. Click alerts to open chats (alerts require installation on Windows).
-      ro: Gestionează chaturile din fundal. Deschide-le din alerte (pe Windows, în VERA instalată).
-      de: Hintergrundsitzungen verwalten. Hinweise öffnen Chats (unter Windows nur mit Installation).
-      fr: Gérez les sessions en arrière-plan. Ouvrez le chat via une alerte (VERA installé sous Windows).
+      en: Background chats, questions and answer timeouts. Windows alerts require installed VERA.
+      ro: Chaturi în fundal, întrebări și răspunsuri la termen. Pe Windows, alertele cer VERA instalată.
+      de: Hintergrundchats, Fragen und Antwortfristen. Windows-Hinweise erfordern installiertes VERA.
+      fr: Chats en arrière-plan, questions et délais. Sous Windows, les alertes exigent VERA installée.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

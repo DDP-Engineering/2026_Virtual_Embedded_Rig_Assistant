@@ -69,6 +69,7 @@
     }
   },
   "toolActivity": {
+    "askUser": "Poser une question",
     "keywordFallback": "La recherche sémantique était indisponible. Voici les résultats par mots-clés.",
     "embeddingRebuild": "L’index sémantique est en cours de reconstruction. Ces résultats correspondent aux mots-clés.",
     "planSteps": "Étapes du plan : {{count}}",
@@ -573,7 +574,22 @@
     "lastActivity": "Dernière activité : {{date}}",
     "turnSlotFree": "Un tour peut démarrer maintenant. Envoyez à nouveau votre message."
   },
+  "question": {
+    "choices": "Choix de réponse",
+    "recommended": "Recommandé",
+    "freeText": "Votre propre réponse",
+    "deadline": "La réponse recommandée sera appliquée à {{date}}",
+    "submit": "Envoyer la réponse",
+    "cancel": "Annuler la question",
+    "cancelled": "Question annulée",
+    "automaticAnswer": "Réponse automatique : {{answer}}",
+    "userAnswer": "Réponse de l’utilisateur : {{answer}}",
+    "waiting": "En attente d’une réponse",
+    "timeoutEnabled": "Utiliser les réponses recommandées après un délai",
+    "timeoutMinutes": "Délai de réponse aux questions (minutes)"
+  },
   "sessionActivity": {
+    "summaryWithQuestions": "Sessions actives dans {{name}} : {{running}} en cours, {{awaiting}} en attente d’approbation, {{questions}} en attente d’une réponse",
     "summary": "Sessions actives dans {{name}} : en cours {{running}}, en attente d’approbation {{awaiting}}",
     "stopNamed": "Arrêter : {{title}}",
     "capacity": "Tours simultanés : {{active}} sur {{limit}} en cours",
@@ -1142,6 +1158,7 @@
     "executionAllowed": "Nécessite l’autorisation run_program et les règles d’approbation de la session"
   },
   "workbenchTools": {
+    "ask_user": "Pose une question avec des choix et une recommandation facultative.",
     "read": "Lire des fichiers texte ou des plages de lignes choisies.",
     "view_image": "Examiner une image du banc de travail avec un modèle compatible.",
     "list": "Lister les fichiers et sous-dossiers d’un répertoire.",

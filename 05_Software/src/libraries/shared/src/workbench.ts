@@ -4,6 +4,7 @@ import { commandPrefixListSchema, storedCommandPrefixesSchema } from "./command-
 import { defaultEmbeddingModelId, embeddingModelIds } from "./embedding-models.js";
 import { workbenchPrivacySchema } from "./privacy.js";
 import { permissionModeSchema } from "./session.js";
+import { questionTimeoutMinutesSchema } from "./session-questions.js";
 
 /** Portable stored folder syntax; host resolution additionally checks the local directory. */
 export const additionalFolderSchema = z
@@ -118,6 +119,7 @@ export const workbenchRetrievalSchema = z.looseObject({
 export type WorkbenchRetrieval = Pick<z.infer<typeof workbenchRetrievalSchema>, "results" | "mode">;
 const agent = z.looseObject({
   allowed_commands: storedCommandPrefixesSchema.default([]),
+  question_timeout_minutes: questionTimeoutMinutesSchema.optional(),
   permission_mode: permissionModeSchema.default("ask"),
   model: z
     .string()
@@ -187,6 +189,7 @@ export const workbenchPatchSchema = z.strictObject({
   agent: z
     .strictObject({
       allowed_commands: commandPrefixListSchema.optional(),
+      question_timeout_minutes: questionTimeoutMinutesSchema.optional(),
       permission_mode: agent.shape.permission_mode.removeDefault().optional(),
       model: agent.shape.model.removeDefault().optional(),
     })

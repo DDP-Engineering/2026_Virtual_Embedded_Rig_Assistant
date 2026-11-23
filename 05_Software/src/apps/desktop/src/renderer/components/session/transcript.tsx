@@ -1,5 +1,5 @@
 // REQ-UX-4bea0002 REQ-UX-4bea0005 REQ-UX-2bbfd052 REQ-REL-47308c01 REQ-REL-c8ac2ecc
-import type { ChatDetail, SessionState } from "@vera/shared";
+import type { ChatDetail, SessionQuestion, SessionState } from "@vera/shared";
 import {
   memo,
   startTransition,
@@ -25,6 +25,7 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { QuestionCard } from "./question-card.js";
 import { RetrievalNotice } from "./retrieval-notice.js";
 import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { ToolDetails } from "./tool-details.js";
@@ -63,6 +64,7 @@ export function Transcript({
   sessionId,
   disabled = false,
   detail = "normal",
+  revealQuestionId,
 }: {
   detail?: ChatDetail;
   state: SessionState;
@@ -73,6 +75,7 @@ export function Transcript({
   workbenchId?: string | undefined;
   sessionId?: string | undefined;
   disabled?: boolean;
+  revealQuestionId?: string | undefined;
 }) {
   const { t } = useTranslation();
   const bookmarks = useSessionBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
@@ -107,16 +110,29 @@ export function Transcript({
     setStart(null);
   }, [sessionId]);
   const rows = useMemo(() => transcriptRows(state, detail), [state, detail]);
-  // A search outlines matches in every row, so it mounts them all. Fewer rows (another chat detail)
-  // still show the newest ones.
+  const question = state.questions.at(-1);
+  const revealIndex =
+    revealQuestionId &&
+    question?.questionId === revealQuestionId &&
+    question.turnId === state.activeTurnId &&
+    question.outcome === null
+      ? rows.findLastIndex(
+          (row) => row.kind === "item" && row.item.kind === "tool" && row.item.id === question.callId,
+        )
+      : -1;
+  // A search mounts every row. An activity focus request brings its exact pending question into view.
   const first = search
     ? 0
-    : Math.min(start ?? Number.POSITIVE_INFINITY, Math.max(0, rows.length - rowCounts.current.first));
+    : Math.min(
+        start ?? Number.POSITIVE_INFINITY,
+        Math.max(0, rows.length - rowCounts.current.first),
+        revealIndex < 0 ? Number.POSITIVE_INFINITY : revealIndex,
+      );
   const shown = useMemo(() => (first ? rows.slice(first) : rows), [rows, first]);
   const hasRows = rows.length > 0;
   useEffect(() => {
     // Pin the window once rows exist, so rows that arrive later never unmount older ones.
-    if (search || (start === null && hasRows)) {
+    if (search || (start === null && hasRows) || (revealIndex >= 0 && start !== first)) {
       if (start !== first) setStart(first);
       return;
     }
@@ -124,7 +140,7 @@ export function Transcript({
     // A transition keeps input and streaming responsive while a chunk renders.
     const chunk = rowCounts.current.chunk;
     return whenIdle(() => startTransition(() => setStart(Math.max(0, first - chunk))));
-  }, [search, start, first, hasRows]);
+  }, [search, start, first, hasRows, revealIndex]);
   const shownFirst = useRef(first);
   // Runs only for commits that change the content (live events arrive at most once per frame), not
   // for highlight or search commits, so streaming forces no extra layout.
@@ -189,6 +205,10 @@ export function Transcript({
       byCall.set(approval.callId, [...(byCall.get(approval.callId) ?? []), approval]);
     return byCall;
   }, [state.approvals]);
+  const questions = useMemo(
+    () => new Map(state.questions.map((question) => [question.callId, question])),
+    [state.questions],
+  );
   const needle = search.toLocaleLowerCase();
   // One label at most: only when the latest turn was stopped or interrupted.
   const latestTurn = state.turns.at(-1);
@@ -276,6 +296,8 @@ export function Transcript({
                     detail={detail}
                     update={updates[item.id]}
                     approvals={approvalsByCall.get(item.id) ?? NO_APPROVALS}
+                    question={questions.get(item.id)}
+                    workbenchId={workbenchId}
                     sessionId={sessionId}
                     disabled={disabled}
                   />
@@ -430,6 +452,8 @@ const ToolRow = memo(function ToolRow({
   detail,
   update,
   approvals,
+  question,
+  workbenchId,
   sessionId,
   disabled,
 }: {
@@ -437,6 +461,8 @@ const ToolRow = memo(function ToolRow({
   detail: ChatDetail;
   update: string | undefined;
   approvals: Approval[];
+  question: SessionQuestion | undefined;
+  workbenchId: string | undefined;
   sessionId: string | undefined;
   disabled: boolean;
 }) {
@@ -447,6 +473,15 @@ const ToolRow = memo(function ToolRow({
       )}
       {item.name === "web_download" && item.status === "ok" && (
         <DownloadCard result={item.preview ?? item.summary ?? ""} />
+      )}
+      {question && (
+        <QuestionCard
+          key={question.questionId}
+          question={question}
+          workbenchId={workbenchId}
+          sessionId={sessionId}
+          disabled={disabled}
+        />
       )}
       {approvals.map((approval) => (
         <ApprovalCard

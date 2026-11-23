@@ -126,6 +126,7 @@ import {
   turnCapacitySchema,
 } from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
+import { questionIdSchema, questionReplySchema } from "./session-questions.js";
 import { sessionStateSchema } from "./session-state.js";
 import {
   commandShellOptionSchema,
@@ -227,6 +228,7 @@ export const sessionActivitySchema = z.strictObject({
       id: sessionIdSchema,
       title: z.string().max(60),
       status: z.enum(["running", "awaiting_approval"]),
+      pendingQuestionId: questionIdSchema.optional(),
     }),
   ),
 });
@@ -820,6 +822,11 @@ export const channels = {
       field: z.enum(["preview", "args", "diff"]),
     }),
     z.strictObject({ text: z.string() }),
+  ),
+  "session.question.answer": defineChannel(
+    "session.question.answer",
+    z.strictObject({ ...planScope, questionId: questionIdSchema, reply: questionReplySchema }),
+    z.strictObject({}),
   ),
   "session.bookmark": defineChannel(
     "session.bookmark",

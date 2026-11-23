@@ -110,6 +110,8 @@ Each component has a knowledge page that names its source files, tests, invarian
 
 Facts that span components:
 
+- Ordinary desktop sessions can pause on a structured question. The owning workbench’s optional timeout applies a valid recommended choice in main, with an automatic outcome in the chat and export. Pending state replays across renderer reloads, appears in the existing workbench activity menu, and keeps authorization in the separate ApprovalGate.
+
 - The active workbench's live indexing snapshot feeds the sidebar badge, compact Files toolbar activity and detailed counts and exceptions in the single-column Workbench overview.
   The chat transcript shows saved retrieval limitations from the corresponding turn.
 - Stored formats follow the root [AGENTS.md](../../AGENTS.md) development policy: every format version is 1, any other version is invalid data, and there is no migration code.

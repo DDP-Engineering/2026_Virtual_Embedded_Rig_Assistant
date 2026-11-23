@@ -36,6 +36,7 @@ import {
   type HelpLanguage,
   type PermissionMode,
   partsSearchDefaults,
+  type QuestionReply,
   type SessionSummary,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
@@ -304,6 +305,10 @@ export class SessionsHost {
             assertCurrent();
             return options.workbench.getSnapshot().config.additional_folders;
           },
+          questionTimeoutMinutes: () => {
+            assertCurrent();
+            return options.workbench.getSnapshot().config.agent.question_timeout_minutes ?? null;
+          },
           commandPrefixes: () => {
             assertCurrent();
             return options.workbench.getSnapshot().config.agent.allowed_commands;
@@ -469,6 +474,12 @@ export class SessionsHost {
     return service
       .list(true)
       .filter((row) => !row.delegation && (row.status === "running" || row.status === "awaiting_approval"));
+  }
+  /** A live question already has a service. Accept its reply without waiting for queued turn preparation. */
+  answerQuestion(scope: SessionScope, sessionId: string, questionId: string, reply: QuestionReply): void {
+    this.assertScope(scope);
+    if (this.shutdown || !this.service || this.db !== scope.db) throw veraError("CONFLICT");
+    this.service.answerQuestion(sessionId, questionId, reply);
   }
   /** Whether a subscription with this ID is open here. */
   holdsSubscription(subscriptionId: string): boolean {
