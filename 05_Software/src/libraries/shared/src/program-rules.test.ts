@@ -22,6 +22,42 @@ const risk = (rules: ProgramRule[], line: string) => {
   return classifyCommand(rules, program, args).risk;
 };
 
+it("keeps exact declared help separate from ordinary rule risk (REQ-SEC-0beca242)", () => {
+  const rules: ProgramRule[] = [
+    { match: "tool {write-mode,erase} *", risk: "device-write", note: "Writes.", timeout: 900 },
+    { match: "tool write-mode *", risk: "irreversible", note: "Permanent." },
+    { match: "tool erase --help", risk: "blocked", note: "Forbidden." },
+  ];
+  const help = { commands: ["write-mode", "erase", "unknown"], flag: "--help" as const };
+  const classify = (args: string[]) => classifyCommand(rules, "tool", args, undefined, help);
+  expect(classify(["write-mode", "--help"])).toEqual({
+    risk: "safe",
+    notes: [],
+    confirm: null,
+    timeout: null,
+  });
+  expect(classify(["erase", "--help"])).toMatchObject({ risk: "blocked", notes: ["Writes.", "Forbidden."] });
+  expect(classify(["unknown", "--help"]).risk).toBe("device-write");
+  for (const args of [
+    ["write-mode", "-h"],
+    ["write-mode", "--HELP"],
+    ["WRITE-MODE", "--help"],
+    ["write_mode", "--help"],
+    ["write-mode", "--help=true"],
+    ["write-mode", "--", "--help"],
+    ["write-mode", "--help", "file.bin"],
+    ["write-mode", "file.bin", "--help"],
+    ["write-mode", "file.bin"],
+  ])
+    expect(classify(args), JSON.stringify(args)).toEqual({
+      risk: "irreversible",
+      notes: ["Writes.", "Permanent."],
+      confirm: "write-mode",
+      timeout: 900,
+    });
+  expect(classify(["--help", "write-mode"]).risk).toBe("device-write");
+});
+
 describe("token normalisation (REQ-FUNC-5bb9429f)", () => {
   it.each([
     "esptool --chip esp32 write_flash 0x0 a.bin",

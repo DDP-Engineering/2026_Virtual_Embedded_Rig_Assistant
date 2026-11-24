@@ -204,7 +204,7 @@ describe("package", { timeout: 60_000 }, () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "zephyr",
-      version: "0.2.1",
+      version: "0.2.2",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });

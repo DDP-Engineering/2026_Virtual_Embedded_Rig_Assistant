@@ -1,6 +1,6 @@
 format: 1
 id: circuitpython
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CircuitPython
 summary: Deploy code and pinned libraries to a CircuitPython board and capture its console run.
@@ -20,6 +20,7 @@ platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/circup/3.1.0/", "https://circuitpython.org/libraries", "https://docs.circuitpython.org/en/latest/docs/workflows.html"]
 programs:
   circuitpython-tool:
+    subcommandHelp: { flag: --help, commands: [capture-output, prepare-libraries, deploy] }
     install: { script: scripts/circuitpython_tool.py }
     version: { args: [--version], match: '^circuitpython-tool (\d+\.\d+\.\d+)' }
     timeout: 300

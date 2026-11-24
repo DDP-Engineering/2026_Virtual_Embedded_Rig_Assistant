@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-deae8eff"
+title = "Print power-profile capture help before dispatch"
+status = "active"
+requirement = "When power-profile receives capture --help or release --help as its exact arguments, the helper shall print its usage and exit successfully before dispatching an operation."
+verification = "Invoke each exact help form on the shipped helper with no driver or meter; assert exit 0 and usage on stdout."
+affected_paths = ["05_Software/plugins/power-profiler/"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

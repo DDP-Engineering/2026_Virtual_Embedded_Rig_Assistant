@@ -484,6 +484,7 @@ export function timeoutCap(current: PreparedCall, ceiling = DEFAULT_PROGRAM_TIME
     current.prepared.program,
     current.prepared.args,
     current.declared.optionSyntax,
+    current.declared.subcommandHelp,
   ).timeout;
   return rule ?? current.declared.timeout ?? ceiling;
 }
@@ -552,16 +553,9 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       applySignal.throwIfAborted();
       const background = args.background === true;
       const timeoutMs = programTimeout({
-        rule: classifyCommand(
-          current.plugin.manifest.rules,
-          args.program,
-          args.args ?? [],
-          current.declared.optionSyntax,
-        ).timeout,
-        program: current.declared.timeout,
+        rule: timeoutCap(current, toolLimit(ctx, "programTimeout")),
         requested: args.timeout,
         background,
-        ceiling: toolLimit(ctx, "programTimeout"),
       });
       let run: ProgramRun;
       try {

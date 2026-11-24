@@ -1,6 +1,6 @@
 format: 1
 id: zephyr
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Zephyr builds, tests and flashing
 summary: Build Zephyr applications, run Twister tests and flash an exact board from a pinned west workspace.
@@ -27,10 +27,12 @@ settings:
     description: The bench registry; declares the probe (probe) a flash names by alias. Not needed for builds, Twister and Renode.
 programs:
   zephyr:
+    subcommandHelp: { flag: --help, commands: [build, test-build, clean, prepare-workspace] }
     install: { script: scripts/zephyr_tool.py }
     version: { args: [--version], match: '^zephyr (\d+\.\d+\.\d+)' }
     timeout: 1800
   zephyr-flash:
+    subcommandHelp: { flag: --help, commands: [flash] }
     install: { script: scripts/zephyr_flash.py }
     version: { args: [--version], match: '^zephyr-flash (\d+\.\d+\.\d+)' }
     timeout: 300

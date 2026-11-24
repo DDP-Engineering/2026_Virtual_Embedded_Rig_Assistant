@@ -51,7 +51,8 @@ metadata:
 ```
 
 `official` lists distinct plugin ids (default `[]`); `reviewed` entries name a plugin and the exact `match`
-string of one of its rules (default `[]`).
+string of an ordinary rule or the literal program, subcommand and flag of an effective safe help
+declaration whose command line contains a dangerous token (default `[]`).
 
 `metadata` is a strict record keyed by plugin ids, at most1024 entries (default `{}` for an
 unclassified current source). Its values are strict discovery objects: `activities` is a distinct
@@ -75,8 +76,8 @@ an issue and 0 otherwise. `<where>` is the plugin id (folder name) or the file n
 | `package` | a plugin folder cannot be read with the store's import checks (links, unsafe names, limits, a root `install.json`) |
 | `manifest` | the store's examination reports an issue (`manifest`, `yaml`, `field`, `id`); detail: the issue code, path and issue. A folder whose manifest id differs from the folder name (so two folders cannot carry one id) is `id` |
 | `rules` | a declared program has no rule whose first pattern token matches the program name (rule grammar of REQ-FUNC-80b2033a) |
-| `token` | a rule at `safe` or `device-read` whose `match`, lowercased, contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send` as a substring, unless `catalog.yaml` lists `{plugin, match}` of that rule under `reviewed`; detail: the token and the match |
-| `reference` | a pack, `requires`, `official`, `metadata` or `reviewed` entry names a plugin that is not in the source, or a `reviewed` entry names no rule of its plugin |
+| `token` | an ordinary rule at `safe` or `device-read` or a declared exact help invocation classified safe contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send` as a lowercase substring, unless `catalog.yaml` lists the exact `{plugin, match}` under `reviewed`; detail: the token and the match |
+| `reference` | a pack, `requires`, `official`, `metadata` or `reviewed` entry names a plugin absent from the source, or a `reviewed` entry names neither a rule nor an applicable exact help invocation of its plugin |
 | `dependency` | a `find` program declares no `hint` (the index lists the hint as its vendor guide); detail: `program <name> has no vendor guide` |
 | `output` | build only: the output folder is not empty |
 

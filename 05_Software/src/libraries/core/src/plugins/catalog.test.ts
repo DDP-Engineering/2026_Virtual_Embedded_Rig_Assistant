@@ -47,7 +47,7 @@ async function release(edit: (manifest: Manifest) => void = () => {}) {
     stringify({
       format: 1,
       official: ["serial-monitor", "esp32-esptool"],
-      reviewed: [],
+      reviewed: [{ plugin: "serial-monitor", match: "serial send --help" }],
       metadata: {
         "serial-monitor": {
           activities: ["communication", "debug"],
@@ -173,7 +173,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   });
   expect(remote.plugins.find((p) => p.id === "esp32-esptool")).not.toHaveProperty("addedAt");
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
-    ["esp32-esptool", "0.2.1", "official"],
+    ["esp32-esptool", "0.2.2", "official"],
     ["serial-monitor", "1.0.1", "official"],
   ]);
   expect(remote.packs[0]?.groups[0]).toEqual({
@@ -185,7 +185,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   state.status = 404;
   const missing = await catalog.view({ refresh: true });
   expect(missing).toMatchObject({ source: "bundled", problem: "unreachable" });
-  expect(missing.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.1");
+  expect(missing.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.2");
 
   state.status = 200;
   await writeFile(join(served, "index-pre-release.json"), "{ not json");
@@ -258,7 +258,7 @@ it("installs a reviewed catalog plugin with its tier and the catalog source, onc
   timer.mockRestore();
   expect(reviewed).toMatchObject({
     id: "serial-monitor",
-    version: "0.2.1",
+    version: "0.2.2",
     tier: "official",
     required: true,
   });
@@ -277,7 +277,7 @@ it("installs a reviewed catalog plugin with its tier and the catalog source, onc
   const record = JSON.parse(
     await readFile(join(data, "plugins", "installed", "serial-monitor", "install.json"), "utf8"),
   );
-  expect(record.source).toEqual({ kind: "catalog", path: `${url}/serial-monitor-0.2.1.zip` });
+  expect(record.source).toEqual({ kind: "catalog", path: `${url}/serial-monitor-0.2.2.zip` });
   await expect(catalog.install("serial-monitor", reviewed.review.sha256)).rejects.toMatchObject({
     code: "CONFLICT",
   });
@@ -438,7 +438,7 @@ it("marks installed plugins with a higher catalog version as updates without fet
   await store.install(join(official, "serial-monitor"));
   const same = await catalog.view({ refresh: true });
   expect(same.plugins.find((plugin) => plugin.id === "serial-monitor")).toMatchObject({
-    installed: { version: "0.2.1", tier: "local" },
+    installed: { version: "0.2.2", tier: "local" },
     update: false,
   });
   expect(same.plugins.find((plugin) => plugin.id === "esp32-esptool")).toMatchObject({ update: false });
@@ -450,7 +450,7 @@ it("marks installed plugins with a higher catalog version as updates without fet
   const newer = await catalog.view({ refresh: true });
   expect(newer.plugins.find((plugin) => plugin.id === "serial-monitor")?.update).toBe(true);
   expect(state.requests.filter((name) => name.endsWith(".zip"))).toEqual([]);
-  expect((await store.list())[0]?.version).toBe("0.2.1");
+  expect((await store.list())[0]?.version).toBe("0.2.2");
 });
 
 // REQ-PLAT-720aa4f2
@@ -494,7 +494,7 @@ it("reads the selected channel's index from a remote catalog and every plugin fr
   expect(state.requests).toEqual(["index-stable.json", "index-stable.json.sig"]);
   setChannel("pre-release");
   expect(await ids(false)).toEqual([
-    ["esp32-esptool", "0.2.1"],
+    ["esp32-esptool", "0.2.2"],
     ["serial-monitor", "1.0.1"],
   ]);
   expect(state.requests.slice(2)).toEqual(["index-pre-release.json", "index-pre-release.json.sig"]);
@@ -502,8 +502,8 @@ it("reads the selected channel's index from a remote catalog and every plugin fr
   setChannel("stable");
   setLocation(undefined);
   expect(await ids(false)).toEqual([
-    ["esp32-esptool", "0.2.1"],
-    ["serial-monitor", "0.2.1"],
+    ["esp32-esptool", "0.2.2"],
+    ["serial-monitor", "0.2.2"],
   ]);
 });
 
@@ -524,8 +524,8 @@ it("refuses a remote index without a signature and shows the bundled catalog", a
   await rm(join(state.folder, "index-pre-release.json.sig"));
   const unsigned = await catalog.view({ refresh: true });
   expect(unsigned).toMatchObject({ source: "bundled", problem: "unsigned" });
-  expect(unsigned.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.1");
-  await expect(catalog.review("serial-monitor")).resolves.toMatchObject({ version: "0.2.1" });
+  expect(unsigned.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.2");
+  await expect(catalog.review("serial-monitor")).resolves.toMatchObject({ version: "0.2.2" });
 
   // Offline, without a remote catalog, the bundled release needs no signature.
   setLocation(undefined);

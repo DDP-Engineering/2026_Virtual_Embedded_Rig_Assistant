@@ -213,7 +213,7 @@ it.skipIf(!uv)(
       expect(release.issues).toEqual([]);
       expect(release.index?.plugins.find((p) => p.id === "esp32-efuse")?.tier).toBe("official");
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/esp32-efuse-0.2.0.zip"));
+      await store.install(join(root, "release/esp32-efuse-0.2.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),

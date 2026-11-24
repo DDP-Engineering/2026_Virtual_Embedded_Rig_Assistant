@@ -142,6 +142,18 @@ reviewed:
   - { plugin: esp32-efuse, match: "espefuse {--help,-h}" }
   - { plugin: esp32-efuse, match: "espefuse * {summary,dump,check-error,get-custom-mac,adc-info} *" }
   - { plugin: esp32-efuse, match: "espsecure *" }
+  # Espressif v5 uses an in-memory transport with skip_connect for exact help.
+  - { plugin: esp32-efuse, match: "espefuse burn-efuse --help" }
+  - { plugin: esp32-efuse, match: "espefuse burn-key --help" }
+  - { plugin: esp32-efuse, match: "espefuse burn-block-data --help" }
+  - { plugin: esp32-efuse, match: "espefuse burn-bit --help" }
+  - { plugin: esp32-efuse, match: "espefuse burn-custom-mac --help" }
+  - { plugin: esp32-efuse, match: "espefuse write-protect-efuse --help" }
+  - { plugin: esp32-efuse, match: "espefuse read-protect-efuse --help" }
+  - { plugin: esp32-efuse, match: "espefuse set-flash-voltage --help" }
+  # The bundled argparse helpers exit during parsing, ahead of any bus or port operation.
+  - { plugin: can-python, match: "can send --help" }
+  - { plugin: serial-monitor, match: "serial send --help" }
 # The stm32cubeprog projection emits "displ" only when -ob/-otp/-psrss display (-otp may name word= values);
 # writes become <write> and match the irreversible rules.
   - { plugin: stm32-cubeprog, match: "stm32_programmer_cli * {-ob,-otp,-psrss} displ *" }

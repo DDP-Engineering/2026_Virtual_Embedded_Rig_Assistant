@@ -31,7 +31,9 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
    only such a program receives the display variables (DISPLAY, WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR).
 3. Give every program rules. Every command line the agent may run should match a rule with the right risk
    level: `safe` (no effect on hardware), `device-read`, `device-write`, `irreversible` or `blocked`. A
-   command no rule matches runs as `device-write`, and the highest risk of all matching rules applies.
+   command no rule matches runs as `device-write`, and the highest risk of matching ordinary rules applies.
+   Use `subcommandHelp` only for an exact documented parser exit on a direct program. Blocked rules
+   still apply. Document the supported command, flag and parser source for the maintainer.
 4. Declare what the user must provide in `settings`, one entry per parameter with a `description`:
    `kind: secret` with a `scope` (`mqtt`, `wokwi` or `parts`; the value stays in VERA's credential store),
    `kind: workbench-file` with a workbench-relative `path` (a `*` segment matches one folder level), an optional
@@ -48,6 +50,8 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 The check rejects schema errors, a folder whose manifest id differs from its name, references to plugins
 that do not exist, a program without any rule, and a rule at `safe` or `device-read` whose pattern contains
 `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send`.
+The same check applies to an exact help invocation classified safe. A maintainer can record that
+literal invocation under `reviewed` once the supported parser's help exit is verified.
 
 ## Electrical and automation plugins
 

@@ -110,8 +110,9 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   the runner re-hashes the approved files. Remaining window: a program opens its files after it starts
   and Node cannot hold share-deny handles on Windows; during a run the agent's own tools wait, so only
   the user, another session or a background run can write in that window.
-- Timeout: the agent's value clamped to the cap (largest timeout of the matching rules, else the
-  program's, else the Program timeout ceiling, default 600 s); foreground default is the cap; background runs have none unless given.
+- Timeout: the agent's value clamped to the cap (largest timeout of the matching ordinary rules,
+  else the program's, else the Program timeout ceiling, default 600 s). Exact declared help uses
+  the program or session cap. Foreground default is the cap. Background runs have none unless given.
 - Handles are session-scoped; at most 32 are kept, oldest finished first dropped; program_stop removes
   one. program_output polls every 50 ms up to waitMs and tests `until` (flag `m`) against the output
   gathered in the call (its last 12 000 characters), in one node:vm context per call with a 100 ms limit

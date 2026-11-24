@@ -72,9 +72,10 @@ are classified, with dates omitted until a publication record is established.
 
 - Catalog check: every plugin folder (not starting with `.`) must pass the store's import checks and examination
   (folder name = id, so ids are unique); every program needs a rule whose first pattern token names it; a `safe` or
-  `device-read` rule whose pattern contains a dangerous token as a case-insensitive substring is an issue unless
-  `catalog.yaml` lists `{plugin, match}` under `reviewed`; packs, `requires`, `official` and `reviewed` must name
-  existing plugins and rules. The build writes nothing with any issue or a non-empty output folder; zips are
+  `device-read` rule or an exact help invocation classified safe that contains a dangerous token as a
+  case-insensitive substring is an issue unless `catalog.yaml` lists the exact `{plugin, match}` under
+  `reviewed`. Packs, `requires` and `official` name existing plugins. Reviewed marks name existing rules
+  or applicable exact help forms. The build writes nothing with any issue or a non-empty output folder; zips are
   deterministic (sorted entries under `<id>/`, dated 1980-01-01).
 - Catalog URL: https, or http on localhost/127.0.0.1/[::1], no credentials, query or fragment; an invalid setting
   counts as none. A read whose final redirected URL is neither https nor loopback http is unreachable. A failed or

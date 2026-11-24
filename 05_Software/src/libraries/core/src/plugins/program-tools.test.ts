@@ -261,6 +261,30 @@ describe("command line (REQ-FUNC-8e22989a)", () => {
 });
 
 describe("timeout cap (REQ-FUNC-90a95bef)", () => {
+  it("runs declared help in read-only mode with the program timeout (REQ-SEC-0beca242)", async () => {
+    const subcommandHelp = { flag: "--help", commands: ["write", "burn"] };
+    const fixture = loaded("echo-tools", { echo: program({ timeout: 12, subcommandHelp }) }, [
+      { match: "echo write *", risk: "irreversible", timeout: 900 },
+      { match: "echo burn *", risk: "blocked" },
+    ]);
+    plugins = [fixture];
+    const start = vi.spyOn(runner, "start");
+    const args = ["write", "--help"];
+    mode = "read-only";
+    const help = await prepare({ program: "echo", args });
+    expect(help.request).toMatchObject({ args, risk: "safe", confirm: null, notes: [] });
+    const result = help.apply(signal());
+    const process = await spawned(1);
+    expect(process.args).toEqual(args);
+    process.finish({ code: 0, signal: null });
+    await result;
+    expect(start.mock.calls[0]?.[0].timeoutMs).toBe(12_000);
+
+    await expect(prepare({ program: "echo", args: ["burn", "--help"] })).rejects.toThrow(/blocked/);
+    await expect(prepare({ program: "echo", args: [...args, "extra"] })).rejects.toThrow(/irreversible/);
+    plugins = [{ ...fixture, record: { ...fixture.record, tier: "trial" } }];
+    await expect(prepare({ program: "echo", args })).rejects.toThrow(/trial plugin/);
+  });
   it("clamps the agent's timeout to the rule, then program, then 600 s cap", () => {
     expect(programTimeout({ rule: 30, program: 120, requested: 500, background: false })).toBe(30_000);
     expect(programTimeout({ rule: null, program: 120, background: false })).toBe(120_000);

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-0beca242"
+title = "Classify a declared exact subcommand help invocation"
+status = "active"
+requirement = "When a declared subcommand and its help flag are the two exact raw arguments of a command matching an ordinary non-blocked rule, the matcher shall classify the help invocation as safe with no operation note, typed confirmation or rule timeout."
+verification = "Classify exact help, blocked help, unmatched declarations, and case, ordering, option terminator, alias, attached-value and extra-argument variants against overlapping rules; verify exact help is safe, blocked help is blocked and actual operations retain their risk, notes, confirmation and timeout."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/plugins/"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/tests/plugins/subcommand-help.test.ts"]
+priority = "high"
+created = 2026-11-24
+updated = 2026-11-24

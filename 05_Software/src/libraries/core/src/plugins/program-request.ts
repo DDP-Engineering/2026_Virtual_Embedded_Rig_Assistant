@@ -337,11 +337,13 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
   if (refusal) throw denied(refusal);
   if (!declares(input.plugin, input.program)) throw denied({ reason: "undeclared" });
   const { manifest, record } = input.plugin;
+  const declared = manifest.programs[input.program];
   const classification = classifyCommand(
     manifest.rules,
     input.program,
     input.args,
-    manifest.programs[input.program]?.optionSyntax,
+    declared?.optionSyntax,
+    declared?.subcommandHelp,
   );
   const guard =
     input.pathGuard ??

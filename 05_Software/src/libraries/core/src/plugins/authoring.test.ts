@@ -77,6 +77,28 @@ it("validates drafts and returns schema errors separately from authoring warning
   );
   expect(JSON.parse(invalid.text).errors.length).toBeGreaterThan(0);
 });
+it("warns authors to verify subcommand help before dispatch (REQ-FUNC-8f4df41b)", async () => {
+  const f = await fixture();
+  f.manifest.programs.fixture!.subcommandHelp = { flag: "--help", commands: ["send"] };
+  f.manifest.rules = [{ match: "fixture send *", risk: "device-write" }];
+  await f.save();
+  const result = await f.registry.execute(
+    f.ctx,
+    "plugin_validate",
+    { path: "plugins/fixture-cli" },
+    signal(),
+  );
+  expect(JSON.parse(result.text)).toMatchObject({
+    errors: [],
+    warnings: expect.arrayContaining([
+      {
+        code: "subcommand-help",
+        path: "programs.fixture.subcommandHelp",
+        detail: expect.stringContaining("prints help and exits before dispatch"),
+      },
+    ]),
+  });
+});
 it("promotes only an unchanged trial and exports a portable package", async () => {
   const f = await fixture();
   const reviewed = await f.store.review(f.draft);

@@ -183,7 +183,14 @@ describe("the plugin package", () => {
 });
 
 describe("risk rules", () => {
-  const classify = (...args: string[]) => classifyCommand(manifest.rules ?? [], "esptool", args);
+  const classify = (...args: string[]) =>
+    classifyCommand(
+      manifest.rules ?? [],
+      "esptool",
+      args,
+      undefined,
+      manifest.programs.esptool?.subcommandHelp,
+    );
   const global = ["--chip", "esp32s3", "--port", "COM7", "--baud", "460800"];
   const bootloader = "Resets the chip into its bootloader.";
 
@@ -192,6 +199,7 @@ describe("risk rules", () => {
       ["version"],
       ["--help"],
       ["-h"],
+      ["write-flash", "--help"],
       ["merge-bin", "-o", "merged.bin", "0x0", "build/bootloader/bootloader.bin"],
       ["--chip", "esp32s3", "merge_bin", "-o", "merged.bin", "0x0", "a.bin"],
       ["image-info", "build/app.bin"],
@@ -200,7 +208,7 @@ describe("risk rules", () => {
       expect(classify(...args).risk, args.join(" ")).toBe("safe");
     for (const args of [
       ["version", "--port", "COM7"],
-      ["write-flash", "--help"],
+      ["write-flash", "--help", "a.bin"],
     ])
       expect(classify(...args).risk, args.join(" ")).not.toBe("safe");
   });

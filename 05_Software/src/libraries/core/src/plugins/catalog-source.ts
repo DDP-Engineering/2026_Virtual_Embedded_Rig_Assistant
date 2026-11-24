@@ -12,10 +12,12 @@ import {
   catalogIndexSchema,
   catalogMaintainersSchema,
   catalogPacksSchema,
+  classifyCommand,
   dangerousToken,
   pluginDependencies,
   pluginHighestRisk,
   pluginMaturity,
+  programCommandLine,
   ruleNamesProgram,
   type VeraError,
 } from "@vera/shared";
@@ -88,6 +90,7 @@ async function examineSource(folder: string): Promise<Examined> {
     .sort(order);
   const known = new Set(names);
   const packages = new Map<string, PluginPackage>();
+  const reviewableHelp = new Map<string, Set<string>>();
   for (const name of names) {
     let pkg: PluginPackage;
     try {
@@ -112,21 +115,35 @@ async function examineSource(folder: string): Promise<Examined> {
       });
     if (!manifest || pkg.issues.length) continue;
     packages.set(name, pkg);
+    const exactHelp = new Set<string>();
+    reviewableHelp.set(name, exactHelp);
+    const unreviewedToken = (match: string, risk: "safe" | "device-read", token = dangerousToken(match)) => {
+      if (token && !maintainers?.reviewed.some((mark) => mark.plugin === name && mark.match === match))
+        issues.push({ where: name, code: "token", detail: `${token} in "${match}" at ${risk}` });
+    };
     for (const [program, declared] of Object.entries(manifest.programs)) {
       if (!manifest.rules.some((rule) => ruleNamesProgram(rule.match, program)))
         issues.push({ where: name, code: "rules", detail: `program ${program} has no rule` });
       // The index lists a vendor program with this hint as its guide; VERA never installs it.
       if ("find" in declared.install && !declared.install.hint)
         issues.push({ where: name, code: "dependency", detail: `program ${program} has no vendor guide` });
+      const help = declared.subcommandHelp;
+      if (!help) continue;
+      for (const command of help.commands) {
+        const args = [command, help.flag];
+        const match = programCommandLine(program, args);
+        const token = dangerousToken(match);
+        if (
+          token &&
+          classifyCommand(manifest.rules, program, args, declared.optionSyntax, help).risk === "safe"
+        ) {
+          exactHelp.add(match);
+          unreviewedToken(match, "safe", token);
+        }
+      }
     }
     for (const rule of manifest.rules) {
-      if (rule.risk !== "safe" && rule.risk !== "device-read") continue;
-      const token = dangerousToken(rule.match);
-      const reviewed = maintainers?.reviewed.some(
-        (mark) => mark.plugin === name && mark.match === rule.match,
-      );
-      if (token && !reviewed)
-        issues.push({ where: name, code: "token", detail: `${token} in "${rule.match}" at ${rule.risk}` });
+      if (rule.risk === "safe" || rule.risk === "device-read") unreviewedToken(rule.match, rule.risk);
     }
     for (const required of manifest.requires)
       if (!known.has(required))
@@ -165,7 +182,10 @@ async function examineSource(folder: string): Promise<Examined> {
   for (const mark of maintainers?.reviewed ?? []) {
     // A plugin with its own issues is reported above; its marks wait until it reads again.
     if (known.has(mark.plugin) && !packages.has(mark.plugin)) continue;
-    if (!packages.get(mark.plugin)?.manifest?.rules.some((rule) => rule.match === mark.match))
+    if (
+      !reviewableHelp.get(mark.plugin)?.has(mark.match) &&
+      !packages.get(mark.plugin)?.manifest?.rules.some((rule) => rule.match === mark.match)
+    )
       issues.push({
         where: MAINTAINERS,
         code: "reference",

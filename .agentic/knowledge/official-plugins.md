@@ -112,29 +112,29 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `parts-search` | 0.3.1 | real uv run on Windows 11; no hardware |
 | `renode` | 0.3.1 | real Renode 1.17.0 on Windows 11; virtual boards, no hardware |
 | `wireshark-tshark` | 0.3.1 | real TShark replay and a live loopback capture on Windows/Npcap; Linux unverified |
-| `arduino-cli` | 0.2.1 | real compiles with arduino-cli 1.6.0; upload, serial readback, two boards open |
-| `ble-tools` | 0.2.0 | real Bleak 3.1.0 and one passive scan; read/notify/write, pairing, BlueZ open |
-| `can-python` | 0.2.1 | real python-can on a udp_multicast bus on Windows; real adapters and vcan0 open |
-| `circuitpython` | 0.2.1 | real circup 3.1.0 on simulated volumes; real board and bundle download open |
-| `esp32-efuse` | 0.2.0 | real esptool 5.6.0 against virtual eFuses; real chip open (never burnt) |
-| `esp32-esptool` | 0.2.1 | real esptool 5.6.0 provisioned and run; identify/flash on real ESP32 boards open |
+| `arduino-cli` | 0.2.2 | real compiles with arduino-cli 1.6.0; upload, serial readback, two boards open |
+| `ble-tools` | 0.2.1 | real Bleak 3.1.0 and one passive scan; read/notify/write, pairing, BlueZ open |
+| `can-python` | 0.2.2 | real python-can on a udp_multicast bus on Windows; real adapters and vcan0 open |
+| `circuitpython` | 0.2.2 | real circup 3.1.0 on simulated volumes; real board and bundle download open |
+| `esp32-efuse` | 0.2.1 | real esptool 5.6.0 against virtual eFuses; real chip open (never burnt) |
+| `esp32-esptool` | 0.2.2 | real esptool 5.6.0 provisioned and run; identify/flash on real ESP32 boards open |
 | `gdb-debug` | 0.2.1 | real xPack GDB and OpenOCD without a probe; probe and board open |
 | `hil-testing` | 0.2.1 | real helper processes and runner; real board and probe open |
 | `lab-validation` | 0.3.1 | real runner and uv provisioning; a real capture of a real circuit open |
 | `microchip-pymcuprog` | 0.2.0 | real pymcuprog: hex conversion, failed ping on a missing port; UPDI board open |
-| `micropython` | 0.2.1 | real mpremote 1.29.0 against a simulated board; real board open |
-| `mqtt-tools` | 0.2.2 | real paho-mqtt 2.1.0 against the local TLS test broker; product broker and device open |
-| `platformio` | 0.2.1 | real PlatformIO 6.2.0 builds, host tests, Renode device tests; board upload open |
-| `power-profiler` | 0.2.1 | real pyjoulescope_driver 2.5.5 without a meter; JS220 and board open |
-| `probe-rs` | 0.2.1 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
-| `raspberry-pi-linux` | 0.2.0 | real asyncssh 2.24.1 against an SSH test server in WSL; a Raspberry Pi open |
+| `micropython` | 0.2.2 | real mpremote 1.29.0 against a simulated board; real board open |
+| `mqtt-tools` | 0.2.3 | real paho-mqtt 2.1.0 against the local TLS test broker; product broker and device open |
+| `platformio` | 0.2.2 | real PlatformIO 6.2.0 builds, host tests, Renode device tests; board upload open |
+| `power-profiler` | 0.2.2 | real pyjoulescope_driver 2.5.5 without a meter; JS220 and board open |
+| `probe-rs` | 0.2.2 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
+| `raspberry-pi-linux` | 0.2.1 | real asyncssh 2.24.1 against an SSH test server in WSL; a Raspberry Pi open |
 | `scpi-instruments` | 0.2.1 | real PyVISA 1.16.2 + pyvisa-py against simulated servers; real instruments open |
-| `serial-monitor` | 0.2.1 | real pyserial through the real provisioner and runner; real-board capture open |
+| `serial-monitor` | 0.2.2 | real pyserial through the real provisioner and runner; real-board capture open |
 | `sigrok` | 0.2.0 | real pinned sigrok-cli 0.8.0 installed from the verified archive; ATK-DL16/Hantek captures open |
 | `stm32-cubeprog` | 0.2.1 | real STM32CubeProgrammer 2.23.0 CLI without a board; Nucleo open |
-| `wokwi` | 0.2.0 | real wokwi-cli 0.29.1 offline; a cloud run open (no token) |
-| `zephyr` | 0.2.1 | real Zephyr 4.4.2 + SDK builds, Twister, ztest on Renode; board flash open |
-| `bus-tools` | 0.1.0 | only a simulated BPIO2 adapter; real Bus Pirate, I2C/SPI fixtures open |
+| `wokwi` | 0.2.1 | real wokwi-cli 0.29.1 offline; a cloud run open (no token) |
+| `zephyr` | 0.2.2 | real Zephyr 4.4.2 + SDK builds, Twister, ztest on Renode; board flash open |
+| `bus-tools` | 0.1.1 | only a simulated BPIO2 adapter; real Bus Pirate, I2C/SPI fixtures open |
 | `esp32-idf` | 0.1.0 | EIM transport only; no ESP-IDF installation or board found, real build/flash/panic open |
 | `electrical-network` | 0.1.0 | offline engine and fixture tests only; real projects and native Ubuntu open |
 | `industrial-catalog` | 0.1.0 | offline engine and fixture tests only; real projects and native Ubuntu open |

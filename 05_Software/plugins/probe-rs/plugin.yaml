@@ -1,6 +1,6 @@
 format: 1
 id: probe-rs
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: probe-rs
 summary: Flash, verify, reset, read memory and stream RTT on ARM, RISC-V and Xtensa targets through debug probes.
@@ -19,6 +19,7 @@ ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 programs:
   probe-rs:
+    subcommandHelp: { flag: --help, commands: [download, run, erase, benchmark, itm, write] }
     install:
       find:
         windows: ["%PATH%", "~/.cargo/bin"]

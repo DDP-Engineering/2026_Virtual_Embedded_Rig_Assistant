@@ -92,7 +92,11 @@ Matching ([`program-rules.ts`](../05_Software/src/libraries/shared/src/program-r
 - The command line is the program name plus the agent's arguments, without launcher or `prefix`.
   Tokens are lowercased, `_` becomes `-`, and `--name=value` splits into two tokens.
 - Pattern tokens: `*` matches zero or more arguments, `{a,b}` either choice, `word*` a prefix.
-- Every matching rule applies and the highest risk wins. A command no rule matches is `device-write`.
+- Every ordinary matching rule applies and the highest risk wins. A command no rule matches is
+  `device-write`. A direct program can declare `subcommandHelp: { flag: --help, commands: [capture] }`
+  for a documented parser exit. With exactly the declared subcommand and flag in raw argv, a
+  matched command is safe unless a blocked rule matches. It uses the program timeout or session
+  ceiling and the usual trial and trust policy.
 - `optionSyntax` (`git`, `sigrok-cli`, `tshark`, `pymcuprog`, `stm32cubeprog`) projects arguments
   into role tokens such as `<write>` following that program's option parsing (STM32CubeProgrammer's
   ignores case). Only matching sees the projection; approvals show and run the raw arguments.

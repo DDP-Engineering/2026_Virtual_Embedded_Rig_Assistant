@@ -1,6 +1,6 @@
 format: 1
 id: platformio
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: PlatformIO projects
 summary: Inspect, build and test existing PlatformIO projects with a pinned PlatformIO Core.
@@ -27,10 +27,12 @@ settings:
     description: The bench registry; declares the probe (probe) an upload names by alias. Not needed for builds and native tests.
 programs:
   platformio:
+    subcommandHelp: { flag: --help, commands: [build, test-host, test-device, clean, prepare-packages] }
     install: { script: scripts/pio_tool.py }
     version: { args: [--version], match: '^platformio (\d+\.\d+\.\d+)' }
     timeout: 1800
   platformio-upload:
+    subcommandHelp: { flag: --help, commands: [upload] }
     install: { script: scripts/pio_upload.py }
     version: { args: [--version], match: '^platformio-upload (\d+\.\d+\.\d+)' }
     timeout: 300

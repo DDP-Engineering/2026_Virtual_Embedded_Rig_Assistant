@@ -1,6 +1,6 @@
 format: 1
 id: wokwi
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wokwi cloud simulation
 summary: Run firmware simulations and scenarios in Wokwi's cloud with a pinned wokwi-cli after approval.
@@ -45,6 +45,7 @@ programs:
     version: { args: [--short-version], match: '^(\d+\.\d+\.\d+) \(', range: '>=0.29.1,<0.29.2' }
     timeout: 60
   wokwi-tool:
+    subcommandHelp: { flag: --help, commands: [run-scenario] }
     install: { script: scripts/wokwi_tool.py }
     version: { args: [--version], match: '^wokwi-tool (\d+\.\d+\.\d+)' }
     timeout: 120

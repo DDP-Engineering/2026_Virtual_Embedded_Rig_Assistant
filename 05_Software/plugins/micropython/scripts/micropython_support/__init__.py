@@ -3,4 +3,4 @@
 FORMAT = 1
 KIND = "micropython-tool-result"
 TOOL = "micropython-tool"
-VERSION = "0.2.1"
+VERSION = "0.2.2"

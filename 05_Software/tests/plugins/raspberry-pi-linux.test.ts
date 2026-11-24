@@ -160,7 +160,7 @@ describe("package", () => {
       expect(validatePluginManifest(m).issues).toEqual([]);
       expect(m).toMatchObject({
         id: "raspberry-pi-linux",
-        version: "0.2.0",
+        version: "0.2.1",
         platforms: ["windows-x64", "linux-x64"],
       });
       const program = m.programs["pi-tool"];

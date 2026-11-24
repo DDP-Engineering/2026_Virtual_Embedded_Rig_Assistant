@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { gitRuleArguments } from "./git-options.js";
-import { type PluginRisk, pluginIdSchema, pluginProgramNameSchema, pluginRiskSchema } from "./plugins.js";
+import {
+  type PluginProgram,
+  type PluginRisk,
+  pluginIdSchema,
+  pluginProgramNameSchema,
+  pluginRiskSchema,
+} from "./plugins.js";
 import { pymcuprogRuleArguments } from "./pymcuprog-options.js";
 import type { PermissionMode } from "./session.js";
 import { sigrokRuleArguments } from "./sigrok-options.js";
@@ -132,7 +138,8 @@ export function classifyCommand(
   rules: readonly ProgramRule[],
   program: string,
   args: readonly string[],
-  optionSyntax?: "sigrok-cli" | "git" | "tshark" | "pymcuprog" | "stm32cubeprog",
+  optionSyntax?: PluginProgram["optionSyntax"],
+  subcommandHelp?: PluginProgram["subcommandHelp"],
 ): ProgramClassification {
   const projected =
     optionSyntax === "sigrok-cli"
@@ -162,6 +169,17 @@ export function classifyCommand(
       confirm = (line[index ?? 0] as Token).text;
     }
   }
+  const [command, flag] = args;
+  if (
+    risk !== undefined &&
+    risk !== "blocked" &&
+    subcommandHelp &&
+    args.length === 2 &&
+    command !== undefined &&
+    flag === subcommandHelp.flag &&
+    subcommandHelp.commands.includes(command)
+  )
+    return { risk: "safe", notes: [], confirm: null, timeout: null };
   return {
     risk: risk ?? "device-write",
     notes,

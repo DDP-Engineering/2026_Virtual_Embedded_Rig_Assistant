@@ -3,4 +3,4 @@
 FORMAT = 1
 KIND = "arduino-tool-result"
 TOOL = "arduino-tool"
-VERSION = "0.2.1"
+VERSION = "0.2.2"

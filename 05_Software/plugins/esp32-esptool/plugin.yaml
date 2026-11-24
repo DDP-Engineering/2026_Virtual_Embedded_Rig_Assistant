@@ -1,6 +1,6 @@
 format: 1
 id: esp32-esptool
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ESP32 esptool
 summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
@@ -20,6 +20,7 @@ platforms: [windows-x64, linux-x64]
 requires: [serial-monitor]
 programs:
   esptool:
+    subcommandHelp: { flag: --help, commands: [write-flash, erase-flash, erase-region, load-ram, write-mem, write-flash-status] }
     install: { pip: "esptool>=5,<6" }
     version: { args: [version], match: 'v(\d+\.\d+\.\d+)', range: ">=5,<6" }
     timeout: 120

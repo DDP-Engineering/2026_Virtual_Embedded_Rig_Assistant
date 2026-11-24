@@ -1,6 +1,6 @@
 format: 1
 id: raspberry-pi-linux
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Raspberry Pi Linux projects
 summary: Run projects, finite tasks and user services on a Raspberry Pi over a pinned SSH connection.
@@ -36,6 +36,7 @@ settings:
     description: The login key stays in the system SSH agent; VERA never handles a password or a key file.
 programs:
   pi-tool:
+    subcommandHelp: { flag: --help, commands: [install-helper, deploy-candidate, apply-candidate, run-task, service-start, service-stop, stop-owned] }
     install: { script: scripts/pi_tool.py }
     version: { args: [--version], match: '^pi-tool (\d+\.\d+\.\d+)' }
     timeout: 120

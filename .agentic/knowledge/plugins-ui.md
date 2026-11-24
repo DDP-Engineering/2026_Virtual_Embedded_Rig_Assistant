@@ -22,7 +22,8 @@ The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugi
 reviewed hash. It lists installed plugins with their program statuses and issues, installs programs (`plugins.provision`) and uninstalls after a
 confirmation. The review screen and the expanded card of an issue-free installed plugin show the same `PluginContents`
 (`renderer/components/plugin-contents.tsx`): a Composition section (programs with install kind and script path or
-source, skills with their SKILL.md descriptions, profiles and data files, documents; "Runs no programs." without
+source and expandable exact subcommand help with its effective risks, skills with their SKILL.md descriptions,
+profiles and data files, documents; "Runs no programs." without
 programs) and an Operations section, the manifest `rules` grouped by `pluginOperations` into one collapsed `<details>`
 per risk (safe, device-read, device-write, irreversible, blocked; label and count in the summary; pattern, note and
 timeout per rule). The risk labels are the approval prompt's `approval.risk.*`. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab

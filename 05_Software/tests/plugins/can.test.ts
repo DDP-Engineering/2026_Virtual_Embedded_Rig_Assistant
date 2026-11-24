@@ -505,7 +505,7 @@ it("waits for the typed word before a transmit starts", async () => {
       settings: () => undefined,
     });
     expect(await provisioner.install("can-python")).toEqual([
-      { name: "can", kind: "script", state: "ready", version: "0.2.1" },
+      { name: "can", kind: "script", state: "ready", version: "0.2.2" },
     ]);
     const plugin = await store.load("can-python");
     const runs = async () =>
@@ -590,7 +590,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      for (const zip of [`can-python-0.2.1.zip`, `can-dbc-0.3.1.zip`])
+      for (const zip of [`can-python-0.2.2.zip`, `can-dbc-0.3.1.zip`])
         await store.install(join(root, "release", zip));
       provisioner = new core.Provisioner({
         store,

@@ -1,6 +1,6 @@
 format: 1
 id: mqtt-tools
-version: 0.2.2
+version: 0.2.3
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: MQTT tools (telemetry and commands)
 summary: Capture MQTT telemetry and send controlled device commands on a broker the workbench configures.
@@ -25,6 +25,7 @@ settings:
     description: A broker login (username and password) stored under the reference a broker profile names in credential; only an approved run of this plugin receives it, on its input.
 programs:
   mqtt-tool:
+    subcommandHelp: { flag: --help, commands: [publish, request] }
     install: { script: scripts/mqtt_tool.py }
     version: { args: [--version], match: '^mqtt-tool (\d+\.\d+\.\d+)' }
     timeout: 120

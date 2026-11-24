@@ -45,6 +45,10 @@ tokens × command tokens.
 - Confirmation word (irreversible only, else `null`): in the first matching rule whose risk is
   `irreversible`, the command token matched by the first non-`*` pattern token that matched a token
   other than the program name; when the pattern has no such token, the normalised program name.
+- With at least one matching rule and no blocked match, the declaring program's
+  `subcommandHelp` classifies exactly two raw arguments (a listed command, then its declared flag)
+  as safe with empty notes, no confirmation and no rule timeout. Compare the raw strings with
+  case and argument boundaries intact. The normal permission policy handles the result.
 
 ## 4. Pre-rule refusals
 

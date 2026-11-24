@@ -29,8 +29,8 @@ specified in `.agentic/specs/REQ-FUNC-80b2033a.md`.
   `pluginHighestRisk(rules)` -> `PluginRunRisk` (`safe` without a rule below `blocked`),
   `pluginOperations(rules)` -> `{risk, rules}[]` (one group per risk with rules, in risk order, rules in manifest
   order and unchanged), `pluginCompositionSchema` (`skills: {name, description?}[]`, `files: string[]`).
-- Rules (shared): `classifyCommand(rules, program, args)` -> `{risk, notes, confirm, timeout}` (timeout:
-  the largest timeout of the matching rules, or null),
+- Rules (shared): `classifyCommand(rules, program, args, optionSyntax?, subcommandHelp?)` ->
+  `{risk, notes, confirm, timeout}` (ordinary matching uses the largest rule timeout),
   `programArgumentRefusal(args)` -> `{reason: count|length|control|argument-file, index?}` or null,
   `programPolicy(mode, risk, trial)` -> `run|refuse|mode|user|confirm`, `confirmationMatches(word,
   typed)`, `programCommandLine(program, args)`, `PROGRAM_ARGUMENTS {count 64, length 4096}`,
@@ -49,6 +49,9 @@ specified in `.agentic/specs/REQ-FUNC-80b2033a.md`.
   the command and the pattern alike; a pattern must cover the whole command line. All matching rules
   apply, the highest risk wins (blocked > irreversible > device-write > device-read > safe), notes of
   every matching rule are kept once in manifest order, and an unmatched command is device-write.
+- A direct program can declare one verified help flag for listed literal subcommands. Exactly
+  those two raw arguments classify safe with empty notes, no typed confirmation and no rule
+  timeout when a rule matches. A blocked match retains ordinary classification.
 - Before any rule or file: more than 64 arguments, an argument over 4096 characters, NUL/CR/LF or a
   leading `@` is DENIED with its reason; a program not declared by the plugin is DENIED undeclared.
 - The confirmation word of an irreversible command is the token matched by the first non-wildcard
@@ -74,6 +77,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-DATA-4d4471f9` — plugin.yaml format 1 validation with field paths (spec REQ-DATA-4d4471f9.md).
 - `REQ-FUNC-5bb9429f` / `REQ-FUNC-80b2033a` — token normalisation and pattern grammar (spec REQ-FUNC-80b2033a.md).
 - `REQ-FUNC-2819a97e` / `REQ-FUNC-9ca99463` — highest risk wins; unmatched is device-write.
+- `REQ-DATA-c80ab568` / `REQ-SEC-0beca242` — exact declared subcommand help and preserved blocked rules.
 - `REQ-SEC-28b53f44` — pre-rule argument refusals.
 - `REQ-FUNC-8d305364` / `REQ-SEC-94998c85` / `REQ-SEC-2b4bcdf5` — mode matrix, blocked, trial override.
 - `REQ-SEC-e8695b28` / `REQ-SEC-08fbf962` / `REQ-SEC-f40ac584` — typed word, mismatch, no switch.

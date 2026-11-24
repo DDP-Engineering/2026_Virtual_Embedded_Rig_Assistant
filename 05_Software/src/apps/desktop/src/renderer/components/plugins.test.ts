@@ -457,6 +457,44 @@ it("reviews both find roots and pinned fallback downloads", async () => {
   expect(calls("plugins.provision")).toEqual([]);
 });
 
+// REQ-UX-13ab0006, REQ-FUNC-8af265ac
+it("shows exact subcommand help and effective risks in the trust review", async () => {
+  const manifest = review.manifest!;
+  const program = manifest.programs.echo!;
+  stub({
+    review: {
+      ...review,
+      manifest: {
+        ...manifest,
+        programs: {
+          echo: { ...program, subcommandHelp: { flag: "--help", commands: ["burn", "monitor", "unknown"] } },
+        },
+      },
+    },
+  });
+  await render();
+  await click('[data-action="plugin-install-folder"]');
+  const details = await vi.waitFor(() => {
+    const item = container.querySelector<HTMLDetailsElement>("[data-plugin-review] [data-subcommand-help]");
+    if (!item) throw Error("Missing exact help declarations");
+    return item;
+  });
+  await act(async () => {
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+  });
+  expect(
+    [...details.querySelectorAll("li")].map((li) => [
+      li.querySelector("code")?.textContent,
+      li.querySelector("[data-risk]")?.getAttribute("data-risk"),
+    ]),
+  ).toEqual([
+    ["echo burn --help", "safe"],
+    ["echo monitor --help", "blocked"],
+    ["echo unknown --help", "device-write"],
+  ]);
+});
+
 // REQ-UX-e6056763, REQ-UX-f0f43fda
 it("puts Install and Cancel in the review header and shows the package's help page", async () => {
   await i18n.changeLanguage("fr");

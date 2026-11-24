@@ -37,6 +37,12 @@ export const pluginValidateTool: ToolDefinition = {
           warnings.push({ code: "token", path: `rules.${index}`, detail: `${token} at ${rule.risk}` });
       }
       for (const [name, program] of Object.entries(manifest.programs)) {
+        if (program.subcommandHelp)
+          warnings.push({
+            code: "subcommand-help",
+            path: `programs.${name}.subcommandHelp`,
+            detail: "Verify that each exact subcommand and flag prints help and exits before dispatch.",
+          });
         if (!manifest.rules.some((rule) => ruleNamesProgram(rule.match, name)))
           warnings.push({
             code: "rules",
