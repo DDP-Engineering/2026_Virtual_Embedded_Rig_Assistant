@@ -18,6 +18,7 @@
     "test": "vitest run --project \"!plugins\"",
     "test:coverage": "vitest run --coverage --project \"!plugins\"",
     "test:plugins": "vitest run --project plugins",
+    "preverify": "npm run prepare:model -- --offline",
     "verify": "npm run lint && npm run typecheck && npm run check:i18n && npm run check:help && npm run check:release-notes && npm run test",
     "verify:all": "npm run verify && npm run test:plugins",
     "check:i18n": "node ../02_Tools/build/check-i18n.mjs",

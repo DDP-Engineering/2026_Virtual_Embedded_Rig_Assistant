@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import {
   copyFileSync,
   cpSync,
@@ -14,11 +14,14 @@ import {
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
+const execute = promisify(execFile);
+const buildTimeout = 240_000;
 
 // The checkout mirrors the repository: 05_Software plus the release tooling its build config imports.
 let repo: string;
@@ -84,9 +87,10 @@ it.each([
     );
     const output = join(checkout, `out-${flag}`);
     expect(existsSync(join(checkout, "src/libraries/shared/dist/index.js"))).toBe(false);
-    const build = spawnSync(process.execPath, [vite, "build", "src/apps/desktop"], {
+    await execute(process.execPath, [vite, "build", "src/apps/desktop"], {
       cwd: checkout,
       encoding: "utf8",
+      timeout: buildTimeout,
       env: {
         ...process.env,
         VERA_TEST: flag,
@@ -94,7 +98,6 @@ it.each([
         VERA_UPDATE_URL: "https://updates.example.test/fixed-build/",
       },
     });
-    expect(build.status, build.stderr).toBe(0);
     const mainDir = join(output, "main");
     const code = readdirSync(mainDir, { recursive: true })
       .filter((name) => String(name).endsWith(".js"))
@@ -149,17 +152,17 @@ it.each([
     const lines = readFileSync(join(assets, String(entry)), "utf8").split("\n").length;
     expect(lines, "renderer entry chunk is minified").toBeLessThan(1000);
     const url = pathToFileURL(join(output, "main/build-mode.js")).href;
-    const run = spawnSync(
+    const { stdout } = await execute(
       process.execPath,
       ["--input-type=module", "--eval", `console.log((await import(${JSON.stringify(url)})).testBuild)`],
       {
         env: { ...process.env, VERA_TEST: "1" },
         encoding: "utf8",
+        timeout: 15_000,
       },
     );
-    expect(run.status, run.stderr).toBe(0);
-    expect(run.stdout.trim()).toBe(expected);
+    expect(stdout.trim()).toBe(expected);
     expect(existsSync(join(checkout, "src/libraries/shared/dist/index.js"))).toBe(false);
   },
-  60_000,
+  buildTimeout + 30_000,
 );

@@ -486,7 +486,7 @@ it("CLI offers the enabled plugin's skill and program tools and runs a resolved 
   const missing = await launch([...replay(workbench, script), "--data", data]).result;
   const failed = events(missing.stdout).filter((r) => r.event.type === "tool.done");
   expect(String(failed[1]?.event.summary)).toMatch(/Program echo is not available/);
-}, 15000);
+});
 // REQ-FUNC-c44675ed, REQ-UX-46085ddf
 it("CLI installs a plugin and its programs and prints their statuses", async () => {
   const { dir } = await fixture();
@@ -618,8 +618,7 @@ it("CLI checks a catalog source and builds its release", async () => {
     const usage = await launch(args).result;
     expect(usage.code, args.join(" ")).toBe(2);
   }
-  // Seven CLI processes: under a full parallel suite they outlast the default 5 s.
-}, 30000);
+}, 60_000);
 // REQ-SEC-bd56a6c0 REQ-SEC-daf01d33
 it("CLI generates a catalog signing key pair and signs the channel indexes of a release", async () => {
   const { dir } = await fixture();
@@ -681,7 +680,7 @@ it("CLI generates a catalog signing key pair and signs the channel indexes of a 
     const usage = await launch(args).result;
     expect(usage.code, args.join(" ")).toBe(2);
   }
-}, 30000);
+}, 60_000);
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {
   const { workbench } = await fixture();
@@ -846,7 +845,7 @@ it("runs ordered read/list/cited events and resumes a durable session in a new p
     resumed.filter((row) => row.seq !== undefined).every((row) => row.seq > Math.max(...persisted)),
   ).toBe(true);
   await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
-}, 15000);
+});
 it.each(["literal", "unicode", "template", "keyfile-template"])(
   "scrubs explicit replay before fragmented output and SQLite persistence (%s)",
   async (encoding) => {
@@ -961,12 +960,14 @@ it.each([["run", "--unknown"], ["run"], ["run", "--prompt", "x", "--prompt", "y"
     expect(result.stderr).toContain("Usage:");
   },
 );
-it("prints pretty one-line events and cleans resources on a failed provider", async () => {
+it("prints pretty one-line events", async () => {
   const { workbench } = await fixture();
-  const good = await launch([...replay(workbench), "--format", "pretty"]).result;
-  expect(good.code).toBe(0);
-  expect(good.stdout).toContain("turn.done");
-  expect(good.stdout).toContain('"stopReason":"end"');
+  const result = await launch([...replay(workbench), "--format", "pretty"]).result;
+  expect(result.code).toBe(0);
+  expect(result.stdout).toMatch(/^\S+ turn\.done \{[^\r\n]*"stopReason":"end"[^\r\n]*\}$/m);
+});
+it("cleans resources on a failed provider", async () => {
+  const { workbench } = await fixture();
   const failed = await launch([
     "run",
     "--workbench",
@@ -981,7 +982,7 @@ it("prints pretty one-line events and cleans resources on a failed provider", as
   expect(failed.code).toBe(1);
   expect(failed.stdout + failed.stderr).toContain("PROVIDER");
   await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
-}, 15000);
+});
 it("scrubs environment/key-file secrets even in invalid arguments and explicit replay text", async () => {
   const { workbench, dir } = await fixture();
   const ambient = "fictional-env-key-15",
@@ -1002,7 +1003,7 @@ it("scrubs environment/key-file secrets even in invalid arguments and explicit r
   const invalidWithFile = await launch(["run", "--key-file", file, `--${key}`]).result;
   expect(invalidWithFile.code).toBe(2);
   expect(invalidWithFile.stderr).not.toContain(key);
-}, 15000);
+});
 it("rejects an irreducible first turn with structured CONTEXT_LIMIT and exit1", async () => {
   const { workbench } = await fixture();
   const args = replay(workbench);
@@ -1265,7 +1266,7 @@ it("cleans owned temporary data/scripts on success and startup failure while ret
   expect(await readFile(join(supplied, "keep.txt"), "utf8")).toBe("original");
   expect(await readFile(join(supplied, "settings.json"), "utf8")).not.toContain("api_key");
   expect(await readdir(temporary)).toEqual([]);
-}, 15000);
+});
 
 // REQ-FUNC-13ab0001 REQ-SEC-13ab0002 REQ-SEC-13ab0003 REQ-FUNC-13ab0007
 it("scoped CLI local Git clone and pulled helper require explicit machine hash review before real execution", async () => {

@@ -965,20 +965,46 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
   });
 
   it("finds the task's group members after its supervisor and leader are gone and stops them", async () => {
+    const install = pi(["install-helper", "--board", "pi"]);
+    expect(install.code, JSON.stringify(install.json.errors)).toBe(0);
+    if (sh(`test -f '${projects}/vera-fixture/app.py'`).code !== 0) {
+      const staged = pi([
+        "deploy-candidate",
+        "--board",
+        "pi",
+        "--project",
+        project(),
+        "--run-id",
+        "deploy-family",
+      ]);
+      expect(staged.code, JSON.stringify(staged.json.errors)).toBe(0);
+      const applied = pi([
+        "apply-candidate",
+        "--board",
+        "pi",
+        "--candidate",
+        "arduino-iot-results/deploy-family/candidate.json",
+      ]);
+      expect(applied.code, JSON.stringify(applied.json.errors)).toBe(0);
+    }
     const before = handles();
     const started = piAsync(["run-task", "--board", "pi", "--project", project(), "--task", "family"]);
     const status = await taskRunning(before);
-    for (let i = 0; i < 40 && sh(`pgrep -g ${status.pgid} | wc -l`).out !== "2"; i++) await sleep(100);
+    const liveMembers = () =>
+      sh(
+        `ps -eo pgid=,stat= | awk -v group=${status.pgid} '$1 == group && $2 !~ /^Z/ { n++ } END { print n+0 }'`,
+      ).out;
+    await expect.poll(liveMembers, { timeout: 10_000 }).toBe("2");
     const handle = sh(`grep -l '"pid": ${status.pid},' ${projects}/.vera-pi/tasks/*/status.json`)
       .out.split("/")
       .at(-2);
-    sh(`kill -KILL ${status.supervisor.pid} ${status.pid}`);
+    expect(sh(`kill -KILL ${status.supervisor.pid} ${status.pid}`).code).toBe(0);
     // pi-tool sees the supervisor gone while a member still runs, and ends the owned group itself.
     const run = await started.done;
     expect(run.code).toBe(3);
     expect(run.json.errors[0].code).toBe("supervisor-lost");
     expect(run.json.remote.state).toBe("confirmed");
-    expect(sh(`pgrep -g ${status.pgid} | wc -l`).out).toBe("0");
+    expect(liveMembers()).toBe("0");
     expect(pi(["task-status", "--board", "pi", "--handle", handle as string]).json.task.state).toBe(
       "stopped",
     );

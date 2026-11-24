@@ -17,7 +17,11 @@ export default defineConfig({
           // Finish workspace tests first; shared build writers never overlap across projects.
           sequence: { groupOrder: index + 2 },
           fileParallelism: false,
-          ...(name === "integration" ? { globalSetup: ["tests/support/cli-bundle-setup.ts"] } : {}),
+          // These projects exercise real subprocesses and on-disk fixtures.
+          testTimeout: 30_000,
+          ...(name === "integration"
+            ? { globalSetup: ["tests/support/cli-bundle-setup.ts"], hookTimeout: 60_000 }
+            : {}),
           setupFiles: ["tests/support/network-setup.ts"],
           include: [`tests/${name}/**/*.test.ts`],
           environment: "node",

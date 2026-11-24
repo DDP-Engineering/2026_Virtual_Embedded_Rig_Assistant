@@ -232,6 +232,11 @@ By default the results are printed in the terminal. Coverage reports need the ex
 `npm run test:coverage`. The policy for choosing checks is in
 [02_Tools/verification-policy.md](../../02_Tools/verification-policy.md).
 
+Before the full verification, prepare the pinned embedding assets from `05_Software` with
+`python ../02_Tools/environment/npmw.py npm run prepare:model`. `npm run verify` checks these
+assets offline before running its checks. Document and evaluator integration tests use them.
+Finish one platform's full run before starting another on the same host to avoid contention.
+
 ## E2E
 
 `npm run test:e2e` invokes [support/test-e2e.mjs](support/test-e2e.mjs): it prepares or reuses
