@@ -6,6 +6,7 @@ import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type { SessionEvent } from "@vera/shared";
 import { afterEach, expect, it } from "vitest";
 import { ContextPolicy } from "../agent/context.js";
+import { ModelCalibrationStore } from "../agent/model-calibration.js";
 import { zeroUsage } from "../agent/runtime.js";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
 import { openDb } from "../storage/db.js";
@@ -191,6 +192,56 @@ it("keeps the calibration across a restart so the first request after it is coun
   // Calibrated: far below the conservative estimate of the same, slightly larger request.
   expect(after?.contextTokens).toBeLessThan(estimate * 0.4);
   expect(gateway.summaries).toHaveLength(0);
+});
+
+it("uses the application calibration for a fresh session at the first 32K dispatch", async () => {
+  const gateway = scriptedGateway(32_768, () => 5_000);
+  const env = await durableSetup(gateway);
+  const records = new Map<string, string>();
+  env.host.modelCalibrations = new ModelCalibrationStore(
+    env.host.root,
+    {
+      read: async (path) => records.get(path),
+      writeAtomic: async (path, content) => {
+        records.set(path, content);
+      },
+    },
+    () => [],
+  );
+  const largePrompt = "word ".repeat(9_000);
+  const cold = env.service.create().id;
+  env.service.send(cold, largePrompt);
+  expect((await env.service.waitIdle(cold))?.stopReason).toBe("limit");
+  expect(gateway.requests).toHaveLength(0);
+
+  const warmup = env.service.create().id;
+  env.service.send(warmup, "Measure the model");
+  expect((await env.service.waitIdle(warmup))?.stopReason).toBe("end");
+  const sample = env.events(warmup).find((event) => event.type === "usage.updated" && event.calibration);
+  expect(sample).toMatchObject({ calibration: { modelRef: "scripted/model" } });
+  await env.restart();
+
+  const warm = env.service.create().id;
+  env.service.send(warm, largePrompt);
+  expect((await env.service.waitIdle(warm))?.stopReason).toBe("end");
+  expect(gateway.requests).toHaveLength(2);
+  const estimated = preflight(env.events(warm));
+  expect(estimated?.contextTokens).toBeLessThan(estimated?.inputBudgetTokens ?? 0);
+  expect(gateway.summaries).toHaveLength(0);
+
+  env.host.model = () => "scripted/another";
+  const other = env.service.create().id;
+  env.service.send(other, largePrompt);
+  expect((await env.service.waitIdle(other))?.stopReason).toBe("limit");
+  expect(gateway.requests).toHaveLength(2);
+
+  const otherWarmup = env.service.create().id;
+  env.service.send(otherWarmup, "Measure the other model");
+  expect((await env.service.waitIdle(otherWarmup))?.stopReason).toBe("end");
+  expect(await env.host.modelCalibrations.forModel("scripted/another").read()).toBeDefined();
+  env.service.send(warmup, largePrompt);
+  expect((await env.service.waitIdle(warmup))?.stopReason).toBe("limit");
+  expect(gateway.requests).toHaveLength(3);
 });
 
 /** A small window whose provider reports the conservative estimate, so counts stay conservative. */

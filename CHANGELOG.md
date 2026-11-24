@@ -159,6 +159,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Reuse a model's measured context estimate in new sessions that share the same application data folder.
 - mqtt-tools 0.2.2: CLI output stays intact with MQTT usernames, and passwords remain masked.
 - Show concrete citation examples to models for local files, indexed documents and VERA help.
 - GitHub release downloads include the Chromium and Whisper archives and licence notices for offline installation.

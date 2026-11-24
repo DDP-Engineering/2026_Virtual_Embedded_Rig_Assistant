@@ -16,6 +16,7 @@ import {
   HelpLibrary,
   type LlmGateway,
   leaseRoot,
+  ModelCalibrationStore,
   PluginCatalog,
   PluginStore,
   ProgramRunner,
@@ -698,6 +699,11 @@ const sessionOptions: Omit<
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
+  modelCalibrations: new ModelCalibrationStore(
+    dataLocations.paths.userData,
+    createFileAccess(systemClock),
+    () => settings.get().settings.providers.custom,
+  ),
   web: webAccess.provider,
   browser: (owner, sessionId) =>
     new AgentBrowser(

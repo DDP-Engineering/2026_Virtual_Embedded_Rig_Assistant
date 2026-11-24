@@ -121,7 +121,7 @@ type CompactionView = ContextView & {
  * The lowest plausible ratio: about 8 bytes per token. Below it a report counts only part of the
  * prompt (prefix caching servers report newly evaluated tokens), so it is not used.
  */
-const MIN_CALIBRATION_RATIO = 0.12;
+export const MIN_CALIBRATION_RATIO = 0.12;
 
 /** The durable form of an adopted summary (REQ-DATA-d9ca38e5). */
 export interface CompactionRecord {
@@ -178,10 +178,12 @@ export class ContextCompactor {
   }
   /** Reported input tokens per estimated token of the latest answered normal request. */
   calibration: { modelRef: string; ratio: number } | undefined;
+  applicationCalibration: { modelRef: string; ratio: number } | undefined;
   /** The count scale for a model, when its calibration is known. */
   scale(modelRef: string): number | undefined {
-    return this.settings.calibrated && this.calibration?.modelRef === modelRef
-      ? this.calibration.ratio * this.settings.margin
+    const sample = this.calibration ?? this.applicationCalibration;
+    return this.settings.calibrated && sample?.modelRef === modelRef
+      ? sample.ratio * this.settings.margin
       : undefined;
   }
   /** Keep the ratio of a reported input count to the estimate it answered; returns what was kept. */
@@ -194,6 +196,7 @@ export class ContextCompactor {
     const ratio = Math.min(1, reported / estimated);
     if (ratio < MIN_CALIBRATION_RATIO) return undefined;
     this.calibration = { modelRef, ratio };
+    this.applicationCalibration = undefined;
     return this.calibration;
   }
   /** Whether the latest pass left a raw view above the trigger. */

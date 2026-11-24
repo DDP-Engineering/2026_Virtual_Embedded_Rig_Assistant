@@ -1,6 +1,7 @@
 export * from "./agent/approvals.js";
 export * from "./agent/citations.js";
 export * from "./agent/context.js";
+export * from "./agent/model-calibration.js";
 export * from "./agent/permissions.js";
 export * from "./agent/prompt.js";
 export * from "./agent/runtime.js";

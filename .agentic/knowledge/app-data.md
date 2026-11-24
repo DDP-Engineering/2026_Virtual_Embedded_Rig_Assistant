@@ -73,6 +73,9 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   VeraApi exposes getSettings/updateSettings; mockApi uses the same schemas and event behavior.
 - PathProvider supplies userData/settings/logs; Clock supplies now/sleep; FileAccess supplies
   read/writeAtomic; Logger supplies log/registerSecret/flush.
+- `userData/model-calibration/` holds optional, atomically replaced format-1 ratio records keyed
+  by a hash of the provider/model reference and any custom connection address and protocol.
+  Readers treat absent or invalid records as cold estimates. The records contain no request content.
 - A regular executable-adjacent vera.portable selects adjacent data before readiness and the
   instance lock; otherwise explicit user-data-dir precedes installed userData. Selected override
   directories are created recursively before Electron setPath, whose contract requires existence.

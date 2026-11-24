@@ -12,10 +12,10 @@ description to improve. Layout and shared rules: [evaluators README](../README.m
   toolchains are blocked) and no hardware is attached. Every program call is therefore a proposal
   that fails with "not available"; the call and its arguments are what is scored.
 - Each case enables only its **plugin group** (the expected plugin, its dependencies and plugins of
-  the same field). All 24 at once do not fit: VERA estimates the first request of the demo workbench
-  at about 21 000 tokens without plugins and 45 000 with all of them, above the 27 033-token input
-  budget of a 32 768-token model, and the turn stops with `CONTEXT_LIMIT` before the first call.
-  The groups stay below the budget (23 800 to 26 000 tokens).
+  the same field). The original cold run estimated about 21 000 tokens without plugins and 45 000
+  with all 24, above the 27 033-token budget of a 32 768-token model. The groups stay below the
+  conservative budget (23 800 to 26 000 tokens). A calibration previously saved for the same
+  provider and model in the same data folder can scale the first request of a new session.
 
 ## Cases
 

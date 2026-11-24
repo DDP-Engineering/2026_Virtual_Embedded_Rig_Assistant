@@ -11,6 +11,7 @@ import {
   createPiAiGateway,
   type LlmGateway,
   leaseRoot,
+  ModelCalibrationStore,
   officialPartsPlugin,
   PluginStore,
   type ProgramHost,
@@ -246,6 +247,13 @@ export async function runTurn(
       root: snapshot.folder,
       readOnly: snapshot.readOnly,
       gateway,
+      ...(options.provider !== "replay" && {
+        modelCalibrations: new ModelCalibrationStore(
+          location.paths.userData,
+          files,
+          () => config.providers.custom,
+        ),
+      }),
       web,
       parts: {
         search: (args, signal) =>

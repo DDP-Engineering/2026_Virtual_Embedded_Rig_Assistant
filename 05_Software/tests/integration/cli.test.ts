@@ -1035,6 +1035,43 @@ const custom = (workbench: string, url: string, prompt = "Read the board") => [
   "--model",
   "org/model",
 ];
+// REQ-NFR-4721c12f
+it("reuses a provider count on the first request of a second CLI process with the same data folder", async () => {
+  const { workbench, dir } = await fixture();
+  const data = join(dir, "data");
+  let requests = 0;
+  const url = await endpoint((_req, res) => {
+    requests++;
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    const chunk = {
+      id: "calibration",
+      choices: [{ index: 0, delta: { content: "Measured." }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 4_500, completion_tokens: 4, total_tokens: 4_504 },
+    };
+    res.end(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`);
+  });
+  const largePrompt = "context ".repeat(3_000);
+  const long = (folder: string) => launch([...custom(workbench, url, largePrompt), "--data", folder]).result;
+  const cold = await long(data);
+  expect(cold.code).toBe(1);
+  expect(cold.stdout).toContain("CONTEXT_LIMIT");
+  expect(requests).toBe(0);
+
+  const measured = await launch([...custom(workbench, url), "--data", data]).result;
+  expect(measured.code).toBe(0);
+  expect(
+    events(measured.stdout).some(({ event }) => event.type === "usage.updated" && event.calibration),
+  ).toBe(true);
+  const warm = await long(data);
+  expect(warm.code).toBe(0);
+  expect(warm.stdout).toContain("Measured.");
+  expect(requests).toBe(2);
+
+  const isolated = await long(join(dir, "other-data"));
+  expect(isolated.code).toBe(1);
+  expect(isolated.stdout).toContain("CONTEXT_LIMIT");
+  expect(requests).toBe(2);
+}, 90_000);
 it.each([false, true])(
   "scrubs a forced provider error with key-file=%j and logs no secrets",
   async (fromFile) => {

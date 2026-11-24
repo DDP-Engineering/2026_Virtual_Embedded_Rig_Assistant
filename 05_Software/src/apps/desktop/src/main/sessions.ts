@@ -7,6 +7,7 @@ import {
   type EmbeddingPort,
   electricalModelPlugin,
   type HelpLibrary,
+  type ModelCalibrationStore,
   officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
@@ -89,6 +90,7 @@ export class SessionsHost {
       workbench: WorkbenchService;
       terminals?: (workbenchId: string) => TerminalReader;
       settings: SettingsService;
+      modelCalibrations?: ModelCalibrationStore;
       gateway: () => ProviderGateway;
       credentials: CredentialFile;
       log?: (message: string) => void;
@@ -310,6 +312,7 @@ export class SessionsHost {
             return self.config?.agent.permission_mode ?? "ask";
           },
           gateway: options.gateway().api,
+          ...(options.modelCalibrations ? { modelCalibrations: options.modelCalibrations } : {}),
           ...(options.web ? { web: options.web } : {}),
           ...(browser ? { browser: (sessionId: string) => browser(snapshot, sessionId) } : {}),
           ...(partsProvider

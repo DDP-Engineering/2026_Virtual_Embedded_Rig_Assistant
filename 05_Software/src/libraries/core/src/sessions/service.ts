@@ -47,6 +47,7 @@ import { issuedLogRefs, validateCitations, withinIssued } from "../agent/citatio
 import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths } from "../agent/message-images.js";
+import type { ModelCalibrationStore } from "../agent/model-calibration.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type {
@@ -127,6 +128,7 @@ export interface SessionHost {
   db: Database.Database;
   root: string;
   gateway: LlmGateway;
+  modelCalibrations?: ModelCalibrationStore;
   clock: Clock;
   model(session: string | null): string;
   prompt(mode: PermissionMode): string;
@@ -1465,6 +1467,29 @@ export class SessionService {
     this.compactors.set(id, compactor);
     return compactor;
   }
+  private contextGateway(id: string, compactor: ContextCompactor, model: string, fresh = false) {
+    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
+    const calibration = this.host.modelCalibrations?.forModel(model);
+    const eligible = fresh || compactor.applicationCalibration?.modelRef === model;
+    if (!eligible) compactor.applicationCalibration = undefined;
+    if (!calibration) return { gateway, calibration };
+    let consulted = false;
+    return {
+      calibration,
+      gateway: {
+        ...gateway,
+        prepareModel: async (reference: string, signal?: AbortSignal) => {
+          await gateway.prepareModel?.(reference, signal);
+          if (!calibration.isCurrent()) compactor.applicationCalibration = undefined;
+          if (!eligible || consulted || compactor.calibration || !compactor.settings.calibrated) return;
+          consulted = true;
+          const ratio = await calibration.read();
+          signal?.throwIfAborted();
+          compactor.applicationCalibration = ratio === undefined ? undefined : { modelRef: reference, ratio };
+        },
+      },
+    };
+  }
   private startTurn(
     row: SessionRow,
     text: string,
@@ -1703,7 +1728,13 @@ export class SessionService {
     );
     const contextCompactor = this.compactor(id);
     contextCompactor.settings = this.compactionSettings(id);
-    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
+    const history = this.transcript(id);
+    const { gateway, calibration } = this.contextGateway(
+      id,
+      contextCompactor,
+      model,
+      !history.some((message) => message.role === "user"),
+    );
     let initialReasoning = staged?.reasoning;
     const self = this;
     const runtimeHost: RuntimeHost = {
@@ -1771,6 +1802,7 @@ export class SessionService {
               (acceptsImages(capabilities) && !self.host.disabledTools?.includes(tool.name))
             );
           });
+          if (calibration && !calibration.isCurrent()) contextCompactor.applicationCalibration = undefined;
           const view = contextPolicy.prepare(
             { system: request.system, tools, messages },
             capabilities,
@@ -1915,7 +1947,7 @@ export class SessionService {
           ].join("\n"),
       model,
       tools,
-      messages: this.transcript(id),
+      messages: history,
       contextPolicy,
       contextCompactor,
       maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? this.resolveAdvanced(id, "toolCallsPerTurn"),
@@ -1996,7 +2028,11 @@ export class SessionService {
       const next =
         event.type === "message.user"
           ? this.process(id, event, transcript, turn)
-          : processing.then(() => this.process(id, event, transcript, turn, program));
+          : processing.then(async () => {
+              await this.process(id, event, transcript, turn, program);
+              if (!turn.failed && event.type === "usage.updated" && event.calibration?.modelRef === model)
+                await calibration?.save(event.calibration.ratio);
+            });
       processing = next.catch(() => {
         failed = true;
         turn.failed = true;
@@ -2281,7 +2317,9 @@ export class SessionService {
     if (this.active.has(id) || this.deleting.has(id) || this.compacting.has(id) || this.closing)
       throw veraError("BUSY");
     const model = this.host.model(row.model_ref);
-    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
+    const contextCompactor = this.compactor(id);
+    contextCompactor.settings = this.compactionSettings(id);
+    const { gateway } = this.contextGateway(id, contextCompactor, model);
     const self = this;
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
@@ -2313,8 +2351,6 @@ export class SessionService {
     };
     const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
     if (!runtime.compact) return "unavailable";
-    const contextCompactor = this.compactor(id);
-    contextCompactor.settings = this.compactionSettings(id);
     runtime.start({
       systemPrompt: this.host.prompt(row.permission_mode),
       model,

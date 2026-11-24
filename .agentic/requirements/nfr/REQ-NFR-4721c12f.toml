@@ -7,20 +7,20 @@ title = "Calibrate the request token count from provider-reported usage"
 status = "active"
 
 requirement = """
-When the provider has reported input usage for an earlier normal request of the session with the same model, the context policy shall count each request as its conservative byte estimate scaled by the ratio of reported input tokens to the conservative estimate of the most recent such request whose ratio is at least 0.12, increased by 10% and never above the conservative estimate, and shall keep that ratio across application restart; without such a report it shall use the conservative estimate.
+When provider token counts are enabled, the context policy shall use the same model's accepted session ratio or, on the first request of a fresh session, the most recently saved ratio for that provider and model in the same application data folder, applying the configured margin (10% by default) and capping the result at the conservative estimate, with conservative counting for a cold model or a switch to a different model in an existing session.
 """
 
-verification = "Replay a session whose first request is reported at a quarter of its conservative estimate: the next request counts ceil(estimate x ratio x 1.1); a ratio above 1 is capped at the conservative estimate; a report below 0.12 of the estimate (a partial count from a prefix-caching server) leaves the earlier ratio in place; a model change or a session without reports counts the conservative estimate; after a database restart the first request counts with the saved ratio and no summary call runs."
+verification = "Measure an accepted normal request, then start a fresh session using the same application data folder and model and verify the first dispatch uses ceil(estimate x ratio x 1.1), capped at the conservative estimate. With a different model, connection or data folder, a cold request uses the conservative estimate. A report below 0.12, corrupt or unavailable cache and disabled provider counts introduce no scale. A second CLI invocation dispatches a warm plugin-heavy request that a cold 32K session refuses."
 
-affected_paths = ["05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/libraries/shared/src/events.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/model-calibration.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/agent/context.test.ts", "05_Software/src/libraries/core/src/agent/runtime-calibration.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts", "05_Software/src/libraries/core/src/agent/prompt-usage.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/context.test.ts", "05_Software/src/libraries/core/src/agent/model-calibration.test.ts", "05_Software/src/libraries/core/src/agent/runtime-calibration.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts", "05_Software/src/libraries/core/src/agent/prompt-usage.test.ts", "05_Software/tests/integration/cli.test.ts"]
 
 
-spec = ""
+spec = "specs/REQ-NFR-4721c12f.md"
 
 priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-24
