@@ -71,6 +71,7 @@ matches VERA's default context window for a custom endpoint; `low` keeps the rea
 | Accepted reference runs | `evaluators/<family>/baselines/<YYYY-MM-DD>-<platform>-<label>/` | yes, chosen deliberately |
 | Code shared by several families | [`evaluators/shared/`](shared/README.md) | yes |
 | Generated runs | [`../evaluation-outputs/<family>/<run-id>/`](../evaluation-outputs/README.md) | no |
+| Reports prepared for users (HTML, PPTX, DOCX) | [`06_SoftwareDocu/`](../../06_SoftwareDocu/README.md), relative to the repository root | yes, chosen deliberately |
 | Scratch: profiles, databases, intermediate builds | a temporary folder of the harness, or `node_modules/.cache/evaluators/<family>/` | no |
 | Tests of the harness code | `../tests/tooling/` and `../tests/integration/` | yes |
 
@@ -81,6 +82,17 @@ Rules:
 - **One folder per run:** `evaluation-outputs/<family>/<YYYYMMDD-HHMMSS>-<label>/`, holding `run.json`
   and the reports made from it. The harness creates missing parent folders and refuses an existing
   output file.
+- **Date reports and evidence:** use a leading `YYYY-MM-DD` and a descriptive label for manually
+  named run folders and reports. Add `HHMMSS` when needed to distinguish runs on the same date.
+  Keep the harness's timestamp on automatically named runs. A run's standard `run.json` and
+  `report.html` inherit the date from their parent folder.
+- **Keep a comparable history:** retain selected complete runs with their `run.json` and report
+  under the same family. Reuse the label for the same setup, for example
+  `evaluation-outputs/compaction/YYYY-MM-DD-qwen-32k/`. Record changes to the cases, model or settings
+  before interpreting differences between dates. Archive intermediate attempts separately from this history.
+- **Use the repository-relative report destination:** save an HTML, PPTX or DOCX prepared for a user
+  in `06_SoftwareDocu/YYYY-MM-DD-<subject>.<ext>`. Keep harness-generated reports and raw evidence in
+  their run folders. Use repository-relative links from a presentation report to its evidence when practical.
 - **Baselines** hold `run.json` (the evidence the harness compares against), `NOTES.md` (host, why it
   was accepted, limits) and, when one exists, the report. A baseline is promoted from a run by
   copying it in a reviewed change; a run never promotes itself.

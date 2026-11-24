@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Metoda, configurația și rezultatele evaluării a patru modele locale în VERA după corecția citărilor.">
+<link rel="icon" href="data:,">
+<title>Evaluarea modelelor locale în VERA</title>
+<style>
+:root { color-scheme: light; --paper:#f5f4ed; --white:#fffef9; --ink:#172725; --muted:#4b625e; --line:#d4dfd7; --green:#075c4c; --mint:#c8f2e3; --deep:#092b28; --old:#889d97; --warn:#79500d; --warn-bg:#fff1ce; }
+* { box-sizing:border-box; }
+html { scroll-padding-top:4.7rem; }
+body { margin:0; background:var(--paper); color:var(--ink); font:1rem/1.65 "Segoe UI",system-ui,sans-serif; }
+a { color:var(--green); text-underline-offset:.18em; }
+a:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline:3px solid #11866d; outline-offset:4px; }
+.wrap { width:min(100% - 3rem, 1120px); margin-inline:auto; }
+.hero { background:var(--deep); color:#fffef9; padding:3.5rem 0 3.15rem; }
+.hero .label { color:#a9dfd1; letter-spacing:.05em; font-weight:700; }
+h1,h2,h3,h4,p,figure { margin:0; }
+h1,h2 { font-family:Georgia, serif; font-weight:600; letter-spacing:-.022em; }
+h1 { max-width:20ch; font-size:clamp(2.55rem,6.5vw,5.8rem); line-height:.99; margin:.65rem 0 1.1rem; }
+.hero .lede { max-width:72ch; color:#e2eee6; font-size:clamp(1.05rem,2vw,1.28rem); }
+.hero .meta { margin-top:1.1rem; color:#b9d5ce; font-size:.9rem; }
+nav { position:sticky; z-index:2; top:0; background:var(--paper); border-bottom:1px solid var(--line); }
+nav .wrap { display:flex; flex-wrap:wrap; gap:.2rem 1.45rem; padding:.7rem 0; }
+nav a { font-size:.93rem; font-weight:650; }
+main { padding:1.75rem 0 3rem; }
+.numbers,.two { display:grid; gap:1rem; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.numbers { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.number,.panel,.table-scroll { background:var(--white); border:1px solid var(--line); border-radius:.85rem; }
+.number,.panel { padding:1.05rem 1.2rem; }
+.number strong { display:block; color:var(--green); font-size:clamp(1.55rem,3vw,2.3rem); letter-spacing:-.04em; line-height:1.22; }
+.number.down strong { color:var(--warn); }
+section { margin-top:3rem; }
+h2 { padding-top:.75rem; border-top:1px solid var(--line); font-size:clamp(1.65rem,4vw,2.6rem); line-height:1.15; margin-bottom:.8rem; }
+h3 { font-size:1.13rem; margin-bottom:.3rem; line-height:1.35; }
+section > h3 { margin-top:1.4rem; }
+h4 { font-size:.96rem; }
+p + p { margin-top:.65rem; }
+.fine,small,figcaption { color:var(--muted); font-size:.89rem; }
+small { display:block; }
+.table-scroll { overflow:auto; margin:.85rem 0; }
+table { width:100%; border-collapse:collapse; font-size:.92rem; }
+caption { text-align:left; padding:.6rem .8rem; font-weight:650; background:#edf3ed; }
+thead th { background:#eaf2eb; color:var(--deep); line-height:1.28; }
+th,td { text-align:left; padding:.7rem .8rem; border-bottom:1px solid var(--line); vertical-align:top; }
+tbody tr:last-child > * { border-bottom:0; }
+tbody tr:nth-child(even) { background:#f7faf4; }
+td { font-variant-numeric:tabular-nums; }
+.stat td { white-space:nowrap; }
+.status { display:inline-block; padding:.08rem .46rem; border-radius:.4rem; font-weight:700; }
+.status.ok { background:#e1f3e9; color:#115644; }
+.status.warn { background:var(--warn-bg); color:var(--warn); }
+.note { margin:.85rem 0; padding:.75rem 1rem; border-left:4px solid #bd8832; background:var(--warn-bg); border-radius:0 .5rem .5rem 0; }
+code { font-family:Consolas,monospace; font-size:.89em; overflow-wrap:anywhere; }
+.method dd { margin:0 0 .7rem; }
+.method dt { font-weight:700; }
+details { margin:.9rem 0; }
+summary { color:var(--green); cursor:pointer; font-weight:700; }
+.chart { margin-top:.8rem; }
+.chart figcaption { margin-top:.8rem; }
+.series { margin-top:.95rem; }
+.bar-row { display:grid; grid-template-columns:5.6rem minmax(2rem,1fr) 3.4rem; align-items:center; gap:.55rem; font-size:.84rem; margin-top:.28rem; }
+.bar-row strong { text-align:right; font-variant-numeric:tabular-nums; }
+.rail { height:.7rem; border-radius:.4rem; background:#e7eee8; overflow:hidden; }
+.rail span { display:block; height:100%; border-radius:inherit; }
+.rail .prior { background:var(--old); }
+.rail .after { background:#137461; }
+.arrow { color:var(--muted); padding-inline:.25rem; }
+.examples .panel { min-width:0; }
+.examples .question { font-size:.92rem; font-weight:600; }
+blockquote { margin:.75rem 0; padding:.6rem .75rem; border-left:3px solid #6ea694; background:#edf5ee; overflow-wrap:anywhere; }
+ul { padding-left:1.25rem; }
+li + li { margin-top:.35rem; }
+footer { margin-top:2.2rem; border-top:1px solid var(--line); padding-top:.75rem; }
+@media (max-width:720px) { .wrap { width:min(100% - 1.5rem, 1120px); } .two,.numbers { grid-template-columns:1fr; } .hero { padding:2.2rem 0; } nav { position:static; } html { scroll-padding-top:.6rem; } }
+@media print { @page { margin:14mm; } html { scroll-padding:0; } body { background:white; font-size:10pt; } .wrap { width:100%; } .hero { color:var(--ink); background:white; padding:0; } .hero .label,.hero .lede,.hero .meta { color:var(--ink); } h1 { font-size:28pt; } nav { display:none; } section { margin-top:1.4rem; } .panel,.number,tr { break-inside:avoid; } .table-scroll { overflow:visible; } th,td { padding:.32rem .38rem; } table { font-size:8.5pt; } h2,h3 { break-after:avoid; } .rail span { print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="label">VERA · Raport de evaluare</p>
+    <h1>Modele locale în VERA</h1>
+    <p class="lede">Patru modele, același set de cazuri. Raportul măsoară compatibilitatea cu instrumentele VERA, răspunsurile bazate pe documente și evoluția citărilor după corecția #383.</p>
+    <p class="meta">Rulări 23–24 noiembrie 2026 · Bază de comparație 21 noiembrie 2026 · Corecție <code>bbe3e7f0</code></p>
+  </div>
+</header>
+<nav aria-label="Cuprins"><div class="wrap">
+  <a href="#metoda">Metodă</a><a href="#configuratie">Configurație</a><a href="#rezultate">Rezultate</a><a href="#evolutie">Evoluție</a><a href="#exemple">Exemple</a><a href="#surse">Surse și limite</a>
+</div></nav>
+<main class="wrap">
+  <div class="numbers" aria-label="Rezultate principale">
+    <div class="number"><strong>+88,1 pp</strong>Muse, răspunsuri cu citare validă în grounding</div>
+    <div class="number"><strong>16,4 s</strong>Inkling, cea mai mică durată medie în compatibilitate</div>
+    <div class="number down"><strong>−11,1 pp</strong>Qwen, scor de abținere în grounding</div>
+  </div>
+
+  <section id="metoda" aria-labelledby="metoda-titlu">
+    <h2 id="metoda-titlu">Metoda de testare</h2>
+    <div class="two">
+      <article class="panel"><h3>Compatibilitate · 30 de rulări pe model</h3>
+        <p>Zece sarcini fixe, câte trei repetări. Suita verifică citirea și căutarea, citarea, apelurile cu argumente stricte, răspunsul în română, analiza unui log, propunerea unei editări și generarea unui răspuns lung. Editarea este propusă, iar aprobarea este refuzată de evaluator.</p>
+      </article>
+      <article class="panel"><h3>Grounding · 120 de rulări pe model</h3>
+        <p>Patruzeci de întrebări, câte trei repetări. În 28 de cazuri, documentele plăcii fictive conțin răspunsul. În celelalte 12, evaluatorul verifică dacă modelul spune că informația lipsește și dacă introduce valori pe care sursele accesate nu le susțin.</p>
+      </article>
+    </div>
+    <p class="fine" style="margin-top:.75rem">În cele opt rulări finale sunt 600 de repetări. Evaluatoarele rulează agentul real VERA prin CLI, cu instrumentele web dezactivate. Regulile de punctare citesc evenimentele, răspunsurile, referințele și rezultatele instrumentelor. Fiecare repetare are o limită de 600 s.</p>
+    <details><summary>Definiții, numitori și praguri</summary>
+      <dl class="method">
+        <dt>Compatibilitate</dt><dd>O sarcină trece dacă turnul se încheie normal și sunt îndeplinite cerințele cazului. Procentul de citări valide împarte numărul de citări verificate la toate citările detectate de VERA.</dd>
+        <dt>Grounding</dt><dd>Exactitatea și cele două măsuri de citare se calculează pe 84 de răspunsuri pe model. „Cu citare validă” cere cel puțin una. „La sursa așteptată” cere ca una dintre citările valide să acopere documentul sau pagina stabilită pentru caz. Abținerea și valorile nesusținute se calculează pe cele 36 de rulări în care informația lipsește.</dd>
+        <dt>Viteză</dt><dd>Timpul până la primul token pornește odată cu procesul CLI și se oprește la primul fragment de răspuns sau de reasoning. Durata totală se oprește la ieșirea procesului. Tokenii pe secundă folosesc durata totală, care include apelurile de instrumente. Media primului token include rulările care au emis un fragment.</dd>
+        <dt>Praguri</dt><dd>Compatibilitatea cere cel puțin 95% turnuri încheiate, 80% sarcini rezolvate și 80% citări valide, cu cel mult 5% argumente respinse. Grounding cere cel puțin 85% exactitate, 60% citări la sursa așteptată, 80% abținere și cel mult 10% răspunsuri cu valori nesusținute.</dd>
+      </dl>
+    </details>
+  </section>
+
+  <section id="configuratie" aria-labelledby="config-titlu">
+    <h2 id="config-titlu">Configurația modelelor</h2>
+    <p>Modelele au rulat pe același endpoint LM Studio, pe rând, cu fereastra încărcată la 32.768 de tokeni. Parametrii de mai jos provin din metadatele serverului capturate de evaluator.</p>
+    <div class="table-scroll" role="region" aria-label="Configurația modelelor" tabindex="0">
+      <table class="stat"><thead><tr><th scope="col">Model și ID</th><th scope="col">Arhitectură</th><th scope="col">Cuantizare</th><th scope="col">Context încărcat</th><th scope="col">Context maxim raportat</th><th scope="col">Reasoning</th></tr></thead>
+      <tbody><tr><th scope="row"><strong>Qwen 3.8 27B</strong><small><code>qwen/qwen3.8-27b</code></small></th><td><code>qwen35</code></td><td><code>Q4_K_M</code></td><td>32 768</td><td>262 144</td><td><code>low</code></td></tr><tr><th scope="row"><strong>Muse Glimmer</strong><small><code>meta/muse-glimmer</code></small></th><td><code>muse-glimmer</code></td><td><code>Q4_K_M</code></td><td>32 768</td><td>131 072</td><td><code>low</code></td></tr><tr><th scope="row"><strong>Inkling 2 Mini</strong><small><code>thinkingmachines/inkling-2-mini</code></small></th><td><code>inkling2_loop</code></td><td><code>Q4_K_M</code></td><td>32 768</td><td>1 048 576</td><td><code>low</code></td></tr><tr><th scope="row"><strong>Ternary Bonsai 2 27B</strong><small><code>ternary-bonsai-2-27b</code></small></th><td><code>qwen35</code></td><td><code>Q2_0</code></td><td>32 768</td><td>262 144</td><td>Implicit pe server (<code>on</code>)</td></tr></tbody></table>
+    </div>
+    <p class="fine">Clientul de test a rulat pe Windows x64, Node.js 24.21.0. Rularea de referință documentează un RTX 5090 Laptop de 24 GiB. Rulările finale nu consemnează modelul GPU, fracția mutată pe GPU, temperatura sau un seed. Interfața compatibilă OpenAI a respins valoarea explicită <code>on</code> pentru Bonsai, iar rezultatele din raport folosesc varianta cu setarea implicită a serverului.</p>
+  </section>
+
+  <section id="rezultate" aria-labelledby="rez-titlu">
+    <h2 id="rez-titlu">Rezultate pe model</h2>
+    <h3>Compatibilitate și viteză</h3>
+    <div class="table-scroll" role="region" aria-label="Rezultatele de compatibilitate" tabindex="0">
+      <table class="stat"><thead><tr><th scope="col">Model</th><th scope="col">Primul token<br>mediu</th><th scope="col">Durată<br>medie</th><th scope="col">Tokeni/s<br>pe sarcină</th><th scope="col">Sarcini<br>rezolvate</th><th scope="col">Citări<br>valide</th><th scope="col">Turnuri<br>încheiate</th><th scope="col">Verdict</th></tr></thead>
+      <tbody><tr><th scope="row"><strong>Qwen 3.8 27B</strong></th><td>6,8 s</td><td>20,6 s</td><td>38,9</td><td>29/30</td><td>95,7% <small>45/47</small></td><td>29/30</td><td><span class="status ok">Recomandat</span></td></tr><tr><th scope="row"><strong>Muse Glimmer</strong></th><td>23,7 s</td><td>35,7 s</td><td>21,1</td><td>28/30</td><td>93,3% <small>56/60</small></td><td>30/30</td><td><span class="status ok">Recomandat</span></td></tr><tr><th scope="row"><strong>Inkling 2 Mini</strong></th><td>10,2 s</td><td>16,4 s</td><td>24,7</td><td>26/30</td><td>82,1% <small>46/56</small></td><td>30/30</td><td><span class="status ok">Recomandat</span></td></tr><tr><th scope="row"><strong>Ternary Bonsai 2 27B</strong></th><td>18,7 s</td><td>31,6 s</td><td>25,4</td><td>25/30</td><td>89,7% <small>35/39</small></td><td>27/30</td><td><span class="status warn">Degradat</span></td></tr></tbody></table>
+    </div>
+    <p>Qwen a rezolvat 29 din 30 de sarcini și a dat cel mai repede primul semn de răspuns. Inkling a avut cea mai mică durată medie totală. Bonsai a atins limita de generare în toate cele trei repetări ale răspunsului lung și a ratat citarea în două dintre cele trei repetări ale citirii din fișier.</p>
+    <details><summary>Rezultatele celor 10 cazuri de compatibilitate</summary>
+      <div class="table-scroll" role="region" aria-label="Rezultate pe caz de compatibilitate" tabindex="0">
+        <table class="stat"><caption>Repetări care au trecut pentru fiecare caz</caption><thead><tr><th scope="col">Caz</th><th scope="col">Qwen</th><th scope="col">Muse</th><th scope="col">Inkling</th><th scope="col">Bonsai</th></tr></thead><tbody><tr><th scope="row">Citire și citare din fișier</th><td>3/3</td><td>3/3</td><td>0/3</td><td>1/3</td></tr><tr><th scope="row">Comparație între două fișiere</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Decodarea unui registru</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Căutare și citare a paginii</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Răspuns în română</th><td>3/3</td><td>3/3</td><td>2/3</td><td>3/3</td></tr><tr><th scope="row">Propunerea unei editări</th><td>3/3</td><td>1/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Listă detaliată de verificări</th><td>2/3</td><td>3/3</td><td>3/3</td><td>0/3</td></tr><tr><th scope="row">Analiza unui log</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Listarea fișierelor</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr><tr><th scope="row">Căutarea a două informații</th><td>3/3</td><td>3/3</td><td>3/3</td><td>3/3</td></tr></tbody></table>
+      </div>
+    </details>
+
+    <h3>Grounding</h3>
+    <div class="table-scroll" role="region" aria-label="Rezultatele de grounding" tabindex="0">
+      <table class="stat"><thead><tr><th scope="col">Model</th><th scope="col">Exactitate</th><th scope="col">Cu citare<br>validă</th><th scope="col">La sursa<br>așteptată</th><th scope="col">Abținere</th><th scope="col">Cu valori<br>nesusținute</th><th scope="col">Durată<br>medie</th><th scope="col">Verdict</th></tr></thead>
+      <tbody><tr><th scope="row"><strong>Qwen 3.8 27B</strong></th><td>98,8%</td><td>98,8%</td><td>94,0%</td><td>80,6%</td><td>19,4%</td><td>15,0 s</td><td><span class="status warn">Prag depășit</span></td></tr><tr><th scope="row"><strong>Muse Glimmer</strong></th><td>100,0%</td><td>98,8%</td><td>98,8%</td><td>88,9%</td><td>2,8%</td><td>66,0 s</td><td><span class="status ok">Trece</span></td></tr><tr><th scope="row"><strong>Inkling 2 Mini</strong></th><td>95,2%</td><td>100,0%</td><td>91,7%</td><td>91,7%</td><td>0,0%</td><td>15,5 s</td><td><span class="status ok">Trece</span></td></tr><tr><th scope="row"><strong>Ternary Bonsai 2 27B</strong></th><td>100,0%</td><td>100,0%</td><td>95,2%</td><td>86,1%</td><td>2,8%</td><td>34,9 s</td><td><span class="status ok">Trece</span></td></tr></tbody></table>
+    </div>
+    <p>Muse și Bonsai au găsit toate valorile așteptate. Inkling a avut cea mai mare abținere și niciun răspuns cu valori nesusținute în cazurile fără răspuns. Qwen a depășit pragul de 10% pentru valori nesusținute, cu 7 din 36 de răspunsuri. Două repetări Bonsai și o repetare Muse au atins limita de 600 s.</p>
+  </section>
+
+  <section id="evolutie" aria-labelledby="evo-titlu">
+    <h2 id="evo-titlu">Evoluția după #383</h2>
+    <p>Promptul și instrumentul Help cer acum referința exactă emisă de instrument și oferă exemple concrete, precum <code>[[docs/pinout.csv#L7-L8]]</code>. Etichetele, prefixele adăugate și șablonul literal <code>[[ref]]</code> rămân formate invalide.</p>
+    <div class="two chart">
+      <figure class="panel"><h3>Compatibilitate</h3><div class="series"><h4>Qwen 3.8 27B</h4><div class="bar-row"><span>21 nov.</span><div class="rail" aria-hidden="true"><span class="prior" style="width:80.9000%"></span></div><strong>80,9%</strong></div><div class="bar-row"><span>23–24 nov.</span><div class="rail" aria-hidden="true"><span class="after" style="width:95.7447%"></span></div><strong>95,7%</strong></div></div><div class="series"><h4>Muse Glimmer</h4><div class="bar-row"><span>21 nov.</span><div class="rail" aria-hidden="true"><span class="prior" style="width:46.2000%"></span></div><strong>46,2%</strong></div><div class="bar-row"><span>23–24 nov.</span><div class="rail" aria-hidden="true"><span class="after" style="width:93.3333%"></span></div><strong>93,3%</strong></div></div><figcaption>Citări valide din totalul citărilor detectate.</figcaption></figure>
+      <figure class="panel"><h3>Grounding</h3><div class="series"><h4>Qwen 3.8 27B</h4><div class="bar-row"><span>21 nov.</span><div class="rail" aria-hidden="true"><span class="prior" style="width:81.0000%"></span></div><strong>81,0%</strong></div><div class="bar-row"><span>23–24 nov.</span><div class="rail" aria-hidden="true"><span class="after" style="width:98.8095%"></span></div><strong>98,8%</strong></div></div><div class="series"><h4>Muse Glimmer</h4><div class="bar-row"><span>21 nov.</span><div class="rail" aria-hidden="true"><span class="prior" style="width:10.7000%"></span></div><strong>10,7%</strong></div><div class="bar-row"><span>23–24 nov.</span><div class="rail" aria-hidden="true"><span class="after" style="width:98.8095%"></span></div><strong>98,8%</strong></div></div><figcaption>Răspunsuri cu cel puțin o citare validă, dintre întrebările cu răspuns în documente.</figcaption></figure>
+    </div>
+    <div class="table-scroll" role="region" aria-label="Indicatori înainte și după corecție" tabindex="0">
+      <table class="stat"><caption>21 noiembrie → 23–24 noiembrie</caption><thead><tr><th scope="col">Indicator</th><th scope="col">Qwen</th><th scope="col">Muse</th></tr></thead>
+      <tbody><tr><th scope="row">Sarcini rezolvate · compatibilitate</th><td>83,3% <span class="arrow">→</span> <strong>96,7%</strong></td><td>46,7% <span class="arrow">→</span> <strong>93,3%</strong></td></tr><tr><th scope="row">Durată medie · compatibilitate</th><td>17,1 s <span class="arrow">→</span> <strong>20,6 s</strong></td><td>31,7 s <span class="arrow">→</span> <strong>35,7 s</strong></td></tr><tr><th scope="row">Exactitate · grounding</th><td>98,8% <span class="arrow">→</span> <strong>98,8%</strong></td><td>100,0% <span class="arrow">→</span> <strong>100,0%</strong></td></tr><tr><th scope="row">Abținere · grounding</th><td>91,7% <span class="arrow">→</span> <strong>80,6%</strong></td><td>86,1% <span class="arrow">→</span> <strong>88,9%</strong></td></tr><tr><th scope="row">Valori nesusținute · grounding</th><td>16,7% <span class="arrow">→</span> <strong>19,4%</strong></td><td>2,8% <span class="arrow">→</span> <strong>2,8%</strong></td></tr></tbody></table>
+    </div>
+    <p class="note"><strong>Abținerea Qwen rămâne sub referință.</strong> Citările s-au îmbunătățit pentru ambele modele, iar exactitatea a rămas stabilă la precizia raportată. Scorul de abținere Qwen a scăzut de la 91,7% la 80,6%, iar rata valorilor nesusținute a crescut de la 16,7% la 19,4%.</p>
+    <p class="fine">Referința folosește cifrele documentate în evaluatoare. JSON-urile originale din 21 noiembrie nu au fost disponibile pentru o comparație pereche. Pentru Inkling și Bonsai, raportul prezintă prima măsurătoare din această serie. Gemma apare în matricea istorică de compatibilitate.</p>
+  </section>
+
+  <section id="exemple" aria-labelledby="ex-titlu">
+    <h2 id="ex-titlu">Exemple din rulări</h2>
+    <div class="two examples">
+      <article class="panel"><h3>Muse · referință validă</h3><p class="question" lang="en">Read board.txt and tell me which supply voltage it states. Cite the file.</p><blockquote lang="en">Board uses 3.3 V. [[board.txt#L1-L2]]</blockquote><p class="fine">Valoarea de 3,3 V și referința la liniile emise de instrument trec verificarea.</p></article>
+      <article class="panel"><h3>Bonsai · răspuns corect, citare invalidă</h3><p class="question" lang="en">Read board.txt and tell me which supply voltage it states. Cite the file.</p><blockquote lang="en">board.txt states the board uses 3.3 V [[board.txt#L1]].</blockquote><p class="fine">Valoarea este corectă. Referința cu <code>#L1</code> e invalidă conform validatorului, iar repetarea nu trece.</p></article>
+      <article class="panel"><h3>Qwen · valoare nesusținută</h3><p class="question" lang="en">What is the maximum SCL rise time in fast mode?</p><blockquote lang="en">Per the standard I2C bus specification, the maximum SCL rise time (t_rise) in fast mode (400 kHz) is 300 ns. This is the standard limit defined by the I2C specification for devices operating at 400 kHz with the 100 pF maximum bus capacitance.</blockquote><p class="fine">Răspunsul citează corect fișa pentru alte caracteristici. Evaluatorul marchează valoarea de 300 ns drept nesusținută de dovezile accesate în această rulare.</p></article>
+      <article class="panel"><h3>Inkling · abținere cu explicație</h3><p class="question">Ce adresă I2C are memoria EEPROM de pe VERA-DEMO-01?</p><blockquote>Dacă te referi la senzorul extern, adresa este 0x48; dacă există o EEPROM pe placă, nu este documentată în sursele disponibile — nu pot afirma o adresă fără dovezi.</blockquote><p class="fine">Modelul atribuie adresa senzorului și spune explicit că adresa EEPROM lipsește din surse. Repetarea trece.</p></article>
+    </div>
+  </section>
+
+  <section id="surse" aria-labelledby="surse-titlu">
+    <h2 id="surse-titlu">Surse și limite</h2>
+    <ul>
+      <li>Testele folosesc un singur workbench demonstrativ și trei repetări pe caz. Rezultatele descriu configurațiile și întrebările testate.</li>
+      <li>Scorarea folosește tipare pentru valori, limbă și abținere. Formulări precum <span lang="en">“contains no CAN bus information”</span> pot exprima abținere fără să fie recunoscute de evaluator. Scorul numeric din raport rămâne cel calculat de evaluator.</li>
+      <li>Prima evaluare Muse de grounding a fost oprită după o schimbare a contextului raportat de server. Tabelul folosește reluarea completă la 32.768. Pentru Bonsai, cererile respinse cu <code>on</code> explicit sunt excluse.</li>
+      <li>Fișierele de rulare consemnează instantanee diferite ale aceluiași checkout în lucru. În fiecare familie, toate cele patru rulări finale au aceleași amprente ale cazurilor și evaluatorului.</li>
+    </ul>
+    <p>Rapoartele de mai jos oferă rezultatele pe caz și datele brute. Legăturile sunt disponibile în checkouturile care păstrează rulările locale din <code>05_Software/evaluation-outputs/</code>.</p>
+    <div class="table-scroll" role="region" aria-label="Rapoartele și datele brute" tabindex="0">
+      <table><thead><tr><th scope="col">Model</th><th scope="col">Compatibilitate</th><th scope="col">Grounding</th></tr></thead><tbody><tr><th scope="row"><strong>Qwen 3.8 27B</strong></th><td><a href="../05_Software/evaluation-outputs/models/2026-11-23-195637-issue-383-qwen/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/models/2026-11-23-195637-issue-383-qwen/run.json">JSON</a></td><td><a href="../05_Software/evaluation-outputs/grounding/2026-11-23-200706-issue-383-qwen/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/grounding/2026-11-23-200706-issue-383-qwen/run.json">JSON</a></td></tr><tr><th scope="row"><strong>Muse Glimmer</strong></th><td><a href="../05_Software/evaluation-outputs/models/2026-11-23-203743-issue-383-muse/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/models/2026-11-23-203743-issue-383-muse/run.json">JSON</a></td><td><a href="../05_Software/evaluation-outputs/grounding/2026-11-23-224205-issue-383-muse/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/grounding/2026-11-23-224205-issue-383-muse/run.json">JSON</a></td></tr><tr><th scope="row"><strong>Inkling 2 Mini</strong></th><td><a href="../05_Software/evaluation-outputs/models/2026-11-23-221448-issue-383-inkling/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/models/2026-11-23-221448-issue-383-inkling/run.json">JSON</a></td><td><a href="../05_Software/evaluation-outputs/grounding/2026-11-24-005544-issue-383-inkling/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/grounding/2026-11-24-005544-issue-383-inkling/run.json">JSON</a></td></tr><tr><th scope="row"><strong>Ternary Bonsai 2 27B</strong></th><td><a href="../05_Software/evaluation-outputs/models/2026-11-23-222536-issue-383-bonsai/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/models/2026-11-23-222536-issue-383-bonsai/run.json">JSON</a></td><td><a href="../05_Software/evaluation-outputs/grounding/2026-11-24-012715-issue-383-bonsai/report.html">HTML</a> · <a href="../05_Software/evaluation-outputs/grounding/2026-11-24-012715-issue-383-bonsai/run.json">JSON</a></td></tr></tbody></table>
+    </div>
+    <p><a href="../05_Software/evaluation-outputs/models/issue-383-20261123-195600-matrix.html">Matricea de compatibilitate</a> · <a href="../05_Software/evaluators/models/README.md">Metoda și referința de compatibilitate</a> · <a href="../05_Software/evaluators/grounding/README.md">Metoda și referința de grounding</a></p>
+    <details><summary>Trasabilitatea rulărilor · ora României</summary>
+      <div class="table-scroll" role="region" aria-label="Trasabilitatea rulărilor" tabindex="0">
+        <table class="stat"><thead><tr><th scope="col">Model și suită</th><th scope="col">Început</th><th scope="col">Sfârșit</th><th scope="col">HEAD la pornire</th><th scope="col">Amprentă evaluator</th><th scope="col">Amprentă cazuri</th></tr></thead><tbody><tr><th scope="row">Qwen 3.8 27B · Compatibilitate</th><td>23.11.2026, 19:56</td><td>23.11.2026, 20:07</td><td><code>ad14b3b5</code></td><td><code>79f81b6be169</code></td><td><code>dd3ce89cb792</code></td></tr><tr><th scope="row">Muse Glimmer · Compatibilitate</th><td>23.11.2026, 20:37</td><td>23.11.2026, 20:55</td><td><code>ad14b3b5</code></td><td><code>79f81b6be169</code></td><td><code>dd3ce89cb792</code></td></tr><tr><th scope="row">Inkling 2 Mini · Compatibilitate</th><td>23.11.2026, 22:14</td><td>23.11.2026, 22:23</td><td><code>81034265</code></td><td><code>79f81b6be169</code></td><td><code>dd3ce89cb792</code></td></tr><tr><th scope="row">Ternary Bonsai 2 27B · Compatibilitate</th><td>23.11.2026, 22:25</td><td>23.11.2026, 22:41</td><td><code>81034265</code></td><td><code>79f81b6be169</code></td><td><code>dd3ce89cb792</code></td></tr><tr><th scope="row">Qwen 3.8 27B · Grounding</th><td>23.11.2026, 20:07</td><td>23.11.2026, 20:37</td><td><code>ad14b3b5</code></td><td><code>7b1685936cbc</code></td><td><code>179bd511123d</code></td></tr><tr><th scope="row">Muse Glimmer · Grounding</th><td>23.11.2026, 22:42</td><td>24.11.2026, 00:55</td><td><code>81034265</code></td><td><code>7b1685936cbc</code></td><td><code>179bd511123d</code></td></tr><tr><th scope="row">Inkling 2 Mini · Grounding</th><td>24.11.2026, 00:55</td><td>24.11.2026, 01:27</td><td><code>81034265</code></td><td><code>7b1685936cbc</code></td><td><code>179bd511123d</code></td></tr><tr><th scope="row">Ternary Bonsai 2 27B · Grounding</th><td>24.11.2026, 01:27</td><td>24.11.2026, 02:37</td><td><code>81034265</code></td><td><code>7b1685936cbc</code></td><td><code>179bd511123d</code></td></tr></tbody></table>
+      </div>
+    </details>
+  </section>
+  <footer class="fine">VERA · Evaluările locale din 23–24 noiembrie 2026</footer>
+</main>
+</body>
+</html>
