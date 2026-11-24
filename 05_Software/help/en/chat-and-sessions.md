@@ -64,7 +64,7 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
 
-A new child starts in the parent’s current permission mode. After launch, choose each session’s mode separately in its composer. Open the parent session, then go to **Edit workbench > Agent and chat**. With the parent in Bypass, choose **Allow Full Access for new child sessions** and confirm to authorize future eligible launches. To end that authorization, choose **Revoke Full Access for future child launches**. Existing children keep their modes. To reduce a child’s access, change its mode in its own chat. Publishing remotely requires separate permission.
+A new child starts in the parent’s current permission mode. After launch, choose each session’s mode separately in its composer. In **Settings > Permissions**, enable **Allow Full Access for delegated tasks** and confirm to allow future Bypass launches across your workbenches. The setting starts off. Turn it off to block future Bypass launches while keeping the modes of sessions already created. To reduce a child’s access, change its mode in its own chat. Publishing remotely requires separate permission.
 
 In a shared checkout, let one implementation child finish and verify its handover before starting the next.
 

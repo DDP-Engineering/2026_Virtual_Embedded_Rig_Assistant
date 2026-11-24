@@ -4,7 +4,6 @@ import {
   type CommandPrefixDisplay,
   type EmbeddingSwitchApproval,
   questionTimeoutMinutesSchema,
-  type SessionSummary,
   type WorkbenchSnapshot,
   workbenchDocsSchema,
   workbenchPatchSchema,
@@ -15,14 +14,12 @@ import { api } from "../api/index.js";
 import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { EmbeddingSwitchDialog } from "./embedding-switch-dialog.js";
 import { ErrorMessage } from "./error-message.js";
-import { DelegatedBypassControl } from "./session/delegated-bypass-control.js";
 import { SkillsPanel } from "./skills.js";
 import { type ConfigSection, WorkbenchConfigForm } from "./workbench-config-form.js";
 
 export function WorkbenchEditor({
   workbench,
   browsePlugins,
-  sessionLaunch,
   close,
   saved,
   dirtyChanged,
@@ -31,7 +28,6 @@ export function WorkbenchEditor({
 }: {
   workbench: WorkbenchSnapshot;
   browsePlugins?: (() => void) | undefined;
-  sessionLaunch?: { session: SessionSummary; changed: () => void } | undefined;
   close: () => void;
   saved: (value: WorkbenchSnapshot) => void;
   /** Reports whether the draft differs from the loaded configuration and instructions. */
@@ -42,7 +38,6 @@ export function WorkbenchEditor({
   request?: { section: ConfigSection } | undefined;
 }) {
   const { t } = useTranslation();
-  const parent = sessionLaunch?.session;
   const ref = useRef<HTMLElement>(null);
   const saveButton = useRef<HTMLButtonElement>(null);
   const title = useId();
@@ -271,24 +266,6 @@ export function WorkbenchEditor({
             {partial && <p role="alert">{t("projects.partialSave")}</p>}
             {workbench.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
           </>
-        }
-        agentActions={
-          shown &&
-          !workbench.readOnly &&
-          sessionLaunch &&
-          parent &&
-          !parent.delegation &&
-          !parent.archived &&
-          (parent.mode === "bypass" || parent.delegatedBypassLaunch) && (
-            <DelegatedBypassControl
-              key={parent.id}
-              sessionId={parent.id}
-              parentTitle={parent.title || t("chat.untitled")}
-              workbenchId={workbench.config.id}
-              authorized={parent.delegatedBypassLaunch === true}
-              changed={sessionLaunch.changed}
-            />
-          )
         }
         skills={<SkillsPanel workbenchId={workbench.config.id} readOnly={workbench.readOnly} />}
       />

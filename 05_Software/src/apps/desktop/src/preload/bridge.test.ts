@@ -306,7 +306,8 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.reasoning.get"
     | "session.reasoning.set"
     | "session.mode.set"
-    | "session.delegation.bypass.set"
+    | "app.settings.delegatedFullAccess.get"
+    | "app.settings.delegatedFullAccess.set"
     | "providers.discover"
     | "providers.presets.discover"
     | "providers.image.capability"
@@ -354,6 +355,12 @@ it("transports settings snapshots and rejects secret/immutable patches before IP
   ).rejects.toMatchObject({ code: "INVALID" });
   await expect(
     bridge.invoke("app.settings.update", { providers: { apiKey: "secret" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  await expect(
+    bridge.invoke("app.settings.update", { delegatedFullAccess: true } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  await expect(
+    bridge.invoke("app.settings.delegatedFullAccess.set", { enabled: true } as never),
   ).rejects.toMatchObject({ code: "INVALID" });
   expect(transport.invoke).toHaveBeenCalledTimes(1);
 });

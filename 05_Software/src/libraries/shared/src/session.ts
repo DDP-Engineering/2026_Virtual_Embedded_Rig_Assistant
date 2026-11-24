@@ -48,7 +48,6 @@ export const sessionSummarySchema = z.strictObject({
   status: sessionStatusSchema,
   archived: z.boolean(),
   pendingQuestionId: questionIdSchema.optional(),
-  delegatedBypassLaunch: z.literal(true).optional(),
   delegation: z
     .strictObject({
       parentSessionId: sessionIdSchema,

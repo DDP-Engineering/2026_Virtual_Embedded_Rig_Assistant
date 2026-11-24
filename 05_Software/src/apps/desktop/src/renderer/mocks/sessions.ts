@@ -466,19 +466,6 @@ export class MockSessions {
       }
       return {};
     }
-    if (channel === "session.delegation.bypass.set") {
-      this.writable();
-      if (request.workbenchId !== this.current().id) throw veraError("CONFLICT");
-      if (
-        row.summary.delegation ||
-        (request.authorized &&
-          (request.acknowledged !== true || row.summary.archived || row.summary.mode !== "bypass"))
-      )
-        throw veraError("DENIED");
-      if (request.authorized) row.summary.delegatedBypassLaunch = true;
-      else delete row.summary.delegatedBypassLaunch;
-      return { authorized: request.authorized };
-    }
     if (channel === "session.mode.set") {
       this.writable();
       const previous = row.summary.mode;

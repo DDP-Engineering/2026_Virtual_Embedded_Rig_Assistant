@@ -85,7 +85,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
-- Manage Full Access launches for the selected parent from Edit workbench > Agent and chat.
+- Control delegated Full Access for all workbenches from Settings > Permissions, off by default.
 - Align Agent and chat fields in compact label-and-control rows.
 - Align the empty Plugins list actions on one row when space allows.
 - Move indexing details to the single-column Workbench overview and keep Files compact.

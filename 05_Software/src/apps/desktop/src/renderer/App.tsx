@@ -950,11 +950,6 @@ export function App() {
                         browsePlugins={browsePlugins}
                         shown={!settings && !plugins && help === undefined && !newWorkbench}
                         workbench={editor}
-                        sessionLaunch={
-                          selected && editor.indexLease === indexLease
-                            ? { session: selected, changed }
-                            : undefined
-                        }
                         request={editorRequest}
                         close={closeEditor}
                         dirtyChanged={setEditorDirty}

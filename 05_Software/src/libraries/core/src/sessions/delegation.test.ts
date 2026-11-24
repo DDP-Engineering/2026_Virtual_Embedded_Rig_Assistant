@@ -695,10 +695,13 @@ it("configures next-turn model and reasoning atomically and detects a concurrent
   await expect(reopened.configureDelegated(parent.id, child.sessionId, request)).resolves.toEqual(settings);
 });
 
-it("copies permission modes at admission and requires scoped user authorization for new Bypass children", async () => {
-  const h = await setup();
+it("copies permission modes and applies the live profile policy to Bypass launches", async () => {
+  let allowed = false;
+  const policy = { allowDelegatedFullAccess: () => allowed };
+  const h = await setup(policy);
+  const other = await setup(policy);
   const parent = h.service.create(null, "ask");
-  const unrelated = h.service.create(null, "bypass");
+  const unrelated = other.service.create(null, "bypass");
   const start = (requestId: string) => h.service.launchDelegated(parent.id, { ...launch, requestId });
   const first = await start("ask-child");
   await h.service.waitIdle(first.sessionId);
@@ -706,12 +709,13 @@ it("copies permission modes at admission and requires scoped user authorization 
   expect(() => h.service.setMode(first.sessionId, "bypass")).toThrow(failure("DENIED"));
   h.service.setMode(first.sessionId, "bypass", true);
   expect(h.service.get(parent.id).snapshot.mode).toBe("ask");
-  expect(() => h.service.setDelegatedBypassLaunch(first.sessionId, true, true)).toThrow(failure("DENIED"));
   h.service.setMode(parent.id, "bypass", true);
   await expect(start("unauthorized")).rejects.toMatchObject(failure("DENIED"));
-  expect(() => h.service.setDelegatedBypassLaunch(parent.id, true)).toThrow(failure("DENIED"));
-  h.service.setDelegatedBypassLaunch(parent.id, true, true);
-  await expect(h.service.launchDelegated(unrelated.id, launch)).rejects.toMatchObject(failure("DENIED"));
+  await expect(other.service.launchDelegated(unrelated.id, launch)).rejects.toMatchObject(failure("DENIED"));
+  allowed = true;
+  const elsewhere = await other.service.launchDelegated(unrelated.id, launch);
+  await other.service.waitIdle(elsewhere.sessionId);
+  expect(other.service.get(elsewhere.sessionId).snapshot.mode).toBe("bypass");
 
   const second = await start("authorized");
   await h.service.waitIdle(second.sessionId);
@@ -731,12 +735,12 @@ it("copies permission modes at admission and requires scoped user authorization 
   const attempts = h.prepareModel.mock.calls.length;
   const pending = start("racing-revocation");
   await vi.waitFor(() => expect(h.prepareModel.mock.calls).toHaveLength(attempts + 1));
-  h.service.setDelegatedBypassLaunch(parent.id, false);
+  allowed = false;
   gate.resolve();
   await expect(pending).rejects.toMatchObject(failure("DENIED"));
   await expect(start("authorized")).resolves.toEqual(second);
   await expect(start("revoked")).rejects.toMatchObject(failure("DENIED"));
-  h.service.setDelegatedBypassLaunch(parent.id, true, true);
+  allowed = true;
   const fourth = await start("reauthorized");
   await h.service.waitIdle(fourth.sessionId);
   expect(h.service.get(fourth.sessionId).snapshot.mode).toBe("bypass");
@@ -745,7 +749,6 @@ it("copies permission modes at admission and requires scoped user authorization 
   const reopened = new SessionService(h.host);
   cleanup.push(() => reopened.close());
   await reopened.waitReady();
-  expect(reopened.list(true).find(({ id }) => id === parent.id)?.delegatedBypassLaunch).toBe(true);
   expect(reopened.get(second.sessionId).snapshot.mode).toBe("bypass");
   expect(reopened.get(first.sessionId).snapshot.mode).toBe("read-only");
 });
@@ -858,7 +861,11 @@ it("rolls back a failed follow-up receipt and recovers committed turn and queue 
 
 it("retains host exclusions for files even after a child receives Full Access", async () => {
   const managed = await setup();
-  const h = await setup({ managedRoots: [managed.root], disabledTools: ["grep"] });
+  const h = await setup({
+    managedRoots: [managed.root],
+    disabledTools: ["grep"],
+    allowDelegatedFullAccess: () => true,
+  });
   const path = join(managed.root, "note.txt");
   const call = (name: string, args: object) => ({ toolCalls: [{ name, args }] });
   await writeFile(
@@ -873,7 +880,6 @@ it("retains host exclusions for files even after a child receives Full Access", 
       .join("\n"),
   );
   const parent = h.service.create(null, "bypass");
-  h.service.setDelegatedBypassLaunch(parent.id, true, true);
   const child = await h.service.launchDelegated(parent.id, { ...launch, modelRef: "replay/blocked-paths" });
   await h.service.waitIdle(child.sessionId);
   const failures = h.service

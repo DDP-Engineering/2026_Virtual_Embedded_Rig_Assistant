@@ -55,26 +55,6 @@ export class DelegationsRepository {
       .all(parentId) as DelegationChildRow[];
   }
 
-  bypassParents(): Set<string> {
-    const parents = this.db
-      .prepare("SELECT parent_session_id FROM session_delegation_bypass")
-      .pluck()
-      .all() as string[];
-    return new Set(parents);
-  }
-
-  bypassLaunchAuthorized(parentId: string): boolean {
-    return !!this.db
-      .prepare("SELECT 1 FROM session_delegation_bypass WHERE parent_session_id=?")
-      .get(parentId);
-  }
-
-  setBypassLaunch(parentId: string, authorized: boolean): void {
-    if (authorized)
-      this.db.prepare("INSERT OR IGNORE INTO session_delegation_bypass VALUES (?)").run(parentId);
-    else this.db.prepare("DELETE FROM session_delegation_bypass WHERE parent_session_id=?").run(parentId);
-  }
-
   mutation(parentId: string, requestId: string) {
     return this.db
       .prepare(

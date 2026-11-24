@@ -56,8 +56,7 @@ owns folder authority and the writer lock.
   remains reserved. The parent foreign key restricts deletion until SessionService confirms
   all children were deleted and removes their request rows in the same transaction.
   `session_delegation_requests` stores hashes and acknowledgements for follow-ups and configuration.
-  Commit them with the corresponding history or settings. `session_delegation_bypass` stores each
-  parent's user-authorized launch grant. Both rows cascade on parent deletion. The Desktop list
+  Commit them with the corresponding history or settings. Request acknowledgements cascade on parent deletion. The Desktop list
   reads the latest turn outcome through sparse event indexes without replaying child transcripts.
 - Document-derived rows cascade with their documents/chunks. Keyword and embedding triggers
   commit with changes. Message/event sequences remain nonnegative safe integers.

@@ -11,6 +11,7 @@ import {
   createCommandShellHost,
   createDownloadPdfExtractor,
   createMaskingResolver,
+  delegatedFullAccessEnabled,
   detectCommandShells,
   embeddingModelId,
   HelpLibrary,
@@ -179,6 +180,7 @@ installSessionPolicy(app);
 registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");
 const dataLocations = configureDataLocations(app, process.execPath, userData);
+const allowDelegatedFullAccess = () => delegatedFullAccessEnabled(dataLocations.paths.userData);
 // Electron keys the lock on the user data folder, so it follows the data locations. A second instance
 // leaves here, before it opens the first one's stores, key files, workers or native modules.
 const firstInstance = app.requestSingleInstanceLock();
@@ -844,6 +846,7 @@ const runtimes = new WorkbenchRuntimes({
       workbench: service,
       sessions: new SessionsHost({
         ...sessionOptions,
+        allowDelegatedFullAccess,
         workbench: service,
         settled,
         emit: runtimeEvents(service),
@@ -1842,13 +1845,6 @@ ipcMain.handle(
         router.inSession(sessionId, (s, owner) =>
           sanitizeSessionSummary(s.setMode(sessionId, mode, acknowledged), sessionContent(owner)),
         ),
-      "session.delegation.bypass.set": ({ workbenchId, sessionId, authorized, acknowledged }) =>
-        router.inSession(
-          sessionId,
-          (s) => s.setDelegatedBypassLaunch(sessionId, authorized, acknowledged),
-          {},
-          workbenchId,
-        ),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.presets.discover": (request) => modelGateway.discoverPreset(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
@@ -1919,6 +1915,8 @@ ipcMain.handle(
         if (patch.plugins) pluginsChanged();
         return result;
       },
+      "app.settings.delegatedFullAccess.get": () => ({ enabled: allowDelegatedFullAccess() }),
+      "app.settings.delegatedFullAccess.set": ({ enabled }) => settings.setDelegatedFullAccess(enabled),
       "app.chooseFolder": async ({ start }) => {
         if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
           return { folder: process.env.VERA_TEST_DIALOG_PATH };

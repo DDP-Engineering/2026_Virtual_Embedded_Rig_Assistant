@@ -109,7 +109,6 @@ it("creates the complete current schema directly, with SQLite pragmas", async ()
       "sessions",
       "session_delegations",
       "session_delegation_requests",
-      "session_delegation_bypass",
       "messages",
       "events",
       "tool_calls",

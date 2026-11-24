@@ -112,7 +112,7 @@ function delegationFailure(error: unknown) {
   const code = known.success ? known.data.code : "INTERNAL";
   const text =
     known.success && code === "DENIED" && known.data.params?.reason === "bypass_launch"
-      ? "The user must authorize Full Access child launches for this parent or change the parent mode."
+      ? "The user must allow delegated Full Access in VERA Settings or change the parent mode."
       : failureText[code];
   return { isError: true, code, error: text };
 }

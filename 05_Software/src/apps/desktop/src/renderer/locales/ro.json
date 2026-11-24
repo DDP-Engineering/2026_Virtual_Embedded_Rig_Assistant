@@ -251,6 +251,10 @@
     "mqttCredentials": "Credențiale MQTT",
     "wokwiTokens": "Tokenuri Wokwi",
     "commands": "Comenzi",
+    "permissions": "Permisiuni",
+    "delegatedFullAccess": "Permite acces complet pentru sarcinile delegate",
+    "delegatedFullAccessWarning": "Când o sesiune în Bypass deleagă o sarcină, noua sesiune poate citi și modifica fișiere și executa comenzi cu permisiunile contului tău. Setarea se aplică lansărilor delegate viitoare din toate workbench-urile.",
+    "enableDelegatedFullAccess": "Activează",
     "commandShell": "Shell pentru comenzi",
     "automaticShell": "Automat (implicit pe platformă)",
     "advanced": "Avansat"
@@ -434,10 +438,6 @@
   },
   "delegation": {
     "instruction": "Instrucțiune de la agentul părinte",
-    "allowBypass": "Permite acces complet pentru noile sesiuni copil",
-    "revokeBypass": "Revocă accesul complet la lansările viitoare",
-    "confirmBypass": "Autorizează lansările",
-    "bypassWarning": "Cât timp această sesiune folosește Bypass, noile sesiuni copil eligibile pornesc cu acces complet. Pot modifica fișiere și executa comenzi cu permisiunile contului tău. Fiecare sesiune copil își păstrează modul dacă schimbi modul acestei sesiuni sau revoci autorizarea lansărilor. Publicarea la distanță necesită permisiune separată. Într-o sesiune delegată în Bypass, comenzile shell rulează automat dacă se potrivesc unui prefix salvat de utilizator în workbench. Pentru celelalte comenzi, ți se cere aprobarea.",
     "title": "Sesiuni delegate",
     "outcome": "Execuție delegată: {{status}}",
     "parent": "Sesiune părinte: {{title}}",

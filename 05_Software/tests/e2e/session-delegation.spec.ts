@@ -405,39 +405,39 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await page.locator('[data-action="confirm-bypass"]').click();
     await expect(permission).toHaveValue("bypass");
 
-    const rejectedGrant = await page.evaluate(async (ids) => {
+    const rejectedGrant = await page.evaluate(async () => {
       try {
-        await (window as unknown as { vera: VeraBridge }).vera.invoke("session.delegation.bypass.set", {
-          ...ids,
-          authorized: true,
-        });
+        await (window as unknown as { vera: VeraBridge }).vera.invoke(
+          "app.settings.delegatedFullAccess.set",
+          { enabled: true } as never,
+        );
         return false;
       } catch {
         return true;
       }
-    }, ids);
+    });
     expect(rejectedGrant).toBe(true);
-    const allow = page.getByRole("button", { name: "Allow Full Access for new child sessions" });
-    const revoke = page.getByRole("button", { name: "Revoke Full Access for future child launches" });
+    const allow = page.getByRole("switch", { name: "Allow Full Access for delegated tasks" });
+    const storedPolicy = join(root, "profile", "delegated-full-access.json");
     const openLaunchSettings = async () => {
-      await page.locator(".workbench-group-name", { hasText: "Delegation modes" }).click();
-      await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="agent"]').click();
+      await page.locator('[data-i18n="nav.settings"]').click();
+      await page.locator("#settings-tab-permissions").click();
     };
     const returnToChat = async (sessionId: string) => {
-      await page.locator(".workbench-editor").getByRole("button", { name: "Cancel", exact: true }).click();
+      await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${sessionId}"]`).click();
     };
     await expect(allow).toHaveCount(0);
     await openLaunchSettings();
-    await expect(page.locator(`[data-session-launch="${ids.sessionId}"]`)).toBeVisible();
+    await expect(allow).not.toBeChecked();
     await allow.click();
-    await expect(page.getByRole("dialog")).toContainText("Each child keeps its own mode");
+    await expect(page.getByRole("dialog")).toContainText("across all workbenches");
     await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
-    await expect(revoke).toHaveCount(0);
+    await expect(allow).not.toBeChecked();
     await allow.click();
-    await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
-    await expect(revoke).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Enable", exact: true }).click();
+    await expect(allow).toBeChecked();
+    expect(JSON.parse(await readFile(storedPolicy, "utf8"))).toEqual({ schemaVersion: 1, enabled: true });
 
     await returnToChat(ids.sessionId);
     const input = page.getByRole("textbox", { name: "Message", exact: true });
@@ -495,7 +495,6 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await expect(page.locator("[data-parent-instruction]")).toHaveCount(4);
     await expect(page.locator("[data-transcript]").getByText("You", { exact: true })).toHaveCount(0);
     await expect(page.locator(`[data-delegated-turn="${first.row.delegation?.turnId}"]`)).toBeVisible();
-    await expect(revoke).toHaveCount(0);
     await permission.selectOption("ask");
     await expect(permission).toHaveValue("ask");
     await permission.selectOption("bypass");
@@ -508,8 +507,9 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await permission.selectOption("auto-edit");
     await expect(permission).toHaveValue("auto-edit");
     await openLaunchSettings();
-    await revoke.click();
-    await expect(revoke).toHaveCount(0);
+    await allow.click();
+    await expect(allow).not.toBeChecked();
+    expect(JSON.parse(await readFile(storedPolicy, "utf8"))).toEqual({ schemaVersion: 1, enabled: false });
     await returnToChat(ids.sessionId);
     await followChild(page, "Implement second ticket");
     await expect(permission).toHaveValue("bypass");
@@ -527,9 +527,15 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await expect(delegation(page).getByRole("button", { name: "Should not launch" })).toHaveCount(0);
     await openLaunchSettings();
     await allow.click();
-    await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
-    await expect(revoke).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Enable", exact: true }).click();
+    await expect(allow).toBeChecked();
     await page.reload();
+    expect(
+      await page.evaluate(async () => {
+        const api = (window as unknown as { vera: VeraBridge }).vera;
+        return (await api.invoke("app.settings.delegatedFullAccess.get", {})).enabled;
+      }),
+    ).toBe(true);
     await page.locator(`[data-session="${first.row.id}"]`).click();
     await expect(permission).toHaveValue("read-only");
     await expect(page.locator("[data-parent-instruction]")).toHaveCount(4);

@@ -194,6 +194,8 @@ export interface SessionHost {
   onActivity?: (sessionId: string) => void;
   /** Timeout in whole minutes, read when a desktop session asks its next question. */
   questionTimeoutMinutes?: () => number | null;
+  /** Live profile policy for launching new delegated sessions in Bypass. */
+  allowDelegatedFullAccess?: () => boolean;
   /** Optional live-only observation of committed completion, approval and question activity. */
   onLiveActivity?: (sessionId: string, activity: LiveSessionActivity) => void;
   scrub?: (text: string) => string;
@@ -431,12 +433,10 @@ export class SessionService {
   list(includeDelegations = false): SessionSummary[] {
     if (this.closed) throw veraError("CONFLICT");
     const outcomes = includeDelegations ? this.delegations.outcomes() : undefined;
-    const authorizedParents = includeDelegations ? this.delegations.bypassParents() : undefined;
     return this.sessions.list().map((row) => {
       const child = outcomes?.get(row.id);
       return {
         ...this.summary(row),
-        ...(authorizedParents?.has(row.id) && { delegatedBypassLaunch: true as const }),
         ...(child && {
           delegation: {
             parentSessionId: child.parentSessionId,
@@ -645,21 +645,8 @@ export class SessionService {
   private checkDelegatedLaunch(parent: SessionRow): void {
     if (parent.archived) throw veraError("DENIED");
     if (this.closing || this.deleting.has(parent.id)) throw veraError("BUSY");
-    if (parent.permission_mode === "bypass" && !this.delegations.bypassLaunchAuthorized(parent.id))
+    if (parent.permission_mode === "bypass" && this.host.allowDelegatedFullAccess?.() !== true)
       throw { ...veraError("DENIED"), params: { reason: "bypass_launch" } };
-  }
-
-  /** A trusted user action controls future Full Access launches for one parent session. */
-  setDelegatedBypassLaunch(id: string, authorized: boolean, acknowledged = false): { authorized: boolean } {
-    const parent = this.delegationOwner(id);
-    this.writable();
-    if (typeof authorized !== "boolean") throw veraError("INVALID");
-    if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
-    if (authorized && (acknowledged !== true || parent.archived || parent.permission_mode !== "bypass"))
-      throw veraError("DENIED");
-    this.delegations.setBypassLaunch(id, authorized);
-    this.notifyDelegationsChanged();
-    return { authorized };
   }
 
   private checkDelegatedMutation(parentId: string, childId: string): void {

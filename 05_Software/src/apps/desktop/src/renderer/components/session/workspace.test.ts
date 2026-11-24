@@ -1833,74 +1833,38 @@ test("each session keeps its own document tabs while the user moves between sess
   ).toBe("board.txt");
 });
 
-test("manages Full Access launches from Agent and chat for the selected parent only", async () => {
-  const { config } = await api.invoke("workbench.create", {
-    folder: "/mock/delegation-settings",
-    name: "Delegation settings",
-  });
-  const first = await api.invoke("session.create", {});
-  const other = await api.invoke("session.create", {});
-  await api.invoke("session.rename", { sessionId: first.id, title: "First parent" });
-  for (const { id } of [first, other]) {
-    await api.invoke("session.mode.set", { sessionId: id, mode: "bypass", acknowledged: true });
-  }
+test("confirms and saves the global delegated Full Access setting", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/delegation-settings", name: "Delegation settings" });
+  const session = await api.invoke("session.create", {});
+  await api.invoke("session.mode.set", { sessionId: session.id, mode: "bypass", acknowledged: true });
   await mount();
-  const click = async (selector: string) => {
-    const target = await vi.waitFor(() => {
-      const node = container.querySelector<HTMLButtonElement>(selector);
-      expect(node).toBeTruthy();
-      return node;
-    });
-    await act(async () => target?.click());
-    await settle();
-  };
-  await click(`[data-session="${first.id}"]`);
-  const allow = "Allow Full Access for new child sessions";
-  const revoke = "Revoke Full Access for future child launches";
-  expect(container.querySelector(".session-heading")?.textContent).toBe("First parent");
-  expect(container.querySelector("[data-session-launch]")).toBeNull();
-  await click('.workbench-group-name[aria-current="page"]');
-  await click('[data-action="edit-workbench-overview"]');
-  await click('[data-project-section="agent"]');
-  expect(container.querySelector(`[data-session-launch="${first.id}"]`)?.textContent).toContain(
-    "Parent session: First parent",
-  );
-  const choose = (name: string) => act(async () => button(name).click());
-  const launchState = async () =>
-    (await api.invoke("session.list", { workbenchId: config.id })).map(({ id, delegatedBypassLaunch }) => [
-      id,
-      delegatedBypassLaunch ?? false,
-    ]);
-  await choose(allow);
-  expect(container.querySelector("dialog[open]")?.textContent).toContain("First parent");
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
+  const permissions = await vi.waitFor(() => {
+    const node = container.querySelector<HTMLButtonElement>("#settings-tab-permissions");
+    expect(node).toBeTruthy();
+    return node;
+  });
+  await act(async () => permissions?.click());
+  const toggle = () => container.querySelector<HTMLInputElement>("#delegated-full-access");
+  await vi.waitFor(() => expect(toggle()?.disabled).toBe(false));
+  expect(toggle()?.checked).toBe(false);
+  await act(async () => toggle()?.click());
+  const dialog = () => container.querySelector("dialog[open]");
+  expect(dialog()?.textContent).toContain("Allow Full Access for delegated tasks");
+  expect(toggle()?.checked).toBe(false);
   await act(async () =>
-    [...(container.querySelector("dialog[open]")?.querySelectorAll("button") ?? [])]
-      .find((node) => node.textContent === "Cancel")
-      ?.click(),
+    [...(dialog()?.querySelectorAll("button") ?? [])].find((node) => node.textContent === "Cancel")?.click(),
   );
-  expect(await launchState()).toEqual(
-    expect.arrayContaining([
-      [first.id, false],
-      [other.id, false],
-    ]),
+  expect((await api.invoke("app.settings.delegatedFullAccess.get", {})).enabled).toBe(false);
+  await act(async () => toggle()?.click());
+  await act(async () =>
+    [...(dialog()?.querySelectorAll("button") ?? [])].find((node) => node.textContent === "Enable")?.click(),
   );
-  await choose(allow);
-  await choose("Authorize launches");
-  await vi.waitFor(() => expect(button(revoke)).toBeTruthy());
-  expect(await launchState()).toEqual(
-    expect.arrayContaining([
-      [first.id, true],
-      [other.id, false],
-    ]),
-  );
-  await choose(revoke);
-  await vi.waitFor(() => expect(button(allow)).toBeTruthy());
-  expect(await launchState()).toEqual(
-    expect.arrayContaining([
-      [first.id, false],
-      [other.id, false],
-    ]),
-  );
+  await vi.waitFor(() => expect(toggle()?.checked).toBe(true));
+  expect((await api.invoke("app.settings.delegatedFullAccess.get", {})).enabled).toBe(true);
+  await act(async () => toggle()?.click());
+  await vi.waitFor(() => expect(toggle()?.checked).toBe(false));
+  expect((await api.invoke("app.settings.delegatedFullAccess.get", {})).enabled).toBe(false);
 });
 
 test("index updates and late snapshots stay inside the sidebar, Files and overview status consumers", async () => {

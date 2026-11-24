@@ -129,6 +129,7 @@ export function createMockApi(
   let browserRuntime: BrowserRuntimeView = { phase: "missing" };
   const browserGrants = new Map<string, string[]>();
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+  let delegatedFullAccess = false;
   const folderSelections = new Map<string, string>();
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
@@ -2120,6 +2121,15 @@ What this plugin does.
       case "app.settings.get":
         value = { settings };
         break;
+      case "app.settings.delegatedFullAccess.get":
+        value = { enabled: delegatedFullAccess };
+        break;
+      case "app.settings.delegatedFullAccess.set": {
+        const { enabled } = channels["app.settings.delegatedFullAccess.set"].request.parse(input.data);
+        delegatedFullAccess = enabled;
+        value = { enabled };
+        break;
+      }
       case "app.settings.update": {
         const patch = settingsPatchSchema.parse(input.data);
         if (patch.interactiveBrowser === false) browserGrants.clear();

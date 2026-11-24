@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   defaultSettings,
   mergeSettings,
@@ -7,7 +9,21 @@ import {
   settingsServicePatchSchema,
   veraError,
 } from "@vera/shared";
+import { z } from "zod";
 import type { FileAccess, PathProvider } from "../ports.js";
+
+const delegatedFullAccessFile = "delegated-full-access.json";
+const delegatedFullAccessSchema = z.strictObject({ schemaVersion: z.literal(1), enabled: z.boolean() });
+
+/** Both hosts check the current profile policy inside delegation admission. */
+export function delegatedFullAccessEnabled(userData: string): boolean {
+  try {
+    const saved: unknown = JSON.parse(readFileSync(join(userData, delegatedFullAccessFile), "utf8"));
+    return delegatedFullAccessSchema.safeParse(saved).data?.enabled === true;
+  } catch {
+    return false;
+  }
+}
 
 export class SettingsService {
   private state: SettingsSnapshot | undefined;
@@ -65,7 +81,7 @@ export class SettingsService {
     if (this.closed) throw veraError("DENIED");
     const parsed = settingsServicePatchSchema.safeParse(patch);
     if (!parsed.success) throw veraError("INVALID");
-    const run = this.queue.then(async () => {
+    return this.enqueue(async () => {
       await this.load();
       const current = this.get();
       if (when && !when(current)) return current;
@@ -82,6 +98,23 @@ export class SettingsService {
       }
       return this.get();
     });
+  }
+
+  /** Writes the security policy independently of general preferences shared by CLI and Desktop. */
+  async setDelegatedFullAccess(enabled: boolean): Promise<{ enabled: boolean }> {
+    if (this.closed) throw veraError("DENIED");
+    const value = delegatedFullAccessSchema.parse({ schemaVersion: 1, enabled });
+    return this.enqueue(async () => {
+      await this.host.files.writeAtomic(
+        join(this.host.paths.userData, delegatedFullAccessFile),
+        JSON.stringify(value),
+      );
+      return { enabled };
+    });
+  }
+
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(operation);
     this.queue = run.then(
       () => {},
       () => {},

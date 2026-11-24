@@ -19,8 +19,6 @@ CREATE TABLE session_delegations(parent_session_id TEXT NOT NULL REFERENCES sess
   request_id TEXT NOT NULL, request_hash TEXT NOT NULL, child_session_id TEXT UNIQUE REFERENCES sessions(id) ON DELETE SET NULL,
   turn_id TEXT NOT NULL, message_id TEXT NOT NULL, PRIMARY KEY(parent_session_id, request_id),
   CHECK(parent_session_id <> child_session_id));
-CREATE TABLE session_delegation_bypass(
-  parent_session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE);
 CREATE TABLE session_delegation_requests(
   parent_session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
   request_id TEXT NOT NULL, request_hash TEXT NOT NULL, result_json TEXT NOT NULL,

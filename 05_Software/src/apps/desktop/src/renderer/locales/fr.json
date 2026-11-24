@@ -251,6 +251,10 @@
     "mqttCredentials": "Identifiants MQTT",
     "wokwiTokens": "Jetons Wokwi",
     "commands": "Commandes",
+    "permissions": "Autorisations",
+    "delegatedFullAccess": "Autoriser l’accès complet pour les tâches déléguées",
+    "delegatedFullAccessWarning": "Quand une session en mode Bypass délègue une tâche, la nouvelle session peut lire et modifier des fichiers et exécuter des commandes avec les droits de votre compte. Cela concerne les prochains lancements délégués dans tous les bancs de travail.",
+    "enableDelegatedFullAccess": "Activer",
     "commandShell": "Shell de commandes",
     "automaticShell": "Automatique (défaut de la plateforme)",
     "advanced": "Avancé"
@@ -434,10 +438,6 @@
   },
   "delegation": {
     "instruction": "Instruction de l’agent parent",
-    "allowBypass": "Autoriser l’accès complet aux nouvelles sessions enfants",
-    "revokeBypass": "Révoquer l’accès complet pour les prochains lancements",
-    "confirmBypass": "Autoriser les lancements",
-    "bypassWarning": "Tant que cette session est en mode Bypass, les nouvelles sessions enfants admissibles démarrent avec un accès complet. Elles peuvent modifier des fichiers et exécuter des commandes avec les droits de votre compte. Chaque session enfant garde son mode si vous changez celui de cette session ou révoquez l’autorisation de lancement. La publication à distance exige une autorisation distincte. Dans une session déléguée en mode Bypass, les commandes shell correspondant à un préfixe enregistré par l’utilisateur dans le banc de travail s’exécutent automatiquement. Les autres commandes shell demandent votre approbation.",
     "title": "Sessions déléguées",
     "outcome": "État de la délégation : {{status}}",
     "parent": "Session parente : {{title}}",

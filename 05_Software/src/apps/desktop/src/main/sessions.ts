@@ -92,6 +92,7 @@ export class SessionsHost {
       workbench: WorkbenchService;
       terminals?: (workbenchId: string) => TerminalReader;
       settings: SettingsService;
+      allowDelegatedFullAccess?: () => boolean;
       modelCalibrations?: ModelCalibrationStore;
       gateway: () => ProviderGateway;
       credentials: CredentialFile;
@@ -311,6 +312,9 @@ export class SessionsHost {
             assertCurrent();
             return options.workbench.getSnapshot().config.agent.question_timeout_minutes ?? null;
           },
+          ...(options.allowDelegatedFullAccess && {
+            allowDelegatedFullAccess: options.allowDelegatedFullAccess,
+          }),
           commandPrefixes: () => {
             assertCurrent();
             return options.workbench.getSnapshot().config.agent.allowed_commands;

@@ -54,7 +54,6 @@ export function WorkbenchConfigForm({
   notices,
   instructionsNotice,
   skills,
-  agentActions,
   browsePlugins,
   workbenchId,
   shown = true,
@@ -83,7 +82,6 @@ export function WorkbenchConfigForm({
   notices?: ReactNode;
   instructionsNotice?: ReactNode;
   skills: ReactNode;
-  agentActions?: ReactNode;
   browsePlugins?: (() => void) | undefined;
   workbenchId?: string | undefined;
   shown?: boolean;
@@ -296,7 +294,6 @@ export function WorkbenchConfigForm({
                   />
                 </label>
               )}
-              {agentActions}
               {workbenchId && removeCommandPrefix && (
                 <WorkbenchCommandPrefixes
                   workbenchId={workbenchId}

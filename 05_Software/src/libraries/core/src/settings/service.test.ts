@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 let SettingsService: typeof import("./service.js").SettingsService;
@@ -30,6 +33,39 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it("reads delegated Full Access live and keeps revocation independent of stale settings writers", async () => {
+    const { delegatedFullAccessEnabled } = await import("./service.js");
+    const profile = await mkdtemp(join(tmpdir(), "vera-profile-policy-"));
+    const paths = {
+      userData: profile,
+      settings: join(profile, "settings.json"),
+      logs: join(profile, "logs"),
+    };
+    const files = {
+      read: (path: string) => readFile(path, "utf8").catch(() => undefined),
+      writeAtomic: (path: string, value: string) => writeFile(path, value),
+    };
+    const makeService = () => new SettingsService({ files, paths, uuid: randomUUID, changed: () => {} });
+    const desktop = makeService();
+    const cli = makeService();
+    try {
+      expect(delegatedFullAccessEnabled(profile)).toBe(false);
+      await desktop.load();
+      await desktop.setDelegatedFullAccess(true);
+      await cli.load();
+      expect(delegatedFullAccessEnabled(profile)).toBe(true);
+      await desktop.setDelegatedFullAccess(false);
+      await cli.update({ theme: "dark" });
+      expect(delegatedFullAccessEnabled(profile)).toBe(false);
+      await writeFile(join(profile, "delegated-full-access.json"), '{"schemaVersion":1,"enabled":"true"}');
+      expect(delegatedFullAccessEnabled(profile)).toBe(false);
+    } finally {
+      await desktop.close();
+      await cli.close();
+      await rm(profile, { recursive: true, force: true });
+    }
+  });
+
   it("persists independent notification patches against the latest settings across reload", async () => {
     const h = harness();
     await h.service.load();

@@ -9,6 +9,7 @@ import {
   createDownloadPdfExtractor,
   createMaskingResolver,
   createPiAiGateway,
+  delegatedFullAccessEnabled,
   type LlmGateway,
   leaseRoot,
   ModelCalibrationStore,
@@ -244,6 +245,7 @@ export async function runTurn(
     const partsPlugin = (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin);
     const service = new SessionService({
       db,
+      allowDelegatedFullAccess: () => delegatedFullAccessEnabled(location.paths.userData),
       root: snapshot.folder,
       readOnly: snapshot.readOnly,
       gateway,

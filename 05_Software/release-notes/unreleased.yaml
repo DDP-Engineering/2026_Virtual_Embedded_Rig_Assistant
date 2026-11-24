@@ -172,10 +172,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Delegated chats and Full Access in compact Agent and chat settings. Bookmarks and browser."
-      ro: "Sesiuni delegate și acces complet în Agent și chat. Marcaje și comenzi pentru browser."
-      de: "Delegierte Chats und Vollzugriff in kompakten Agent-Einstellungen. Lesezeichen und Browser."
-      fr: "Chats délégués et accès complet dans les réglages compacts. Signets et navigation."
+      en: Manage Full Access for delegated tasks in Settings. The option starts off.
+      ro: Gestionează accesul complet pentru sarcinile delegate din Setări. Implicit este oprit.
+      de: Vollzugriff für delegierte Aufgaben in den Einstellungen verwalten. Standardmäßig aus.
+      fr: Gérez l’accès complet des tâches déléguées dans les paramètres. Désactivé par défaut.
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

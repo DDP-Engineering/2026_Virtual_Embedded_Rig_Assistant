@@ -251,6 +251,10 @@
     "mqttCredentials": "MQTT credentials",
     "wokwiTokens": "Wokwi tokens",
     "commands": "Commands",
+    "permissions": "Permissions",
+    "delegatedFullAccess": "Allow Full Access for delegated tasks",
+    "delegatedFullAccessWarning": "When a session in Bypass delegates a task, the new session can read and change files and run commands with your account’s permissions. This applies to future delegated launches across all workbenches.",
+    "enableDelegatedFullAccess": "Enable",
     "commandShell": "Command shell",
     "automaticShell": "Automatic (platform default)",
     "advanced": "Advanced"
@@ -434,10 +438,6 @@
   },
   "delegation": {
     "instruction": "Parent agent instruction",
-    "allowBypass": "Allow Full Access for new child sessions",
-    "revokeBypass": "Revoke Full Access for future child launches",
-    "confirmBypass": "Authorize launches",
-    "bypassWarning": "While this session is in Bypass, new eligible children start with Full Access. They can edit files and run commands with your account's permissions. Each child keeps its own mode when you change this session's mode or revoke launch authorization. Remote publication requires separate permission. In a delegated Bypass session, shell commands run automatically when they match a user-saved workbench command prefix. Other shell commands ask for your approval.",
     "title": "Delegated sessions",
     "outcome": "Delegated turn: {{status}}",
     "parent": "Parent session: {{title}}",

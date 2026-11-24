@@ -4339,27 +4339,14 @@ legend {
   display: grid;
   gap: 0.65rem;
 }
-.workbench-agent-settings > label,
-.workbench-agent-settings > [data-session-launch] {
+.workbench-agent-settings > label {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 0.35rem 1rem;
   align-items: center;
 }
-.workbench-agent-settings > [data-session-launch] > span {
-  overflow-wrap: anywhere;
-}
-.workbench-agent-settings > [data-session-launch] > button {
-  justify-self: start;
-  max-inline-size: 100%;
-  white-space: normal;
-}
-.workbench-agent-settings > [data-session-launch] > [role="alert"] {
-  grid-column: 1 / -1;
-}
 @container (inline-size < 27rem) {
-  .workbench-agent-settings > label,
-  .workbench-agent-settings > [data-session-launch] {
+  .workbench-agent-settings > label {
     grid-template-columns: minmax(0, 1fr);
   }
 }

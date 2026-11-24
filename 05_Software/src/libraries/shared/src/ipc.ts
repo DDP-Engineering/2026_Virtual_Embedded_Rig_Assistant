@@ -1016,16 +1016,6 @@ export const channels = {
     }),
     sessionSummarySchema,
   ),
-  "session.delegation.bypass.set": defineChannel(
-    "session.delegation.bypass.set",
-    z.strictObject({
-      workbenchId: workbenchIdSchema,
-      sessionId: sessionIdSchema,
-      authorized: z.boolean(),
-      acknowledged: z.literal(true).optional(),
-    }),
-    z.strictObject({ authorized: z.boolean() }),
-  ),
   "providers.discover": defineChannel(
     "providers.discover",
     providerDiscoveryRequestSchema,
@@ -1076,6 +1066,19 @@ export const channels = {
       .refine((options) => new Set(options.map((option) => option.id)).size === 4),
   ),
   "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),
+  "app.settings.delegatedFullAccess.get": defineChannel(
+    "app.settings.delegatedFullAccess.get",
+    z.strictObject({}),
+    z.strictObject({ enabled: z.boolean() }),
+  ),
+  "app.settings.delegatedFullAccess.set": defineChannel(
+    "app.settings.delegatedFullAccess.set",
+    z.discriminatedUnion("enabled", [
+      z.strictObject({ enabled: z.literal(true), acknowledged: z.literal(true) }),
+      z.strictObject({ enabled: z.literal(false) }),
+    ]),
+    z.strictObject({ enabled: z.boolean() }),
+  ),
   "app.chooseFolder": defineChannel(
     "app.chooseFolder",
     // `start` is only where the dialog opens; the picked folder is still validated by its caller.

@@ -37,6 +37,7 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
 
 
 - The shared permission picker confirms each Bypass change before applying it. Settings contains no warning-suppression preference. Desktop and CLI pass their selected userData root as host-owned managedRoots to SessionService; agent file guards exclude its lexical/canonical aliases in every mode. Settings, credentials and plugin loaders retain their internal storage authority.
+- The format-1 `delegated-full-access.json` profile setting starts off. The dedicated acknowledged enable IPC writes it atomically through SettingsService. Desktop and CLI read the file during launch admission. General settings saves write a separate file.
 
 - SettingsService.load/get/update/close; get/update return detached {settings}. Settings are
   never read-only.
