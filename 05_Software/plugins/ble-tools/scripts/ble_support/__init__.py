@@ -4,5 +4,5 @@ FORMAT = 1
 KIND = "ble-tool-result"
 PROFILE_KIND = "ble-tools-profile"
 TOOL = "ble-tool"
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 BLEAK = "3.1.0"

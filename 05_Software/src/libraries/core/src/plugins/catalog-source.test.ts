@@ -167,6 +167,33 @@ it("reports dangerous tokens below device-write unless a maintainer marked the r
   ]);
 });
 
+it("requires an exact maintainer review for dangerous tokens in effective subcommand help", async () => {
+  const base = plugin("alpha");
+  const root = await source({
+    plugins: {
+      alpha: {
+        ...base,
+        programs: {
+          tool: {
+            ...base.programs.tool,
+            subcommandHelp: { flag: "--help", commands: ["burn", "burn-other", "scan"] },
+          },
+        },
+        rules: [...base.rules, { match: "tool burn-other *", risk: "blocked" }],
+      },
+    },
+    packs: [],
+  });
+  expect(await checkCatalogSource(root)).toEqual([
+    { where: "alpha", code: "token", detail: 'burn in "tool burn --help" at safe' },
+  ]);
+  await writeFile(
+    join(root, "catalog.yaml"),
+    stringify({ format: 1, reviewed: [{ plugin: "alpha", match: "tool burn --help" }] }),
+  );
+  expect(await checkCatalogSource(root)).toEqual([]);
+});
+
 // REQ-FUNC-f4381792
 it("builds deterministic zips and an index that the store installs", async () => {
   const root = await source({

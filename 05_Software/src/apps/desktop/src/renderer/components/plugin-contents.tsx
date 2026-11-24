@@ -4,9 +4,10 @@ import type {
   PluginProgram,
   PluginReview,
   PluginRisk,
+  ProgramRule,
 } from "@vera/shared";
-import { pluginOperations, pluginText } from "@vera/shared";
-import type { ReactNode } from "react";
+import { classifyCommand, pluginOperations, pluginText, programCommandLine } from "@vera/shared";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { helpLanguage } from "./help.js";
 import { MaturityBadge } from "./plugin-library-controls.js";
@@ -22,6 +23,43 @@ export function useRiskLabels(): Record<PluginRisk, string> {
     irreversible: t("approval.risk.irreversible"),
     blocked: t("approval.risk.blocked"),
   };
+}
+function SubcommandHelp({
+  name,
+  help,
+  optionSyntax,
+  rules,
+  labels,
+}: {
+  name: string;
+  help: NonNullable<PluginProgram["subcommandHelp"]>;
+  optionSyntax: PluginProgram["optionSyntax"];
+  rules: readonly ProgramRule[];
+  labels: Record<PluginRisk, string>;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <details data-subcommand-help onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary>{t("plugins.help")}</summary>
+      {open && (
+        <ul className="plugin-review-list">
+          {help.commands.map((command) => {
+            const args = [command, help.flag];
+            const { risk } = classifyCommand(rules, name, args, optionSyntax, help);
+            return (
+              <li key={command}>
+                <span className="risk-badge" data-risk={risk}>
+                  {labels[risk]}
+                </span>{" "}
+                <code>{programCommandLine(name, args)}</code>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </details>
+  );
 }
 /** Where a program comes from: its install kind with the requirement, script path, search roots or downloads. */
 function InstallSource({ program }: { program: PluginProgram }) {
@@ -82,6 +120,15 @@ export function PluginContents({
                 <code>{name}</code> <InstallSource program={program} />
                 {program.version.range && (
                   <span className="muted"> {t("plugins.range", { range: program.version.range })}</span>
+                )}
+                {program.subcommandHelp && (
+                  <SubcommandHelp
+                    name={name}
+                    help={program.subcommandHelp}
+                    optionSyntax={program.optionSyntax}
+                    rules={manifest.rules}
+                    labels={risk}
+                  />
                 )}
               </li>
             ))}

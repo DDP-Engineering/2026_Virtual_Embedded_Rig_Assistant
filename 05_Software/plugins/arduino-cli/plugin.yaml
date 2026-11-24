@@ -1,6 +1,6 @@
 format: 1
 id: arduino-cli
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Arduino CLI
 summary: Compile Arduino sketches with a pinned arduino-cli and upload the verified binary to an identified board.
@@ -41,6 +41,7 @@ programs:
     version: { args: [version], match: 'Version: (\d+\.\d+\.\d+)', range: '>=1.6,<2' }
     timeout: 60
   arduino-tool:
+    subcommandHelp: { flag: --help, commands: [install, upload] }
     install: { script: scripts/arduino_tool.py }
     version: { args: [--version], match: '^arduino-tool (\d+\.\d+\.\d+)' }
     timeout: 1800

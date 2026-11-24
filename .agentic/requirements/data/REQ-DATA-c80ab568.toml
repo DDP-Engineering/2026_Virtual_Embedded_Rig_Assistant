@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-c80ab568"
+title = "Validate exact subcommand help declarations"
+status = "active"
+requirement = "When a format-1 manifest declares subcommand help, validation shall accept only a bounded, unique list of literal subcommands and one help flag on a directly executed program with unchanged command arguments."
+verification = "Validate a direct program with one documented flag and command; check malformed, duplicate and empty declarations and incompatible prefixes, launchers, plans, file programs and Git execution transformations return field issues."
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+priority = "high"
+created = 2026-11-24
+updated = 2026-11-24

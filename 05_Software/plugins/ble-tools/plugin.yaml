@@ -1,6 +1,6 @@
 format: 1
 id: ble-tools
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: BLE tools (discovery and GATT)
 summary: Scan for Bluetooth Low Energy devices and run controlled GATT reads, writes and notifications on known profiles.
@@ -26,6 +26,7 @@ settings:
     description: The bench registry; declares each Bluetooth LE device (ble-device) by address and profile that calls name by alias.
 programs:
   ble-tool:
+    subcommandHelp: { flag: --help, commands: [read-characteristic, subscribe-notifications, write-characteristic, release] }
     install: { script: scripts/ble_tool.py }
     version: { args: [--version], match: '^ble-tool (\d+\.\d+\.\d+)' }
     timeout: 120

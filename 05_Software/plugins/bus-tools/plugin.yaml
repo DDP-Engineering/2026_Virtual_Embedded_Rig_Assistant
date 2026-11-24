@@ -1,6 +1,6 @@
 format: 1
 id: bus-tools
-version: 0.1.0
+version: 0.1.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Bus tools (I2C, SPI, UART)
 summary: Run bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 declared in the lab resources.
@@ -26,6 +26,7 @@ settings:
     description: The bench registry; declares the Bus Pirate adapter (bus-adapter) with its serial ports and power limits that calls name by alias.
 programs:
   bus-tool:
+    subcommandHelp: { flag: --help, commands: [configure-bus, read-register, transfer, capture, release] }
     install: { script: scripts/bus_tool.py }
     version: { args: [--version], match: '^bus-tool (\d+\.\d+\.\d+)' }
     timeout: 120

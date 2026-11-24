@@ -45,6 +45,41 @@ const program = canonical.programs.esptool;
 const ph = (name: string) => `\${${name}}`;
 const paths = (data: unknown) => validatePluginManifest(data).issues.map((issue) => issue.path);
 
+it("accepts only literal subcommand help on direct programs (REQ-DATA-c80ab568)", () => {
+  const declaration = { flag: "--help", commands: ["write-flash"] };
+  const manifest = (extra: Record<string, unknown>) => ({
+    ...canonical,
+    programs: { esptool: { ...program, subcommandHelp: declaration, ...extra } },
+  });
+  expect(validatePluginManifest(manifest({})).manifest?.programs.esptool?.subcommandHelp).toEqual(
+    declaration,
+  );
+  for (const subcommandHelp of [
+    { flag: "--force", commands: ["write-flash"] },
+    { flag: "--help", commands: [] },
+    { flag: "--help", commands: ["write-flash", "write-flash"] },
+    { flag: "--help", commands: ["write flash"] },
+    { flag: "--help", commands: ["write*"] },
+    { flag: "--help", commands: ["--write"] },
+  ])
+    expect(paths(manifest({ subcommandHelp }))[0]).toMatch(/^programs\.esptool\.subcommandHelp/);
+  for (const extra of [
+    { prefix: ["--force"] },
+    { launcher: ["/c"], launcherMode: "string" },
+    { plan: "hil" },
+    { file: true },
+    { optionSyntax: "git" },
+    {
+      install: {
+        download: {
+          "linux-x64": { url: "https://example.test/tool", sha256: "a".repeat(64), prefix: ["--force"] },
+        },
+      },
+    },
+  ])
+    expect(paths(manifest(extra))).toContain("programs.esptool.subcommandHelp");
+});
+
 // REQ-DATA-4d4471f9
 it("accepts the canonical manifest, a skills-only plugin and every install kind", () => {
   const valid = validatePluginManifest(canonical);

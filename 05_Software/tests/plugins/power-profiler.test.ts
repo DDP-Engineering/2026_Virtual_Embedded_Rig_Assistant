@@ -110,6 +110,13 @@ const ownEnv = (): Record<string, string> => ({
   FAKE_JSDRV_STATE: paths().state,
 });
 const last = (stdout: string): Json => JSON.parse(stdout.trim().split("\n").at(-1) || "{}");
+it.each(["capture", "release"])("prints %s help before opening the meter (REQ-FUNC-deae8eff)", (command) => {
+  const result = exec(profileScript, [command, "--help"]);
+  expect(result.code).toBe(0);
+  expect(result.stdout).toContain("Usage: power-profile");
+  expect(existsSync(paths().log)).toBe(false);
+});
+
 function exec(script: string, args: string[], env: Record<string, string> = {}, executable = python): Run {
   const run = spawnSync(executable, [script, ...args], {
     cwd: root,

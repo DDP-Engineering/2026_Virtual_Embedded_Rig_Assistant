@@ -1,6 +1,6 @@
 format: 1
 id: micropython
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: MicroPython
 summary: Copy files, deploy and run scripts on a MicroPython board and capture its console.
@@ -20,6 +20,7 @@ platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/mpremote/1.29.0/", "https://docs.micropython.org/en/latest/reference/mpremote.html"]
 programs:
   micropython-tool:
+    subcommandHelp: { flag: --help, commands: [deploy-file, run-file] }
     install: { script: scripts/micropython_tool.py }
     version: { args: [--version], match: '^micropython-tool (\d+\.\d+\.\d+)' }
     timeout: 300

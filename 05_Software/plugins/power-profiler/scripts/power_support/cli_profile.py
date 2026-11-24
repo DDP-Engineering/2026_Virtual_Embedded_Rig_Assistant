@@ -23,6 +23,7 @@ USAGE = """power-profile <operation> [options]
           [--markers <n>,...] [--firmware <file>] [--board <text>] [--condition <name>=<value>]... [--label <text>]
   release --meter <alias>                     VERA's cleanup: signals off, current range back to auto, read back
   common: [--results-dir <dir>] [--run-id <id>]
+  help: capture --help or release --help
 
 The meter is opened without its defaults; its current path is never switched (a meter whose current range mode is
 off is refused); changed settings are restored and read back. Exit codes: 0 pass, 2 refused or blocked before any
@@ -93,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     if argv in (["--version"], ["-V"]):
         print(f"power-profile {VERSION}")
         return 0
-    if argv in (["--help"], ["-h"]) or not argv:
+    if not argv or argv in (["--help"], ["-h"], ["capture", "--help"], ["release", "--help"]):
         print(f"Usage: {USAGE}")
         return 0
     try:

@@ -102,10 +102,10 @@ entries:
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: Windows stops late child processes. PowerShell and saved Git prefixes are restricted.
-      ro: Windows oprește și procesele copil pornite la oprire. PowerShell și prefixele Git au restricții.
-      de: Windows stoppt späte Kindprozesse. PowerShell und gespeicherte Git-Präfixe sind eingeschränkt.
-      fr: Windows arrête les processus enfants tardifs. PowerShell et les préfixes Git sont limités.
+      en: Windows stops late child processes. PowerShell/Git limits apply. Verified help needs no approval.
+      ro: Windows oprește procesele copil târzii. Limite PowerShell/Git. Ajutor verificat fără aprobare.
+      de: Windows stoppt späte Kindprozesse. PowerShell/Git begrenzt. Geprüfte Plugin-Hilfe läuft direkt.
+      fr: Windows arrête les enfants tardifs. Limites PowerShell/Git. Aide vérifiée sans approbation.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -130,10 +130,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
-      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
-      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
-      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
+      en: Area masking keeps secret-named files accessible. MQTT usernames no longer trigger CLI masking.
+      ro: Mascare pe zone. Fișiere cu nume secrete accesibile. Textul CLI păstrează numele de utilizator MQTT.
+      de: Maskierung je Bereich. Dateien mit geheimen Namen bleiben nutzbar. MQTT-Nutzernamen im CLI bleiben.
+      fr: Masquage par zone. Fichiers aux noms secrets accessibles. Noms d’utilisateur MQTT préservés en CLI.
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:

@@ -1,6 +1,6 @@
 format: 1
 id: can-python
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CAN bus (python-can)
 summary: Capture CAN traffic listen-only and send or replay frames through python-can adapters.
@@ -20,6 +20,7 @@ platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://python-can.readthedocs.io/en/v4.6.1/"]
 programs:
   can:
+    subcommandHelp: { flag: --help, commands: [capture, send, replay] }
     install: { script: scripts/can_bus.py }
     version: { args: [--version], match: '^can-python (\d+\.\d+\.\d+)' }
     timeout: 300

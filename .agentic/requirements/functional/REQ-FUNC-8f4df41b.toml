@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-8f4df41b"
+title = "Warn authors to verify declared subcommand help"
+status = "active"
+requirement = "When plugin_validate sees a valid subcommand help declaration, it shall warn the author to verify that each listed invocation prints usage and exits before dispatch."
+verification = "Validate a draft with a subcommand help declaration and assert that the warning names the manifest field and the print-and-exit condition."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/authoring.ts", "05_Software/src/libraries/core/src/skills/create-plugin.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

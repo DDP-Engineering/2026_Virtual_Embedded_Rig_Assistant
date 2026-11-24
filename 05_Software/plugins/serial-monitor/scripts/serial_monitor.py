@@ -23,7 +23,7 @@ import time
 import serial
 from serial.tools import list_ports
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 BY_ID = "/dev/serial/by-id"
 # The partial line searched by --until keeps at most this many characters.
 LINE_CHARS = 4096

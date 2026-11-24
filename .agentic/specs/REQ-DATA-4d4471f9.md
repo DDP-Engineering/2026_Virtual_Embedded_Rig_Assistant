@@ -35,6 +35,7 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `programs.*.launcher` | optional non-empty args; only with find without download fallback, whose search locates launcher[0] |
 | `programs.*.launcherMode` | argv or string, required iff launcher is present; string uses the verified Bash/PowerShell command transport |
 | `programs.*.optionSyntax` | optional `sigrok-cli`, `git`, `tshark`, `pymcuprog` or `stm32cubeprog`; projects command-specific option roles for matching; Git additionally inserts a mandatory execution-only no-ext-diff guard at its read-command boundary, preserving original approval/log arguments |
+| `programs.*.subcommandHelp` | optional strict object with `flag` (`--help` or `-h`) and `commands` (1–64 unique literals, each 1–64 ASCII letters, digits, underscores or hyphens, starting alphanumeric); incompatible with a launcher, a nonempty command or download prefix, Git argument rewriting, plans and file-only programs |
 | `programs.*.prefix` | optional args; `${pluginDir}` is the only placeholder |
 | `programs.*.env` | optional map `^[A-Za-z_][A-Za-z0-9_]{0,127}$` → value ≤ 4096 characters; placeholders `${workbench}`, `${pluginDir}` only |
 | `programs.*.timeout` | optional integer seconds, 1–3600 |

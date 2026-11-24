@@ -12,7 +12,8 @@ workbench draft, and the user-only `plugins.promote` and `plugins.export`.
 ## Purpose and boundaries
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
-for dangerous tokens in safe/device-read rules, programs without rules, and find without hint.
+for declared subcommand help, dangerous tokens in safe/device-read rules, programs without rules,
+and find without hint. The help warning asks the author to verify the exact parser exit.
 `plugin_install {path}` is a program-class prepared tool. Its inline review shows the complete manifest;
 ApprovalGate always waits for a user decision, including bypass, and refuses read-only. The exact
 request binds the draft path, manifest and integrity hash. The store installs only matching bytes as

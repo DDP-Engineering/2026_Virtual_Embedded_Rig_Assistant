@@ -166,9 +166,27 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 - Keep Windows portable session alerts in VERA without registering with the Windows shell.
 - Write the VERA product name into unsigned Windows packages.
+- mqtt-tools 0.2.2: CLI output stays intact with MQTT usernames, and passwords remain masked.
 - Show concrete citation examples to models for local files, indexed documents and VERA help.
 - GitHub release downloads include the Chromium and Whisper archives and licence notices for offline installation.
 - Chat and Files search published documents while indexing continues and recover from concurrent publication.
+- Run verified plugin subcommand help without a device approval.
+- arduino-cli 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- ble-tools 0.2.1: Exact help for supported subcommands no longer needs a device approval.
+- bus-tools 0.1.1: Exact help for supported subcommands no longer needs a device approval.
+- can-python 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- circuitpython 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- esp32-efuse 0.2.1: Exact help for supported subcommands no longer needs a device approval.
+- esp32-esptool 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- micropython 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- mqtt-tools 0.2.3: Exact help for supported subcommands no longer needs a device approval.
+- platformio 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- power-profiler 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- probe-rs 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- raspberry-pi-linux 0.2.1: Exact help for supported subcommands no longer needs a device approval.
+- serial-monitor 0.2.2: Exact help for supported subcommands no longer needs a device approval.
+- wokwi 0.2.1: Exact help for supported subcommands no longer needs a device approval.
+- zephyr 0.2.2: Exact help for supported subcommands no longer needs a device approval.
 
 - Report redirected workbench runtime folders before closing the workbench.
 - Keep saved Plan feedback live-masked, require stale-fragment recapture and skip discovery during review preparation.

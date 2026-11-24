@@ -1,6 +1,6 @@
 format: 1
 id: esp32-efuse
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ESP32 eFuses and image security
 summary: Review ESP32 eFuses and prepare secure-boot keys and encrypted images; burns are permanent.
@@ -19,6 +19,7 @@ ecosystem: esp32
 platforms: [windows-x64, linux-x64]
 programs:
   espefuse:
+    subcommandHelp: { flag: --help, commands: [burn-efuse, burn-key, burn-block-data, burn-bit, burn-custom-mac, write-protect-efuse, read-protect-efuse, set-flash-voltage] }
     install: { pip: "esptool>=5,<6" }
     version: { args: [--help], match: 'espefuse v(\d+\.\d+\.\d+)', range: ">=5,<6" }
     timeout: 120

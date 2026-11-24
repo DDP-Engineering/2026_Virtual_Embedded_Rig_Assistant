@@ -15,6 +15,9 @@ The broker password never goes into the profile, `workbench.yaml`, the prompt, a
 - CLI: `VERA_MQTT_PASSWORD_BENCH` and optional `VERA_MQTT_USERNAME_BENCH` (the reference upper-cased, `-` as `_`),
   held in memory for that run.
 
+VERA treats the username as a broker identifier for global text masking. Setting it to `pi` leaves `pin` intact
+in CLI output. The CLI registers the password for masking, including its JSON-escaped form.
+
 A profile names the reference in `credential`; a call passes `--credential bench`. When you approve such a run, VERA
 reads the credential at the moment the run starts and writes it as one line to mqtt-tool's input, then closes it. It
 does so only for this official plugin while it is enabled for the workbench: disabling the plugin removes the

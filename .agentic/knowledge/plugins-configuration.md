@@ -24,8 +24,10 @@ Configuration on the Plugins page and the CLI variable. Desktop main stores the 
 reference and token, no username), both rendered by `renderer/components/plugin-credentials.tsx` inside the
 Configuration section of mqtt-tools and wokwi (with Replace, which puts a stored reference into the form); each list
 returns only its own scope's references and storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
-and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
-changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
+and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Both hosts exclude the MQTT username from global text masking
+registration and carry it privately in the approved helper input. The CLI registers passwords and tokens for masking.
+Schemas live in `shared/src/plugin-credentials.ts`. Neither changes a program's environment; only the wokwi helper
+itself puts the token into the one wokwi-cli child it starts.
 
 Declared parameters (REQ-DATA-af8807e1, REQ-FUNC-cbdb46ac, REQ-UX-efe126c0, REQ-UX-05e0ed17): plugin.yaml `settings`
 (optional, at most 32; shared `plugin-settings.ts`) names each parameter with a description - `secret` + scope (mqtt,

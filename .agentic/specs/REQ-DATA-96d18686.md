@@ -36,8 +36,13 @@ characters without control characters; no username) and `wokwi.credentials.remov
 Configuration shows the form "Wokwi tokens". Each list returns only the entries of its own scope.
 
 CLI: `VERA_MQTT_PASSWORD_<REF>` and optional `VERA_MQTT_USERNAME_<REF>`, and `VERA_WOKWI_TOKEN_<REF>`, where `<REF>`
-is the reference upper-cased with `-` as `_`, are put in memory-only entries `mqtt:<ref>` and `wokwi:<ref>` and
-registered as secrets for redaction.
+is the reference upper-cased with `-` as `_`, are put in memory-only entries `mqtt:<ref>` and `wokwi:<ref>`.
+
+Both hosts treat an MQTT username as a broker identifier and exclude it from global text masking registration.
+The credential hand-off still carries it privately and the Desktop credential IPC list returns only reference and
+storage metadata. The CLI continues to register MQTT passwords and Wokwi tokens for redaction, including their
+JSON-escaped forms. A username that also matches an independently registered secret is subject to the existing
+masking rules for that secret.
 
 ## 2 Command line
 

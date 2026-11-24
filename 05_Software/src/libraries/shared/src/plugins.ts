@@ -259,6 +259,16 @@ const programSchema = z
     launcher: args.min(1).optional(),
     launcherMode: z.enum(["argv", "string"]).optional(),
     optionSyntax: z.enum(["sigrok-cli", "git", "tshark", "pymcuprog", "stm32cubeprog"]).optional(),
+    subcommandHelp: z
+      .strictObject({
+        flag: z.enum(["--help", "-h"]),
+        commands: z
+          .array(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/))
+          .min(1)
+          .max(64)
+          .refine(unique, "List each subcommand once."),
+      })
+      .optional(),
     /** `hil`: VERA core compiles and runs this program's `check` and `run` operations (spec REQ-DATA-5f714098 §1). */
     plan: z.literal("hil").optional(),
     prefix: z
@@ -324,6 +334,22 @@ const programSchema = z
     file: z.literal(true).optional(),
   })
   .superRefine((program, ctx) => {
+    if (program.subcommandHelp) {
+      const downloads = "download" in program.install ? program.install.download : undefined;
+      if (
+        program.prefix?.length ||
+        program.launcher ||
+        program.plan ||
+        program.file ||
+        program.optionSyntax === "git" ||
+        Object.values(downloads ?? {}).some((entry) => entry?.prefix?.length)
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["subcommandHelp"],
+          message: "Declare subcommand help only when the program receives the original arguments.",
+        });
+    }
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))
       ctx.addIssue({
         code: "custom",

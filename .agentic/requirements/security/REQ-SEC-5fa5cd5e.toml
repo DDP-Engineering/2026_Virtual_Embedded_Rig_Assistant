@@ -6,9 +6,9 @@ title = "Catalog check rejects dangerous tokens below device-write"
 
 status = "active"
 
-requirement = "If a catalog rule at `safe` or `device-read` has a pattern that contains burn, efuse, fuse, otp, rdp, lock, protect, secure, encrypt, transmit or send in any letter case and catalog.yaml does not list that plugin and pattern as reviewed, then the catalog check shall report a `token` issue naming the token."
+requirement = "If an ordinary catalog rule at `safe` or `device-read` or an exact declared help invocation classified `safe` contains burn, efuse, fuse, otp, rdp, lock, protect, secure, encrypt, transmit or send in any letter case and catalog.yaml lacks the exact review entry, then the catalog check shall report a `token` issue naming the token."
 
-verification = "Core test: a rule `tool * burn *` at device-read reports `token` burn; the same rule at device-write, or listed under reviewed, reports nothing; `tool * BLOCK *` at safe reports lock. CLI integration test: the check exits 1 on that source."
+verification = "Core tests verify ordinary safe/read rules and exact declared safe help report the token without an exact review mark. Blocked help and marked exact help produce no token issue. CLI integration test: the check exits 1 on an unreviewed risky source."
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-24

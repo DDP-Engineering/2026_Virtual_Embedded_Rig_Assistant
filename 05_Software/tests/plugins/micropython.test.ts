@@ -159,7 +159,7 @@ describe("package", () => {
   it("publishes the official micropython package with one pinned helper, two skills, catalog and pack entries", async () => {
     const m = manifest();
     expect(validatePluginManifest(m).issues).toEqual([]);
-    expect(m).toMatchObject({ id: "micropython", version: "0.2.1", platforms: ["windows-x64", "linux-x64"] });
+    expect(m).toMatchObject({ id: "micropython", version: "0.2.2", platforms: ["windows-x64", "linux-x64"] });
     expect(Object.keys(m.programs)).toEqual(["micropython-tool"]);
     expect(m.programs["micropython-tool"]?.install).toEqual({ script: "scripts/micropython_tool.py" });
     expect(readFileSync(script, "utf8")).toContain(

@@ -1,6 +1,6 @@
 format: 1
 id: power-profiler
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Power profiling
 summary: Measure a board's current, power and energy with a Joulescope JS220 and analyse the captures offline.
@@ -26,6 +26,7 @@ settings:
     description: The bench registry; declares the power monitor (power-monitor) that captures name by alias.
 programs:
   power-profile:
+    subcommandHelp: { flag: --help, commands: [capture, release] }
     install: { script: scripts/power_profile.py }
     version: { args: [--version], match: '^power-profile (\d+\.\d+\.\d+)' }
     timeout: 120

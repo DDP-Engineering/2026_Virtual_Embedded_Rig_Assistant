@@ -1,6 +1,6 @@
 format: 1
 id: serial-monitor
-version: 0.2.1
+version: 0.2.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Serial monitor
 summary: List serial ports by USB ID, capture a board's console and send it one line.
@@ -19,6 +19,7 @@ ecosystem: general
 platforms: [windows-x64, linux-x64]
 programs:
   serial:
+    subcommandHelp: { flag: --help, commands: [send] }
     install: { script: scripts/serial_monitor.py }
     version: { args: [--version], match: 'serial-monitor (\d+\.\d+\.\d+)' }
 rules:
