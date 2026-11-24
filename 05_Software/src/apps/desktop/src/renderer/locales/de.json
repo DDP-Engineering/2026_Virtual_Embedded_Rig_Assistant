@@ -595,6 +595,7 @@
     "running": "Läuft",
     "approval": "Freigabe erforderlich",
     "question": "Antwort erforderlich",
+    "planDecisions": "Pläne mit ausstehender Entscheidung",
     "completions": "Ungelesene Antworten",
     "readAll": "Alle als gelesen markieren",
     "empty": "Keine Sitzungsaktivität."
@@ -668,6 +669,9 @@
     "exported": "Artefakt exportiert."
   },
   "plan": {
+    "open": "Plan öffnen",
+    "availableOne": "Plan verfügbar · 1 Schritt",
+    "available": "Plan verfügbar · {{count}} Schritte",
     "add": "Kommentar hinzufügen",
     "addToStep": "Kommentar zu Schritt {{step}} hinzufügen",
     "edit": "Feedback bearbeiten",

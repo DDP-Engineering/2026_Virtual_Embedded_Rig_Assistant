@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { LiveSessionActivity } from "@vera/core";
-import { type HelpLanguage, type Settings, sessionIdSchema, workbenchIdSchema } from "@vera/shared";
+import {
+  type ActivitySessionTarget,
+  type HelpLanguage,
+  type Settings,
+  sessionIdSchema,
+  workbenchIdSchema,
+} from "@vera/shared";
 import type { NotificationConstructorOptions } from "electron";
 import { notificationOptions } from "./session-notification-copy.js";
 
@@ -19,6 +25,7 @@ export interface NotificationTarget {
   sessionId: string;
   pending?: () => boolean;
   questionId?: string;
+  aboutPlan?: true;
 }
 
 /** Delivers live session alerts and hands out a target only after a click on the OS notification. */
@@ -35,6 +42,7 @@ export class SessionNotifications {
       preferences: () => Settings["notifications"];
       language: () => HelpLanguage;
       window: () => { minimized: boolean; visible: boolean; focused: boolean } | undefined;
+      shownSession?: () => ActivitySessionTarget | undefined;
       supported: () => boolean;
       create: (options: NotificationConstructorOptions) => NativeNotice;
       activate: (token: string) => void;
@@ -69,6 +77,7 @@ export class SessionNotifications {
       sessionId,
       ...("pending" in event && { pending: event.pending }),
       ...(event.type === "question.requested" && { questionId: event.questionId }),
+      ...(event.type === "question.requested" && event.aboutPlan && { aboutPlan: event.aboutPlan }),
     };
     if (target.pending) this.requests.set(key, undefined);
     // A request may settle synchronously when published. Keep the native presenter outside that stack.
@@ -78,15 +87,21 @@ export class SessionNotifications {
         const window = this.host.window();
         if (!window) return;
         const foreground = window.visible && !window.minimized && window.focused;
+        const shown = target.aboutPlan ? this.host.shownSession?.() : undefined;
+        const awayFromPlan =
+          target.aboutPlan &&
+          (shown?.sessionId !== sessionId ||
+            shown.workbenchId !== workbenchId ||
+            shown.folder !== workbench.folder);
         const preferences = this.host.preferences();
         const eligible =
           kind === "completion"
             ? preferences.turnCompletion === "always" ||
               (preferences.turnCompletion === "background" && !foreground)
-            : !foreground &&
+            : (!foreground || awayFromPlan) &&
               (kind === "question" ? preferences.questionRequests : preferences.approvalRequests) &&
               target.pending?.();
-        if (eligible && this.host.supported()) this.show(kind, key, target);
+        if (eligible && this.host.supported()) this.show(target.aboutPlan ? "plan" : kind, key, target);
       } catch {
         this.reportFailure();
       }

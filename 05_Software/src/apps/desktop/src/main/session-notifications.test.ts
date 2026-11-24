@@ -27,6 +27,7 @@ function harness(platform = "linux", portable = false) {
     questionRequests: true,
   };
   const window = { visible: true, focused: false, minimized: false };
+  const shown = { folder: first.folder, workbenchId: first.config.id, sessionId };
   const native: Notice[] = [];
   const supported = vi.fn(() => true);
   const activate = vi.fn();
@@ -42,6 +43,7 @@ function harness(platform = "linux", portable = false) {
     preferences: () => prefs,
     language: () => "en",
     window: () => window,
+    shownSession: () => shown,
     supported,
     create,
     activate,
@@ -49,8 +51,45 @@ function harness(platform = "linux", portable = false) {
   });
   const publish = (event: LiveSessionActivity, workbench = first) =>
     notices.observe(workbench, sessionId, event);
-  return { notices, publish, window, prefs, native, supported, create, activate, failed };
+  return { notices, publish, window, shown, prefs, native, supported, create, activate, failed };
 }
+
+it("notifies once for a pending plan decision in another visible session and opens Plan", async () => {
+  const h = harness();
+  h.window.focused = true;
+  h.shown.sessionId = "ses_00000000000000000000000004";
+  const plan = { ...question, aboutPlan: true } as const;
+  h.publish(plan);
+  h.publish(plan);
+  await flush();
+  expect(h.native).toHaveLength(1);
+  h.native[0]?.emit("click");
+  expect(h.notices.takeActivation(h.activate.mock.calls[0]?.[0])).toMatchObject({
+    workbenchId: first.config.id,
+    sessionId,
+    questionId,
+    aboutPlan: true,
+  });
+
+  const same = harness();
+  same.window.focused = true;
+  same.publish(plan);
+  await flush();
+  expect(same.native).toHaveLength(0);
+
+  const background = harness();
+  background.window.focused = false;
+  background.publish(plan);
+  await flush();
+  expect(background.native).toHaveLength(1);
+  const notice = background.native[0];
+  notice?.emit("show");
+  background.publish(settled);
+  await flush();
+  expect(notice?.close).toHaveBeenCalledOnce();
+  notice?.emit("click");
+  expect(background.activate).not.toHaveBeenCalled();
+});
 
 it.each([
   ["win32", true, false],

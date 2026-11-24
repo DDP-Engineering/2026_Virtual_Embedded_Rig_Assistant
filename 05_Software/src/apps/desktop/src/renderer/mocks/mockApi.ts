@@ -685,6 +685,7 @@ export function createMockApi(
     }
     if (channel === "session.capacity")
       return channels[channel].response.parse(sessions.capacity()) as Response<C>;
+    if (channel === "session.view.set") return channels[channel].response.parse({}) as Response<C>;
     if (channel === "session.activity.unread") return channels[channel].response.parse([]) as Response<C>;
     if (channel === "session.activity.readAll") return channels[channel].response.parse({}) as Response<C>;
     if (channel === "session.activity.open") {
@@ -713,11 +714,12 @@ export function createMockApi(
                     row.pendingQuestionId ||
                     (!row.delegation && row.status === "running"),
                 )
-                .map(({ id, title, status, pendingQuestionId }) => ({
+                .map(({ id, title, status, pendingQuestionId, pendingPlanDecision }) => ({
                   id,
                   title,
                   status,
                   pendingQuestionId,
+                  pendingPlanDecision,
                 })),
             },
           ]

@@ -699,11 +699,13 @@ function interfaceLanguage(): HelpLanguage {
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
 const unreadCompletions = new UnreadCompletions();
+let shownSession: ActivitySessionTarget | undefined;
 const sessionNotifications = new SessionNotifications({
   platform: process.platform,
   portable: dataLocations.portable,
   preferences: () => settings.get().settings.notifications,
   language: interfaceLanguage,
+  shownSession: () => shownSession,
   window: () =>
     !quitting && window && !window.isDestroyed()
       ? { visible: window.isVisible(), minimized: window.isMinimized(), focused: window.isFocused() }
@@ -1603,6 +1605,24 @@ ipcMain.handle(
           s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         ),
       "session.capacity": () => turnLimit.state(),
+      "session.view.set": ({ session }) => {
+        if (session) {
+          try {
+            const route = router.workbench();
+            if (
+              route.snapshot.folder === session.folder &&
+              route.snapshot.config.id === session.workbenchId &&
+              holdsSession(route.db, session.sessionId)
+            )
+              shownSession = session;
+          } catch {
+            // The view can change while its old workbench is closing.
+          }
+        } else {
+          shownSession = undefined;
+        }
+        return {};
+      },
       "session.notification.open": async ({ token }) => {
         const target = sessionNotifications.takeActivation(token);
         if (!target) return null;
@@ -1633,7 +1653,7 @@ ipcMain.handle(
           folder: snapshot.folder,
           foreground,
           sessions: sessions.map((item) => {
-            const { id, title, status, pendingQuestionId } = sanitizeSessionSummary(
+            const { id, title, status, pendingQuestionId, pendingPlanDecision } = sanitizeSessionSummary(
               item,
               sessionContent(snapshot),
             );
@@ -1642,6 +1662,7 @@ ipcMain.handle(
               title,
               status: status as "running" | "awaiting_approval",
               ...(pendingQuestionId && { pendingQuestionId }),
+              ...(pendingPlanDecision && { pendingPlanDecision }),
             };
           }),
         })),
@@ -2101,6 +2122,7 @@ async function createWindow(state: WindowState): Promise<void> {
       .finally(() => created.destroy());
   });
   window.webContents.on("render-process-gone", () => {
+    shownSession = undefined;
     gitStatus.stop();
     gitDiff.stop();
     gitHistory.stop();

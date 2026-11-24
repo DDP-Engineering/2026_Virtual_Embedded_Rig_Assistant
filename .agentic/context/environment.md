@@ -140,7 +140,8 @@ There is no upgrade-safety suite, because every stored format is version 1.
 - `-- --browser-only` and `-- --serial-only` select one lane. The browser lane needs no desktop build. A failing lane stops the run, so run the lanes apart to see both.
 - Native specs need a build made with `VERA_TEST=1`. A build made with another value compiles the seams out, and workbench creation in the specs then waits until its timeout.
 - Activity uses focused `background-sessions.spec.ts` and `session-question.spec.ts` replay for keyboard
-  access, unread replies with native delivery disabled, guarded navigation and pending owner focus.
+  access, unread replies with native delivery disabled, guarded navigation and pending owner focus. The
+  plan decision case also checks routing across workbenches, a configured-hidden Plan tab and plan clearing.
 - Notification preferences use `notification-settings.spec.ts` for keyboard, draft and locale checks.
   The focused `validated settings update survives an application restart` case in `shell.spec.ts`
   exercises confirmed preferences across an Electron process restart.

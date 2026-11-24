@@ -140,6 +140,7 @@ const workbenchHandlers = {
   "session.sizes": unused,
   "session.search": unused,
   "session.activity": unused,
+  "session.view.set": unused,
   "session.activity.unread": unused,
   "session.activity.open": unused,
   "session.activity.readAll": unused,

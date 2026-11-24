@@ -36,6 +36,7 @@ export function SessionWorkspace({
   delegationParent,
   delegationChildren = [],
   selectLinkedSession,
+  openPlan,
   focusTranscript = false,
   questionFocusId,
   transcriptOpened,
@@ -54,6 +55,7 @@ export function SessionWorkspace({
   delegationParent?: SessionSummary | undefined;
   delegationChildren?: readonly SessionSummary[] | undefined;
   selectLinkedSession?: (id: string) => void;
+  openPlan?: () => void;
   focusTranscript?: boolean;
   questionFocusId?: string | undefined;
   transcriptOpened?: (id: string) => void;
@@ -153,13 +155,18 @@ export function SessionWorkspace({
     target.checking = true;
     const generation = scopeGeneration.current;
     const focused = document.activeElement;
+    const aboutPlan = view.state.questions.some(
+      (item) => item.questionId === question.questionId && item.aboutPlan,
+    );
     void confirmPendingQuestionFocus(question, card, node, (pendingCard) => {
       if (target !== pendingTranscriptFocus.current) return;
       pendingTranscriptFocus.current = undefined;
-      if (generation !== scopeGeneration.current || document.activeElement !== focused) return;
+      if (generation !== scopeGeneration.current) return;
+      if (pendingCard && aboutPlan) openPlan?.();
+      if (document.activeElement !== focused) return;
       (pendingCard ?? heading.current)?.focus();
     });
-  }, [id, workbenchId, view, shown, focusTranscript, readOnly]);
+  }, [id, workbenchId, view, shown, focusTranscript, readOnly, openPlan]);
   const waitingFocus = pendingTranscriptFocus.current;
   const revealQuestionId = focusTranscript
     ? questionFocusId
@@ -310,6 +317,7 @@ export function SessionWorkspace({
     if (searching) searchInput.current?.focus();
   }, [searching]);
   if (!id) return <p>{t("chat.select")}</p>;
+  const planSteps = view?.state.todos.length ?? 0;
   return (
     <section ref={workspace} className="session-workspace" aria-label={t("chat.conversation")}>
       {readOnly && <p role="status">{t("documents.readOnly")}</p>}
@@ -317,6 +325,16 @@ export function SessionWorkspace({
         <h2 ref={heading} tabIndex={-1}>
           {view?.state.title || t("chat.untitled")}
         </h2>
+        {openPlan && planSteps > 0 && (
+          <div className="chat-plan-indicator" data-plan-available>
+            <span role="status">
+              {planSteps === 1 ? t("plan.availableOne") : t("plan.available", { count: planSteps })}
+            </span>
+            <button type="button" onClick={openPlan}>
+              {t("plan.open")}
+            </button>
+          </div>
+        )}
       </header>
       {view && shown && browserEnabled && !readOnly && !archived && (
         <BrowserControls

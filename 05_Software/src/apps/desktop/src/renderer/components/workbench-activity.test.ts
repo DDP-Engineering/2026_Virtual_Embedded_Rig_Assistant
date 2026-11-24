@@ -445,3 +445,59 @@ test("activity events refresh the heading and the rows at once; the limit shows 
     { timeout: 1000 },
   );
 });
+
+test("switching to a copied session reports its new folder and does not reuse the old Plan action", async () => {
+  const original = await api.invoke("workbench.create", { folder: "/mock/plan-original", name: "Rig" });
+  const session = await api.invoke("session.create", { workbenchId: original.config.id });
+  const sessionView = await api.invoke("session.get", { sessionId: session.id });
+  sessionView.snapshot.todos = [{ text: "Inspect the board", status: "pending" }];
+  const copy: WorkbenchSnapshot = {
+    ...original,
+    folder: "/mock/plan-copy",
+    config: {
+      ...original.config,
+      interface: { ...original.config.interface, right_panel_tabs: ["docs"] },
+    },
+  };
+  const activity: SessionActivity = {
+    workbenchId: copy.config.id,
+    folder: copy.folder,
+    name: "Copied demo board",
+    foreground: false,
+    sessions: [{ id: session.id, title: session.title, status: "running" }],
+  };
+  let active = original;
+  const invoke = api.invoke.bind(api);
+  const calls = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, payload: never) => {
+    if (channel === "workbench.config.get") return active;
+    if (channel === "session.get") return sessionView;
+    if (channel === "session.activity") return [activity];
+    if (channel === "session.activity.open") {
+      active = copy;
+      return { workbench: copy, sessionId: session.id };
+    }
+    return invoke(channel as never, payload);
+  }) as typeof api.invoke);
+  await mount();
+  const user = userEvent.setup();
+  const sessionButton = container.querySelector<HTMLButtonElement>(`[data-session="${session.id}"]`);
+  if (!sessionButton) throw new Error("Plan session is missing from the sidebar");
+  await act(async () => user.click(sessionButton));
+  await settle();
+  const openPlan = container.querySelector<HTMLButtonElement>("[data-plan-available] button");
+  if (!openPlan) throw new Error("Plan action missing");
+  await act(async () => user.click(openPlan));
+  expect(container.querySelector("#panel-plan")).toBeTruthy();
+
+  const activityButton = container.querySelector<HTMLButtonElement>('[data-action="show-activity"]');
+  if (!activityButton) throw new Error("Activity action missing");
+  await act(async () => user.click(activityButton));
+  const copyEntry = document.querySelector<HTMLButtonElement>('dialog [data-activity-kind="running"]');
+  if (!copyEntry) throw new Error("Copied session missing from Activity");
+  await act(async () => user.click(copyEntry));
+  await settle();
+  expect(container.querySelector("#tab-plan")).toBeNull();
+  expect(calls).toHaveBeenCalledWith("session.view.set", {
+    session: { folder: copy.folder, workbenchId: copy.config.id, sessionId: session.id },
+  });
+});

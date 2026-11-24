@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-48f4b943"
+
+title = "Discover and open the current plan from Chat"
+
+status = "active"
+
+requirement = "When the selected session has a nonempty plan, VERA shall show its current step count and an Open plan action in Chat at every detail level, opening the right Plan tab on activation."
+
+verification = "Run with the panel closed and Minimal Chat, open Plan from the indicator, clear the plan and check the indicator disappears. Switch to a copied workbench with identical stored IDs and verify the previous Plan action does not carry over."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/shell.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.test.ts","05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts","05_Software/tests/e2e/session-question.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

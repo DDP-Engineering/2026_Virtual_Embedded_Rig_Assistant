@@ -18,6 +18,7 @@ export const questionInputSchema = z.strictObject({
   question: questionText,
   choices: z.array(choiceText).min(2).max(8),
   recommended: z.unknown().optional().describe("One-based number of the recommended choice, if any"),
+  aboutPlan: z.literal(true).optional().describe("Set only when asking for a decision on the current plan"),
 });
 export type QuestionInput = z.infer<typeof questionInputSchema>;
 

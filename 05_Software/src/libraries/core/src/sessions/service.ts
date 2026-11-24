@@ -37,6 +37,7 @@ import {
   sessionExportSchema,
   sessionIdSchema,
   sessionSearchQuerySchema,
+  todoItemsSchema,
   usageEventSchema,
   type ViewerContent,
   veraError,
@@ -375,11 +376,12 @@ export class SessionService {
     } else if (event.type === "approval.decided") {
       observe(id, { type: "approval.decided", approvalId: event.approvalId });
     } else if (event.type === "question.requested") {
-      const { questionId, turnId } = event.question;
+      const { questionId, turnId, aboutPlan } = event.question;
       observe(id, {
         type: "question.requested",
         questionId,
         turnId,
+        ...(aboutPlan && { aboutPlan }),
         pending: () => !this.closing && this.questions.id(id) === questionId,
       });
     } else if (event.type === "question.settled") {
@@ -417,9 +419,10 @@ export class SessionService {
   }
   private summary(row: SessionRow): SessionSummary {
     if (!row.created_at || !row.updated_at) throw veraError("INVALID");
-    const pendingQuestionId = this.questions.id(row.id);
+    const question = this.questions.current(row.id);
     return {
-      ...(pendingQuestionId && { pendingQuestionId }),
+      ...(question && { pendingQuestionId: question.questionId }),
+      ...(question?.aboutPlan && { pendingPlanDecision: question.aboutPlan }),
       id: row.id,
       title: row.title,
       createdAt: row.created_at,
@@ -1619,8 +1622,13 @@ export class SessionService {
       const timeout = this.host.questionTimeoutMinutes;
       if (timeout) {
         const mask = (text: string) => this.maskContent("agent", text);
-        ctx.askUser = (input, callId, signal) =>
-          this.questions.ask(
+        ctx.askUser = (input, callId, signal) => {
+          if (input.aboutPlan) {
+            const plan = ctx.todos?.repository.get(id);
+            if (!plan || todoItemsSchema.parse(JSON.parse(plan.items_json)).length === 0)
+              throw veraError("INVALID");
+          }
+          return this.questions.ask(
             id,
             turn.turnId,
             callId,
@@ -1642,6 +1650,7 @@ export class SessionService {
               });
             },
           );
+        };
       }
       ctx.delegation = bindDelegatedSessionHost(
         this,

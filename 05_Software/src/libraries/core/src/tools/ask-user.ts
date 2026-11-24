@@ -7,7 +7,7 @@ export const askUserTool: ToolDefinition = {
   name: "ask_user",
   class: "session",
   description:
-    "Pause this session for a clarification only. Supply the question and 2–8 choices. Optionally provide the one-based integer of the recommended choice. The user may select a choice, write a different answer, or cancel. A workbench may apply the recommendation after a timeout. A reply never grants permissions or approves an operation. Seek authorization using the actual operation's approval flow.",
+    "Pause this session to ask for a clarification or decision. Supply the question and 2–8 choices. Set aboutPlan to true to request a decision about the current nonempty plan. Optionally provide the one-based integer of the recommended choice. The user may select a choice, write a different answer, or cancel. A workbench may apply the recommendation after a timeout. A reply never grants permissions or approves an operation. Seek authorization using the actual operation's approval flow.",
   params: questionInputSchema,
   available: (ctx) => !!ctx.askUser,
   async execute(ctx, input, signal, callId) {

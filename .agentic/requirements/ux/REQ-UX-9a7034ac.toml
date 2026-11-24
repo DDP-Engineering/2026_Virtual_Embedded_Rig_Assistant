@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9a7034ac"
+
+title = "Notify once and open the requested plan from a pending decision"
+
+status = "active"
+
+requirement = "When a plan decision is requested and the user is away from its session, VERA shall offer a single live alert that opens the verified workbench, session and Plan while the decision remains pending."
+
+verification = "Exercise foreground other-session and background notices, same-session suppression, duplicate requests, correct navigation, and settlement before activation. Verify the shown-session report distinguishes workbench folders that share stored IDs."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts","05_Software/src/apps/desktop/src/main/index.ts","05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/activity-view.tsx","05_Software/src/apps/desktop/src/main/session-notification-copy.ts","05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts","05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts","05_Software/tests/e2e/session-question.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

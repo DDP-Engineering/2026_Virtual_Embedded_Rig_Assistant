@@ -142,8 +142,31 @@ export function App() {
     retry: false,
   });
   const benchId = bench.data?.config.id;
+  const benchFolder = bench.data?.folder;
   const indexLease = bench.data?.indexLease;
   const [filesRequest, setFilesRequest] = useState<{ indexLease: number; sequence: number }>();
+  const [planRequest, setPlanRequest] = useState<ActivitySessionTarget & { sequence: number }>();
+  const shownSessionId =
+    chat && !settings && !plugins && !newWorkbench && !editor && help === undefined
+      ? activeSession
+      : undefined;
+  const shownSession = useMemo<ActivitySessionTarget | undefined>(
+    () =>
+      benchFolder && benchId && shownSessionId
+        ? { folder: benchFolder, workbenchId: benchId, sessionId: shownSessionId }
+        : undefined,
+    [benchFolder, benchId, shownSessionId],
+  );
+  useEffect(() => {
+    void api.invoke("session.view.set", { session: shownSession ?? null }).catch(() => {});
+  }, [shownSession]);
+  const openPlan = useCallback(() => {
+    if (!shownSession) return;
+    setPlanRequest((last) => ({
+      ...shownSession,
+      sequence: (last?.sequence ?? 0) + 1,
+    }));
+  }, [shownSession]);
   useRunPresentation(benchId);
   const readOnly = bench.data?.readOnly ?? false;
   const benchFailure = bench.isError && (bench.error as { code?: string }).code !== "NOT_FOUND";
@@ -772,6 +795,14 @@ export function App() {
                   showFilesRequest={
                     filesRequest?.indexLease === indexLease ? filesRequest?.sequence : undefined
                   }
+                  showPlanRequest={
+                    planRequest &&
+                    planRequest.folder === shownSession?.folder &&
+                    planRequest.workbenchId === shownSession.workbenchId &&
+                    planRequest.sessionId === shownSession.sessionId
+                      ? planRequest.sequence
+                      : undefined
+                  }
                   visibleTabs={bench.data?.config.interface.right_panel_tabs}
                   configurePanelTabs={
                     activeWorkbench
@@ -802,6 +833,7 @@ export function App() {
                       activityError={sessionError ?? sessionActivity.error}
                       workbenches={recent.data}
                       pending={sessionPending}
+                      shownSession={shownSession}
                       openSession={openActivitySession}
                     />
                   }
@@ -1027,6 +1059,7 @@ export function App() {
                           delegationParent={delegationParent}
                           delegationChildren={delegationChildren}
                           selectLinkedSession={selectLinkedSession}
+                          openPlan={openPlan}
                           focusTranscript={
                             !!linkedTranscript &&
                             linkedTranscript.sessionId === activeSession &&

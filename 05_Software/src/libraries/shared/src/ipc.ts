@@ -229,6 +229,7 @@ export const sessionActivitySchema = z.strictObject({
       title: z.string().max(60),
       status: z.enum(["running", "awaiting_approval"]),
       pendingQuestionId: questionIdSchema.optional(),
+      pendingPlanDecision: z.literal(true).optional(),
     }),
   ),
 });
@@ -795,6 +796,11 @@ export const channels = {
   ),
   /** Every open workbench, the shown one first, with its running turns and pending requests. */
   "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
+  "session.view.set": defineChannel(
+    "session.view.set",
+    z.strictObject({ session: activitySessionTargetSchema.nullable() }),
+    z.strictObject({}),
+  ),
   "session.activity.unread": defineChannel(
     "session.activity.unread",
     z.strictObject({}),

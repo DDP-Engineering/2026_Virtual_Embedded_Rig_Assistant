@@ -62,11 +62,13 @@ export function Shell({
   visibleTabs = defaultRightPanelTabs,
   configurePanelTabs,
   showFilesRequest,
+  showPlanRequest,
 }: {
   workbenchId?: string | undefined;
   visibleTabs?: readonly RightPanelTab[] | undefined;
   configurePanelTabs?: (() => void) | undefined;
   showFilesRequest?: number | undefined;
+  showPlanRequest?: number | undefined;
   children?: ReactNode;
   navigation: ReactNode;
   settings: boolean;
@@ -90,7 +92,9 @@ export function Shell({
   const { t } = useTranslation();
   const [layout, setLayout] = useState(initialLayout);
   const bindings = useContext(ShortcutContext);
-  const tabs = rightPanelTabs(t).filter(({ id }) => visibleTabs.includes(id));
+  const tabs = rightPanelTabs(t).filter(
+    ({ id }) => visibleTabs.includes(id) || (id === "plan" && plan && showPlanRequest !== undefined),
+  );
   const [selection, setSelection] = useState<{
     workbenchId: string | undefined;
     tab: RightPanelTab | undefined;
@@ -115,6 +119,22 @@ export function Shell({
   const settingsLink = useRef<HTMLButtonElement>(null);
   const filesVisible = visibleTabs.includes("docs");
   const focusFilesRequest = useRef(false);
+  const lastPlanRequest = useRef<number | undefined>(undefined);
+  const focusPlanRequest = useRef(false);
+  useEffect(() => {
+    if (showPlanRequest === undefined || lastPlanRequest.current === showPlanRequest) return;
+    lastPlanRequest.current = showPlanRequest;
+    focusPlanRequest.current = true;
+    setBlockedRequest(undefined);
+    setLayout((value) => ({ ...value, rightCollapsed: false }));
+    setSelection({ workbenchId, tab: "plan" });
+  }, [showPlanRequest, workbenchId]);
+  useEffect(() => {
+    if (showPlanRequest === undefined || !focusPlanRequest.current || tab !== "plan" || layout.rightCollapsed)
+      return;
+    focusPlanRequest.current = false;
+    document.getElementById("tab-plan")?.focus();
+  }, [showPlanRequest, tab, layout.rightCollapsed]);
   useEffect(() => {
     focusFilesRequest.current = showFilesRequest !== undefined;
     if (!focusFilesRequest.current) return;

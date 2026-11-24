@@ -595,6 +595,7 @@
     "running": "Running",
     "approval": "Needs approval",
     "question": "Needs answer",
+    "planDecisions": "Plans awaiting a decision",
     "completions": "Unread completions",
     "readAll": "Mark all as read",
     "empty": "No session activity."
@@ -668,6 +669,9 @@
     "exported": "Artifact exported."
   },
   "plan": {
+    "open": "Open plan",
+    "availableOne": "Plan available · 1 step",
+    "available": "Plan available · {{count}} steps",
     "add": "Add comment",
     "addToStep": "Add comment to step {{step}}",
     "edit": "Edit feedback",

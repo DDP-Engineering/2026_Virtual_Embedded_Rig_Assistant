@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-1400dfd5"
+
+title = "Distinguish pending plan decisions from routine plan updates"
+
+status = "active"
+
+requirement = "When an ordinary Desktop agent asks an explicit decision about its current nonempty plan, VERA shall preserve an about-plan marker for the pending question until settlement."
+
+verification = "Start a recorded plan decision, assert its durable marker and live pending status, settle it, and assert other questions keep their behavior."
+
+affected_paths = ["05_Software/src/libraries/shared/src/session-questions.ts","05_Software/src/libraries/core/src/sessions/questions.ts","05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/ask-user.ts","05_Software/src/libraries/core/src/sessions/live-activity.ts","05_Software/src/libraries/shared/src/session.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/questions.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

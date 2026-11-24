@@ -20,7 +20,11 @@ export class Questions {
   constructor(private readonly now: () => number) {}
 
   id(sessionId: string): string | undefined {
-    return this.pending.get(sessionId)?.request.questionId;
+    return this.current(sessionId)?.questionId;
+  }
+
+  current(sessionId: string): QuestionRequest | undefined {
+    return this.pending.get(sessionId)?.request;
   }
 
   ask(
@@ -51,6 +55,7 @@ export class Questions {
       turnId,
       question: input.question,
       choices: input.choices,
+      ...(input.aboutPlan && { aboutPlan: true as const }),
       recommended,
       deadline: expiry === null ? null : new Date(expiry).toISOString(),
     };

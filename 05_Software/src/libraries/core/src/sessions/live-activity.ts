@@ -25,5 +25,11 @@ export type LiveSessionActivity =
   | { type: "turn.completed"; turnId: string; title: string }
   | { type: "approval.requested"; approvalId: string; pending: () => boolean }
   | { type: "approval.decided"; approvalId: string }
-  | { type: "question.requested"; questionId: string; turnId: string; pending: () => boolean }
+  | {
+      type: "question.requested";
+      questionId: string;
+      turnId: string;
+      aboutPlan?: true;
+      pending: () => boolean;
+    }
   | { type: "question.settled"; questionId: string; turnId: string };

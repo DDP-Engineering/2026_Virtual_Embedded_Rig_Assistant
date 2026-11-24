@@ -595,6 +595,7 @@
     "running": "În curs",
     "approval": "Necesită aprobare",
     "question": "Necesită răspuns",
+    "planDecisions": "Planuri care așteaptă o decizie",
     "completions": "Răspunsuri necitite",
     "readAll": "Marchează toate ca citite",
     "empty": "Nicio activitate în sesiuni."
@@ -668,6 +669,9 @@
     "exported": "Artefact exportat."
   },
   "plan": {
+    "open": "Deschide planul",
+    "availableOne": "Plan disponibil · 1 pas",
+    "available": "Plan disponibil · {{count}} pași",
     "add": "Adaugă comentariu",
     "addToStep": "Adaugă comentariu la pasul {{step}}",
     "edit": "Editează feedbackul",

@@ -110,6 +110,8 @@ Select an edit in **Changes** to open its recorded diff in a tab beside Chat.
 
 ## Plan feedback and review
 
+Choose **Open plan** in Chat to see the current plan and its steps. A plan decision uses the question card in Chat. If you are away from the session, the notification or the entry in **Activity** opens that session and its **Plan** tab.
+
 In **Plan**, choose **Add comment** for a whole step, or select text in one step before choosing it to quote that fragment. Keyboard users can select with Shift and the arrow keys in **Step text**, then choose **Use selected text**; **Entire step** clears the fragment. Empty steps accept whole-step comments only. Enter multiline feedback, for example “Check voltage before flashing”, and choose **Save draft**. Saving does not send a message or start the agent. Cancel or Escape discards unsaved edits and returns focus to Plan.
 
 Draft and submitted counts open the comments for that exact step. **Edit feedback** changes text only; **Delete feedback** removes a draft. Every plan replacement makes earlier anchors stale, even if some text is unchanged. **Needs re-anchor** keeps those drafts readable: choose **Re-anchor**, select a numbered current step, explicitly choose its whole text or a fragment, then **Save re-anchor**. Saved drafts survive closing or switching sessions.

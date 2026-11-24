@@ -110,6 +110,8 @@ Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans 
 
 ## Commenter et réviser le plan
 
+Choisissez **Ouvrir le plan** dans le chat pour voir ses étapes. Répondez à une demande de décision dans la carte de question. Si vous êtes dans une autre session, la notification ou l’entrée dans **Activité** ouvre la session et l’onglet **Plan**.
+
 Dans **Plan**, choisissez **Ajouter un commentaire** pour une étape entière ou sélectionnez d’abord du texte dans une seule étape pour citer ce fragment. Au clavier, sélectionnez avec Shift et les flèches dans **Texte de l’étape**, puis choisissez **Utiliser le texte sélectionné** ; **Étape entière** efface le fragment. Une étape vide accepte uniquement un commentaire sur l’étape entière. Saisissez plusieurs lignes, par exemple « Vérifier la tension avant la programmation », puis **Enregistrer le brouillon**. L’enregistrement n’envoie aucun message et ne démarre pas l’agent. Annuler ou Échap abandonne les modifications non enregistrées et ramène le focus sur Plan.
 
 Le nombre de brouillons et de commentaires envoyés ouvre les commentaires de cette étape précise. **Modifier le commentaire** change seulement le texte ; **Supprimer le commentaire** retire un brouillon. Tout remplacement du plan invalide les associations précédentes, même si le texte reste identique. **À réassocier** conserve ces brouillons lisibles : choisissez **Réassocier**, une étape actuelle numérotée, explicitement son texte entier ou un fragment, puis **Enregistrer l’association**. Les brouillons enregistrés survivent à la fermeture et au changement de session.

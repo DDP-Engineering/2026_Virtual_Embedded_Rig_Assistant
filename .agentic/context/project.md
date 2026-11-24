@@ -32,6 +32,8 @@ Windows presenter. Click activation applies the unsaved-editor guard and opens t
 session. Question settlement invalidates native activation and dismisses the notice where supported.
 Native and in-app focus requires the exact question to remain pending. Title-bar Activity shows running
 sessions, pending approvals and questions, and up to 100 unread replies independently of native delivery.
+Chat exposes the current plan and opens its right tab. A tagged decision on a nonempty plan alerts when
+the user is away from that session, and the verified activation opens the session and Plan.
 
 Saved-session performance verification uses an isolated native Electron build, real persisted
 fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference

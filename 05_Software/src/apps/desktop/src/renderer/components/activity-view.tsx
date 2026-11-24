@@ -18,6 +18,7 @@ export function ActivityView({
   activityError,
   workbenches,
   pending,
+  shownSession,
   openSession,
 }: {
   open: boolean;
@@ -26,6 +27,7 @@ export function ActivityView({
   activityError: unknown;
   workbenches: RecentWorkbenchState[] | undefined;
   pending: boolean;
+  shownSession?: ActivitySessionTarget | undefined;
   openSession: (target: Target, questionId?: string) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
@@ -49,14 +51,27 @@ export function ActivityView({
   const operating = (activity ?? [])
     .filter((row) => !workbenches?.some(({ folder, missing }) => folder === row.folder && missing))
     .flatMap(({ workbenchId, folder, name, sessions }) =>
-      sessions.map(({ id, title, status, pendingQuestionId }) => ({
+      sessions.map(({ id, title, status, pendingQuestionId, pendingPlanDecision }) => ({
         target: { workbenchId, folder, sessionId: id },
         title,
         name,
         questionId: pendingQuestionId,
-        kind: pendingQuestionId ? "question" : status === "awaiting_approval" ? "approval" : "running",
+        kind: pendingQuestionId
+          ? pendingPlanDecision
+            ? "plan"
+            : "question"
+          : status === "awaiting_approval"
+            ? "approval"
+            : "running",
       })),
     );
+  const otherPlans = operating.filter(
+    ({ kind, target }) =>
+      kind === "plan" &&
+      (target.folder !== shownSession?.folder ||
+        target.workbenchId !== shownSession.workbenchId ||
+        target.sessionId !== shownSession.sessionId),
+  ).length;
   const busy = pending || reading;
   useLayoutEffect(() => {
     if (!open) return;
@@ -93,6 +108,7 @@ export function ActivityView({
     { kind: "running", title: t("activity.running"), rows: operating.filter((r) => r.kind === "running") },
     { kind: "approval", title: t("activity.approval"), rows: operating.filter((r) => r.kind === "approval") },
     { kind: "question", title: t("activity.question"), rows: operating.filter((r) => r.kind === "question") },
+    { kind: "plan", title: t("activity.planDecisions"), rows: operating.filter((r) => r.kind === "plan") },
     {
       kind: "completion",
       title: t("activity.completions"),
@@ -111,6 +127,7 @@ export function ActivityView({
         data-action="show-activity"
         ref={trigger}
         aria-label={t("activity.title")}
+        aria-describedby={otherPlans ? `${dialogId}-plan-count` : undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
@@ -121,6 +138,12 @@ export function ActivityView({
         }}
       >
         <Activity aria-hidden="true" />
+        {otherPlans > 0 && (
+          <span className="activity-plan-count" id={`${dialogId}-plan-count`}>
+            <span className="sr-only">{t("activity.planDecisions")} </span>
+            {otherPlans}
+          </span>
+        )}
       </button>
       {open &&
         createPortal(

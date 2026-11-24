@@ -595,6 +595,7 @@
     "running": "En cours",
     "approval": "Approbation requise",
     "question": "Réponse requise",
+    "planDecisions": "Plans en attente de décision",
     "completions": "Réponses non lues",
     "readAll": "Tout marquer comme lu",
     "empty": "Aucune activité de session."
@@ -668,6 +669,9 @@
     "exported": "Artefact exporté."
   },
   "plan": {
+    "open": "Ouvrir le plan",
+    "availableOne": "Plan disponible · 1 étape",
+    "available": "Plan disponible · {{count}} étapes",
     "add": "Ajouter un commentaire",
     "addToStep": "Commenter l’étape {{step}}",
     "edit": "Modifier le commentaire",

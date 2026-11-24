@@ -15,6 +15,8 @@ Core owns validated ordered session task lists and atomic database/event updates
 - TodosRepository.get(sessionId) reads its row; replace(sessionId,items,updatedAt) independently validates and parameterizes the existing schema1 upsert. SQLite session deletion cascades todos.
 - SessionService binds TodoHost database/repository/session/Clock/ownership/scrub/hub callbacks; todo validates scrubbed fields, checks abort/authority and upserts+records one event within a synchronous transaction, publishing after commit.
 - PlanTab keys workbench/session identity and consumes the shared session view (useSessionView over useSessionEvents). List text is escaped, order is authoritative; Circle/CircleDot/CircleCheck expose localized status image names and visible status labels. Empty/loading/retry states share application conventions.
+- Chat shows a nonempty plan's current step count at every detail level. Open plan selects the right Plan pane for the current workbench folder and session, temporarily revealing a configured-hidden tab without editing workbench preferences.
+- Ordinary Desktop `ask_user` calls can mark a pending decision with `aboutPlan: true` only when the current session has a nonempty plan. The question event carries the tag. Activity and eligible native alerts route to the exact pending question, then open Plan.
 
 ## Feedback and review backend
 

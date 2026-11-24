@@ -110,6 +110,8 @@ Wählen Sie unter **Änderungen** eine Bearbeitung, um ihren Diff neben Chat zu 
 
 ## Plan kommentieren und prüfen
 
+Wähle **Plan öffnen** im Chat, um die Schritte des aktuellen Plans zu sehen. Antworte auf eine Planentscheidung in der Fragekarte. Wenn du in einer anderen Sitzung bist, öffnet die Benachrichtigung oder der Eintrag in **Aktivität** die Sitzung und den Tab **Plan**.
+
 Wählen Sie in **Plan** **Kommentar hinzufügen** für einen ganzen Schritt oder markieren Sie vorher Text in genau einem Schritt, um diesen Ausschnitt zu zitieren. Mit der Tastatur markieren Sie im **Schritttext** mit Shift und Pfeiltasten und wählen **Ausgewählten Text verwenden**; **Gesamter Schritt** entfernt den Ausschnitt. Leere Schritte erlauben nur Kommentare zum gesamten Schritt. Schreiben Sie mehrzeiliges Feedback, etwa „Spannung vor dem Flashen prüfen“, und wählen Sie **Entwurf speichern**. Speichern sendet keine Nachricht und startet keinen Agenten. Abbrechen oder Escape verwirft ungespeicherte Änderungen und setzt den Fokus zurück auf Plan.
 
 Die Anzahl der Entwürfe und übermittelten Kommentare öffnet die Kommentare für genau diesen Schritt. **Feedback bearbeiten** ändert nur den Text; **Feedback löschen** entfernt einen Entwurf. Jede Planersetzung macht frühere Verankerungen ungültig, auch bei gleichem Text. **Neue Verankerung erforderlich** hält diese Entwürfe lesbar: Wählen Sie **Neu verankern**, einen nummerierten aktuellen Schritt, ausdrücklich den gesamten Text oder einen Ausschnitt und dann **Verankerung speichern**. Gespeicherte Entwürfe bleiben beim Schließen oder Wechseln von Sitzungen erhalten.

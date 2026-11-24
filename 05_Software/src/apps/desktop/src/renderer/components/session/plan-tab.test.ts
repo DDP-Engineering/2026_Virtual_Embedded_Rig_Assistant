@@ -36,7 +36,7 @@ afterEach(async () => {
   await api.invoke("workbench.close", {});
   localStorage.clear();
 });
-async function mount() {
+async function mount(title = "Empty session", openPanel = true) {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   container = document.createElement("div");
   document.body.append(container);
@@ -44,14 +44,25 @@ async function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => root.render(createElement(QueryClientProvider, { client }, createElement(App))));
   await settle();
-  await act(async () => button("Empty session").click());
-  await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-plan")?.click());
+  await act(async () => button(title).click());
+  if (openPanel) {
+    await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
+    await act(async () => container.querySelector<HTMLButtonElement>("#tab-plan")?.click());
+  }
   await settle();
 }
 it("connects Plan to the selected session empty list", async () => {
   await mount();
   expect(container.querySelector("#panel-plan")?.textContent).toContain("No tasks in this session.");
+});
+
+it("opens the current plan from Chat with the right panel closed", async () => {
+  await mount("Plan feedback targets", false);
+  expect(container.querySelector("#panel-plan")).toBeNull();
+  expect(container.querySelector("[data-plan-available]")?.textContent).toContain("Plan available · 4 steps");
+  await act(async () => button("Open plan").click());
+  expect(container.querySelector("#tab-plan")?.getAttribute("aria-selected")).toBe("true");
+  expect(container.querySelectorAll("#panel-plan .plan-text")).toHaveLength(4);
 });
 
 async function renderPlan(sessionId: string, workbenchId = "wb_test") {

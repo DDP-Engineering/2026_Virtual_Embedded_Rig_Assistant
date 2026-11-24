@@ -110,6 +110,8 @@ Selectează o editare din **Modificări** pentru a-i deschide diferențele într
 
 ## Feedback și revizuirea planului
 
+Alege **Deschide planul** în Chat pentru a vedea pașii planului curent. Răspunde la cererea de decizie din cardul întrebării. Dacă ești în altă sesiune, notificarea sau intrarea din **Activitate** deschide sesiunea și fila **Plan**.
+
 În **Plan**, alege **Adaugă comentariu** pentru un pas întreg sau selectează mai întâi text dintr-un singur pas pentru a cita fragmentul. Cu tastatura, selectează cu Shift și săgețile în **Textul pasului**, apoi alege **Folosește textul selectat**; **Întregul pas** elimină fragmentul. Pașii goi acceptă doar comentarii pentru întregul pas. Scrie feedback pe mai multe rânduri, de exemplu „Verifică tensiunea înainte de programare”, și alege **Salvează schița**. Salvarea nu trimite mesaje și nu pornește agentul. Anulare sau Escape renunță la editările nesalvate și readuce focalizarea în Plan.
 
 Numărul schițelor și al comentariilor trimise deschide comentariile acelui pas exact. **Editează feedbackul** schimbă doar textul; **Șterge feedbackul** elimină o schiță. Fiecare înlocuire a planului invalidează ancorele anterioare, chiar dacă unele texte sunt identice. **Necesită reancorare** păstrează schițele lizibile: alege **Reancorează**, selectează un pas curent numerotat, alege explicit întregul text sau un fragment, apoi **Salvează reancorarea**. Schițele salvate rămân după închiderea sau schimbarea sesiunii.

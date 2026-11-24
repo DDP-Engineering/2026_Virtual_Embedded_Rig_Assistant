@@ -15,16 +15,33 @@ afterEach(async () => {
   }
 });
 
-async function setup(recommended: unknown = 2, timeout: number | null = 1, write = false) {
+async function setup(
+  recommended: unknown = 2,
+  timeout: number | null = 1,
+  write = false,
+  aboutPlan = false,
+  hasPlan = aboutPlan,
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-question-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, ".vera"));
   await mkdir(join(root, "scripts"));
   await writeFile(join(root, "target.txt"), "before");
   const replay = [
+    ...(hasPlan
+      ? [{ toolCalls: [{ name: "todo", args: { items: [{ text: "Inspect board", status: "pending" }] } }] }]
+      : []),
     {
       toolCalls: [
-        { name: "ask_user", args: { question: "Which profile?", choices: ["Quiet", "Fast"], recommended } },
+        {
+          name: "ask_user",
+          args: {
+            question: "Which profile?",
+            choices: ["Quiet", "Fast"],
+            recommended,
+            ...(aboutPlan && { aboutPlan }),
+          },
+        },
       ],
     },
     ...(write
@@ -70,6 +87,35 @@ async function setup(recommended: unknown = 2, timeout: number | null = 1, write
   }
   return { service, root, live, ask };
 }
+
+it("marks a pending plan decision in the snapshot and live observation until settlement", async () => {
+  const { service, ask, live } = await setup(2, null, false, true);
+  const { id, question } = await ask();
+  expect(question.aboutPlan).toBe(true);
+  expect(service.list().find((item) => item.id === id)?.pendingPlanDecision).toBe(true);
+  const request = live.mock.calls.find(([, event]) => event.type === "question.requested")?.[1];
+  expect(request).toMatchObject({
+    type: "question.requested",
+    questionId: question.questionId,
+    aboutPlan: true,
+  });
+  service.answerQuestion(id, question.questionId, { kind: "choice", choice: 1 });
+  await service.waitIdle(id);
+  expect(service.list().find((item) => item.id === id)?.pendingPlanDecision).toBeUndefined();
+});
+
+it("rejects a plan decision request when the session has no plan", async () => {
+  const { service, live } = await setup(2, null, false, true, false);
+  const { id } = service.create();
+  service.send(id, "Ask for a decision about the plan");
+  await service.waitIdle(id);
+  const snapshot = service.get(id).snapshot;
+  expect(snapshot.questions).toEqual([]);
+  expect(snapshot.items).toContainEqual(
+    expect.objectContaining({ kind: "tool", name: "ask_user", status: "error" }),
+  );
+  expect(live.mock.calls.some(([, event]) => event.type === "question.requested")).toBe(false);
+});
 
 it.each([
   [{ kind: "choice", choice: 2 } as const, "Fast"],

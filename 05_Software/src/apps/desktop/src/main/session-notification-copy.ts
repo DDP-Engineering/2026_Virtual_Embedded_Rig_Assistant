@@ -6,23 +6,27 @@ const copy = {
     completion: "A reply is ready.",
     approval: "An approval request needs your attention.",
     question: "A question is waiting for your answer.",
+    plan: "A plan is waiting for your decision.",
   },
   ro: {
     completion: "Un răspuns este gata.",
     approval: "O cerere de aprobare necesită atenția ta.",
     question: "O întrebare așteaptă răspunsul tău.",
+    plan: "Un plan așteaptă decizia ta.",
   },
   de: {
     completion: "Eine Antwort ist verfügbar.",
     approval: "Eine Anfrage wartet auf Ihre Freigabe.",
     question: "Eine Frage wartet auf Ihre Antwort.",
+    plan: "Ein Plan wartet auf Ihre Entscheidung.",
   },
   fr: {
     completion: "Une réponse est prête.",
     approval: "Une demande d’approbation attend votre décision.",
     question: "Une question attend votre réponse.",
+    plan: "Un plan attend votre décision.",
   },
-} satisfies Record<HelpLanguage, Record<"completion" | "approval" | "question", string>>;
+} satisfies Record<HelpLanguage, Record<"completion" | "approval" | "question" | "plan", string>>;
 
 export const windowsNotificationAppId = (testBuild: boolean) =>
   testBuild ? "engineering.ddp.vera.test" : "engineering.ddp.vera";

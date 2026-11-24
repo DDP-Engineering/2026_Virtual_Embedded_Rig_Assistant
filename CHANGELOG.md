@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Open the current plan from Chat and get a notification while away when a plan needs a decision.
 - Receive desktop alerts for pending chat questions and manage them in Settings > Notifications.
 - Catch up on unread replies and pending session activity across workbenches from the title bar.
 - Ask structured chat questions and optionally apply the recommended answer after a workbench timeout.
