@@ -63,9 +63,11 @@ export function WorkbenchIndexDetails({
             </>
           )}
           {missingDetails && !list.isPending && <p>{t("documents.indexFailureDetailsUnavailable")}</p>}
-          <button type="button" disabled={!canReindex} onClick={() => reindex.mutate()}>
-            {t("documents.reindex")}
-          </button>
+          <div className="overview-index-actions">
+            <button type="button" disabled={!canReindex} onClick={() => reindex.mutate()}>
+              {t("documents.reindex")}
+            </button>
+          </div>
           {reindex.isError && <ErrorMessage error={reindex.error} />}
         </details>
       )}

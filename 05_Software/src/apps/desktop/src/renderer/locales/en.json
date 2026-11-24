@@ -587,7 +587,8 @@
     "userAnswer": "User answer: {{answer}}",
     "waiting": "Awaiting an answer",
     "timeoutEnabled": "Use recommended answers after a timeout",
-    "timeoutMinutes": "Question timeout (minutes)"
+    "timeoutMinutes": "Question timeout (minutes)",
+    "timeoutUnit": "min"
   },
   "activity": {
     "title": "Activity",

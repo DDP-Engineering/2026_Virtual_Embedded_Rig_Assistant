@@ -7,7 +7,15 @@ import {
   questionTimeoutLimits,
   type WorkbenchConfig,
 } from "@vera/shared";
-import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { ModelSelect } from "./model-select.js";
@@ -98,6 +106,8 @@ export function WorkbenchConfigForm({
   removeCommandPrefix?: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const questionToggleId = useId();
+  const questionTimeout = config.agent.question_timeout_minutes;
   // The draft's Document volume warning over the application one (REQ-UX-d64e808a).
   const appAdvanced = useSettingsSnapshot().data?.settings.advanced;
   const volumeLimit = documentVolumeLimitFor({ workbench: config.advanced, app: appAdvanced });
@@ -255,34 +265,32 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
-              <label className="workbench-question-toggle">
-                <span>{t("question.timeoutEnabled")}</span>
-                <input
-                  type="checkbox"
-                  checked={config.agent.question_timeout_minutes != null}
-                  onChange={(event) => {
-                    const question_timeout_minutes = event.currentTarget.checked
-                      ? questionTimeoutLimits.initial
-                      : null;
-                    setConfig((current) => ({
-                      ...current,
-                      agent: { ...current.agent, question_timeout_minutes },
-                    }));
-                  }}
-                />
-              </label>
-              {config.agent.question_timeout_minutes != null && (
-                <label>
-                  <span>{t("question.timeoutMinutes")}</span>
+              <div className="workbench-question-setting">
+                <label htmlFor={questionToggleId}>{t("question.timeoutEnabled")}</label>
+                <div className="workbench-question-controls">
                   <input
+                    id={questionToggleId}
+                    type="checkbox"
+                    checked={questionTimeout != null}
+                    onChange={(event) => {
+                      const question_timeout_minutes = event.currentTarget.checked
+                        ? questionTimeoutLimits.initial
+                        : null;
+                      setConfig((current) => ({
+                        ...current,
+                        agent: { ...current.agent, question_timeout_minutes },
+                      }));
+                    }}
+                  />
+                  <input
+                    aria-label={t("question.timeoutMinutes")}
                     type="number"
+                    disabled={questionTimeout == null}
                     min={questionTimeoutLimits.min}
                     max={questionTimeoutLimits.max}
                     step={1}
                     value={
-                      Number.isNaN(config.agent.question_timeout_minutes)
-                        ? ""
-                        : config.agent.question_timeout_minutes
+                      Number.isNaN(questionTimeout) ? "" : (questionTimeout ?? questionTimeoutLimits.initial)
                     }
                     onChange={(event) => {
                       const question_timeout_minutes = event.currentTarget.valueAsNumber;
@@ -292,8 +300,9 @@ export function WorkbenchConfigForm({
                       }));
                     }}
                   />
-                </label>
-              )}
+                  <span aria-hidden="true">{t("question.timeoutUnit")}</span>
+                </div>
+              </div>
               {workbenchId && removeCommandPrefix && (
                 <WorkbenchCommandPrefixes
                   workbenchId={workbenchId}

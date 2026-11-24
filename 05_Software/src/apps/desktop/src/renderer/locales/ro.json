@@ -587,7 +587,8 @@
     "userAnswer": "Răspunsul utilizatorului: {{answer}}",
     "waiting": "Așteaptă un răspuns",
     "timeoutEnabled": "Folosește răspunsurile recomandate după un interval",
-    "timeoutMinutes": "Timp de așteptare pentru întrebări (minute)"
+    "timeoutMinutes": "Timp de așteptare pentru întrebări (minute)",
+    "timeoutUnit": "min"
   },
   "activity": {
     "title": "Activitate",

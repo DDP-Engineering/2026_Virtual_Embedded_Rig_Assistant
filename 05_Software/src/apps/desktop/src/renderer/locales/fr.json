@@ -587,7 +587,8 @@
     "userAnswer": "Réponse de l’utilisateur : {{answer}}",
     "waiting": "En attente d’une réponse",
     "timeoutEnabled": "Utiliser les réponses recommandées après un délai",
-    "timeoutMinutes": "Délai de réponse aux questions (minutes)"
+    "timeoutMinutes": "Délai de réponse aux questions (minutes)",
+    "timeoutUnit": "min"
   },
   "activity": {
     "title": "Activité",

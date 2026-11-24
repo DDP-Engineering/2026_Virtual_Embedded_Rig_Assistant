@@ -73,6 +73,12 @@ for (const lang of ["en", "ro", "de"])
         const summary = exceptions.locator("summary");
         await summary.click();
         await expect(exceptions.locator("ul")).toContainText("docs/failed.pdf");
+        const reindexAligned = await exceptions.evaluate((element) => {
+          const summary = element.querySelector("summary")?.getBoundingClientRect();
+          const button = element.querySelector(".overview-index-actions button")?.getBoundingClientRect();
+          return !!summary && !!button && Math.abs(summary.right - button.right) <= 1;
+        });
+        expect(reindexAligned).toBe(true);
         await summary.click();
         const groups = overview.locator(".overview-groups");
         const layout = await groups.evaluate((element) => {

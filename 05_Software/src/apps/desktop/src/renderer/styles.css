@@ -37,9 +37,6 @@
   outline: 0.125rem solid var(--primary);
   outline-offset: 0.125rem;
 }
-.workbench-question-toggle > input {
-  justify-self: start;
-}
 .approval-diff {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -4207,6 +4204,10 @@ legend {
   inline-size: fit-content;
   margin-inline-start: auto;
 }
+.overview-index-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 .overview-card dl {
   margin: 0;
 }
@@ -4339,14 +4340,29 @@ legend {
   display: grid;
   gap: 0.65rem;
 }
-.workbench-agent-settings > label {
+.workbench-agent-settings > label,
+.workbench-question-setting {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 0.35rem 1rem;
   align-items: center;
 }
+.workbench-question-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.workbench-question-controls input[type="checkbox"] {
+  inline-size: auto;
+  margin: 0;
+}
+.workbench-question-controls input[type="number"] {
+  inline-size: 6rem;
+  min-inline-size: 0;
+}
 @container (inline-size < 27rem) {
-  .workbench-agent-settings > label {
+  .workbench-agent-settings > label,
+  .workbench-question-setting {
     grid-template-columns: minmax(0, 1fr);
   }
 }

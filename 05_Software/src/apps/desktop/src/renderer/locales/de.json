@@ -587,7 +587,8 @@
     "userAnswer": "Antwort des Benutzers: {{answer}}",
     "waiting": "Wartet auf eine Antwort",
     "timeoutEnabled": "Empfohlene Antworten nach einer Wartezeit übernehmen",
-    "timeoutMinutes": "Wartezeit für Fragen (Minuten)"
+    "timeoutMinutes": "Wartezeit für Fragen (Minuten)",
+    "timeoutUnit": "Min."
   },
   "activity": {
     "title": "Aktivität",

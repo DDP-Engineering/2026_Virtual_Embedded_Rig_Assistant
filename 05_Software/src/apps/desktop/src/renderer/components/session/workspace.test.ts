@@ -1867,6 +1867,44 @@ test("confirms and saves the global delegated Full Access setting", async () => 
   expect((await api.invoke("app.settings.delegatedFullAccess.get", {})).enabled).toBe(false);
 });
 
+test("enables and saves the question timeout from one settings row", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/question-timeout", name: "Question timeout" });
+  await mount();
+  const click = async (selector: string) => {
+    const target = await vi.waitFor(() => {
+      const node = container.querySelector<HTMLButtonElement>(selector);
+      expect(node).toBeTruthy();
+      return node;
+    });
+    await act(async () => target?.click());
+    await settle();
+  };
+  await click('.workbench-group-name[aria-current="page"]');
+  await click('[data-action="edit-workbench-overview"]');
+  await click('[data-project-section="agent"]');
+  const row = container.querySelector(".workbench-question-setting");
+  const toggle = row?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+  const minutes = row?.querySelector<HTMLInputElement>('input[type="number"]');
+  expect(toggle?.checked).toBe(false);
+  expect(minutes?.disabled).toBe(true);
+  await act(async () => toggle?.click());
+  expect(minutes?.disabled).toBe(false);
+  expect(minutes?.value).toBe("5");
+  await act(async () => toggle?.click());
+  expect(minutes?.disabled).toBe(true);
+  await act(async () => toggle?.click());
+  const user = userEvent.setup();
+  await act(async () => {
+    if (!minutes) throw new Error("Question timeout input missing");
+    await user.clear(minutes);
+    await user.type(minutes, "9");
+    button("Save").click();
+  });
+  await vi.waitFor(async () => {
+    expect((await api.invoke("workbench.config.get", {})).config.agent.question_timeout_minutes).toBe(9);
+  });
+});
+
 test("index updates and late snapshots stay inside the sidebar, Files and overview status consumers", async () => {
   const { config, indexLease } = await api.invoke("workbench.create", {
     folder: "/mock/status-lease",

@@ -86,6 +86,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Changed
 
 - Control delegated Full Access for all workbenches from Settings > Permissions, off by default.
+- Enable recommended answers and set their timeout on one row in Agent and chat.
+- Align the Reindex button with the indexing details in Workbench overview.
 - Align Agent and chat fields in compact label-and-control rows.
 - Align the empty Plugins list actions on one row when space allows.
 - Move indexing details to the single-column Workbench overview and keep Files compact.
