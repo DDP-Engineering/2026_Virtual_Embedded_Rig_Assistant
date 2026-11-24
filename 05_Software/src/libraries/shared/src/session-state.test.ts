@@ -298,8 +298,11 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
       s.turns.push({ turnId: event.turnId, steps: 0, stopReason: null });
       break;
     }
-    case "turn.done":
+    case "turn.done": {
       s.activeTurnId = null;
+      const question = s.questions.at(-1);
+      if (question?.turnId === event.turnId && question.outcome === null)
+        question.outcome = { kind: "cancelled", source: "stopped" };
       s.status = event.stopReason === "error" ? "error" : "idle";
       if (s.usage.compactionStatus === "running") delete s.usage.compactionStatus;
       for (const t of s.turns) if (t.turnId === event.turnId) t.stopReason = event.stopReason;
@@ -312,6 +315,7 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
         }
       }
       break;
+    }
     case "message.user":
       if (!s.items.some((i) => i.id === event.messageId))
         s.items.push({ kind: "user", id: event.messageId, text: event.text });
@@ -376,6 +380,16 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
         i.durationMs = event.durationMs;
         if (event.preview !== undefined) i.preview = event.preview;
       }
+      break;
+    }
+    case "question.requested":
+      s.questions.push({ ...event.question, outcome: null });
+      break;
+    case "question.settled": {
+      const question = s.questions.find(
+        (item) => item.questionId === event.questionId && item.turnId === event.turnId,
+      );
+      if (question?.outcome === null) question.outcome = event.outcome;
       break;
     }
     case "approval.requested": {
@@ -583,6 +597,24 @@ const mixed: shared.SessionEvent[] = [
   { type: "usage.updated", inputTokens: 14, outputTokens: 4, promptIds: ["u1", "q1"], contextTokens: 950 },
   { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false },
   { type: "message.delta", messageId: "m2", text: "unfinalized" },
+  {
+    type: "question.requested",
+    question: {
+      questionId: "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      callId: "qcall",
+      turnId: "t1",
+      question: "Which board?",
+      choices: ["A", "B"],
+      recommended: 1,
+      deadline: null,
+    },
+  },
+  {
+    type: "question.settled",
+    questionId: "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    turnId: "t1",
+    outcome: { kind: "choice", choice: 1, answer: "A", source: "user" },
+  },
   { type: "error", code: "RATE", messageKey: "errors.RATE", retryable: true },
   { type: "session.interrupted", turnId: "t1" },
   { type: "turn.done", turnId: "t1", stopReason: "aborted" },
@@ -625,6 +657,8 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
       "tool.started": true,
       "tool.update": true,
       "tool.done": true,
+      "question.requested": true,
+      "question.settled": true,
       "approval.requested": true,
       "approval.decided": true,
       "change.recorded": true,

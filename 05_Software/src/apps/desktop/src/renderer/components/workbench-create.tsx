@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   documentFolderPattern,
+  questionTimeoutMinutesSchema,
   type WorkbenchConfig,
   type WorkbenchInspection,
   type WorkbenchSnapshot,
@@ -41,7 +42,9 @@ export function WorkbenchCreate({
   const skillsPage = usePaged(inspection?.skills ?? []);
   const disabled = pending || busy;
   // An invalid limit in Documents & RAG keeps Create off until it is corrected.
-  const valid = workbenchDocsSchema.safeParse(config.docs).success;
+  const valid =
+    workbenchDocsSchema.safeParse(config.docs).success &&
+    questionTimeoutMinutesSchema.optional().safeParse(config.agent.question_timeout_minutes).success;
   async function perform(action: () => Promise<void>) {
     if (disabled) return;
     setPending(true);

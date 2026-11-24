@@ -81,6 +81,7 @@ export {
 } from "./sessions/delegation.js";
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
+export * from "./sessions/live-activity.js";
 export * from "./sessions/service.js";
 export { timedGateway } from "./sessions/timed-gateway.js";
 export * from "./settings/masking.js";

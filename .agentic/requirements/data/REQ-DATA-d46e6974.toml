@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d46e6974"
+
+title = "Persist independent question notification preferences"
+
+status = "active"
+
+requirement = """
+When notification settings are created or updated, VERA shall persist the Question notifications switch with an enabled first-run default while preserving the unpatched notification choices and the workbench question timeout.
+"""
+
+verification = "Toggle question alerts, patch the other settings independently, reload format-1 storage, and observe the saved switch and the preserved sibling choices and timeout."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/apps/desktop/src/renderer/components/notification-settings.tsx", ".agentic/specs/REQ-DATA-4a030001.md", "05_Software/tests/packaging/smoke/smoke-runtime.mjs"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/notification-settings.test.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/notification-settings.spec.ts", "05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/e2e/session-question.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

@@ -69,6 +69,7 @@
     }
   },
   "toolActivity": {
+    "askUser": "Frage stellen",
     "keywordFallback": "Da die semantische Suche nicht verfügbar war, werden Stichworttreffer angezeigt.",
     "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",
     "planSteps": "Planschritte: {{count}}",
@@ -236,10 +237,15 @@
     "updates": "Aktualisierungen",
     "data": "Daten & Datenschutz",
     "about": "Über",
-    "placeholder": "Dieser Bereich wird in einer zukünftigen Aktualisierung verfügbar sein.",
     "saving": "Einstellungen werden gespeichert…",
     "retry": "Erneut versuchen",
     "notifications": "Benachrichtigungen",
+    "notificationTurnCompletion": "Abschluss eines Durchlaufs",
+    "notificationApprovalRequests": "Freigabeanfragen im Hintergrund",
+    "notificationQuestionRequests": "Benachrichtigungen zu Fragen",
+    "notificationNever": "Nie",
+    "notificationBackground": "Im Hintergrund",
+    "notificationAlways": "Immer",
     "shortcuts": "Tastenkombinationen",
     "partsSearch": "Bauteilsuche",
     "mqttCredentials": "MQTT-Zugangsdaten",
@@ -569,7 +575,31 @@
     "lastActivity": "Letzte Aktivität: {{date}}",
     "turnSlotFree": "Ein Durchlauf kann jetzt starten. Senden Sie Ihre Nachricht erneut."
   },
+  "question": {
+    "choices": "Antwortmöglichkeiten",
+    "recommended": "Empfohlen",
+    "freeText": "Eigene Antwort",
+    "deadline": "Empfohlene Antwort wird um {{date}} übernommen",
+    "submit": "Antwort senden",
+    "cancel": "Frage abbrechen",
+    "cancelled": "Frage abgebrochen",
+    "automaticAnswer": "Automatische Antwort: {{answer}}",
+    "userAnswer": "Antwort des Benutzers: {{answer}}",
+    "waiting": "Wartet auf eine Antwort",
+    "timeoutEnabled": "Empfohlene Antworten nach einer Wartezeit übernehmen",
+    "timeoutMinutes": "Wartezeit für Fragen (Minuten)"
+  },
+  "activity": {
+    "title": "Aktivität",
+    "running": "Läuft",
+    "approval": "Freigabe erforderlich",
+    "question": "Antwort erforderlich",
+    "completions": "Ungelesene Antworten",
+    "readAll": "Alle als gelesen markieren",
+    "empty": "Keine Sitzungsaktivität."
+  },
   "sessionActivity": {
+    "summaryWithQuestions": "Aktive Sitzungen in {{name}}: {{running}} laufen, {{awaiting}} warten auf Genehmigung, {{questions}} auf Antwort",
     "summary": "Aktive Sitzungen in {{name}}: laufend {{running}}, wartet auf Freigabe {{awaiting}}",
     "stopNamed": "Stoppen: {{title}}",
     "capacity": "Gleichzeitige Durchläufe: {{active}} von {{limit}} laufen",
@@ -1138,6 +1168,7 @@
     "executionAllowed": "Benötigt run_program-Freigabe und die Genehmigungsregeln der Sitzung"
   },
   "workbenchTools": {
+    "ask_user": "Stellt eine Rückfrage mit Auswahl und optionaler Empfehlung.",
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
     "view_image": "Ein Workbench-Bild mit einem Modell betrachten, das Bilder akzeptiert.",
     "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",

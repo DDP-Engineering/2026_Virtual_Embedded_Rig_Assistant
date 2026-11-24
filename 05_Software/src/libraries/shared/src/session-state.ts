@@ -19,6 +19,7 @@ import {
   stopReasonSchema,
   todoItemsSchema,
 } from "./session.js";
+import { sessionQuestionSchema } from "./session-questions.js";
 
 const assistant = z.strictObject({
   kind: z.literal("assistant"),
@@ -97,6 +98,7 @@ export const sessionStateSchema = z.strictObject({
   turns: z.array(
     z.strictObject({ turnId: z.string(), steps: z.number(), stopReason: stopReasonSchema.nullable() }),
   ),
+  questions: z.array(sessionQuestionSchema),
   approvals: z.array(
     z
       .strictObject({
@@ -154,6 +156,7 @@ export function emptySessionState(): SessionState {
     items: [],
     turns: [],
     approvals: [],
+    questions: [],
     changes: [],
     artifacts: [],
     todos: [],
@@ -171,11 +174,12 @@ type Collection =
   | "items"
   | "turns"
   | "approvals"
+  | "questions"
   | "changes"
   | "artifacts"
   | "planComments"
   | "planReviews";
-type Records = "items" | "turns" | "approvals" | "planComments" | "planReviews";
+type Records = "items" | "turns" | "approvals" | "questions" | "planComments" | "planReviews";
 
 /**
  * Write access to one state for the shared reducer. A fold owns the whole state and mutates it in
@@ -337,6 +341,9 @@ function reduce(d: Draft, event: SessionEvent): void {
       break;
     case "turn.done": {
       s.activeTurnId = null;
+      const lastQuestion = s.questions.at(-1);
+      if (lastQuestion?.turnId === event.turnId && lastQuestion.outcome === null)
+        d.at("questions", s.questions.length - 1).outcome = { kind: "cancelled", source: "stopped" };
       s.status = event.stopReason === "error" ? "error" : "idle";
       s.usage = settledUsage(s.usage);
       for (let i = 0; i < s.turns.length; i++)
@@ -457,6 +464,17 @@ function reduce(d: Draft, event: SessionEvent): void {
       tool.durationMs = event.durationMs;
       if (event.preview !== undefined) tool.preview = event.preview;
       if (event.truncated) tool.truncated = { ...tool.truncated, ...event.truncated };
+      break;
+    }
+    case "question.requested":
+      d.list("questions").push({ ...event.question, outcome: null });
+      break;
+    case "question.settled": {
+      const index = s.questions.findLastIndex(
+        (question) => question.questionId === event.questionId && question.turnId === event.turnId,
+      );
+      if (index >= 0 && s.questions[index]?.outcome === null)
+        d.at("questions", index).outcome = event.outcome;
       break;
     }
     case "approval.requested": {

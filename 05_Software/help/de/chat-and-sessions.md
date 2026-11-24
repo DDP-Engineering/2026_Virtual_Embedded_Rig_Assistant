@@ -14,6 +14,12 @@ Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. V
 
 Durchläufe laufen weiter, wenn Sie einen anderen Workbench öffnen. Eine Workbench-Zeile in der Seitenleiste zeigt ein Zeichen mit der Anzahl ihrer laufenden und wartenden Sitzungen, auch wenn die Zeile eingeklappt ist; ein Schild bedeutet, dass eine Sitzung auf Ihre Freigabe wartet. Wählen Sie das Zeichen (oder fokussieren Sie es und drücken Sie Enter), um diese Sitzungen anzuzeigen. Wählen Sie eine Sitzung, um sie in ihrem Workbench zu öffnen und dort die Freigabe zu prüfen, oder **Stoppen**, um nur diesen Durchlauf zu beenden. Solange Durchläufe laufen, zeigt **Workbenches**, wie viele laufen, und das Limit **Gleichzeitige Durchläufe**. Am Limit bleibt eine neue Nachricht im Eingabefeld: Warten Sie, bis ein Durchlauf endet, oder stoppen Sie einen in der Seitenleiste, und senden Sie sie dann erneut.
 
+## Aktivität
+
+Öffne **Aktivität** in der Titelleiste. Dort siehst du laufende Sitzungen, ausstehende Freigaben und Fragen sowie ungelesene Antworten aus allen Workbenches. Mit Tab wechselst du zwischen den Bedienelementen, mit Enter öffnest du einen Eintrag und mit Esc schließt du die Ansicht. VERA fragt nach, bevor ungespeicherte Änderungen verworfen werden. Bei einer offenen Frage springt VERA zur Fragekarte.
+
+Ungelesene Antworten sind auch bei deaktivierten Desktop-Hinweisen verfügbar. VERA behält bis zu 100 erfolgreiche Antworten seit dem Start der Anwendung. Beim Öffnen einer ungelesenen Antwort wird sie als gelesen markiert. **Alle als gelesen markieren** leert die Liste der ungelesenen Antworten. Laufende Sitzungen und ausstehende Anfragen bleiben sichtbar.
+
 ## Eine Nachricht schreiben
 
 Schreiben Sie in das Nachrichtenfeld (**Fragen Sie VERA zu Ihrem Projekt…**). Enter sendet, Shift+Enter fügt eine Zeile ein, und @ vervollständigt Pfade von Workbench-Dateien. Um dem Agenten eine Datei zu geben, wählen Sie im Tab **Dateien** an der Datei **Als Kontext anhängen**; sie erscheint als Chip über dem Nachrichtenfeld.
@@ -43,6 +49,12 @@ Der Text erscheint an der ursprünglichen Cursorposition oder nach der Auswahl. 
 Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Solange eine Freigabekarte auf Ihre Entscheidung wartet, ist das Senden angehalten.
 
 **Stoppen** beendet den laufenden Durchlauf. Auch Escape fragt **Laufenden Durchlauf stoppen?**. Bereits abgeschlossene Arbeit, etwa angewendete Dateiänderungen, bleibt erhalten.
+
+## Eine Frage beantworten
+
+Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Klicke dann auf **Antwort senden**. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
+
+In den Workbench-Einstellungen unter **Agent und Chat** ist **Empfohlene Antworten nach einer Wartezeit übernehmen** standardmäßig aus. Nach dem Einschalten sind 1 bis 1440 ganze Minuten erlaubt. Bei gültiger Empfehlung zeigt die Karte den Zeitpunkt an, und der Chat kennzeichnet automatische Antworten. Die Zeit läuft im Hintergrund und beim Neuladen weiter. Genehmigungspflichtige Vorgänge fragen weiterhin gesondert nach.
 
 ## Delegierte Sitzungen verfolgen
 

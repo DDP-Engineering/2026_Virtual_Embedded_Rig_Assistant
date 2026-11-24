@@ -66,6 +66,9 @@ import { workbenchStorageBytes } from "./storage-size.js";
 import { FIND_WALK_LIMIT, findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
 import { WriteQueue } from "./write-queue.js";
 
+/** Checks a staged open before it can replace the active workbench or update recents. */
+export type WorkbenchOpenGuard = (snapshot: WorkbenchSnapshot, db: Database.Database | undefined) => void;
+
 function requireJson(value: unknown, ancestors = new Set<object>()): void {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
   if (typeof value === "number" && Number.isFinite(value)) return;
@@ -723,14 +726,18 @@ export class WorkbenchService {
       return this.openFolder(folder, input);
     });
   }
-  open(input: string): Promise<WorkbenchSnapshot> {
-    return this.run(async () => this.openFolder(await this.folder(input), input));
+  open(input: string, guard?: WorkbenchOpenGuard): Promise<WorkbenchSnapshot> {
+    return this.run(async () => this.openFolder(await this.folder(input), input, guard));
   }
   /** The canonical folder that open uses for `input` (INVALID relative, NOT_FOUND missing); reads nothing inside it. */
   locate(input: string): Promise<string> {
     return this.folder(input);
   }
-  private async openFolder(folder: string, input: string): Promise<WorkbenchSnapshot> {
+  private async openFolder(
+    folder: string,
+    input: string,
+    guard?: WorkbenchOpenGuard,
+  ): Promise<WorkbenchSnapshot> {
     await this.writes.drain();
     const config = await this.config(folder);
     await this.layout(folder);
@@ -738,6 +745,7 @@ export class WorkbenchService {
     if (isNetworkShare(input)) warnings.push({ code: "NETWORK_SHARE_UNSUPPORTED" });
     const same = this.state?.folder === folder;
     const databasePath = join(folder, ".vera/vera.db");
+    if (guard && !existsSync(databasePath)) throw veraError("NOT_FOUND");
     const storageOptions = { workbenchId: config.id, appVersion: this.host.appVersion };
     // An owned database opens in place and is checked before writes; a read-only one is copied first.
     const acquired = await this.acquire(folder, warnings);
@@ -749,8 +757,13 @@ export class WorkbenchService {
         same && acquired.owned === this.owned && this.database?.db.open && !acquired.readOnly
           ? this.database
           : !acquired.readOnly || existsSync(databasePath)
-            ? await openDb(databasePath, { ...storageOptions, readOnly: acquired.readOnly })
+            ? await openDb(databasePath, {
+                ...storageOptions,
+                readOnly: acquired.readOnly,
+                existingOnly: guard !== undefined,
+              })
             : undefined;
+      guard?.(next, database?.db);
       const snapshot = this.host.settings.get();
       // A listed workbench keeps the place the user gave it; a new one goes first.
       const recent = snapshot.settings.recentWorkbenches;

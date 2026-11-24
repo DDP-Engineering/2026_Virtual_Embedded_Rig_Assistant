@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-1ec20f7a"
+
+title = "Persist desktop notification preferences"
+
+status = "active"
+
+requirement = """
+When application settings are created or changed, VERA shall persist format-1 notification preferences with first-run defaults of In background for turn completion and enabled for approval requests, keeping the unpatched preference in a partial write.
+"""
+
+verification = "Load fresh settings, patch both choices in separate updates and reload the saved file; assert the exact defaults, both overrides and sibling preservation."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts","05_Software/src/libraries/shared/src/events.ts",".agentic/specs/REQ-DATA-4a030001.md","05_Software/tests/packaging/smoke/smoke-runtime.mjs"]
+
+linked_tests = ["05_Software/src/libraries/core/src/settings/service.test.ts","05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts","05_Software/tests/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

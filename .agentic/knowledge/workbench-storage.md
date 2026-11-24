@@ -8,7 +8,18 @@ db.test.ts, keyword-schema.test.ts, embedding-schema.test.ts, repositories.test.
 and session-recovery.test.ts. [Workbench](workbench.md) owns folder/lock/handle
 lifetime; [native packaging](native-packaging.md) owns addon delivery.
 
-## Current contract
+## Purpose and boundaries
+
+Core owns the format-1 SQLite schema, storage handles and row repositories. The Workbench service
+owns folder authority and the writer lock.
+
+## Public interface
+
+- `openDb` takes workbench identity, app version and read-only mode, and returns a database with
+  idempotent `close(preserveSource?)`. A guarded session route requires existing initialized
+  storage so stale notification clicks leave an absent or empty database unchanged.
+
+## Invariants
 
 - schemaSql defines the complete current schema, including keyword indexes,
   embedding/extraction tables and their synchronization triggers.
@@ -23,8 +34,6 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
   schema return INVALID; a different workbench identity returns CONFLICT.
 - There is no database migration runner or checksum catalogue, and no automatic
   database backups. Existing metadata is preserved without interpreting extra keys. No old-schema detection, repair, reset or compatibility path exists.
-- StorageOptions supplies workbenchId, appVersion and optional readOnly.
-  openDb returns db and idempotent close(preserveSource?).
 - A writable openDb is for a database whose workbench lock the caller holds: it
   opens the file in place with no copy and checks the schema with query_only ON
   before any pragma or write. A refused database keeps its DB/WAL bytes while
@@ -55,6 +64,16 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
 - Row repositories preserve caller-supplied JSON. Session recovery repairs
   interrupted runtime operations in the current schema; it is independent of
   schema initialization and is not a database migration.
+
+## Key behaviors
+
+- Guarded stale-target opens return NOT_FOUND for absent or uninitialized storage
+  (REQ-REL-279c294c). Initialization on an ordinary authorized workbench open uses the existing schema policy.
+
+## Files
+
+- `storage/db.ts` opens and closes handles. `storage/schema.ts` initializes and checks the schema.
+- `storage/repos/` contains stored-row access. `storage/db.test.ts` covers guarded and regular opens.
 
 ## Change map
 

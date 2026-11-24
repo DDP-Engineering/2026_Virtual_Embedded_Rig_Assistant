@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c8bad7f5"
+
+title = "Open the exact pending question from a native alert"
+
+status = "active"
+
+requirement = """
+When a user clicks a native question alert, Desktop shall honor the unsaved-editor guard and navigate to the verified owning session and focus the exact card only while that question is still pending.
+"""
+
+verification = "Click a live cross-workbench notice, decline and accept the editor guard, then exercise a late stale click and a settlement while a pre-settlement renderer query is in flight; assert no stale card focus or submitted answer."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/question-focus.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/shared/src/events.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/question-card.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

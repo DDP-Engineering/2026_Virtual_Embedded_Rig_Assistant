@@ -30,6 +30,7 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
     "## Transcript",
   ];
   const bookmarks = new Set(state.bookmarkedMessageIds);
+  const questions = new Map(state.questions.map((question) => [question.callId, question]));
   for (const item of state.items) {
     if (item.kind === "user" || item.kind === "assistant") {
       out.push(
@@ -45,9 +46,16 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
         for (const citation of item.citations)
           out.push(`- ${refText(citation.ref)} (${citation.valid ? "verified" : "unverified"})`);
       }
-    } else if (item.kind === "tool")
-      out.push("", `### Tool: ${heading(item.name)} (${item.status})`, "", block(item.summary ?? ""));
-    else out.push("", "### Error", "", block(`${item.code}: ${item.messageKey}`));
+    } else if (item.kind === "tool") {
+      const question = questions.get(item.id);
+      if (question) {
+        out.push("", "### Question", "", block(question.question));
+        if (question.outcome && "answer" in question.outcome) {
+          const source = question.outcome.source === "automatic" ? "Automatic answer" : "User answer";
+          out.push("", source, "", block(question.outcome.answer));
+        } else out.push("", question.outcome ? "Question cancelled." : "Awaiting an answer.");
+      } else out.push("", `### Tool: ${heading(item.name)} (${item.status})`, "", block(item.summary ?? ""));
+    } else out.push("", "### Error", "", block(`${item.code}: ${item.messageKey}`));
   }
   const programs = state.approvals.filter((approval) => approval.program);
   if (programs.length) {

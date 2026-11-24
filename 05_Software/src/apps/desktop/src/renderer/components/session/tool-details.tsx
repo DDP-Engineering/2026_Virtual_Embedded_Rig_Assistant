@@ -47,6 +47,7 @@ const actionKeys = defineTranslationKeys([
   "browser.tool.tabs",
   "browser.tool.switch",
   "browser.tool.close",
+  "toolActivity.askUser",
 ]);
 const actionIndex = {
   read: 1,
@@ -91,6 +92,7 @@ const actionIndex = {
   browser_tabs: 31,
   browser_switch: 32,
   browser_close: 33,
+  ask_user: 34,
 } as const;
 const record = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === "object" && !Array.isArray(value)

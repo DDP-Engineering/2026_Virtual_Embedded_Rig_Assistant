@@ -82,6 +82,7 @@ release `../07_Delivery/plugins/`, each zip checked against its index),
 `npm run package` (compiled release; it prepares the bundled plugins, stages them as `<resources>/plugins/` and checks
 them again in the unpacked output) and `npm run package:test` (compiled instrumented).
 Outputs are `release_tmp/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.
+Windows executable version resources carry the matching production or test product name even without a signing source (REQ-PLAT-c8943ad9). Packaging selects executable signing separately and retains mandatory signing when a source is configured.
 The instrumented packaged app accepts `--packaging-probe=<absolute JSON path>` and exits 0/1
 after writing schema-1 SQLite/embedding results. `probe-windows-offline.ps1` takes ZIP, expected
 SHA256 and evidence directory; `probe-linux-offline.sh` takes AppImage, evidence directory and

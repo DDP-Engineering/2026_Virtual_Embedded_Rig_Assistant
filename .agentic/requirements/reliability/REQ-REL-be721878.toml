@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-be721878"
+title = "Isolate desktop notification failures"
+status = "active"
+requirement = "If native delivery is unavailable or fails, then Desktop shall preserve session and in-app approval behavior."
+verification = "Make notification support, creation, display and dismissal fail independently and verify the publication path and in-app workflow remain usable."
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

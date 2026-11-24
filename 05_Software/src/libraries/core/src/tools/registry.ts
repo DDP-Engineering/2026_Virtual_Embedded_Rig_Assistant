@@ -14,6 +14,7 @@ import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
+import { askUserTool } from "./ask-user.js";
 import { browserTools } from "./browser.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolLimit, toolSignal } from "./context.js";
@@ -38,6 +39,7 @@ import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   terminal_read: terminalReadTool,
+  ask_user: askUserTool,
   read: readTool,
   view_image: viewImageTool,
   list: listTool,
@@ -283,7 +285,8 @@ export class ToolRegistry {
         throw Error(
           `Invalid arguments for ${name}: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; ")}`,
         );
-      effectiveSignal = toolSignal(ctx, signal);
+      // The clarification wait belongs to the turn even if its filesystem permissions change.
+      effectiveSignal = tool === askUserTool ? signal : toolSignal(ctx, signal);
       result = await tool.execute(ctx, parsed.data, effectiveSignal, callId);
       effectiveSignal.throwIfAborted();
     } catch (error) {

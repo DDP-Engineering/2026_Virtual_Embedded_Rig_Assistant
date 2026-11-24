@@ -3,6 +3,7 @@ import {
   advancedEditPatch,
   type CommandPrefixDisplay,
   type EmbeddingSwitchApproval,
+  questionTimeoutMinutesSchema,
   type SessionSummary,
   type WorkbenchSnapshot,
   workbenchDocsSchema,
@@ -115,6 +116,7 @@ export function WorkbenchEditor({
   // Only edited keys are checked, so an untouched value from the file never blocks Save.
   const valid =
     workbenchDocsSchema.safeParse(config.docs).success &&
+    questionTimeoutMinutesSchema.optional().safeParse(config.agent.question_timeout_minutes).success &&
     advancedDraftValid(advancedEditPatch(workbench.config.advanced, config.advanced, "workbench"));
   useEffect(() => {
     dirtyChanged?.(dirty);
@@ -160,6 +162,7 @@ export function WorkbenchEditor({
         agent: {
           permission_mode: config.agent.permission_mode,
           model: config.agent.model,
+          question_timeout_minutes: config.agent.question_timeout_minutes,
         },
         tools: { disabled: config.tools.disabled },
         plugins: { enabled: config.plugins.enabled },

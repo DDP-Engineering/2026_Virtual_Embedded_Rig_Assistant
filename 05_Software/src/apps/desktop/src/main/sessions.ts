@@ -7,6 +7,7 @@ import {
   type EmbeddingPort,
   electricalModelPlugin,
   type HelpLibrary,
+  type LiveSessionActivity,
   type ModelCalibrationStore,
   officialLayoutPlugin,
   officialPartsPlugin,
@@ -36,6 +37,7 @@ import {
   type HelpLanguage,
   type PermissionMode,
   partsSearchDefaults,
+  type QuestionReply,
   type SessionSummary,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
@@ -121,6 +123,7 @@ export class SessionsHost {
       settled?: () => void;
       /** A session's turn, approval, title or status changed (SessionHost.onActivity). */
       activity?: () => void;
+      liveActivity?: (owner: WorkbenchSnapshot, sessionId: string, event: LiveSessionActivity) => void;
       /** The app-wide Concurrent turns admission, one instance shared by every runtime (REQ-FUNC-52e97b95). */
       admission?: TurnAdmission;
     },
@@ -287,6 +290,9 @@ export class SessionsHost {
           root: snapshot.folder,
           ...(options.settled ? { onWorkSettled: options.settled } : {}),
           ...(options.activity ? { onActivity: options.activity } : {}),
+          ...(options.liveActivity && {
+            onLiveActivity: (id, event) => options.liveActivity?.(snapshot, id, event),
+          }),
           ...(options.admission ? { admission: options.admission } : {}),
           onDelegationsChanged: () =>
             options.emit({
@@ -300,6 +306,10 @@ export class SessionsHost {
           additionalFolders: () => {
             assertCurrent();
             return options.workbench.getSnapshot().config.additional_folders;
+          },
+          questionTimeoutMinutes: () => {
+            assertCurrent();
+            return options.workbench.getSnapshot().config.agent.question_timeout_minutes ?? null;
           },
           commandPrefixes: () => {
             assertCurrent();
@@ -455,8 +465,8 @@ export class SessionsHost {
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
   }
   /**
-   * The top-level sessions running or awaiting approval, from the session service once it is ready; none
-   * before this workbench's session service exists, since nothing can run there yet.
+   * The running top-level sessions and the sessions owning pending requests. Before the service
+   * exists, there can be no live turns or pending requests here.
    */
   async activity(): Promise<SessionSummary[]> {
     const service = this.service;
@@ -466,7 +476,18 @@ export class SessionsHost {
     if (this.service !== service || this.db !== db || !db.open) return [];
     return service
       .list(true)
-      .filter((row) => !row.delegation && (row.status === "running" || row.status === "awaiting_approval"));
+      .filter(
+        (row) =>
+          row.status === "awaiting_approval" ||
+          row.pendingQuestionId ||
+          (!row.delegation && row.status === "running"),
+      );
+  }
+  /** A live question already has a service. Accept its reply without waiting for queued turn preparation. */
+  answerQuestion(scope: SessionScope, sessionId: string, questionId: string, reply: QuestionReply): void {
+    this.assertScope(scope);
+    if (this.shutdown || !this.service || this.db !== scope.db) throw veraError("CONFLICT");
+    this.service.answerQuestion(sessionId, questionId, reply);
   }
   /** Whether a subscription with this ID is open here. */
   holdsSubscription(subscriptionId: string): boolean {

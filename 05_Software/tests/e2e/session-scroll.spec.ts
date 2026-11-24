@@ -175,6 +175,7 @@ test("fixed viewport and independent left conversation rail retain composer and 
     await page.locator(`[data-session="${sessionId}"]`).click();
     await input.fill("Multiline composer\n".repeat(80));
     await contained(page);
+    await expect(rail).toBeVisible();
     await input.fill("");
     await expect(rail).toBeVisible();
   }
@@ -193,6 +194,7 @@ test("native Electron confines long conversation scrolling to the session", asyn
   );
   delete env.ELECTRON_RUN_AS_NODE;
   env.VERA_REPLAY_DIR = resolve("tests/fixtures/llm-scripts");
+  env.VERA_TEST_DIALOG_PATH = folder;
   const app = await _electron.launch({
     executablePath: resolve(
       "node_modules/electron/dist",
@@ -204,11 +206,10 @@ test("native Electron confines long conversation scrolling to the session", asyn
   try {
     await installNetworkGuard(app);
     const page = await app.firstWindow();
-    await page.waitForFunction(() => !!(window as unknown as { vera?: VeraBridge }).vera);
-    await page.evaluate(async (folder) => {
-      const api = (window as unknown as { vera: VeraBridge }).vera;
-      await api.invoke("workbench.create", { folder, name: "Native scroll bench" });
-    }, folder);
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator("#workbench-name").fill("Native scroll bench");
+    await page.locator('[data-action="choose-create"]').click();
+    await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="new-session"]').click();
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session");

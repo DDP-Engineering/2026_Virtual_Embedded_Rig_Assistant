@@ -1,0 +1,36 @@
+schema = 1
+
+id = "REQ-FUNC-96754d71"
+
+title = "Resolve structured session questions"
+
+status = "active"
+
+requirement = "When the model asks a structured question in an interactive session, the session shall return the selected choice, free text, or cancellation to the calling turn and record the result in the transcript."
+
+verification = "Send each reply form to a replayed model question and compare its calling turn's result and snapshot."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/core/src/tools/ask-user.ts",
+  "05_Software/src/libraries/core/src/tools/registry.ts",
+  "05_Software/src/libraries/core/src/tools/context.ts",
+  "05_Software/src/libraries/shared/src/session-questions.ts",
+  "05_Software/src/libraries/shared/src/events.ts",
+  "05_Software/src/libraries/shared/src/session-state.ts",
+  "05_Software/src/libraries/core/src/sessions/export.ts",
+  "05_Software/src/apps/desktop/src/main/events.ts",
+]
+
+linked_tests = [
+  "05_Software/src/libraries/core/src/sessions/questions.test.ts",
+  "05_Software/src/libraries/shared/src/session-state.test.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

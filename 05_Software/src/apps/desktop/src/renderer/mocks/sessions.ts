@@ -120,6 +120,9 @@ export class MockSessions {
       if (key.startsWith(`${this.current().id}/`) && row.changes.some((c) => c.path === path)) return {};
     throw veraError("NOT_FOUND");
   }
+  holds(workbenchId: string, id: string): boolean {
+    return this.sessions.has(`${workbenchId}/${id}`);
+  }
   private key(id: string) {
     return `${this.current().id}/${id}`;
   }

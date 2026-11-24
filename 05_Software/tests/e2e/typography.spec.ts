@@ -79,9 +79,14 @@ test("Appearance keeps interface, conversation and code sizes independent and re
   const language = await page.locator("#language").boundingBox();
   const button = await restore.boundingBox();
   if (!row || !language || !button) throw Error("Missing language row controls");
-  expect(button.x).toBeGreaterThan(language.x + language.width);
   expect(Math.abs(button.x + button.width - row.x - row.width)).toBeLessThan(1);
-  expect(Math.abs(button.y + button.height - language.y - language.height)).toBeLessThan(1);
+  // At enlarged text sizes, platform font metrics can place the reset action on its own row.
+  if (button.y >= language.y + language.height) {
+    expect(button.y + button.height).toBeLessThanOrEqual(row.y + row.height + 1);
+  } else {
+    expect(button.x).toBeGreaterThan(language.x + language.width);
+    expect(Math.abs(button.y + button.height - language.y - language.height)).toBeLessThan(1);
+  }
   await restore.click();
   await expect(page.locator("#chat-font-size")).toHaveValue("14");
   await expect(page.locator("#code-font-size")).toHaveValue("14");

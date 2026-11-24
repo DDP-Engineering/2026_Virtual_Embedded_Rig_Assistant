@@ -8,6 +8,8 @@ import {
   mapPlanCommentContent,
   mapPlanFeedbackEventContent,
   mapPlanReviewContent,
+  maskQuestionOutcome,
+  maskQuestionRequest,
   modelReferenceSchema,
   type ProgramApproval,
   projectPlan,
@@ -111,6 +113,10 @@ export function sanitizeSessionSnapshot(
     title: scrub(snapshot.title).slice(0, 60),
     modelRef: scrubModel(snapshot.modelRef, scrub),
     items: snapshot.items.map((item) => sanitizeItem(item, scrub, imagePath, protect)),
+    questions: snapshot.questions.map(({ outcome, ...request }) => ({
+      ...maskQuestionRequest(request, scrub),
+      outcome: outcome === null ? null : maskQuestionOutcome(outcome, scrub),
+    })),
     approvals: snapshot.approvals.map((a) => ({
       ...a,
       path: scrub(a.path),
@@ -171,7 +177,7 @@ export function sanitizeEvent(
     const { enabled: enabledPlugins, ...pluginExtensions } = plugins;
     const { detail, ...chatExtensions } = chat;
     const { right_panel_tabs, git_status, ...interfaceExtensions } = panelInterface;
-    const { permission_mode, model, allowed_commands, ...agentExtensions } = agent;
+    const { permission_mode, model, allowed_commands, question_timeout_minutes, ...agentExtensions } = agent;
     const scrubbedModel = model === null ? null : scrub(model);
     return {
       ...(extra(extensions) as Record<string, unknown>),
@@ -199,6 +205,7 @@ export function sanitizeEvent(
       agent: {
         ...(extra(agentExtensions) as object),
         permission_mode,
+        ...(question_timeout_minutes === undefined ? {} : { question_timeout_minutes }),
         allowed_commands: allowed_commands
           .map(scrub)
           .filter((prefix) => commandPrefixSchema.safeParse(prefix).success),
@@ -211,6 +218,10 @@ export function sanitizeEvent(
   };
   if (envelope.topic === "session") {
     const event = envelope.event;
+    if (event.type === "question.requested")
+      return { ...envelope, event: { ...event, question: maskQuestionRequest(event.question, scrub) } };
+    if (event.type === "question.settled")
+      return { ...envelope, event: { ...event, outcome: maskQuestionOutcome(event.outcome, scrub) } };
     const result = { ...event };
     if (event.type === "error") {
       if (event.retryAfter && protect(event.retryAfter) !== event.retryAfter)

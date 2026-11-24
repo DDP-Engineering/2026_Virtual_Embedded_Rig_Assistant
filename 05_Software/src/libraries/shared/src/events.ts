@@ -30,6 +30,7 @@ import {
   todoItemsSchema,
   turnCapacitySchema,
 } from "./session.js";
+import { questionIdSchema, questionOutcomeSchema, questionRequestSchema } from "./session-questions.js";
 import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
 import {
@@ -61,6 +62,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("dictation.interrupted"), id: dictationJobIdSchema }),
   /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
   z.strictObject({ type: z.literal("session.activity") }),
+  z.strictObject({ type: z.literal("session.notification.clicked"), token: z.uuid() }),
   /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
   z.strictObject({ type: z.literal("session.capacity"), ...turnCapacitySchema.shape }),
 ]);
@@ -74,6 +76,7 @@ const presentationSettings = [
   "codeFontSize",
   "keyboardShortcuts",
   "dictation",
+  "notifications",
   "recentWorkbenches",
   "sessionOrder",
 ];
@@ -136,6 +139,13 @@ export const usageEventSchema = z.strictObject({
     .optional(),
 });
 export const sessionEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("question.requested"), question: questionRequestSchema }),
+  z.strictObject({
+    type: z.literal("question.settled"),
+    questionId: questionIdSchema,
+    turnId: z.string().min(1),
+    outcome: questionOutcomeSchema,
+  }),
   z.strictObject({
     type: z.literal("session.updated"),
     title: z.string().max(60).optional(),

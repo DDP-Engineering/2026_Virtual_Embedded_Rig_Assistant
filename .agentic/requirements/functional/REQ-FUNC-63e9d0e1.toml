@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-63e9d0e1"
+title = "Alert for pending human approval requests"
+status = "active"
+requirement = "When a live approval request still awaits a person after automatic decisions can settle, Desktop shall alert for it, including in a delegated session, if the app is in the background and the saved approval preference is enabled."
+verification = "Publish requests and auto-decisions in the same stack, settle another before dispatch, and compare with an outstanding child approval."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

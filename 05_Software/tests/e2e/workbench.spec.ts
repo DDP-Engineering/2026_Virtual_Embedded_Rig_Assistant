@@ -201,6 +201,7 @@ test("New Workbench creates with the configured draft and offers Open for an exi
     await expect(create.locator('[data-docs-folder="src"]')).toHaveCount(0);
     await expect(create.locator("[data-docs-preview]")).toContainText("Documents to index: 3 (");
     await create.locator('[data-project-section="tools"]').click();
+    await create.locator("[data-pager-size]").selectOption("50");
     await create.locator('[data-tool-toggle="web_search"]').uncheck();
     await create.locator('[data-project-section="skills"]').click();
     await expect(create.locator('[data-create-skill="probe-swd"] input')).toBeChecked();

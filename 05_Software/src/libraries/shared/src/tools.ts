@@ -23,6 +23,7 @@ export const builtinToolNames = [
   "program_output",
   "program_stop",
   "terminal_read",
+  "ask_user",
   "plugin_validate",
   "plugin_install",
   "apply_candidate",

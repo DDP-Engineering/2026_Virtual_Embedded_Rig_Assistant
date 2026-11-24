@@ -1,0 +1,29 @@
+schema = 1
+
+id = "REQ-FUNC-5fb4cd15"
+
+title = "Apply eligible workbench question recommendations at a deadline"
+
+status = "active"
+
+requirement = "When a deadline expires for a pending question with a valid recommended choice and an enabled workbench timeout, the runtime shall answer with that choice and record it as automatic."
+
+verification = "Advance fake time with and without a valid recommendation and reconnect a session subscriber before the deadline."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/sessions/questions.ts",
+  "05_Software/src/apps/desktop/src/main/sessions.ts",
+  "05_Software/src/libraries/shared/src/session-questions.ts",
+]
+
+linked_tests = [
+  "05_Software/src/libraries/core/src/sessions/questions.test.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

@@ -11,6 +11,7 @@ import { openDb } from "../storage/db.js";
 import { createToolContext } from "../tools/context.js";
 import { readTool } from "../tools/read.js";
 import { ToolRegistry } from "../tools/registry.js";
+import type { LiveSessionActivity } from "./live-activity.js";
 import type { SessionHost } from "./service.js";
 import { SessionService } from "./service.js";
 
@@ -750,7 +751,8 @@ it("copies permission modes at admission and requires scoped user authorization 
 });
 
 it("uses ordinary pending edit approval for delegated work and refuses steering around it", async () => {
-  const h = await setup();
+  const live: { id: string; activity: LiveSessionActivity }[] = [];
+  const h = await setup({ onLiveActivity: (id, activity) => live.push({ id, activity }) });
   await writeFile(
     join(h.root, "replay/approved-edit.jsonl"),
     [
@@ -788,6 +790,10 @@ it("uses ordinary pending edit approval for delegated work and refuses steering 
   const approval = snapshot().approvals[0];
   if (!approval) throw Error("Missing pending approval");
   expect(approval.decision).toBeNull();
+  const request = live.find(({ activity }) => activity.type === "approval.requested");
+  expect(request?.id).toBe(child.sessionId);
+  if (request?.activity.type !== "approval.requested") throw Error("Missing live approval");
+  expect(request.activity.pending()).toBe(true);
   await expect(readFile(join(h.root, "approval-fixture.txt"))).rejects.toMatchObject({ code: "ENOENT" });
   h.service.decideApproval({
     sessionId: child.sessionId,
@@ -796,6 +802,8 @@ it("uses ordinary pending edit approval for delegated work and refuses steering 
     decision: "approved",
   });
   await h.service.waitIdle(child.sessionId);
+  expect(request.activity.pending()).toBe(false);
+  expect(live.map(({ activity }) => activity.type)).toEqual(["approval.requested", "approval.decided"]);
   expect(await readFile(join(h.root, "approval-fixture.txt"), "utf8")).toBe("approved by Desktop user");
   expect(snapshot().approvals[0]).toMatchObject({ decision: "approved", by: "user" });
 });

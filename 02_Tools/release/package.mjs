@@ -52,7 +52,8 @@ export function distributionConfig(platform, testBuild, env) {
         { target: "nsis", arch: ["x64"] },
         { target: "zip", arch: ["x64"] },
       ],
-      signAndEditExecutable: signed,
+      signAndEditExecutable: true,
+      signExecutable: signed,
       ...(env.VERA_CERTIFICATE_SHA1 || env.VERA_CERTIFICATE_SUBJECT
         ? {
             signtoolOptions: {

@@ -82,6 +82,7 @@ test("Program runs follows live app/workbench masking for actual MQTT-secret out
       workbenchId: id,
       modelRef: "replay/start",
       mode: "bypass",
+      acknowledged: true,
     });
     await page.locator(`[data-session="${session.id}"]`).click();
     await invoke(page, "session.send", { sessionId: session.id, text: "start" });

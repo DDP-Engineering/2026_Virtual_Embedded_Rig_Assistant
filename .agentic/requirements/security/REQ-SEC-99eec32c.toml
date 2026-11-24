@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-99eec32c"
+title = "Keep native notification payloads generic"
+status = "active"
+requirement = "When Desktop posts a native session alert, it shall submit only silent generic localized copy and any opaque native activation metadata needed to open VERA."
+verification = "Inspect emitted options in all four languages, including Windows toast XML, for generic copy and absence of session data and approval actions."
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notification-copy.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/shared/src/events.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

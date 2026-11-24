@@ -14,6 +14,12 @@ Une session est une conversation avec l’agent au sein d’un banc de travail. 
 
 Les tours continuent lorsque vous ouvrez un autre banc de travail. Dans la barre latérale, la ligne d’un banc de travail affiche une marque avec le nombre de ses sessions en cours et en attente, même lorsque la ligne est repliée ; un bouclier signale une session qui attend votre approbation. Sélectionnez la marque (ou donnez-lui le focus et appuyez sur Entrée) pour lister ces sessions. Choisissez une session pour l’ouvrir dans son banc de travail, où vous pouvez examiner l’approbation, ou **Arrêter** pour ne terminer que ce tour. Pendant les tours, **Bancs de travail** indique combien s’exécutent et la limite **Tours simultanés**. À la limite, un nouveau message reste dans la zone de saisie : attendez la fin d’un tour ou arrêtez-en un dans la barre latérale, puis envoyez-le de nouveau.
 
+## Activité
+
+Ouvrez **Activité** dans la barre de titre pour voir les sessions en cours, les approbations et questions en attente et les réponses non lues de tous les bancs de travail. Utilisez Tab pour vous déplacer dans la vue, Entrée pour ouvrir un élément et Échap pour fermer la vue. VERA demande confirmation avant d’abandonner les modifications non enregistrées. Une question encore en attente s’ouvre sur sa carte.
+
+Les réponses non lues restent accessibles lorsque les alertes du bureau sont désactivées. VERA conserve jusqu’à 100 réponses terminées avec succès depuis le lancement de l’application. L’ouverture d’une réponse non lue la marque comme lue. **Tout marquer comme lu** vide cette liste et laisse visibles les sessions en cours et les demandes en attente.
+
 ## Écrire un message
 
 Saisissez votre texte dans la zone de message (**Interrogez VERA sur votre projet…**). Enter envoie, Shift+Enter ajoute une ligne, et @ complète les chemins des fichiers du banc de travail. Pour donner un fichier à l’agent, choisissez **Joindre comme contexte** sur ce fichier dans l’onglet **Fichiers** ; il apparaît sous forme de puce au-dessus de la zone de message.
@@ -43,6 +49,12 @@ Le résultat apparaît à la position initiale du curseur ou après le texte sé
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.
 
 **Arrêter** termine le tour en cours. Escape demande aussi **Arrêter le tour en cours ?**. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
+
+## Répondre à une question
+
+Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
+
+Dans les réglages **Agent et chat** du banc de travail, l’option **Utiliser les réponses recommandées après un délai** est désactivée par défaut. Activez-la et choisissez un nombre entier de 1 à 1440 minutes. Lorsqu’une recommandation est valide, la carte affiche l’échéance et la conversation indique les réponses automatiques. Le délai continue en arrière-plan et pendant le rechargement de l’interface. Les opérations soumises à approbation la demandent séparément.
 
 ## Suivre les sessions déléguées
 

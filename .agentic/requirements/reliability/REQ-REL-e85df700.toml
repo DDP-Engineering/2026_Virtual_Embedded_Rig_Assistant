@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-e85df700"
+
+title = "Keep structured questions usable without native delivery"
+
+status = "active"
+
+requirement = """
+If desktop notifications are unavailable or disabled, VERA shall keep pending questions available for review and response in the app.
+"""
+
+verification = "Disable the native presenter or throw from native creation, then use Activity and respond to the still-pending question in VERA."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/tests/e2e/session-question.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

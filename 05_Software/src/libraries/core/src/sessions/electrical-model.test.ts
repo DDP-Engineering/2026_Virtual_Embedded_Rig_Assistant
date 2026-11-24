@@ -38,7 +38,11 @@ async function setup(
   );
   const handle = await core.openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
   closes.push(async () => handle.close());
-  const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: () => Date.now() });
+  const gateway = new ReplayGateway({
+    dir: join(root, "scripts"),
+    now: () => Date.now(),
+    contextWindow: 131_072,
+  });
   await gateway.models("replay", new AbortController().signal);
   const catalogs: string[][] = [];
   const host: core.SessionHost = {

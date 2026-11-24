@@ -1,3 +1,4 @@
+import type { WorkbenchOpenGuard } from "@vera/core";
 import { veraError, type WorkbenchSnapshot } from "@vera/shared";
 import { expect, it, vi } from "vitest";
 import { type WorkbenchRuntime, WorkbenchRuntimes } from "./workbench-runtimes.js";
@@ -24,11 +25,12 @@ class ScriptedRuntime implements WorkbenchRuntime {
       // Canonical form: a trailing slash names the same folder.
       return input.replace(/\/$/, "");
     },
-    open: async (input: string) => {
+    open: async (input: string, guard?: WorkbenchOpenGuard) => {
       const folder = input.replace(/\/$/, "");
       this.record(`open ${folder}`);
       await this.gates.get(folder);
       if (this.failing.has(folder)) throw veraError("INVALID");
+      guard?.(this.snapshot(folder), undefined);
       this.folder = folder;
       return this.snapshot();
     },
@@ -44,6 +46,9 @@ class ScriptedRuntime implements WorkbenchRuntime {
       this.folder = undefined;
     },
     getSnapshot: () => this.snapshot(),
+    getDatabase: () => {
+      throw Error("No database in the scripted runtime");
+    },
   };
   readonly sessions = {
     lifecycle: async <T>(operation: () => Promise<T>, drain = true) => {
@@ -59,13 +64,13 @@ class ScriptedRuntime implements WorkbenchRuntime {
     },
     clearSubscriptions: () => this.record("unsubscribe"),
   };
-  private snapshot(): WorkbenchSnapshot {
-    if (!this.folder) throw veraError("NOT_FOUND");
+  private snapshot(folder = this.folder): WorkbenchSnapshot {
+    if (!folder) throw veraError("NOT_FOUND");
     return {
-      folder: this.folder,
+      folder,
       readOnly: false,
       warnings: [],
-      config: { id: `wb_${this.folder}` },
+      config: { id: `wb_${folder}` },
     } as unknown as WorkbenchSnapshot;
   }
 }
@@ -97,6 +102,26 @@ function harness() {
 
 /** Lets queued registry work run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+it("validates a notification target before promoting it and releases a rejected new runtime", async () => {
+  const { runtimes, made } = harness();
+  await runtimes.open("A");
+  const original = runtimes.foreground;
+  await expect(
+    runtimes.open("stale", (snapshot) => {
+      expect(snapshot.folder).toBe("stale");
+      expect(runtimes.foreground).toBe(original);
+      throw veraError("NOT_FOUND");
+    }),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(runtimes.foreground).toBe(original);
+  expect(made[1]?.folder).toBeUndefined();
+  await runtimes.open("B", (snapshot) => {
+    expect(snapshot.folder).toBe("B");
+    expect(runtimes.foreground).toBe(original);
+  });
+  expect(runtimes.foreground.folder).toBe("B");
+});
 
 // REQ-FUNC-db6bacf7, REQ-FUNC-0dfa01fd
 it("keeps a busy workbench in the background and releases it once its work settles", async () => {

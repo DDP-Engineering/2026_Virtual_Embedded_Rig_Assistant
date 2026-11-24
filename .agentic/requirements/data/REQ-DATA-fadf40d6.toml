@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-fadf40d6"
+
+title = "Reject invalid desktop notification settings"
+
+status = "active"
+
+requirement = """
+If a notification preference is invalid in a settings file or patch, VERA shall reject that input as invalid.
+"""
+
+verification = "Parse stored settings with an omitted or mistyped entry and typed IPC patches with an unknown choice, key or non-boolean approval value; assert rejection and accept either valid partial entry."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/notification-settings.test.ts","05_Software/src/libraries/core/src/settings/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

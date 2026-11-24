@@ -232,17 +232,8 @@ const events = (text: string) =>
 const replay = (
   workbench: string,
   script = join(root, "tests/fixtures/llm-scripts/read-then-answer.jsonl"),
-) => [
-  "run",
-  "--workbench",
-  workbench,
-  "--prompt",
-  "Read the board",
-  "--provider",
-  "replay",
-  "--script",
-  script,
-];
+  prompt = "Read the board",
+) => ["run", "--workbench", workbench, "--prompt", prompt, "--provider", "replay", "--script", script];
 it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
   await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");
@@ -807,8 +798,9 @@ it.skipIf(process.platform !== "linux").each(["a", "d", "interrupt"])(
 
 it("runs ordered read/list/cited events and resumes a durable session in a new process", async () => {
   const { workbench, dir } = await fixture();
-  const first = await launch([...replay(workbench), "--data", join(dir, "data")]).result;
-  expect(first.code).toBe(0);
+  const data = join(dir, "data");
+  const first = await launch([...replay(workbench), "--data", data]).result;
+  expect(first.code, first.stderr).toBe(0);
   const rows = events(first.stdout);
   const types = rows.map((row) => row.event.type);
   const selected = types.filter((type) =>
@@ -833,14 +825,25 @@ it("runs ordered read/list/cited events and resumes a durable session in a new p
   const id = rows[0].sessionId;
   const persisted = rows.filter((row) => row.seq !== undefined).map((row) => row.seq);
   expect(persisted).toEqual([...persisted].sort((a, b) => a - b));
-  const second = await launch([...replay(workbench), "--session", id]).result;
-  expect(second.code).toBe(0);
-  expect(events(second.stdout).every((row) => row.sessionId === id)).toBe(true);
-  expect(events(second.stdout).filter((row) => row.event.type === "message.user")).toHaveLength(1);
+  const followUp = join(dir, "resume.jsonl");
+  await writeFile(followUp, JSON.stringify({ text: "Earlier evidence [[{{ref}}]]." }));
+  const second = await launch([
+    ...replay(workbench, followUp, "Cite your earlier evidence"),
+    "--data",
+    data,
+    "--session",
+    id,
+  ]).result;
+  expect(second.code, second.stderr || second.stdout).toBe(0);
+  const resumed = events(second.stdout);
+  expect(resumed.every((row) => row.sessionId === id)).toBe(true);
+  expect(resumed.filter((row) => row.event.type === "message.user")).toHaveLength(1);
+  expect(resumed.findLast((row) => row.event.type === "message.done").event).toMatchObject({
+    text: "Earlier evidence [[board.txt#L1-L2]].",
+    citations: [{ valid: true }],
+  });
   expect(
-    events(second.stdout)
-      .filter((row) => row.seq !== undefined)
-      .every((row) => row.seq > Math.max(...persisted)),
+    resumed.filter((row) => row.seq !== undefined).every((row) => row.seq > Math.max(...persisted)),
   ).toBe(true);
   await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
 }, 15000);

@@ -12,7 +12,11 @@ const closes: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const close of closes.splice(0).reverse()) await close();
 });
-async function setup(path = "docs/notes/bringup.md", fabricated = false) {
+async function setup(
+  path = "docs/notes/bringup.md",
+  fabricated = false,
+  onLiveActivity?: core.SessionHost["onLiveActivity"],
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-approvals-"));
   closes.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, ".vera"));
@@ -56,6 +60,7 @@ async function setup(path = "docs/notes/bringup.md", fabricated = false) {
     clock: { now: () => new Date(), sleep: async () => {} },
     model: () => "replay/edit",
     prompt: () => "Test",
+    ...(onLiveActivity && { onLiveActivity }),
   };
   const service = new core.SessionService(host);
   closes.push(() => service.close());
@@ -149,10 +154,22 @@ it.each(["approved", "denied"] as const)("ask %s binds exact request and continu
   }
 });
 it("auto-edit ordinary path records mode and internal metadata stays inaccessible", async () => {
-  const { service, root, path, handle } = await setup();
+  const live: core.LiveSessionActivity[] = [];
+  const pendingAtDispatch: boolean[] = [];
+  const { service, root, path, handle } = await setup(undefined, false, (_id, event) => {
+    live.push(event);
+    if (event.type === "approval.requested") queueMicrotask(() => pendingAtDispatch.push(event.pending()));
+  });
   const s = service.create(null, "auto-edit");
   service.send(s.id, "edit");
   expect(await service.waitIdle(s.id)).toEqual({ stopReason: "end" });
+  expect(pendingAtDispatch).toEqual([false]);
+  expect(live.map(({ type }) => type)).toEqual(["approval.requested", "approval.decided", "turn.completed"]);
+  const replayed: string[] = [];
+  const off = service.subscribe(s.id, 0, (_seq, event) => replayed.push(event.type));
+  expect(replayed).toContain("turn.done");
+  expect(live).toHaveLength(3);
+  off();
   expect(await readFile(join(root, path), "utf8")).toBe("new\n");
   expect(handle.db.prepare("SELECT decision,decided_by FROM approvals").get()).toEqual({
     decision: "approved",

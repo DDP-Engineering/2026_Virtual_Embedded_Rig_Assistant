@@ -100,7 +100,7 @@ function conversation(pairs: number): SessionState {
     );
   return state;
 }
-async function render(state: SessionState, search = "") {
+async function render(state: SessionState, search = "", revealQuestionId?: string) {
   await act(async () =>
     root.render(
       createElement(Transcript, {
@@ -110,6 +110,7 @@ async function render(state: SessionState, search = "") {
         updates: {},
         retry: () => {},
         search,
+        revealQuestionId,
         sessionId: "session",
       }),
     ),
@@ -136,6 +137,39 @@ it("mounts the newest 40 rows first and the rest in idle chunks, keeping the end
   expect(articles()[0]?.textContent).toContain("question 0");
   expect(viewport().scrollTop).toBe(2000 * ROW - VIEWPORT);
 }, 15000);
+
+it("reveals a pending question before idle rendering even after many queued messages", async () => {
+  const state = conversation(12);
+  const questionId = "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  state.activeTurnId = "awaiting";
+  state.questions.push({
+    questionId,
+    callId: "question-call",
+    turnId: "awaiting",
+    question: "Which profile?",
+    choices: ["Quiet", "Fast"],
+    recommended: null,
+    deadline: null,
+    outcome: null,
+  });
+  state.items.push({
+    kind: "tool",
+    id: "question-call",
+    turnId: "awaiting",
+    name: "ask_user",
+    args: {},
+    status: "running",
+  });
+  for (let i = 0; i < 45; i++)
+    state.items.push({ kind: "user", id: `queued-${i}`, text: "Steering", pending: true });
+  const card = () => container.querySelector(`[data-pending-question="${questionId}"]`);
+  await render(state);
+  expect(card()).toBeNull();
+  await render(state, "", questionId);
+  expect(card()).not.toBeNull();
+  await render(state);
+  expect(card()).not.toBeNull();
+});
 
 it("mounts a short session at once and keeps rows that arrive later", async () => {
   const state = conversation(10);

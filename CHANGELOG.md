@@ -8,6 +8,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Receive desktop alerts for pending chat questions and manage them in Settings > Notifications.
+- Catch up on unread replies and pending session activity across workbenches from the title bar.
+- Ask structured chat questions and optionally apply the recommended answer after a workbench timeout.
+- Receive desktop alerts for completed replies and pending approvals, and click to open their sessions.
+- Configure desktop alerts for completed turns and background approval requests in Settings > Notifications.
 - Organize Advanced settings and configure browser navigation, dictation and model discovery deadlines.
 - Send follow-ups to delegated sessions and authorize Full Access launches with independent session modes.
 
@@ -155,11 +160,14 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Bypass extends to analysis, plugin drafts, HIL plans, bench resources and electrical inputs.
 - Bypass runs declared programs in outside folders, binds outside files and stops its runs when Bypass ends.
 - Bypass confirms each mode change; agent file access refuses VERA application data in every mode.
-- Delete settings.json from earlier pre-releases after removal of the Bypass warning suppression preference.
+- Delete settings.json from earlier pre-releases after changes to Bypass and desktop notification preferences.
 
 ### Fixed
 
 - Reuse a model's measured context estimate in new sessions that share the same application data folder.
+- Keep the conversation and composer visible when the update banner takes space in a compact window.
+- Keep Windows portable session alerts in VERA without registering with the Windows shell.
+- Write the VERA product name into unsigned Windows packages.
 - mqtt-tools 0.2.2: CLI output stays intact with MQTT usernames, and passwords remain masked.
 - Show concrete citation examples to models for local files, indexed documents and VERA help.
 - GitHub release downloads include the Chromium and Whisper archives and licence notices for offline installation.

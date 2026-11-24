@@ -28,16 +28,17 @@ export interface SessionRoute<R extends RoutedRuntime> {
   readonly db: Database;
 }
 
-/** One open workbench runtime and its sessions that are running or awaiting approval. */
+/** One open workbench runtime with its running top-level sessions and pending requests. */
 export interface RuntimeActivity {
   readonly snapshot: WorkbenchSnapshot;
   readonly foreground: boolean;
   readonly sessions: SessionSummary[];
 }
 
-/** The prepared membership query of each open database. */
 const membership = new WeakMap<Database, { get(id: string): unknown }>();
-function holds(db: Database, sessionId: string): boolean {
+/** Membership in one exact workbench database. */
+export function holdsSession(db: Database, sessionId: string): boolean {
+  if (!db.open) return false;
   let statement = membership.get(db);
   if (!statement) {
     statement = db.prepare("SELECT 1 FROM sessions WHERE id=?");
@@ -84,7 +85,7 @@ export class SessionRouter<R extends RoutedRuntime> {
    */
   session(sessionId: string, workbenchId?: string): SessionRoute<R> {
     const open = this.open();
-    const holders = open.filter((route) => holds(route.db, sessionId));
+    const holders = open.filter((route) => holdsSession(route.db, sessionId));
     if (workbenchId === undefined) {
       const owner = holders[0];
       if (!owner) throw veraError("NOT_FOUND");
@@ -185,7 +186,7 @@ export class SessionRouter<R extends RoutedRuntime> {
       return failure(error);
     }
   }
-  /** Every open runtime, foreground first, with its top-level sessions running or awaiting approval. */
+  /** Every open runtime, foreground first, with its running top-level sessions and pending requests. */
   async activity(): Promise<RuntimeActivity[]> {
     const foreground = this.runtimes()[0];
     return Promise.all(

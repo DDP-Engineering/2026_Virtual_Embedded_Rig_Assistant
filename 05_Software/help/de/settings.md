@@ -8,12 +8,24 @@
 | **Webzugriff** | Websuche und Lesen von Webseiten für den Agenten |
 | **Darstellung und Sprache** | Sprache, Design und Textgrößen |
 | **Befehle** | Die Shell für Agentenbefehle und neue Terminals |
-| **Benachrichtigungen** | Noch nicht verfügbar |
+| **Benachrichtigungen** | Desktop-Hinweise bei abgeschlossenen Durchläufen, Freigaben und Fragen |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
 | **Daten & Datenschutz** | Maskierungsstandards für vier Bereiche |
 | **Über** | Version, Laufzeit, Lizenz und Komponenten von Drittanbietern |
 | **Diktat** | Lokale Whisper-Modelle und gesprochene Sprache |
+
+## Benachrichtigungen
+
+Unter **Abschluss eines Durchlaufs** stehen **Nie**, **Im Hintergrund** (Standard) und **Immer** zur Wahl. VERA ist im Hintergrund, wenn sein Fenster minimiert, ausgeblendet oder nicht fokussiert ist.
+
+Die Option **Freigabeanfragen im Hintergrund** ist standardmäßig aktiviert. Prüfe und beantworte Anfragen in VERA. Offene Anfragen erscheinen in der Seitenleiste und im Chatverlauf.
+
+**Benachrichtigungen zu Fragen** ist standardmäßig aktiviert. VERA benachrichtigt dich im Hintergrund, wenn eine Sitzung auf eine Antwort wartet. Die Frist für die empfohlene Antwort wird separat im Workbench eingestellt. Ein Klick auf einen aktuellen Hinweis öffnet die Sitzung und setzt den Fokus auf die offene Frage. Du kannst auch über Aktivität oder im Chat antworten.
+
+Klicke auf das Banner eines Hinweises, während VERA läuft, um die zugehörige Sitzung zu öffnen. VERA fragt nach, bevor ungespeicherte Änderungen verworfen werden.
+
+Unter Windows setzen Desktop-Hinweise eine installierte Version von VERA voraus. Die portable ZIP-Version nutzt die Sitzungsanzeigen, Freigabekarten und Fragekarten in VERA. Unter Linux benötigen Desktop-Hinweise einen Benachrichtigungsdienst. In unterstützten Umgebungen entscheidet das Betriebssystem, ob es Hinweise anzeigt, während VERA läuft. Wenn Hinweise ausbleiben, prüfe die Systembenachrichtigungen für VERA und den Modus „Nicht stören“. Die Sitzungsanzeigen, Freigabekarten und Fragekarten bleiben in VERA verfügbar.
 
 ## Daten & Datenschutz
 

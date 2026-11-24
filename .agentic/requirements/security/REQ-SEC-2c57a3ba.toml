@@ -1,0 +1,32 @@
+schema = 1
+
+id = "REQ-SEC-2c57a3ba"
+
+title = "Keep question answers outside approval decisions"
+
+status = "active"
+
+requirement = "When a question resolves, the runtime shall keep any subsequent operation subject to its existing permission and approval policy."
+
+verification = "Replay an automatic answer followed by a write and assert that the file stays unchanged until the separate approval is granted."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/core/src/tools/ask-user.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/libraries/shared/src/session-questions.ts",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+]
+
+linked_tests = [
+  "05_Software/src/libraries/core/src/sessions/questions.test.ts",
+  "05_Software/src/apps/desktop/src/main/ipc-router.test.ts",
+]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-24

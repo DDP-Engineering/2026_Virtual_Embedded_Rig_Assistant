@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-ee964ea7"
+
+title = "Explain desktop notification delivery in Help"
+
+status = "active"
+
+requirement = """
+When the user consults notification Help, VERA shall explain the background window states, approval review inside VERA, the running-app limit, system notification settings and in-app cues when desktop alerts are unavailable, in the interface language.
+"""
+
+verification = "Inspection: check Settings Help in each supported language for the three background states, approval review in VERA, the running-app requirement, OS delivery controls and what to use in unsupported environments."
+
+affected_paths = ["05_Software/help/","00_Planning/Interface.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

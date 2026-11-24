@@ -10,11 +10,11 @@ requirement = """
 When the user switches to another Settings page, chooses Back to workbenches or leaves Settings by any other navigation while the current page has unsaved changes, VERA shall ask to discard the changes, staying on the page with the draft when the user declines and discarding the draft and continuing when the user confirms, and shall not ask when there are no changes.
 """
 
-verification = "With a changed Command shell draft: switching to Updates asks, declining keeps the page and the draft, confirming switches and drops it; Back to workbenches asks the same way; without changes no prompt appears."
+verification = "With a changed Command shell or Notifications draft, switch to Updates. Declining keeps the page and the draft, confirming switches and drops it, and without changes no prompt appears. Check Back to workbenches with a changed Command shell draft."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings-page-header.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/notification-settings.spec.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-23

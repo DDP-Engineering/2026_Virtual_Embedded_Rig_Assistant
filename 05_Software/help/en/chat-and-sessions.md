@@ -14,6 +14,12 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 
 Turns keep running when you open another workbench. A workbench row in the sidebar shows a mark with the number of its running and waiting sessions, also when the row is collapsed; a shield means a session awaits your approval. Select the mark (or focus it and press Enter) to list those sessions. Choose a session to open it in its workbench, where you can review its approval, or **Stop** to end only that turn. While turns run, **Workbenches** shows how many run and the **Concurrent turns** limit. At the limit, a new message stays in the message box: wait for a turn to finish or stop one in the sidebar, then send it again.
 
+## Activity
+
+Open **Activity** in the title bar to see running sessions, pending approvals and questions, and unread replies across workbenches. Use Tab to move through the view, Enter to open an entry, and Escape to close it. VERA asks before discarding unsaved edits. A waiting question opens at its card while it is still pending.
+
+Unread replies are available with desktop alerts disabled. VERA keeps up to 100 successful replies from the current app run. Opening an unread reply marks it as read. **Mark all as read** clears unread replies and leaves running sessions and pending requests visible.
+
 ## Write a message
 
 Type in the message box (**Ask VERA about your project…**). Enter sends, Shift+Enter adds a line, and @ completes paths of workbench files. To give the agent a file, choose **Attach as context** on it in the **Files** tab; it appears as a chip above the message box.
@@ -43,6 +49,12 @@ The result appears at the original caret or after the selected text. If you edit
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.
 
 **Stop** ends the running turn. Escape also asks **Stop the running turn?**. Work that was already completed, such as applied file changes, stays.
+
+## Answer a question
+
+When VERA asks a question, select a choice or enter your own answer, then select **Submit answer**. The card marks any recommended choice. You can also select **Cancel question** to continue the turn with a cancellation, or stop the turn to end it. Open a waiting question from the activity menu in its workbench heading.
+
+In the workbench’s **Agent and chat** settings, **Use recommended answers after a timeout** is off by default. Enable it to set a whole number from 1 to 1440 minutes. The card shows the deadline when a valid recommendation can be applied, and the transcript marks automatic answers. The timer keeps running with the window in the background or the view reloading. Any operation that needs approval still asks for it separately.
 
 ## Follow delegated sessions
 

@@ -1,4 +1,4 @@
-import type { WorkbenchService } from "@vera/core";
+import type { WorkbenchOpenGuard, WorkbenchService } from "@vera/core";
 import { veraError, type WorkbenchCreate, type WorkbenchSnapshot } from "@vera/shared";
 import type { SessionsHost } from "./sessions.js";
 
@@ -7,7 +7,10 @@ import type { SessionsHost } from "./sessions.js";
  * and its own session host, whose session service, turns and program host belong to that workbench.
  */
 export interface WorkbenchRuntime {
-  readonly workbench: Pick<WorkbenchService, "locate" | "open" | "create" | "close" | "getSnapshot">;
+  readonly workbench: Pick<
+    WorkbenchService,
+    "locate" | "open" | "create" | "close" | "getSnapshot" | "getDatabase"
+  >;
   readonly sessions: Pick<SessionsHost, "lifecycle" | "close" | "idle" | "busy" | "beginShutdown">;
 }
 
@@ -66,10 +69,18 @@ export class WorkbenchRuntimes<R extends WorkbenchRuntime> {
    * background one is reused, both keeping their session service and turns. If opening fails, every
    * runtime stays as it was.
    */
-  open(input: string): Promise<WorkbenchSnapshot> {
+  open(input: string, guard?: WorkbenchOpenGuard): Promise<WorkbenchSnapshot> {
     return this.lifecycle(async () => {
-      const target = this.target(await this.current.workbench.locate(input));
-      const snapshot = await target.sessions.lifecycle(() => target.workbench.open(input), false);
+      const folder = await this.current.workbench.locate(input);
+      if (guard && folder !== input) throw veraError("NOT_FOUND");
+      const target = this.target(folder);
+      if (guard && folderOf(target) === folder) {
+        const snapshot = target.workbench.getSnapshot();
+        guard(snapshot, target.workbench.getDatabase());
+        await this.promote(target);
+        return snapshot;
+      }
+      const snapshot = await target.sessions.lifecycle(() => target.workbench.open(input, guard), false);
       await this.promote(target);
       return snapshot;
     });

@@ -103,6 +103,7 @@ export function SessionList({
     idle: t("chat.idle"),
     running: t("chat.running"),
     awaiting_approval: t("chat.awaiting"),
+    awaiting_question: t("question.waiting"),
     error: t("chat.error"),
   };
   useEffect(() => {
@@ -150,6 +151,7 @@ export function SessionList({
   };
   const renderSession = (s: SessionSummary) => {
     const date = dateFormatter.format(new Date(s.updatedAt));
+    const sessionStatus = s.pendingQuestionId ? "awaiting_question" : s.status;
     // Search results and archived sessions keep their order.
     const movable = !!move && !s.archived && !search.trim();
     const index = listed.indexOf(s);
@@ -170,22 +172,24 @@ export function SessionList({
         >
           <strong>{s.title || t("chat.untitled")}</strong>
           <small>
-            {(s.status === "running" || s.status === "awaiting_approval") && (
+            {(sessionStatus === "running" ||
+              sessionStatus === "awaiting_approval" ||
+              sessionStatus === "awaiting_question") && (
               <span
                 className="session-activity"
-                data-session-activity={s.status}
-                title={status[s.status]}
+                data-session-activity={sessionStatus}
+                title={status[sessionStatus]}
                 aria-hidden="true"
               >
-                <ActivityIcon status={s.status} />
+                <ActivityIcon status={sessionStatus} />
               </span>
             )}
             <time data-session-updated dateTime={s.updatedAt} title={t("chat.lastActivity", { date })}>
               {date}
             </time>
           </small>
-          <span className="sr-only" data-session-status={s.status}>
-            {status[s.status]}
+          <span className="sr-only" data-session-status={sessionStatus}>
+            {status[sessionStatus]}
           </span>
         </button>
         <details

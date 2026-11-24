@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-c8943ad9"
+title = "Preserve Windows package executable identity without signing"
+status = "active"
+requirement = "When packaging Windows builds, VERA shall write the production or test product identity to each corresponding executable's version resources regardless of signing configuration."
+verification = "Inspect the pinned builder configuration for resource editing with and without a signing source, and inspect ProductName and FileDescription in separately built unsigned production and test executables."
+affected_paths = ["02_Tools/release/package.mjs", "05_Software/src/apps/desktop/electron-builder.yml"]
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+priority = "normal"
+rationale = "Windows attribution can use executable version resources. Unsigned builds require the same product metadata as signed builds."
+created = 2026-11-23
+updated = 2026-11-23

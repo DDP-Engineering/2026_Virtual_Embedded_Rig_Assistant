@@ -1,6 +1,21 @@
 import { expect, it } from "vitest";
 import { appEventSchema, settingsChangedEvent } from "./events.js";
+import { channels } from "./ipc.js";
 import { defaultSettings, mergeSettings } from "./settings.js";
+
+it("limits the notification activation request and event to an opaque token", () => {
+  const token = "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19";
+  const type = "session.notification.clicked";
+  const activation = channels["session.notification.open"];
+  expect(appEventSchema.parse({ type, token })).toEqual({ type, token });
+  expect(appEventSchema.safeParse({ type, token, folder: "elsewhere" }).success).toBe(false);
+  expect(activation.request.parse({ token })).toEqual({ token });
+  expect(activation.request.safeParse({ token, sessionId: "elsewhere" }).success).toBe(false);
+  expect(activation.request.safeParse({ token, questionId: "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" }).success).toBe(
+    false,
+  );
+  expect(activation.request.safeParse({ token: "malformed" }).success).toBe(false);
+});
 
 it("marks a settings change as masking-neutral only when nothing but presentation settings differ", () => {
   const current = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");

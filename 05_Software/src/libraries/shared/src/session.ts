@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAX_MESSAGE_IMAGES } from "./composer-images.js";
 import { modelReferenceSchema } from "./providers.js";
+import { questionIdSchema } from "./session-questions.js";
 
 const imagePathSchema = z
   .string()
@@ -46,6 +47,7 @@ export const sessionSummarySchema = z.strictObject({
   mode: permissionModeSchema,
   status: sessionStatusSchema,
   archived: z.boolean(),
+  pendingQuestionId: questionIdSchema.optional(),
   delegatedBypassLaunch: z.literal(true).optional(),
   delegation: z
     .strictObject({

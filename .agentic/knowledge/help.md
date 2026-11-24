@@ -45,6 +45,10 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
 
 ## Content and checks
 
+Settings Help explains localized notification preferences, guarded session navigation, running-app
+scope, platform controls and in-app approvals and questions. The default-on question alert setting
+is independent of the workbench’s recommended-answer timeout (REQ-UX-ee964ea7, REQ-DATA-d46e6974).
+
 Chat and sessions, Permissions and generated Keyboard shortcuts describe [user terminals](terminals.md),
 per-terminal read consent, revocation/history semantics and Ctrl+Shift+T in all four app languages.
 
@@ -77,6 +81,10 @@ the same source tree through `import.meta.glob`. Packaging (`02_Tools/release/pa
 - `help.read {page, language}` → `{page, title, language, content}`: the page in that language, else the English page
   with `language: "en"`; NOT_FOUND when neither exists.
 - Shared helpers `helpTitle`, `helpLinks`, `orderHelpPages`; constants `helpLanguages`, `HELP_PAGE_BYTES` (256 KiB).
+
+- The chat-and-sessions page explains structured choices, cancellation, workbench activity, the
+  automatic-answer timeout and the separate approval flow in all four languages. It also describes
+  Activity keyboard navigation, the run-local unread limit and how to mark replies as read.
 
 ## Invariants
 

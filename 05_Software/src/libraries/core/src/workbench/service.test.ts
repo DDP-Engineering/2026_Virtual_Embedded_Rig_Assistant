@@ -6,6 +6,7 @@ import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, writeFile } fro
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { veraError } from "@vera/shared";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { electricalModelPlugin, electricalToolOffered } from "../electrical/tools.js";
@@ -74,6 +75,55 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+
+it("discards a rejected staged open without publishing it or changing the active workbench", async () => {
+  const h = await harness();
+  const original = await h.service.create(h.folder, "Original");
+  const other = new WorkbenchService(h.host);
+  const folder = join(h.root, "other");
+  try {
+    await mkdir(folder);
+    const { config } = await other.create(folder, "Other");
+    await other.close();
+    const previous = h.settings.get().settings.recentWorkbenches;
+    const events = h.events.length;
+    let staged: Database.Database | undefined;
+    await expect(
+      h.service.open(folder, (snapshot, db) => {
+        expect(snapshot.config.id).toBe(config.id);
+        expect(db?.open).toBe(true);
+        expect(h.service.getSnapshot()).toEqual(original);
+        staged = db;
+        throw veraError("NOT_FOUND");
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(staged?.open).toBe(false);
+    expect(h.service.getSnapshot()).toEqual(original);
+    expect(h.settings.get().settings.recentWorkbenches).toEqual(previous);
+    expect(h.events).toHaveLength(events);
+    expect((await other.open(folder)).readOnly).toBe(false);
+    await other.close();
+    const database = join(folder, ".vera", "vera.db");
+    const lock = join(folder, ".vera", "lock");
+    await writeFile(lock, JSON.stringify({ app: "test", pid: Number.MAX_SAFE_INTEGER, since: "2026-11-23" }));
+    const read = h.host.files.read;
+    const removeDuringAcquire = vi.spyOn(h.host.files, "read").mockImplementation(async (path) => {
+      if (path === lock) await rm(database, { force: true });
+      return read(path);
+    });
+    try {
+      await expect(h.service.open(folder, vi.fn())).rejects.toMatchObject({ code: "NOT_FOUND" });
+      expect(removeDuringAcquire).toHaveBeenCalledWith(lock);
+    } finally {
+      removeDuringAcquire.mockRestore();
+    }
+    await expect(h.service.open(folder, vi.fn())).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(existsSync(database)).toBe(false);
+  } finally {
+    await other.close();
+    await h.service.close();
+  }
+});
 
 it("reads fresh validated config without catalog discovery while getConfig retains warnings", async () => {
   const h = await harness();

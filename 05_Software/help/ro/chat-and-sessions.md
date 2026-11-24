@@ -14,6 +14,12 @@ O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salveaz
 
 Turele continuă să ruleze când deschizi alt workbench. Rândul unui workbench din bara laterală afișează un semn cu numărul sesiunilor în lucru și al celor care așteaptă, chiar și când rândul este restrâns; un scut înseamnă că o sesiune așteaptă aprobarea ta. Selectează semnul (sau focalizează-l și apasă Enter) pentru a vedea aceste sesiuni. Alege o sesiune pentru a o deschide în workbench-ul ei, unde poți verifica aprobarea, sau **Oprește** pentru a încheia doar acea tură. Cât timp rulează ture, **Workbench-uri** arată câte rulează și limita **Ture simultane**. La limită, un mesaj nou rămâne în caseta de mesaj: așteaptă să se termine o tură sau oprește una din bara laterală, apoi trimite-l din nou.
 
+## Activitate
+
+Deschide **Activitate** din bara de titlu pentru a vedea sesiunile în curs, aprobările și întrebările în așteptare și răspunsurile necitite din toate workbench-urile. Folosește Tab pentru navigare, Enter pentru a deschide un element și Escape pentru a închide fereastra. VERA cere confirmare înainte de a abandona modificările nesalvate. O întrebare încă în așteptare se deschide la cardul ei.
+
+Răspunsurile necitite sunt disponibile și cu alertele desktop dezactivate. VERA păstrează cel mult 100 de răspunsuri finalizate cu succes de la pornirea aplicației. Deschiderea unui răspuns necitit îl marchează ca citit. **Marchează toate ca citite** golește lista de răspunsuri necitite și păstrează vizibile sesiunile în curs și cererile în așteptare.
+
 ## Scrie un mesaj
 
 Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite, Shift+Enter adaugă un rând, iar @ completează căile fișierelor din workbench. Pentru a-i da agentului un fișier, alege **Atașează ca context** pe acel fișier în fila **Fișiere**; fișierul apare ca etichetă deasupra casetei de mesaj.
@@ -43,6 +49,12 @@ Rezultatul apare la cursorul inițial sau după textul selectat. Dacă ai editat
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.
 
 **Oprește** încheie execuția curentă. Și Escape întreabă **Oprești execuția curentă?**. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
+
+## Răspunde la o întrebare
+
+Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
+
+În setările **Agent și chat** ale workbench-ului, opțiunea **Folosește răspunsurile recomandate după un interval** este dezactivată implicit. Activeaz-o și stabilește un număr întreg de la 1 la 1440 de minute. Cardul afișează termenul când se poate aplica o recomandare validă, iar conversația marchează răspunsul automat. Timpul continuă să curgă în fundal și la reîncărcarea interfeței. Operațiunile care necesită aprobare o cer separat.
 
 ## Urmărește sesiunile delegate
 

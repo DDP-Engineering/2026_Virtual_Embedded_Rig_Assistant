@@ -73,6 +73,8 @@ The registry also exposes web_download as a prepared write operation with its ow
 - recoverChanges resolves pending rows by guarded current hash: after marks applied and records the recovered event, before removes the row, otherwise conflict. It never changes file bytes. Session hosts await waitReady before exposing recovered state.
 - Bypass prepared requests mark filesystem scope and record canonical absolute change paths, including internal metadata changes. Recovery reconciles those recorded targets by hash only. Scope signal, current-mode guard and grant checks revoke queued writes/in-flight reads or grep on downgrade.
 
+- `ask_user` is a session-class tool bound only when its desktop host can answer. Its result reports clarification data and source. The regular write and program approvals still use their own gate.
+
 ## Agent management boundary
 
 Write/edit preparation and every apply recheck refuse `.vera/workbench.yaml` and host-managed

@@ -33,10 +33,31 @@ async function launch(prefix: string): Promise<Bench> {
   await script("long-b", [{ text: long("LONG B", 10) }]);
   await script("long-stop", [{ text: long("LONG STOP", 60) }]);
   await script("long-c", [{ text: long("LONG C", 60) }]);
+  await script("notice", [{ text: long("NOTIFICATION", 5) }]);
+  await script("question-notice", [
+    {
+      text: long("QUESTION", 6),
+      toolCalls: [
+        {
+          name: "ask_user",
+          args: { question: "Which profile?", choices: ["Quiet", "Fast"], recommended: 2 },
+        },
+      ],
+    },
+    { text: "Received {{source}}: {{answer}}" },
+  ]);
   await copyFile(
     resolve("tests/fixtures/llm-scripts/edit-approve.jsonl"),
     join(scripts, "edit-approve.jsonl"),
   );
+  await script("parent-approval", [
+    {
+      toolCalls: [
+        { name: "session_launch", args: { instruction: "Edit the board", modelRef: "replay/edit-approve" } },
+      ],
+    },
+    { text: long("PARENT STILL WORKING", 30) },
+  ]);
   const env = Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
@@ -129,6 +150,172 @@ async function start(page: Page, model: string, text: string, mode?: "ask") {
   await input.press("Enter");
   return id;
 }
+test("a completion notification restores the window and honors the editor guard across workbenches", async () => {
+  test.setTimeout(120000);
+  const bench = await launch("vera-session-notice-");
+  const { app, page, a, b } = bench;
+  try {
+    await app.evaluate(({ dialog, Notification }) => {
+      const native = { notices: [] as Electron.Notification[] };
+      Object.assign(globalThis, { veraTestNativeNotices: native.notices });
+      Notification.isSupported = () => true;
+      Notification.prototype.show = function () {
+        native.notices.push(this);
+        this.emit("show");
+      };
+      dialog.showOpenDialog = () =>
+        new Promise((resolve) => {
+          Object.assign(globalThis, {
+            veraTestCancelNoticePicker: () => resolve({ canceled: true, filePaths: [] }),
+          });
+        });
+    });
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        notifications: { turnCompletion: "always" },
+      }),
+    );
+    const notices = () =>
+      app.evaluate(() =>
+        (
+          globalThis as unknown as { veraTestNativeNotices: Electron.Notification[] }
+        ).veraTestNativeNotices.map(({ title, body, silent }) => ({ title, body, silent })),
+      );
+    const payload = { title: "VERA", body: "A reply is ready.", silent: true };
+    const first = await start(page, "notice", "First completion notification");
+    await expect.poll(notices, { timeout: 25000 }).toEqual([payload]);
+    const second = await start(page, "notice", "Second completion notification");
+    await switchWorkbench(page, b);
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    const draft = page.locator(".workbench-editor [data-project-name]");
+    await draft.fill("Unsaved Bench B");
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.minimize());
+    await expect.poll(notices, { timeout: 25000 }).toEqual([payload, payload]);
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(true);
+    const click = (index: number) =>
+      app.evaluate((_electron, index) => {
+        (globalThis as unknown as { veraTestNativeNotices: Electron.Notification[] }).veraTestNativeNotices[
+          index
+        ]?.emit("click");
+      }, index);
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await click(0);
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(false);
+    await expect(draft).toHaveValue("Unsaved Bench B");
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator('[data-action="open-workbench-nav"]').click();
+    await expect.poll(() => app.evaluate(() => "veraTestCancelNoticePicker" in globalThis)).toBe(true);
+    await click(1);
+    await expect(draft).toHaveValue("Unsaved Bench B");
+    page.once("dialog", (dialog) => dialog.accept());
+    await app.evaluate(() => {
+      (globalThis as unknown as { veraTestCancelNoticePicker: () => void }).veraTestCancelNoticePicker();
+    });
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, second)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, first)).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByText("NOTIFICATION END", { exact: false })).toBeVisible();
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await close(bench);
+  }
+});
+
+test("question alerts respect the editor guard, focus the owning card and become inert after settlement", async () => {
+  test.setTimeout(120_000);
+  const bench = await launch("vera-question-notice-");
+  const { app, page, a, b } = bench;
+  try {
+    await app.evaluate(({ Notification }) => {
+      const notices: Electron.Notification[] = [];
+      const dismissed: number[] = [];
+      Object.assign(globalThis, { questionNotices: notices, questionDismissed: dismissed });
+      Notification.isSupported = () => true;
+      Notification.prototype.show = function () {
+        notices.push(this);
+        this.emit("show");
+      };
+      Notification.prototype.close = function () {
+        dismissed.push(notices.indexOf(this));
+        this.emit("close");
+      };
+    });
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        notifications: { turnCompletion: "never", approvalRequests: false },
+      }),
+    );
+    const first = await start(page, "question-notice", "First profile question");
+    const second = await start(page, "question-notice", "Second profile question");
+    await switchWorkbench(page, b);
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    const draft = page.locator(".workbench-editor [data-project-name]");
+    await draft.fill("Unsaved Bench B");
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.minimize());
+    const notices = () =>
+      app.evaluate(() =>
+        (globalThis as unknown as { questionNotices: Electron.Notification[] }).questionNotices.map(
+          ({ title, body, silent }) => ({ title, body, silent }),
+        ),
+      );
+    const payload = { title: "VERA", body: "A question is waiting for your answer.", silent: true };
+    await expect.poll(notices, { timeout: 25_000 }).toEqual([payload, payload]);
+    expect((await read(page, first)).snapshot.questions[0]?.outcome).toBeNull();
+    expect((await read(page, second)).snapshot.questions[0]?.outcome).toBeNull();
+    const click = (index: number) =>
+      app.evaluate((_electron, index) => {
+        (globalThis as unknown as { questionNotices: Electron.Notification[] }).questionNotices[index]?.emit(
+          "click",
+        );
+      }, index);
+
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await click(0);
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(false);
+    await expect(draft).toHaveValue("Unsaved Bench B");
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await click(1);
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, second)).toHaveAttribute("aria-current", "page");
+    const card = page.getByRole("region", { name: "Which profile?" });
+    await expect(card).toBeFocused();
+    expect((await read(page, second)).snapshot.questions[0]?.outcome).toBeNull();
+    await card.getByRole("radio", { name: "Quiet" }).check();
+    await card.getByRole("button", { name: "Submit answer" }).click();
+    await expect(card.getByText("User answer: Quiet")).toBeVisible();
+    await page.evaluate(
+      (sessionId) => (window as unknown as { vera: VeraBridge }).vera.invoke("session.stop", { sessionId }),
+      first,
+    );
+    const dismissed = () =>
+      app.evaluate(() =>
+        (globalThis as unknown as { questionDismissed: number[] }).questionDismissed.toSorted(),
+      );
+    await expect.poll(dismissed).toEqual([0, 1]);
+    await switchWorkbench(page, b);
+    const visible = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible());
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.hide());
+    await expect.poll(visible).toBe(false);
+    await click(0);
+    await click(1);
+    expect(await visible()).toBe(false);
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await close(bench);
+  }
+});
+
 /** Presses `key` until the focused element matches `selector`. */
 async function keyTo(page: Page, selector: string, key = "Tab", max = 80) {
   for (let i = 0; i < max; i++) {
@@ -137,6 +324,151 @@ async function keyTo(page: Page, selector: string, key = "Tab", max = 80) {
   }
   throw Error(`Keyboard focus never reached ${selector}`);
 }
+
+test("Activity catches background completions with native alerts off and preserves unsaved work", async () => {
+  test.setTimeout(120_000);
+  const bench = await launch("vera-session-activity-");
+  const { page, a, b } = bench;
+  try {
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        notifications: { turnCompletion: "never", approvalRequests: false },
+      }),
+    );
+    const finished = await start(page, "notice", "Background reply to read");
+    const other = await start(page, "notice", "Background reply to clear");
+    await switchWorkbench(page, b);
+    const running = await start(page, "long-stop", "Keep running");
+    await page.reload();
+    const trigger = page.getByRole("button", { name: "Activity", exact: true });
+    await keyTo(page, '[data-action="show-activity"]');
+    await page.keyboard.press("Enter");
+    const view = page.getByRole("dialog", { name: "Activity" });
+    await expect(view).toBeVisible();
+    const completed = view.locator(`[data-activity-session="${finished}"][data-activity-kind="completion"]`);
+    const runningRow = view.locator(`[data-activity-session="${running}"][data-activity-kind="running"]`);
+    const second = view.locator(`[data-activity-session="${other}"][data-activity-kind="completion"]`);
+    await expect(completed).toBeVisible({ timeout: 25_000 });
+    await expect(second).toBeVisible({ timeout: 25_000 });
+    await expect(runningRow).toBeVisible();
+    await expect(view.getByRole("button", { name: "Close" })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(runningRow).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(trigger).toBeFocused();
+    await switchWorkbench(page, b);
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    const draft = page.locator(".workbench-editor [data-project-name]");
+    await draft.fill("Unsaved Bench B");
+    await trigger.click();
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await completed.press("Enter");
+    await expect(completed).toBeVisible();
+    page.once("dialog", (dialog) => dialog.accept());
+    await completed.press("Enter");
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, finished)).toHaveAttribute("aria-current", "page");
+    await expect(view).not.toBeVisible();
+    await trigger.click();
+    await expect(completed).toHaveCount(0);
+    await expect(second).toBeVisible();
+    await view.getByRole("button", { name: "Mark all as read" }).press("Enter");
+    await expect(second).toHaveCount(0);
+    await expect(runningRow).toBeVisible();
+    await view.getByRole("button", { name: "Close" }).click();
+
+    const removed = await start(page, "notice", "Reply for a deleted session");
+    const unread = () =>
+      page.evaluate(() =>
+        (window as unknown as { vera: VeraBridge }).vera.invoke("session.activity.unread", {}),
+      );
+    await expect
+      .poll(async () => (await unread()).map((entry) => entry.sessionId), { timeout: 25_000 })
+      .toContain(removed);
+    const stale = (await unread()).find((entry) => entry.sessionId === removed);
+    expect(stale).toBeDefined();
+    await page.evaluate(
+      (id) => (window as unknown as { vera: VeraBridge }).vera.invoke("session.delete", { sessionId: id }),
+      removed,
+    );
+    expect((await unread()).some((entry) => entry.sessionId === removed)).toBe(false);
+    await switchWorkbench(page, b);
+    const reply = await page.evaluate(
+      async ({ stale, other, wrongOwner }) => {
+        if (!stale) throw Error("The completion marker is missing");
+        const { folder, workbenchId, sessionId, completionId } = stale;
+        const vera = (window as unknown as { vera: VeraBridge }).vera;
+        return Promise.all([
+          vera.invoke("session.activity.open", { folder, workbenchId, sessionId, completionId }),
+          vera.invoke("session.activity.open", { folder, workbenchId: wrongOwner, sessionId: other }),
+        ]);
+      },
+      { stale, other, wrongOwner: b.config.id },
+    );
+    expect(reply).toEqual([null, null]);
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+    const shown = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.get", {}),
+    );
+    expect(shown.config.id).toBe(b.config.id);
+    await page.evaluate(
+      (id) => (window as unknown as { vera: VeraBridge }).vera.invoke("session.stop", { sessionId: id }),
+      running,
+    );
+  } finally {
+    await close(bench);
+  }
+});
+
+test("Activity routes a delegated approval to its child without duplicating it under the parent", async () => {
+  test.setTimeout(120_000);
+  const bench = await launch("vera-delegated-activity-");
+  const { page, a, b } = bench;
+  try {
+    const finished = await start(page, "notice", "Reply before the delegated approval");
+    await expect
+      .poll(async () => (await read(page, finished)).snapshot.activeTurnId, { timeout: 25_000 })
+      .toBeNull();
+    const parent = await start(page, "parent-approval", "Delegate an edit", "ask");
+    const getActivity = () =>
+      page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("session.activity", {}));
+    await expect
+      .poll(
+        async () =>
+          (await getActivity()).flatMap(({ sessions }) =>
+            sessions.filter(({ status }) => status === "awaiting_approval"),
+          ),
+        { timeout: 20_000 },
+      )
+      .toHaveLength(1);
+    const child = (await getActivity())
+      .flatMap(({ sessions }) => sessions)
+      .find(({ status }) => status === "awaiting_approval");
+    expect(child?.id).toBeDefined();
+    expect(child?.id).not.toBe(parent);
+    await switchWorkbench(page, b);
+    await page.getByRole("button", { name: "Activity", exact: true }).press("Enter");
+    const view = page.getByRole("dialog", { name: "Activity" });
+    const approval = view.locator('[data-activity-kind="approval"]');
+    await expect(approval).toHaveCount(1);
+    await expect(approval).toHaveAttribute("data-activity-session", child?.id ?? "");
+    await view.getByRole("button", { name: "Mark all as read" }).press("Enter");
+    await expect(view.locator('[data-activity-kind="completion"]')).toHaveCount(0);
+    await expect(approval).toHaveAttribute("data-activity-session", child?.id ?? "");
+    await expect(view.locator('[data-activity-kind="running"]')).toHaveAttribute(
+      "data-activity-session",
+      parent,
+    );
+    await approval.press("Enter");
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, child?.id ?? "")).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("[data-approval-card]")).toBeVisible();
+    expect((await read(page, child?.id ?? "")).snapshot.approvals.at(-1)?.decision).toBeNull();
+    await page.locator("[data-approval-card]").getByRole("button", { name: "Approve", exact: true }).click();
+  } finally {
+    await close(bench);
+  }
+});
 
 test("A runs in the background while B runs; the sidebar follows both and both replies stay", async () => {
   test.setTimeout(180000);

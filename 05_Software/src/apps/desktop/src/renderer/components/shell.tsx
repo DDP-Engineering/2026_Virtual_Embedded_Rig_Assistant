@@ -47,6 +47,7 @@ export function Shell({
   openWorkbench,
   showPlugins,
   showHelp,
+  activity,
   newSelected,
   pluginsSelected,
   context,
@@ -74,6 +75,7 @@ export function Shell({
   openWorkbench?: () => void;
   showPlugins?: () => void;
   showHelp?: () => void;
+  activity?: ReactNode;
   newSelected?: boolean;
   pluginsSelected?: boolean;
   context?: ReactNode;
@@ -371,6 +373,7 @@ export function Shell({
           ))}
         </div>
         <div className="topbar-spacer" />
+        {activity}
         {showHelp && (
           <button
             type="button"

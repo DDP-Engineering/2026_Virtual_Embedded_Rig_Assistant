@@ -141,7 +141,9 @@ export function useSessionEvents(id: string | undefined, changed: () => void, wo
             event.type === "turn.done" ||
             event.type === "session.updated" ||
             event.type === "approval.requested" ||
-            event.type === "approval.decided"
+            event.type === "approval.decided" ||
+            event.type === "question.requested" ||
+            event.type === "question.settled"
           )
             changed();
         });

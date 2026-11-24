@@ -69,6 +69,7 @@
     }
   },
   "toolActivity": {
+    "askUser": "Ask a question",
     "keywordFallback": "Keyword results are shown because semantic ranking was unavailable.",
     "embeddingRebuild": "The embedding index is rebuilding. These results match keywords.",
     "planSteps": "Plan steps: {{count}}",
@@ -236,10 +237,15 @@
     "updates": "Updates",
     "data": "Data & privacy",
     "about": "About",
-    "placeholder": "This section will be available in a future update.",
     "saving": "Saving preferences…",
     "retry": "Retry",
     "notifications": "Notifications",
+    "notificationTurnCompletion": "Turn completion",
+    "notificationApprovalRequests": "Approval requests in background",
+    "notificationQuestionRequests": "Question notifications",
+    "notificationNever": "Never",
+    "notificationBackground": "In background",
+    "notificationAlways": "Always",
     "shortcuts": "Keyboard shortcuts",
     "partsSearch": "Parts search",
     "mqttCredentials": "MQTT credentials",
@@ -569,7 +575,31 @@
     "lastActivity": "Last activity: {{date}}",
     "turnSlotFree": "A turn can start now. Send your message again."
   },
+  "question": {
+    "choices": "Answer choices",
+    "recommended": "Recommended",
+    "freeText": "Your own answer",
+    "deadline": "Recommended answer applies at {{date}}",
+    "submit": "Submit answer",
+    "cancel": "Cancel question",
+    "cancelled": "Question cancelled",
+    "automaticAnswer": "Automatic answer: {{answer}}",
+    "userAnswer": "User answer: {{answer}}",
+    "waiting": "Awaiting an answer",
+    "timeoutEnabled": "Use recommended answers after a timeout",
+    "timeoutMinutes": "Question timeout (minutes)"
+  },
+  "activity": {
+    "title": "Activity",
+    "running": "Running",
+    "approval": "Needs approval",
+    "question": "Needs answer",
+    "completions": "Unread completions",
+    "readAll": "Mark all as read",
+    "empty": "No session activity."
+  },
   "sessionActivity": {
+    "summaryWithQuestions": "Active sessions in {{name}}: running {{running}}, awaiting approval {{awaiting}}, awaiting an answer {{questions}}",
     "summary": "Active sessions in {{name}}: running {{running}}, awaiting approval {{awaiting}}",
     "stopNamed": "Stop: {{title}}",
     "capacity": "Concurrent turns: {{active}} of {{limit}} running",
@@ -1138,6 +1168,7 @@
     "executionAllowed": "Requires run_program allowance and session approval rules"
   },
   "workbenchTools": {
+    "ask_user": "Ask a clarification with choices and an optional recommended answer.",
     "read": "Read text files or selected line ranges.",
     "view_image": "View a workbench image with a model that accepts images.",
     "list": "List files and subfolders in a directory.",

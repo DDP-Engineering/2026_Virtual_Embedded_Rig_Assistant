@@ -34,7 +34,7 @@ import {
   type WorkbenchHost,
   WorkbenchService,
 } from "@vera/core";
-import type { AdvancedKey } from "@vera/shared";
+import type { ActivitySessionTarget, AdvancedKey } from "@vera/shared";
 import {
   type BrowserSessionView,
   type EventEnvelope,
@@ -58,6 +58,7 @@ import {
   dialog,
   ipcMain,
   Menu,
+  Notification,
   nativeTheme,
   net,
   protocol,
@@ -135,13 +136,16 @@ import { openPath, revealPath } from "./reveal-path.js";
 import { RunPresentation } from "./run-presentation.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { exportSession } from "./session-export.js";
+import { windowsNotificationAppId } from "./session-notification-copy.js";
+import { SessionNotifications } from "./session-notifications.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
-import { SessionRouter } from "./session-router.js";
+import { holdsSession, SessionRouter } from "./session-router.js";
 import { planReviewHandlers, SessionsHost } from "./sessions.js";
 import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
 import { TerminalService } from "./terminals.js";
+import { UnreadCompletions } from "./unread-completions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
 import { WebAccessService } from "./web-access.js";
@@ -163,6 +167,9 @@ declare const __VERA_PLUGIN_CATALOG_URL__: string;
 declare const __VERA_PLUGIN_CATALOG_KEY__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
+// Match the installed NSIS shortcut. An unpackaged dev process must not take over that shortcut.
+if (process.platform === "win32" && app.isPackaged)
+  app.setAppUserModelId(windowsNotificationAppId(__VERA_TEST__));
 // Datasheet CDNs can reject Chromium HTTP/2 streams, so downloads stay on HTTP/1.1. Chromium offers the
 // switch only for the whole process: catalog, plugin program and update requests lose HTTP/2 multiplexing
 // too, which costs a little speed and no function. Model calls use Node's network stack, not this one.
@@ -182,6 +189,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let window: BrowserWindow | undefined;
+let quitting = false;
 
 /**
  * The offline component archive (browser runtime or dictation model) the user picks; undefined when the picker
@@ -326,7 +334,7 @@ function runtimeEvents(owner: WorkbenchService) {
     projectEvent(envelope, () => owner.getSnapshot()),
   );
 }
-/** The sidebar re-reads session.activity: a session's turn, approval, title or status, or the open runtimes changed. */
+/** Activity readers refresh after live session events, acknowledgements or workbench transitions. */
 function announceActivity(): void {
   emitAppEvent({ topic: "app", id: "app", event: { type: "session.activity" } });
 }
@@ -688,6 +696,55 @@ function interfaceLanguage(): HelpLanguage {
     ? language
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
+const unreadCompletions = new UnreadCompletions();
+const sessionNotifications = new SessionNotifications({
+  platform: process.platform,
+  portable: dataLocations.portable,
+  preferences: () => settings.get().settings.notifications,
+  language: interfaceLanguage,
+  window: () =>
+    !quitting && window && !window.isDestroyed()
+      ? { visible: window.isVisible(), minimized: window.isMinimized(), focused: window.isFocused() }
+      : undefined,
+  supported: () => Notification.isSupported(),
+  create: (options) => new Notification(options),
+  activate: (token) => {
+    if (!window || window.isDestroyed() || quitting) return;
+    if (window.isMinimized()) window.restore();
+    if (!window.isVisible()) window.show();
+    window.focus();
+    emitAppEvent({ topic: "app", id: "app", event: { type: "session.notification.clicked", token } });
+  },
+  failed: () => logger.log("warn", "session.notification.failed"),
+});
+/** Brings forward only the exact workbench and session, including an idle workbench that retired. */
+async function openActivitySession(target: ActivitySessionTarget & { pending?: () => boolean }) {
+  if (quitting) return null;
+  return workbenchTransition(async () => {
+    try {
+      const snapshot = await replaceForeground(() =>
+        runtimes.open(target.folder, (owner, db) => {
+          if (
+            owner.folder !== target.folder ||
+            owner.config.id !== target.workbenchId ||
+            target.pending?.() === false ||
+            !db ||
+            !holdsSession(db, target.sessionId)
+          )
+            throw veraError("NOT_FOUND");
+        }),
+      );
+      return {
+        workbench: publicWorkbenchFolders(warmPrograms(snapshot), (text) => credentials.scrub(text)),
+        sessionId: target.sessionId,
+      };
+    } catch (error) {
+      const code = veraErrorSchema.safeParse(error).data?.code;
+      if (code === "NOT_FOUND" || code === "CONFLICT" || code === "INVALID" || code === "DENIED") return null;
+      throw error;
+    }
+  });
+}
 /** What every workbench runtime's session host shares; each runtime adds its own WorkbenchService. */
 const sessionOptions: Omit<
   ConstructorParameters<typeof SessionsHost>[0],
@@ -695,6 +752,18 @@ const sessionOptions: Omit<
 > = {
   log: (message) => logger.log("error", "agent.turn.failed", { message }),
   admission: turnLimit,
+  liveActivity: (owner, id, event) => {
+    if (event.type === "turn.completed") {
+      unreadCompletions.add({
+        folder: owner.folder,
+        workbenchId: owner.config.id,
+        workbenchName: credentials.scrub(owner.config.name).slice(0, 80),
+        sessionId: id,
+        title: credentials.scrub(event.title).slice(0, 60),
+      });
+    }
+    sessionNotifications.observe(owner, id, event);
+  },
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
@@ -1531,6 +1600,29 @@ ipcMain.handle(
           s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         ),
       "session.capacity": () => turnLimit.state(),
+      "session.notification.open": async ({ token }) => {
+        const target = sessionNotifications.takeActivation(token);
+        if (!target) return null;
+        const opened = await openActivitySession(target);
+        if (!opened) return null;
+        // If settlement raced workbench promotion, keep the session route without a card focus request.
+        return target.questionId && target.pending?.()
+          ? { ...opened, questionId: target.questionId }
+          : opened;
+      },
+      "session.activity.unread": () => unreadCompletions.list(),
+      "session.activity.open": async ({ completionId, ...target }) => {
+        const opened = await openActivitySession(target);
+        if (!opened) unreadCompletions.discard(target);
+        else if (completionId) unreadCompletions.read(completionId, target);
+        announceActivity();
+        return opened;
+      },
+      "session.activity.readAll": () => {
+        unreadCompletions.clear();
+        announceActivity();
+        return {};
+      },
       "session.activity": async () =>
         (await router.activity()).map(({ snapshot, foreground, sessions }) => ({
           workbenchId: snapshot.config.id,
@@ -1538,8 +1630,16 @@ ipcMain.handle(
           folder: snapshot.folder,
           foreground,
           sessions: sessions.map((item) => {
-            const { id, title, status } = sanitizeSessionSummary(item, sessionContent(snapshot));
-            return { id, title, status: status as "running" | "awaiting_approval" };
+            const { id, title, status, pendingQuestionId } = sanitizeSessionSummary(
+              item,
+              sessionContent(snapshot),
+            );
+            return {
+              id,
+              title,
+              status: status as "running" | "awaiting_approval",
+              ...(pendingQuestionId && { pendingQuestionId }),
+            };
           }),
         })),
       "session.export": async ({ sessionId, format }) => {
@@ -1651,6 +1751,8 @@ ipcMain.handle(
       "session.delete": ({ sessionId }) =>
         router.inSession(sessionId, async (s, owner) => {
           await s.delete(sessionId);
+          unreadCompletions.discard({ folder: owner.folder, workbenchId: owner.config.id, sessionId });
+          announceActivity();
           if (workbenchKey(owner) === foregroundKey())
             await browserHost.closeSession({ workbenchId: owner.config.id, sessionId });
           return {};
@@ -1695,6 +1797,12 @@ ipcMain.handle(
       // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) =>
         router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" }),
+      "session.question.answer": ({ sessionId, workbenchId, questionId, reply }) => {
+        const route = router.session(sessionId, workbenchId);
+        router.verify(route);
+        route.runtime.sessions.answerQuestion({ workbenchId, db: route.db }, sessionId, questionId, reply);
+        return {};
+      },
       "session.approval.decide": (request) =>
         router.inSession(
           request.sessionId,
@@ -1865,6 +1973,10 @@ ipcMain.handle(
       },
       "workbench.recent": async ({ remove, pin, move, reveal }) => {
         const entries = await workbench().recent(remove, pin, move);
+        if (remove !== undefined) {
+          unreadCompletions.discardWorkbench(remove);
+          announceActivity();
+        }
         if (reveal !== undefined) {
           const entry = entries.find((item) => item.folder === reveal && !item.missing);
           if (!entry) throw veraError("NOT_FOUND");
@@ -2033,6 +2145,7 @@ if (!firstInstance) {
     }
     if (draining) return;
     draining = true;
+    quitting = true;
     const captureClosed = capture.close();
     terminals.suspend();
     catalogChecks.close();

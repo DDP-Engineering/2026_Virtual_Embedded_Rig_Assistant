@@ -1,0 +1,44 @@
+schema = 1
+
+id = "REQ-UX-489b8652"
+
+title = "Present localized keyboard-accessible Activity across workbenches"
+
+status = "active"
+
+requirement = "The desktop shall provide keyboard-accessible Activity for running sessions, pending approvals, pending questions and unread completions with controls and Help in all four supported languages."
+
+verification = "Open and dismiss Activity by keyboard, activate an entry by keyboard, and compare localized control, Help and release text as UTF-8 for en, ro, de and fr."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/renderer/App.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/activity-view.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/shell.tsx",
+  "05_Software/src/apps/desktop/src/renderer/styles.css",
+  "05_Software/src/apps/desktop/src/renderer/hooks/use-session-activity.ts",
+  "05_Software/src/apps/desktop/src/renderer/locales/en.json",
+  "05_Software/help/en/chat-and-sessions.md",
+  "05_Software/src/apps/desktop/src/renderer/locales/ro.json",
+  "05_Software/help/ro/chat-and-sessions.md",
+  "05_Software/src/apps/desktop/src/renderer/locales/de.json",
+  "05_Software/help/de/chat-and-sessions.md",
+  "05_Software/src/apps/desktop/src/renderer/locales/fr.json",
+  "05_Software/help/fr/chat-and-sessions.md",
+  "05_Software/release-notes/unreleased.yaml",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts",
+  "05_Software/tests/e2e/background-sessions.spec.ts",
+  "05_Software/tests/e2e/session-question.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

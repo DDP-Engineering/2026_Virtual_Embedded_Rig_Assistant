@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-f7a53a4c"
+
+title = "Present localized desktop notification preferences"
+
+status = "active"
+
+requirement = """
+When a user opens Settings > Notifications, VERA shall present a keyboard-operable turn-completion selector with Never, In background and Always and an independent background approval-request switch, with labels in English, Romanian, German or French according to the interface language.
+"""
+
+verification = "Navigate to Notifications by keyboard and operate the controls; for each supported language, open the panel and assert accessible localized names and option text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/settings.tsx","05_Software/src/apps/desktop/src/renderer/components/notification-settings.tsx","05_Software/src/apps/desktop/src/renderer/locales/","05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/notification-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

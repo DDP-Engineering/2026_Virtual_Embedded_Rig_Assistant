@@ -80,6 +80,16 @@ export interface ApprovalHost {
 }
 export class ApprovalGate {
   private readonly pending = new Map<string, Pending>();
+
+  /** True only for the live waiter on this session's exact request. */
+  isPending(sessionId: string, approvalId: string): boolean {
+    const entry = this.pending.get(approvalId);
+    return (
+      entry?.request.sessionId === sessionId &&
+      !entry.signal.aborted &&
+      this.host.active(sessionId, entry.request.turnId)
+    );
+  }
   constructor(private readonly host: ApprovalHost) {}
   async request(request: ChangeRequest, signal: AbortSignal): Promise<Decision> {
     signal.throwIfAborted();

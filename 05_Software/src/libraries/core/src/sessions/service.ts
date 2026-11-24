@@ -12,6 +12,8 @@ import {
   changeIdSchema,
   isLiveSessionEvent,
   type MaskingArea,
+  maskQuestionOutcome,
+  maskQuestionRequest,
   type PermissionMode,
   type PlanComment,
   type PlanCommentChange,
@@ -25,6 +27,8 @@ import {
   planCommentDeleteSchema,
   planReviewRequestSchema,
   planReviewRestoreSchema,
+  type QuestionReply,
+  questionReplySchema,
   resolveAdvanced,
   type SessionEvent,
   type SessionItemDetailField,
@@ -105,6 +109,7 @@ import {
 } from "./delegation.js";
 import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
+import { type LiveSessionActivity, successfulOrdinaryTurn } from "./live-activity.js";
 import {
   documentSearchToolMetadata,
   MaskingContextPolicy,
@@ -120,6 +125,7 @@ import {
   validatePlanReview,
   validatePlanTarget,
 } from "./plan-review.js";
+import { Questions } from "./questions.js";
 import { projectMessageImages, SessionImages } from "./session-images.js";
 import { timedGateway } from "./timed-gateway.js";
 
@@ -186,6 +192,10 @@ export interface SessionHost {
    * decided, or its title or status was updated. Called after the change is stored; errors are contained.
    */
   onActivity?: (sessionId: string) => void;
+  /** Timeout in whole minutes, read when a desktop session asks its next question. */
+  questionTimeoutMinutes?: () => number | null;
+  /** Optional live-only observation of committed completion, approval and question activity. */
+  onLiveActivity?: (sessionId: string, activity: LiveSessionActivity) => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -237,6 +247,8 @@ function activityChanged(event: SessionEvent): boolean {
     case "session.interrupted":
     case "approval.requested":
     case "approval.decided":
+    case "question.requested":
+    case "question.settled":
       return true;
     case "session.updated":
       return event.title !== undefined || event.status !== undefined;
@@ -265,6 +277,7 @@ export class SessionService {
   private readonly writeQueue: WriteQueue;
   private readonly ready: Promise<void>;
   private readonly approvals: ApprovalGate;
+  private readonly questions = new Questions(() => this.host.clock.now().getTime());
   private readonly artifacts: ArtifactStore;
   private readonly knowledge: DocumentKnowledge;
   constructor(private readonly host: SessionHost) {
@@ -282,7 +295,15 @@ export class SessionService {
     this.hub = new SessionHub(
       host.db,
       () => this.now(),
-      host.onActivity ? (id, event) => activityChanged(event) && host.onActivity?.(id) : undefined,
+      host.onActivity || host.onLiveActivity
+        ? (id, event) => {
+            try {
+              this.observeLiveActivity(id, event);
+            } finally {
+              if (activityChanged(event)) host.onActivity?.(id);
+            }
+          }
+        : undefined,
     );
     this.approvals = new ApprovalGate({
       db: host.db,
@@ -333,6 +354,36 @@ export class SessionService {
       this.recover();
     }
   }
+  private observeLiveActivity(id: string, event: SessionEvent): void {
+    const observe = this.host.onLiveActivity;
+    if (!observe) return;
+    if (successfulOrdinaryTurn(event, this.active.get(id))) {
+      observe(id, {
+        type: "turn.completed",
+        turnId: event.turnId,
+        title: this.sessions.get(id)?.title ?? "",
+      });
+    } else if (event.type === "approval.requested") {
+      const { approvalId } = event;
+      observe(id, {
+        type: "approval.requested",
+        approvalId,
+        pending: () => !this.closing && this.approvals.isPending(id, approvalId),
+      });
+    } else if (event.type === "approval.decided") {
+      observe(id, { type: "approval.decided", approvalId: event.approvalId });
+    } else if (event.type === "question.requested") {
+      const { questionId, turnId } = event.question;
+      observe(id, {
+        type: "question.requested",
+        questionId,
+        turnId,
+        pending: () => !this.closing && this.questions.id(id) === questionId,
+      });
+    } else if (event.type === "question.settled") {
+      observe(id, { type: "question.settled", questionId: event.questionId, turnId: event.turnId });
+    }
+  }
   /** Content policy only; authorization continues to use the unconditional host scrubber. */
   maskContent(area: MaskingArea, text: string): string {
     return this.host.masking?.(area) === false ? text : (this.host.scrub?.(text) ?? text);
@@ -364,7 +415,9 @@ export class SessionService {
   }
   private summary(row: SessionRow): SessionSummary {
     if (!row.created_at || !row.updated_at) throw veraError("INVALID");
+    const pendingQuestionId = this.questions.id(row.id);
     return {
+      ...(pendingQuestionId && { pendingQuestionId }),
       id: row.id,
       title: row.title,
       createdAt: row.created_at,
@@ -1172,6 +1225,14 @@ export class SessionService {
   decideApproval(input: ApprovalDecision): void {
     this.approvals.decide(input);
   }
+  /** Resolve the current clarification by exact session and question identity. */
+  answerQuestion(id: string, questionId: string, input: QuestionReply): void {
+    if (this.row(id).archived) throw veraError("DENIED");
+    this.writable();
+    const reply = questionReplySchema.safeParse(input);
+    if (!reply.success) throw veraError("INVALID");
+    this.questions.answer(id, questionId, reply.data);
+  }
   /** Persist an explicit user prefix grant, then approve its still-pending exact command. */
   async allowCommandApproval(input: ApprovalDecision): Promise<void> {
     const prefix = this.approvals.commandPrefix(input);
@@ -1568,6 +1629,33 @@ export class SessionService {
         ...(this.host.pluginBuilder ? [this.host.pluginBuilder.root] : []),
       ];
     } else if (!review) {
+      const timeout = this.host.questionTimeoutMinutes;
+      if (timeout) {
+        const mask = (text: string) => this.maskContent("agent", text);
+        ctx.askUser = (input, callId, signal) =>
+          this.questions.ask(
+            id,
+            turn.turnId,
+            callId,
+            input,
+            timeout(),
+            signal,
+            (question) =>
+              this.hub.emit(id, {
+                type: "question.requested",
+                question: maskQuestionRequest(question, mask),
+              }),
+            ({ questionId, turnId }, outcome) => {
+              this.writable();
+              this.hub.emit(id, {
+                type: "question.settled",
+                questionId,
+                turnId,
+                outcome: maskQuestionOutcome(outcome, mask),
+              });
+            },
+          );
+      }
       ctx.delegation = bindDelegatedSessionHost(
         this,
         id,
@@ -2518,6 +2606,15 @@ export class SessionService {
           if (row.status === "running" || row.status === "awaiting_approval") {
             const snapshot = this.hub.get(row.id).snapshot;
             const turnId = snapshot.activeTurnId ?? `interrupted_${row.id}`;
+            for (const question of snapshot.questions) {
+              if (question.outcome === null)
+                this.hub.record(row.id, {
+                  type: "question.settled",
+                  questionId: question.questionId,
+                  turnId: question.turnId,
+                  outcome: { kind: "cancelled", source: "stopped" },
+                });
+            }
             for (const item of snapshot.items)
               if (item.kind === "tool" && item.status === "running")
                 this.hub.record(row.id, {

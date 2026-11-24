@@ -69,6 +69,7 @@
     }
   },
   "toolActivity": {
+    "askUser": "Pune o întrebare",
     "keywordFallback": "Sunt afișate rezultate după cuvinte-cheie deoarece căutarea semantică nu a fost disponibilă.",
     "embeddingRebuild": "Indexul semantic se reconstruiește. Aceste rezultate corespund cuvintelor-cheie.",
     "planSteps": "Pași în plan: {{count}}",
@@ -236,10 +237,15 @@
     "updates": "Actualizări",
     "data": "Date și confidențialitate",
     "about": "Despre",
-    "placeholder": "Această secțiune va fi disponibilă într-o actualizare viitoare.",
     "saving": "Se salvează preferințele…",
     "retry": "Reîncearcă",
     "notifications": "Notificări",
+    "notificationTurnCompletion": "Finalizarea unei ture",
+    "notificationApprovalRequests": "Cereri de aprobare în fundal",
+    "notificationQuestionRequests": "Notificări pentru întrebări",
+    "notificationNever": "Niciodată",
+    "notificationBackground": "În fundal",
+    "notificationAlways": "Întotdeauna",
     "shortcuts": "Comenzi rapide",
     "partsSearch": "Căutare componente",
     "mqttCredentials": "Credențiale MQTT",
@@ -569,7 +575,31 @@
     "lastActivity": "Ultima activitate: {{date}}",
     "turnSlotFree": "Acum poate începe o tură. Trimite mesajul din nou."
   },
+  "question": {
+    "choices": "Variante de răspuns",
+    "recommended": "Recomandat",
+    "freeText": "Răspunsul tău",
+    "deadline": "Răspunsul recomandat se aplică la {{date}}",
+    "submit": "Trimite răspunsul",
+    "cancel": "Anulează întrebarea",
+    "cancelled": "Întrebare anulată",
+    "automaticAnswer": "Răspuns automat: {{answer}}",
+    "userAnswer": "Răspunsul utilizatorului: {{answer}}",
+    "waiting": "Așteaptă un răspuns",
+    "timeoutEnabled": "Folosește răspunsurile recomandate după un interval",
+    "timeoutMinutes": "Timp de așteptare pentru întrebări (minute)"
+  },
+  "activity": {
+    "title": "Activitate",
+    "running": "În curs",
+    "approval": "Necesită aprobare",
+    "question": "Necesită răspuns",
+    "completions": "Răspunsuri necitite",
+    "readAll": "Marchează toate ca citite",
+    "empty": "Nicio activitate în sesiuni."
+  },
   "sessionActivity": {
+    "summaryWithQuestions": "Sesiuni active în {{name}}: în curs {{running}}, așteaptă aprobare {{awaiting}}, așteaptă răspuns {{questions}}",
     "summary": "Sesiuni active în {{name}}: în lucru {{running}}, așteaptă aprobare {{awaiting}}",
     "stopNamed": "Oprește: {{title}}",
     "capacity": "Ture simultane: {{active}} din {{limit}} în lucru",
@@ -1138,6 +1168,7 @@
     "executionAllowed": "Necesită permisiunea run_program și regulile de aprobare ale sesiunii"
   },
   "workbenchTools": {
+    "ask_user": "Cere o clarificare cu variante și un răspuns recomandat opțional.",
     "read": "Citește fișiere text sau intervale de linii.",
     "view_image": "Vezi o imagine din workbench cu un model care acceptă imagini.",
     "list": "Listează fișierele și subfolderele unui director.",

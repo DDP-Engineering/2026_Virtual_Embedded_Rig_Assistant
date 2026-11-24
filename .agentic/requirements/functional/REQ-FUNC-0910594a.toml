@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0910594a"
+
+title = "Dismiss settled native question alerts"
+
+status = "active"
+
+requirement = """
+When a question with a native alert settles, Desktop shall dismiss the alert where the presenter supports dismissal.
+"""
+
+verification = "Settle by answer, cancellation and timeout before or after native show, and assert close happens once where the presenter supplies a live notice."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/questions.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

@@ -8,12 +8,24 @@
 | **Accès web** | Recherche et lecture sur le web pour l’agent |
 | **Apparence et langue** | Langue, thème et tailles de texte |
 | **Commandes** | Le shell des commandes de l’agent et des nouveaux terminaux |
-| **Notifications** | Pas encore disponible |
+| **Notifications** | Alertes du bureau à la fin d’un tour, pour les approbations et les questions |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |
 | **Données et confidentialité** | Valeurs de masquage par défaut pour quatre domaines |
 | **À propos** | Version, environnement d’exécution, licence et composants tiers |
 | **Dictée** | Modèles Whisper locaux et langue parlée |
+
+## Notifications
+
+**Fin d’un tour** propose **Jamais**, **En arrière-plan** (par défaut) et **Toujours**. VERA est en arrière-plan lorsque sa fenêtre est réduite, masquée ou inactive.
+
+L’option **Demandes d’approbation en arrière-plan** est activée par défaut. Consultez les demandes et répondez dans VERA. Les demandes en attente apparaissent dans la barre latérale et le fil de discussion.
+
+L’option **Notifications de questions** est activée par défaut. Vous recevez une alerte lorsqu’une session attend une réponse et que VERA est en arrière-plan. Le délai d’application de la réponse recommandée se règle séparément dans le banc de travail. Cliquez sur une alerte encore active pour ouvrir la session et placer le focus sur la question. Vous pouvez aussi répondre depuis Activité ou la discussion.
+
+Cliquez sur la bannière d’une alerte pendant que VERA fonctionne pour ouvrir sa session. VERA vous demande confirmation avant d’abandonner les modifications non enregistrées.
+
+Sous Windows, les alertes du bureau nécessitent une version installée de VERA. La version ZIP portable utilise les indicateurs de session, les cartes d’approbation et les cartes de questions dans VERA. Sous Linux, les alertes du bureau nécessitent un service de notifications du bureau. Dans les environnements compatibles, le système décide si les alertes s’affichent pendant que VERA fonctionne. Si elles n’apparaissent pas, vérifiez les notifications système pour VERA et le mode Ne pas déranger. Les indicateurs de session, les cartes d’approbation et les cartes de questions restent disponibles dans VERA.
 
 ## Données et confidentialité
 

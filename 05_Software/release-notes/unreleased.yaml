@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Grouped models, translated tools, clear plans/citations, no empty blocks, reused token estimates.
-      ro: Modele grupate, unelte traduse, planuri/citări clare, fără goluri, estimări de tokeni reutilizate.
-      de: Modellgruppen, übersetzte Tools, klare Pläne/Quellen, ohne Leerblöcke, Schätzwerte erneut nutzen.
-      fr: Modèles groupés, outils traduits, plans et citations clairs, sans blocs vides, estimations reprises.
+      en: Model groups, localized tools, clear plans/cites, no blanks. Input visible. Reused token estimates.
+      ro: Modele grupate, unelte traduse, planuri/citări clare. Casetă vizibilă, estimări refolosite.
+      de: Modelle gruppiert, Tools übersetzt, Pläne/Zitate klar. Eingabe sichtbar, Schätzwerte erneut nutzen.
+      fr: Modèles groupés, outils traduits, plans/citations clairs. Saisie visible. Estimations reprises.
   - category: fixed
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:
@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Sessions run on in other workbenches, up to a turn limit; see, open or stop them in the sidebar.
-      ro: Sesiunile rulează și în alte workbench-uri, cu limită; vezi, deschide sau oprește din bara laterală.
-      de: Sitzungen laufen in anderen Workbenches weiter, mit Limit; Seitenleiste zeigt, öffnet, stoppt sie.
-      fr: Les sessions continuent dans d’autres bancs, avec limite ; voyez, ouvrez ou arrêtez-les sur le côté.
+      en: "Activity lists replies and requests. Toggle question alerts. Windows alerts need installed VERA."
+      ro: "Activitate arată răspunsuri și cereri. Alerte opționale pentru întrebări. Windows: instalează VERA."
+      de: "Aktivität zeigt Antworten und Anfragen. Fragehinweise sind optional. Windows: VERA installieren."
+      fr: "Activité liste réponses et demandes. Alertes de questions au choix. Sous Windows, installez VERA."
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
