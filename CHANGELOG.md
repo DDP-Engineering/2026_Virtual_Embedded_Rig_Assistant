@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Show an open document or Git diff beside Chat, with an adjustable divider and compact tab view.
 - Reopen recently closed tabs, pin important tabs, and search open tabs beside Chat.
 - Delete old `vera.tabs.<workbenchId>.<sessionId>` localStorage records to clear obsolete saved tab layouts.
 - Open the current plan from Chat and get a notification while away when a plan needs a decision.

@@ -112,6 +112,8 @@ Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans 
 
 Choisissez **Rouvrir le dernier onglet fermé** à côté du chat pour retrouver un document ou une comparaison de la session en cours. Faites un clic droit et choisissez **Épingler l’onglet** pour le garder près du chat lors d’une fermeture groupée. Choisissez **Rechercher dans les onglets ouverts** pour filtrer par titre ou chemin, puis sélectionnez un résultat avec la souris ou avec les flèches et Entrée.
 
+Choisissez **Afficher à côté du chat** dans le menu d’un onglet ouvert. Le chat reste visible à gauche, avec l’onglet à droite. Sélectionnez un autre onglet pour changer le volet droit. Faites glisser le séparateur ou utilisez les flèches. **Quitter la vue côte à côte** rétablit un seul volet et conserve les onglets. Dans une fenêtre étroite, utilisez la barre d’onglets.
+
 ## Commenter et réviser le plan
 
 Choisissez **Ouvrir le plan** dans le chat pour voir ses étapes. Répondez à une demande de décision dans la carte de question. Si vous êtes dans une autre session, la notification ou l’entrée dans **Activité** ouvre la session et l’onglet **Plan**.

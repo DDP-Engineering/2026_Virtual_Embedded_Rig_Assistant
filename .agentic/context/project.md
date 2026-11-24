@@ -46,6 +46,7 @@ The target platforms are Windows x64 and Linux x64 (`00_Planning/System.md`).
 
 The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
 The Chat tab strip supports per-session reopening, pinning and title/path search. Persistable open tabs retain their pins in the existing format-1 record.
+The center can show Chat and an open document or Git comparison side by side, resizing within the viewport and falling back to the tab strip in a narrow window.
 
 ## Established constraints
 

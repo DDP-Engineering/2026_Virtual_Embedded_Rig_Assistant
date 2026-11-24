@@ -80,7 +80,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   import the original through main. The Files menu and drag attach an existing path. The composer displays up to
   eight removable Blob thumbnail chips. Image sends wait for the pending capability lookup so the composer can warn when the effective model receives only paths. Image-only drafts
   are sendable and use the same acknowledgment and retry behavior. See `composer-images.spec.ts`.
-- User-message image paths appear as bounded thumbnails in the visible transcript. Thumbnail buttons open the
+- User-message image paths appear as bounded thumbnails when the transcript is visible, including beside a document. Thumbnail buttons open the
   file viewer in Rendered mode and the standard keyboard return restores the opener. A missing or unreadable
   image shows its persisted workbench path under Display masking. Visible attachments refresh when Chat is
   selected again or the window regains focus. Rows release thumbnail resources when they leave the viewport. See `transcript-images.spec.ts`.

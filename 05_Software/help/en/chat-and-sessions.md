@@ -112,6 +112,8 @@ Select an edit in **Changes** to open its recorded diff in a tab beside Chat.
 
 Use **Reopen last closed tab** beside Chat to recover a document or diff from the current session. Right-click a tab and choose **Pin tab** to keep it next to Chat and protect it from bulk closing. Choose **Search open tabs** to match a title or path, then click a result or use the arrow keys and Enter.
 
+From an open tab’s menu, choose **Show beside Chat** to read it on the right while the conversation stays on the left. Select another open tab to switch the right pane. Drag the divider or focus it and use the arrow keys to resize. **Exit split view** restores a single pane and keeps the tabs open. In a narrow window, use the tab strip to switch between them.
+
 ## Plan feedback and review
 
 Choose **Open plan** in Chat to see the current plan and its steps. A plan decision uses the question card in Chat. If you are away from the session, the notification or the entry in **Activity** opens that session and its **Plan** tab.

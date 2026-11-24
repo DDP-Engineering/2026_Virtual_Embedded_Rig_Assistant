@@ -17,6 +17,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
 import { ShortcutContext } from "../../lib/shortcuts.js";
+import { ChatBesideTab } from "../documents/document-split.js";
 import * as documentTabs from "../documents/viewer-context.js";
 import { Transcript } from "./transcript.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
@@ -106,21 +107,30 @@ async function navigator(
   const { viewport, content, anchors, reads } = geometry(starts, scrollHeight);
   const viewportRef = { current: viewport };
   const contentRef = { current: content };
-  const render = async (next: readonly NavigatorMessage[]) => {
+  const render = async (
+    next: readonly NavigatorMessage[],
+    split = false,
+    jump?: { id: string; seq: number },
+  ) => {
     await act(async () =>
       root?.render(
         createElement(
           ShortcutContext.Provider,
           { value: bindings },
-          createElement(TranscriptNavigator, {
-            viewport: viewportRef,
-            content: contentRef,
-            anchors,
-            messages: next,
-            controls: "transcript",
-            onNavigate,
-            bookmarked,
-          }),
+          createElement(
+            ChatBesideTab.Provider,
+            { value: split },
+            createElement(TranscriptNavigator, {
+              viewport: viewportRef,
+              content: contentRef,
+              anchors,
+              messages: next,
+              controls: "transcript",
+              onNavigate,
+              bookmarked,
+              jump,
+            }),
+          ),
         ),
       ),
     );
@@ -796,13 +806,15 @@ it("mounts an older bookmarked row before retrying the shared rail jump", async 
   expect(document.activeElement).toBe(markers()[0]);
 });
 
-it("yields bookmark commands while a document tab owns the conversation area", async () => {
+it("runs bookmark commands and panel jumps when Chat is visible beside a document", async () => {
   const user = userEvent.setup();
-  const tab = vi
-    .spyOn(documentTabs, "useDocumentTabs")
-    .mockReturnValue({ active: "file:manual" } as NonNullable<
-      ReturnType<typeof documentTabs.useDocumentTabs>
-    >);
+  type TabState = NonNullable<ReturnType<typeof documentTabs.useDocumentTabs>>;
+  const select = vi.fn<(key: string) => void>();
+  const stubTabs = (active: string) => {
+    const state: Pick<TabState, "active" | "select"> = { active, select };
+    return state as TabState;
+  };
+  const tab = vi.spyOn(documentTabs, "useDocumentTabs").mockReturnValue(stubTabs("file:manual"));
   const { onNavigate, render } = await navigator(
     [0, 1000, 3000],
     undefined,
@@ -812,10 +824,24 @@ it("yields bookmark commands while a document tab owns the conversation area", a
   );
   await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
   expect(onNavigate).not.toHaveBeenCalled();
+  await render(texts(3), true);
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenCalledWith("m1");
+  onNavigate.mockClear();
+  await render(texts(3), true, { id: "m1", seq: 1 });
+  expect(onNavigate).toHaveBeenCalledWith("m1");
+  expect(select).not.toHaveBeenCalled();
+  onNavigate.mockClear();
+  select.mockImplementation(() => {
+    tab.mockReturnValue(stubTabs("chat"));
+  });
+  await render(texts(3), false, { id: "m1", seq: 2 });
+  expect(select).toHaveBeenCalledWith("chat");
+  expect(onNavigate).toHaveBeenCalledWith("m1");
   tab.mockReturnValue(undefined);
   await render(texts(3));
   await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
-  expect(onNavigate).toHaveBeenCalledWith("m1");
+  expect(onNavigate).toHaveBeenLastCalledWith("m1");
 });
 
 it("starts shortcuts from the latest manual rail destination when jumps share the end clamp", async () => {

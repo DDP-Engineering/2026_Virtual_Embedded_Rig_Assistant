@@ -1048,7 +1048,7 @@ it("shows only the document in a tab and offers its file actions in the tab menu
   expect(
     menuActions(h.view)
       .map(([action]) => action)
-      .slice(6),
+      .slice(7),
   ).toEqual(["reveal-download"]);
   await closeMenu();
   await h.open("artifact");
@@ -1060,6 +1060,7 @@ it("shows only the document in a tab and offers its file actions in the tab menu
     "move-left",
     "move-right",
     "pin",
+    "show-beside-chat",
   ]);
 });
 

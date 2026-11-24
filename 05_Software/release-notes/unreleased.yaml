@@ -179,10 +179,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Reopen and pin tabs. Search tabs in a centered dialog. Export bookmarks and browse changes.
-      ro: Redeschide și fixează file. Caută într-un dialog centrat. Exportă marcaje și vezi modificările.
-      de: Tabs öffnen, anheften und mittig suchen. Lesezeichen exportieren, Änderungen durchblättern.
-      fr: Rouvrez et épinglez les onglets. Recherche centrée. Exportez les signets et parcourez les modifs.
+      en: View Chat beside an open tab. Resize the panes, reopen and pin tabs, and search open tabs.
+      ro: Vezi Chat lângă o filă. Redimensionează panourile, redeschide, fixează și caută file.
+      de: Chat neben einem Tab anzeigen. Bereiche skalieren, Tabs öffnen, anheften und suchen.
+      fr: Affichez le chat à côté d’un onglet. Redimensionnez, rouvrez, épinglez et recherchez les onglets.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

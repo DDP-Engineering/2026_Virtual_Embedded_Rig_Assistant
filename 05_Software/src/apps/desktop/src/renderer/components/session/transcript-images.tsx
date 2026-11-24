@@ -3,14 +3,15 @@ import type { Response } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { CHAT, useDocumentTabs, useDocumentViewer } from "../documents/viewer-context.js";
+import { useChatVisible } from "../documents/document-split.js";
+import { useDocumentTabs, useDocumentViewer } from "../documents/viewer-context.js";
 import "./transcript-images.css";
 
 type Preview = Response<"docs.imageThumbnail">;
 
 export function TranscriptImages({ workbenchId, paths }: { workbenchId: string; paths: string[] }) {
   const list = useRef<HTMLUListElement>(null);
-  const showingChat = (useDocumentTabs()?.active ?? CHAT) === CHAT;
+  const showingChat = useChatVisible(useDocumentTabs()?.active);
   const [visible, setVisible] = useState(false);
   const [refresh, setRefresh] = useState({ maskRevision: 0 });
   useEffect(() => {

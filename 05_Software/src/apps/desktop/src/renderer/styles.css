@@ -1551,6 +1551,30 @@ legend {
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
 }
+.document-tabs[data-split-view] {
+  grid-template-columns: var(--chat-pane-width) 8px minmax(0, 1fr);
+}
+.document-tabs[data-split-view] > :is(.document-tab-bar, .document-tab-notices) {
+  grid-column: 1 / -1;
+}
+.document-tabs[data-split-view] > [data-source-current] {
+  grid-column: 3;
+}
+.document-split-separator {
+  grid-row: 3;
+  grid-column: 2;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-inline-start: 1px solid var(--border);
+  cursor: col-resize;
+  touch-action: none;
+}
+.document-split-separator:is(:hover, :focus-visible) {
+  background: var(--primary);
+}
 .document-tab-notices {
   grid-row: 2;
   padding-inline: 1.5rem;

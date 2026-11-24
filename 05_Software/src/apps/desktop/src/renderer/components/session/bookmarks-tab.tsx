@@ -4,7 +4,6 @@ import { Bookmark, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSessionView } from "../../hooks/session-view.js";
-import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { Pager, usePaged } from "../pager.js";
 import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
@@ -45,7 +44,6 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
   const { view, error, retry } = useSessionView(sessionId);
   const bookmarks = useSessionBookmarks(sessionId, view?.state.bookmarkedMessageIds ?? NONE, locked);
   const { requestJump } = useBookmarkJump(sessionId);
-  const tabs = useDocumentTabs();
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
@@ -71,10 +69,7 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
     dialog.current?.showModal();
     dialog.current?.querySelector("button")?.focus();
   }, [confirming]);
-  const open = (id: string) => {
-    tabs?.select(CHAT);
-    requestJump?.(id);
-  };
+  const open = (id: string) => requestJump?.(id);
   const remove = (ids: readonly string[] | "all") => {
     bookmarks.remove(ids);
     setSelected((current) =>

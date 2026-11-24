@@ -87,8 +87,9 @@ progress travels through existing workbench events.
   while hidden (draft and scroll survive); only the selected document panel (`[data-source-current]`,
   keyed by tab and attempt) is mounted and reopens at its kept place: PdfViewer `page`/`onPage`,
   TextViewer `line`/`onLine`, other bodies their scroll offset (REQ-UX-1f53a583). Opening moves
-  focus into the panel unless the body focused its cited unit; Escape selects Chat and focuses the
-  opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
+  focus into the panel unless the body focused its cited unit; Escape focuses the opener when shown,
+  else the Chat tab. It selects Chat in single-pane mode and keeps the right document visible in split view.
+  In the panel Ctrl+F asks a PDF or text body for its
   find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
   bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
 - The document panel shows its applicable Rendered/Text/Hex toolbar ([file viewing modes](document-viewer-file-modes.md)) and the document (or its load error with Retry), without a path line or file-action buttons for ordinary documents; the path is the tab's tooltip (REQ-UX-968b89b0). Patch documents show a source heading and comparison context. A tab menu action's error or notice
@@ -111,6 +112,10 @@ progress travels through existing workbench events.
   state. Reopen selects its newest eligible member and loads it in a new attempt. Display policy changes
   conceal closed labels as well as open labels, and a Git index lease change removes stale targets.
   `TabSearch` matches visible labels and paths in the shown strip and returns focus to the chosen tab.
+- Show beside Chat reuses the selected document or Git diff in the right central pane. Chat stays
+  mounted and interactive on the left. The 640 px center threshold restores ordinary single-pane tab
+  navigation in a compact window. The divider supports pointer and keyboard input and keeps each
+  pane at least 280 px wide. Exit resets the presentation while tabs and the draft stay in place.
 - The Chat panel (`[data-chat-panel]`) shares the grid cell of the document panel; while a document
   is selected it is `inert` with `visibility: hidden` (never the `hidden` attribute, whose
   `display: none` resets the transcript's scroll in Chromium), so the transcript keeps its scroll. While it is hidden,

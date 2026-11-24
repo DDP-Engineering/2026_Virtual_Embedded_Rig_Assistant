@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-09da4b2f"
+title = "Open a tab beside Chat"
+status = "active"
+requirement = "When the user invokes Show beside Chat on a document or Git diff tab with room for both panes, VERA shall show Chat on the left and the actively selected tab on the right."
+verification = "Open a document and switch to a Git diff while Chat stays usable on the left. Exercise focus-sensitive tab shortcuts, bookmark jumps and image thumbnails in visible split Chat."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmark-navigation.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/document-split.tsx","05_Software/src/apps/desktop/src/renderer/styles.css","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/viewer-modes.spec.ts","05_Software/tests/e2e/git-diff-tabs.spec.ts"]
+created = 2026-11-24
+updated = 2026-11-24

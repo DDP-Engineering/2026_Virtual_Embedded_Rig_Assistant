@@ -726,6 +726,9 @@
     "renewalDue": "Le renouvellement du jeton est dû ; il se renouvelle automatiquement si nécessaire."
   },
   "documents": {
+    "showBesideChat": "Afficher à côté du chat",
+    "exitSplit": "Quitter la vue côte à côte",
+    "resizeSplit": "Redimensionner le chat et le document",
     "reopenTab": "Rouvrir le dernier onglet fermé",
     "searchTabs": "Rechercher dans les onglets ouverts",
     "filterTabs": "Filtrer par titre ou chemin",

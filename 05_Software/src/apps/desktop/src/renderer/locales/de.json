@@ -726,6 +726,9 @@
     "renewalDue": "Das Token muss erneuert werden; dies erfolgt bei Bedarf automatisch."
   },
   "documents": {
+    "showBesideChat": "Neben Chat anzeigen",
+    "exitSplit": "Geteilte Ansicht schließen",
+    "resizeSplit": "Chat- und Dokumentbereich skalieren",
     "reopenTab": "Zuletzt geschlossenen Tab wieder öffnen",
     "searchTabs": "Offene Tabs durchsuchen",
     "filterTabs": "Nach Titel oder Pfad filtern",

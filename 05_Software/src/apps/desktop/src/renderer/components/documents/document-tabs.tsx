@@ -3,8 +3,9 @@
 // REQ-UX-f261c988 REQ-UX-f5d6e9e4
 import { useQuery } from "@tanstack/react-query";
 import { veraError } from "@vera/shared";
-import { Pin, RotateCcw, Search, X } from "lucide-react";
+import { Columns2, Pin, RotateCcw, Search, X } from "lucide-react";
 import {
+  type CSSProperties,
   type DragEvent as ReactDragEvent,
   type ReactNode,
   Suspense,
@@ -16,6 +17,7 @@ import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { ChatBesideTab, DocumentSplitSeparator, useDocumentSplit } from "./document-split.js";
 import { useDescribeDocument, useFileActions } from "./file-actions.js";
 import { GitDiffView } from "./git-diff-view.js";
 import { GitHistoryView } from "./git-history-view.js";
@@ -48,6 +50,8 @@ const focusKey = (key: string) =>
 export function DocumentTabs({ chat }: { chat: ReactNode }) {
   const { t } = useTranslation();
   const state = useDocumentTabs();
+  const scope = state?.scope;
+  const root = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ scope: string; key: string; x: number; y: number }>();
   const [searchScope, setSearchScope] = useState<string>();
   const searchButton = useRef<HTMLButtonElement>(null);
@@ -68,6 +72,11 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   });
   const keys = [CHAT, ...(state?.tabs ?? []).map((tab) => tab.key)];
   const active = state?.active ?? CHAT;
+  const split = useDocumentSplit(root, scope, active !== CHAT);
+  const select = state?.select;
+  const selectVisible = (key: string) => {
+    if (key !== CHAT || !split.visible) select?.(key);
+  };
   const closeTab = (key: string) => {
     const index = keys.indexOf(key);
     const wasActive = key === active;
@@ -92,9 +101,8 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
     flushSync(() => shift(key, delta));
     focusKey(key);
   };
-  const keysRef = useRef({ keys, active, closeTab, shift });
-  keysRef.current = { keys, active, closeTab, shift };
-  const select = state?.select;
+  const keysRef = useRef({ keys, active, closeTab, shift, selectVisible, splitVisible: split.visible });
+  keysRef.current = { keys, active, closeTab, shift, selectVisible, splitVisible: split.visible };
   const { clear } = actions;
   // An action's message belongs to the moment it ran; another tab clears it.
   useEffect(() => {
@@ -107,7 +115,6 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   useEffect(() => {
     if (menuGone) setMenu(undefined);
   }, [menuGone]);
-  const scope = state?.scope;
   useEffect(() => {
     setSearchScope((requested) => (requested === scope ? requested : undefined));
     dragged.current = undefined;
@@ -119,23 +126,35 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
       // Open dialogs and menus (the tab's or a Files row's) keep their own keys.
       if (event.altKey || event.isComposing || document.querySelector("dialog[open], [data-tree-menu]"))
         return;
-      const { keys: all, active: current, closeTab: closing, shift: moving } = keysRef.current;
-      const index = Math.max(0, all.indexOf(current));
+      const {
+        keys: all,
+        active: current,
+        closeTab: closing,
+        shift: moving,
+        selectVisible: choose,
+        splitVisible,
+      } = keysRef.current;
+      const focus = document.activeElement;
+      const tabKey = focus?.closest<HTMLElement>("[data-tab-key]")?.dataset.tabKey;
+      const origin = splitVisible
+        ? (tabKey ?? (focus?.closest("[data-chat-panel]") ? CHAT : current))
+        : current;
+      const index = Math.max(0, all.indexOf(origin));
       const key = event.key;
       if (event.ctrlKey && (key === "Tab" || ((key === "PageDown" || key === "PageUp") && !event.shiftKey))) {
         event.preventDefault();
         const forward = key === "PageDown" || (key === "Tab" && !event.shiftKey);
         const next = (index + (forward ? 1 : -1) + all.length) % all.length;
-        flushSync(() => select(all[next] ?? CHAT));
+        flushSync(() => choose(all[next] ?? CHAT));
         focusTab(next);
       } else if (event.ctrlKey && event.shiftKey && (key === "PageDown" || key === "PageUp")) {
         event.preventDefault();
-        if (current === CHAT) return;
+        if (origin === CHAT) return;
         const focused = document.activeElement?.closest("[data-document-tabs]");
         flushSync(() => moving(current, key === "PageDown" ? 1 : -1));
         if (focused) focusKey(current);
       } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key.toLowerCase() === "w") {
-        if (current === CHAT) return;
+        if (origin === CHAT) return;
         event.preventDefault();
         closing(current);
       }
@@ -172,6 +191,7 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
     entries.findIndex((entry) => entry.key === active),
   );
   const shown = tabs.find((tab) => tab.key === active);
+  const splitLabel = split.requested ? t("documents.exitSplit") : t("documents.showBesideChat");
   const menuItems = (tab: DocumentTab): TreeMenuItem[] => {
     const index = keys.indexOf(tab.key);
     const group = pinGroup(tab.key);
@@ -213,6 +233,17 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
           focusKey(tab.key);
         },
       },
+      {
+        action: "show-beside-chat",
+        label: t("documents.showBesideChat"),
+        run: () => {
+          flushSync(() => {
+            state.select(tab.key);
+            split.open();
+          });
+          focusKey(tab.key);
+        },
+      },
       ...(path !== undefined && tab.content?.kind !== "artifact"
         ? actions.items({ path, displayPath: tab.content?.displayPath, type: "file", ignored }, () =>
             setProperties({ path, ignored }),
@@ -247,12 +278,18 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
     endDrag();
   };
   return (
-    <div className="document-tabs">
+    <div
+      ref={root}
+      className="document-tabs"
+      data-split-view={split.visible || undefined}
+      style={split.visible ? ({ "--chat-pane-width": `${split.leftWidth}px` } as CSSProperties) : undefined}
+    >
       <div className="document-tab-bar">
         <div
           className="document-tab-strip"
           role="tablist"
           aria-label={t("documents.tabs")}
+          aria-multiselectable={split.visible || undefined}
           data-document-tabs
         >
           {entries.map((entry, index) => {
@@ -263,7 +300,7 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
               <div
                 className="document-tab"
                 key={entry.key}
-                data-selected={index === selectedIndex}
+                data-selected={index === selectedIndex || (!document_ && split.visible)}
                 data-pinned={pinned || undefined}
                 data-drop={drop === entry.key || undefined}
                 draggable={document_ || undefined}
@@ -285,13 +322,13 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
                   role="tab"
                   id={tabId(index)}
                   data-tab-key={entry.key}
-                  aria-selected={index === selectedIndex}
+                  aria-selected={index === selectedIndex || (!document_ && split.visible)}
                   aria-description={pinned ? t("documents.pinnedTab") : undefined}
                   aria-controls={panelId(index)}
                   aria-haspopup={document_ ? "menu" : undefined}
                   tabIndex={index === selectedIndex ? 0 : -1}
                   title={entry.title}
-                  onClick={() => state.select(entry.key)}
+                  onClick={() => selectVisible(entry.key)}
                   onContextMenu={(event) => {
                     if (!document_) return;
                     event.preventDefault();
@@ -332,7 +369,7 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
                     const target = next === undefined ? undefined : entries[next];
                     if (next === undefined || !target) return;
                     event.preventDefault();
-                    flushSync(() => state.select(target.key));
+                    flushSync(() => selectVisible(target.key));
                     focusTab(next);
                   }}
                 >
@@ -374,9 +411,7 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
             disabled={!state.canReopen}
             onClick={() => {
               flushSync(state.reopen);
-              document
-                .querySelector<HTMLElement>('[data-document-tabs] [role="tab"][aria-selected="true"]')
-                ?.focus();
+              document.querySelector<HTMLElement>('[data-document-tabs] [role="tab"][tabindex="0"]')?.focus();
             }}
           >
             <RotateCcw aria-hidden="true" />
@@ -392,6 +427,17 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
             onClick={() => setSearchScope(state.scope)}
           >
             <Search aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            data-action="split-view"
+            aria-label={splitLabel}
+            title={splitLabel}
+            aria-pressed={split.requested}
+            disabled={!shown && !split.requested}
+            onClick={split.requested ? split.close : split.open}
+          >
+            <Columns2 aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -422,10 +468,18 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
         id={panelId(0)}
         aria-labelledby={tabId(0)}
         // Inert, not hidden: the conversation keeps its layout and so its scroll position.
-        inert={active !== CHAT}
+        inert={active !== CHAT && !split.visible}
       >
-        {chat}
+        <ChatBesideTab.Provider value={split.visible}>{chat}</ChatBesideTab.Provider>
       </div>
+      {split.visible && (
+        <DocumentSplitSeparator
+          chatId={panelId(0)}
+          width={split.leftWidth}
+          max={split.max}
+          resize={split.resize}
+        />
+      )}
       {shown && (
         <DocumentPanel
           // A new open of the tab remounts its document at the requested place.
@@ -434,7 +488,7 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
           index={selectedIndex}
           leave={() => {
             const opener = state.opener(shown.key);
-            flushSync(() => state.select(CHAT));
+            flushSync(() => selectVisible(CHAT));
             // The opener gets focus back when it is still shown; otherwise the Chat tab does.
             if (opener?.isConnected && !opener.closest("[hidden], [inert]")) opener.focus();
             else focusTab(0);

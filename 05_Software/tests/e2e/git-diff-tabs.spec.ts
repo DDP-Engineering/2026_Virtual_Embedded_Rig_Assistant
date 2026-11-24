@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, type Page, test } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
@@ -76,7 +76,10 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
         process.platform === "win32" ? "electron.exe" : "electron",
       ),
       chromiumSandbox: true,
-      args: [desktop, `--user-data-dir=${join(root, "data")}`],
+      args: [
+        env.VERA_BUILD_ROOT ? resolve(env.VERA_BUILD_ROOT, "main/index.js") : desktop,
+        `--user-data-dir=${join(root, "data")}`,
+      ],
       env,
     });
     await installNetworkGuard(app);
@@ -175,6 +178,25 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
     await expect(selected).toHaveText(`Staged: ${name}`);
     await expect(center).toContainText("index vs HEAD");
     await expect(center.locator("pre")).toContainText("-base version\n+staged version");
+    const beforeSplit = await app.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      if (!win) throw new Error("Missing Electron window");
+      const previous = win.getSize();
+      win.setSize(1560, 900);
+      return previous;
+    });
+    await page.getByRole("button", { name: "Show beside Chat", exact: true }).click();
+    await expect(page.getByRole("separator", { name: "Resize Chat and document panes" })).toBeVisible();
+    await expect(composer).toBeVisible();
+    await expect(composer).toHaveValue(draft);
+    await expect(center.locator("pre")).toContainText("-base version\n+staged version");
+    await page.getByRole("tab", { name: `Unstaged: ${name}`, exact: true }).click();
+    await expect(center.locator("pre")).toContainText("-staged version\n+working version");
+    await page.getByRole("tab", { name: `Staged: ${name}`, exact: true }).click();
+    await page.getByRole("button", { name: "Exit split view", exact: true }).click();
+    await app.evaluate(({ BrowserWindow }, [width, height]) => {
+      if (width && height) BrowserWindow.getAllWindows()[0]?.setSize(width, height);
+    }, beforeSplit);
     await expect(docs.locator(".patch-document")).toHaveCount(0);
     await expect(strip.getByRole("tab")).toHaveText([
       "Chat",

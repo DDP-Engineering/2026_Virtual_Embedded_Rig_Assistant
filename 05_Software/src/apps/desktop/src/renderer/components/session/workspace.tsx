@@ -12,6 +12,7 @@ import { api } from "../../api/index.js";
 import { useSessionView } from "../../hooks/session-view.js";
 import { useTurnCapacity } from "../../hooks/use-turn-capacity.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
+import { useChatVisible } from "../documents/document-split.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { BrowserControls } from "./browser-controls.js";
@@ -119,7 +120,7 @@ export function SessionWorkspace({
   // Behind a document tab (TASK-79f6ffd3) the conversation is hidden: a composer focus request
   // (Attach as context) shows the Chat tab first; window shortcuts wait until it is shown.
   const tabs = useDocumentTabs();
-  const shown = !tabs || tabs.active === CHAT;
+  const shown = useChatVisible(tabs?.active);
   const selectTab = tabs?.select;
   const pendingTranscriptFocus = useRef<
     { sessionId: string; workbenchId: string; questionId: string | undefined; checking: boolean } | undefined
@@ -132,9 +133,9 @@ export function SessionWorkspace({
       questionId: questionFocusId,
       checking: false,
     };
-    selectTab?.(CHAT);
+    if (!shown) selectTab?.(CHAT);
     transcriptOpened?.(id);
-  }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened]);
+  }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened, shown]);
   useEffect(() => {
     void focusTranscript; // A new request can arrive in an already loaded conversation.
     const target = pendingTranscriptFocus.current;

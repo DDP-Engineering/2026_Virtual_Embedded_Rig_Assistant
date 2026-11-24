@@ -726,6 +726,9 @@
     "renewalDue": "Token renewal is due; it renews automatically when needed."
   },
   "documents": {
+    "showBesideChat": "Show beside Chat",
+    "exitSplit": "Exit split view",
+    "resizeSplit": "Resize Chat and document panes",
     "reopenTab": "Reopen last closed tab",
     "searchTabs": "Search open tabs",
     "filterTabs": "Filter by title or path",

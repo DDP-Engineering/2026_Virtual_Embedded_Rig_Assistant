@@ -112,6 +112,8 @@ Wählen Sie unter **Änderungen** eine Bearbeitung, um ihren Diff neben Chat zu 
 
 Mit **Zuletzt geschlossenen Tab wieder öffnen** neben Chat stellst du ein Dokument oder einen Vergleich der aktuellen Sitzung wieder her. Wähle im Kontextmenü **Tab anheften**, um ihn neben Chat zu halten und beim Schließen mehrerer Tabs zu behalten. Wähle **Offene Tabs durchsuchen**, um nach Titel oder Pfad zu filtern. Wähle einen Treffer per Klick oder mit Pfeiltasten und Eingabetaste.
 
+Wähle im Menü eines offenen Tabs **Neben Chat anzeigen**. Der Chat bleibt links sichtbar, der Tab erscheint rechts. Wähle einen anderen Tab, um rechts zu wechseln. Ziehe die Trennlinie oder nutze darauf die Pfeiltasten. **Geteilte Ansicht schließen** wechselt zur Einzelansicht und lässt die Tabs offen. In einem schmalen Fenster wechselst du über die Tableiste.
+
 ## Plan kommentieren und prüfen
 
 Wähle **Plan öffnen** im Chat, um die Schritte des aktuellen Plans zu sehen. Antworte auf eine Planentscheidung in der Fragekarte. Wenn du in einer anderen Sitzung bist, öffnet die Benachrichtigung oder der Eintrag in **Aktivität** die Sitzung und den Tab **Plan**.

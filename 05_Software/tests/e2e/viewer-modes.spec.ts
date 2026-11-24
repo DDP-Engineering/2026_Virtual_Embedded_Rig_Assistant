@@ -27,6 +27,86 @@ async function markdownModes(page: Page) {
   await expect(panel(page).locator('[data-hex-byte="0"]')).toBeVisible();
 }
 
+test("Chat and the chosen tab split, resize and fall back to the same tab strip", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.setViewportSize({ width: 1440, height: 820 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator("[data-workbench-entry] .workbench-group-name").click();
+  await page.locator("[data-session]").first().click();
+  const chat = page.locator("[data-chat-panel]");
+  const composer = chat.getByRole("textbox", { name: "Message", exact: true });
+  await composer.fill("Keep this draft while reviewing tabs.");
+  await page.locator('[data-toggle="right"]').click();
+  await page.locator("#tab-docs").click();
+  const docs = page.locator('[data-tree-path="docs"]');
+  if ((await docs.getAttribute("aria-expanded")) === "false") await docs.click();
+  await page.locator('[data-tree-path="docs/a.md"]').click();
+  await page.locator('[data-tree-path="board.txt"]').click();
+  await page.locator('[data-toggle="right"]').click();
+  const strip = page.locator("[data-document-tabs]");
+  const chatTab = page.locator('[role="tab"][data-tab-key="chat"]');
+  const markdown = page.locator('[role="tab"][data-tab-key="file:docs/a.md"]');
+  const board = page.locator('[role="tab"][data-tab-key="file:board.txt"]');
+  await markdown.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Show beside Chat", exact: true }).click();
+  const divider = page.getByRole("separator", { name: "Resize Chat and document panes" });
+  await expect(divider).toBeVisible();
+  await expect(markdown).toHaveAttribute("aria-selected", "true");
+  await expect(chatTab).toHaveAttribute("aria-selected", "true");
+  await expect(composer).toHaveValue("Keep this draft while reviewing tabs.");
+  await expect(composer).toBeEditable();
+  await expect(panel(page).locator("[data-heading]").first()).toBeVisible();
+  const handle = await divider.boundingBox();
+  if (!handle) throw Error("Missing splitter bounds");
+  const chatWidth = () => chat.evaluate((node) => node.getBoundingClientRect().width);
+  const original = await chatWidth();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + 50);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 64, handle.y + 50, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(chatWidth).toBeGreaterThan(original + 40);
+  const expanded = await chatWidth();
+  await divider.press("ArrowLeft");
+  await expect.poll(chatWidth).toBeLessThan(expanded);
+  await divider.press("Home");
+  await expect.poll(chatWidth).toBe(280);
+  await board.click();
+  await expect(panel(page)).toContainText("Board uses 3.3 V.");
+  expect((await panel(page).boundingBox())?.x).toBeGreaterThan((await chat.boundingBox())?.x ?? 0);
+  await panel(page).focus();
+  await page.keyboard.press("Escape");
+  await expect(chatTab).toBeFocused();
+  await expect(panel(page)).toBeVisible();
+  await composer.press("Control+Shift+PageUp");
+  await expect(strip.getByRole("tab")).toHaveText(["Chat", "a.md", "board.txt"]);
+  await composer.press("Control+w");
+  await expect(board).toBeVisible();
+  await board.press("Control+w");
+  await expect(board).toHaveCount(0);
+  await page.getByRole("button", { name: "Reopen last closed tab" }).click();
+  await expect(board).toBeFocused();
+  await chatTab.click();
+  await expect(panel(page)).toBeVisible();
+  await page.setViewportSize({ width: 750, height: 660 });
+  await expect(divider).toHaveCount(0);
+  await expect(chat).toHaveAttribute("inert", "");
+  await chatTab.click();
+  await expect(composer).toBeVisible();
+  await expect(panel(page)).toHaveCount(0);
+  await markdown.click();
+  await expect(panel(page)).toBeVisible();
+  await expect(chat).toHaveAttribute("inert", "");
+  await page.setViewportSize({ width: 1440, height: 820 });
+  await expect(divider).toBeVisible();
+  await page.getByRole("button", { name: "Exit split view", exact: true }).click();
+  await expect(divider).toHaveCount(0);
+  await expect(markdown).toHaveAttribute("aria-selected", "true");
+  await expect(strip.getByRole("tab")).toHaveCount(3);
+  await chatTab.click();
+  await expect(composer).toHaveValue("Keep this draft while reviewing tabs.");
+});
+
 test("tab search opens in the viewport center and keeps its controls visible", {
   tag: "@parallel-browser",
 }, async ({ page, rendererUrl }) => {

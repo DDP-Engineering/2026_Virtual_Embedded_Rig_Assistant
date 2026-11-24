@@ -726,6 +726,9 @@
     "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
   },
   "documents": {
+    "showBesideChat": "Afișează lângă Chat",
+    "exitSplit": "Închide vederea alăturată",
+    "resizeSplit": "Redimensionează panourile Chat și document",
     "reopenTab": "Redeschide ultima filă închisă",
     "searchTabs": "Caută în filele deschise",
     "filterTabs": "Filtrează după titlu sau cale",

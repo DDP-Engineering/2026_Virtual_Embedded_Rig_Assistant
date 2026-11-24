@@ -1,5 +1,6 @@
 import { type RefObject, useContext, useEffect, useRef, useState } from "react";
 import { ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
+import { useChatVisible } from "../documents/document-split.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { currentIndex } from "./transcript-navigation.js";
 import type { NavigatorMessage } from "./transcript-navigator.js";
@@ -23,7 +24,7 @@ export function useBookmarkNavigation({
 }) {
   const bindings = useContext(ShortcutContext);
   const tabs = useDocumentTabs();
-  const shown = !tabs || tabs.active === CHAT;
+  const shown = useChatVisible(tabs?.active);
   const [target, setTarget] = useState<{ id: string; quiet: boolean } | null>(null);
   const pending = target?.id ?? null;
   const setPending = (id: string | null, quiet = false) => setTarget(id === null ? null : { id, quiet });
@@ -75,6 +76,11 @@ export function useBookmarkNavigation({
   });
   /** Jump to a bookmarked message, mounting older history first when needed. */
   const go = (id: string, quiet: boolean) => {
+    if (!shown) {
+      tabs?.select(CHAT);
+      setPending(id, quiet);
+      return;
+    }
     if (arrive(id, quiet)) setPending(null);
     else setPending(id, quiet);
   };
