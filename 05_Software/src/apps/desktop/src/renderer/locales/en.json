@@ -726,6 +726,13 @@
     "renewalDue": "Token renewal is due; it renews automatically when needed."
   },
   "documents": {
+    "reopenTab": "Reopen last closed tab",
+    "searchTabs": "Search open tabs",
+    "filterTabs": "Filter by title or path",
+    "noMatchingTabs": "No matching tabs.",
+    "pinTab": "Pin tab",
+    "unpinTab": "Unpin tab",
+    "pinnedTab": "Pinned tab",
     "imageZoom": "Image zoom",
     "imageFit": "Fit",
     "imagePreview": "Image preview",

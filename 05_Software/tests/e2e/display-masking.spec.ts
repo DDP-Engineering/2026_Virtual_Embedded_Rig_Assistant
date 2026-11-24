@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node
 import { join, resolve } from "node:path";
 import { _electron, expect, type Page, test } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
+import { tabStorageKey } from "../../src/apps/desktop/src/renderer/lib/document-tabs-store.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
@@ -54,7 +55,10 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
         "node_modules/electron/dist",
         process.platform === "win32" ? "electron.exe" : "electron",
       ),
-      args: [resolve("src/apps/desktop"), `--user-data-dir=${profile}`],
+      args: [
+        resolve(process.env.VERA_BUILD_ROOT ?? "src/apps/desktop/out", "main/index.js"),
+        `--user-data-dir=${profile}`,
+      ],
       env,
       chromiumSandbox: true,
     });
@@ -239,20 +243,11 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     await expect(page.locator("[data-source-current]")).toContainText(
       `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
     );
+    const tabKey = tabStorageKey({ folder: bench.folder, workbenchId, sessionId: session.id });
     await expect
-      .poll(() =>
-        page.evaluate(
-          ({ workbenchId, sessionId }) =>
-            JSON.parse(localStorage.getItem(`vera.tabs.${workbenchId}.${sessionId}`) ?? "null")?.active,
-          { workbenchId, sessionId: session.id },
-        ),
-      )
+      .poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null")?.active, tabKey))
       .toBe(`file:${second.path}`);
-    const before = await page.evaluate(
-      ({ workbenchId, sessionId }) =>
-        JSON.parse(localStorage.getItem(`vera.tabs.${workbenchId}.${sessionId}`) ?? "null"),
-      { workbenchId, sessionId: session.id },
-    );
+    const before = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), tabKey);
     expect(JSON.stringify(before)).not.toContain("mask02-mqtt");
     receipts.push({ off: findOff, on: findOn, persisted: before, outbound: await outboundAttempts(app) });
     expect(await outboundAttempts(app)).toEqual([]);

@@ -3,7 +3,7 @@
 // REQ-UX-f261c988 REQ-UX-f5d6e9e4
 import { useQuery } from "@tanstack/react-query";
 import { veraError } from "@vera/shared";
-import { X } from "lucide-react";
+import { Pin, RotateCcw, Search, X } from "lucide-react";
 import {
   type DragEvent as ReactDragEvent,
   type ReactNode,
@@ -21,6 +21,7 @@ import { GitDiffView } from "./git-diff-view.js";
 import { GitHistoryView } from "./git-history-view.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
 import { SessionChangeDiff } from "./session-change-diff.js";
+import { TabSearch } from "./tab-search.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { CHAT, DocumentBody, type DocumentTab, useDocumentTabs } from "./viewer-context.js";
@@ -47,7 +48,9 @@ const focusKey = (key: string) =>
 export function DocumentTabs({ chat }: { chat: ReactNode }) {
   const { t } = useTranslation();
   const state = useDocumentTabs();
-  const [menu, setMenu] = useState<{ key: string; x: number; y: number }>();
+  const [menu, setMenu] = useState<{ scope: string; key: string; x: number; y: number }>();
+  const [searchScope, setSearchScope] = useState<string>();
+  const searchButton = useRef<HTMLButtonElement>(null);
   const [properties, setProperties] = useState<{ path: string; ignored: boolean }>();
   const [drop, setDrop] = useState<string | null>();
   const dragged = useRef<string | undefined>(undefined);
@@ -72,12 +75,17 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
     // Closing the selected tab moves focus to the tab that replaced it.
     if (wasActive) focusTab(Math.min(index, keys.length - 2));
   };
-  /** Moves a document tab one place among the document tabs; Chat stays first. */
+  const pinGroup = (key: string) => {
+    const pinned = state?.tabs.find((tab) => tab.key === key)?.pinned;
+    return state?.tabs.filter((tab) => tab.pinned === pinned).map((tab) => tab.key) ?? [];
+  };
+  /** Moves a document tab one place within its pin group. */
   const shift = (key: string, delta: -1 | 1) => {
-    const index = keys.indexOf(key);
-    if (index < 1) return;
-    if (delta < 0 && index > 1) state?.move(key, keys[index - 1] ?? null);
-    if (delta > 0 && index < keys.length - 1) state?.move(key, keys[index + 2] ?? null);
+    const group = pinGroup(key);
+    const index = group.indexOf(key);
+    if (index < 0) return;
+    if (delta < 0 && index > 0) state?.move(key, group[index - 1] ?? null);
+    if (delta > 0 && index < group.length - 1) state?.move(key, group[index + 2] ?? null);
   };
   /** A moved tab is re-inserted by React; it gets its focus back once the move has rendered. */
   const moveFocused = (key: string, delta: -1 | 1) => {
@@ -94,10 +102,17 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
     clear();
   }, [active, clear]);
   // A menu whose tab closed some other way (Ctrl+W elsewhere, a session switch) goes away.
-  const menuGone = !!menu && !state?.tabs.some((tab) => tab.key === menu.key);
+  const menuGone =
+    !!menu && (menu.scope !== state?.scope || !state?.tabs.some((tab) => tab.key === menu.key));
   useEffect(() => {
     if (menuGone) setMenu(undefined);
   }, [menuGone]);
+  const scope = state?.scope;
+  useEffect(() => {
+    setSearchScope((requested) => (requested === scope ? requested : undefined));
+    dragged.current = undefined;
+    setDrop(undefined);
+  }, [scope]);
   useEffect(() => {
     if (!select) return;
     const listener = (event: KeyboardEvent) => {
@@ -159,6 +174,9 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   const shown = tabs.find((tab) => tab.key === active);
   const menuItems = (tab: DocumentTab): TreeMenuItem[] => {
     const index = keys.indexOf(tab.key);
+    const group = pinGroup(tab.key);
+    const others = tabs.filter((entry) => entry.key !== tab.key && !entry.pinned).map((entry) => entry.key);
+    const right = keys.slice(index + 1).filter((key) => others.includes(key));
     const path = filePath(tab.key);
     const ignored = "textPath" in tab.target && !!tab.target.ignored;
     return [
@@ -166,30 +184,34 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
       {
         action: "close-others",
         label: t("documents.closeOthers"),
-        disabled: tabs.length < 2,
-        run: () =>
-          state.closeMany(
-            keys.slice(1).filter((key) => key !== tab.key),
-            tab.key,
-          ),
+        disabled: others.length === 0,
+        run: () => state.closeMany(others, tab.key),
       },
       {
         action: "close-right",
         label: t("documents.closeRight"),
-        disabled: index === keys.length - 1,
-        run: () => state.closeMany(keys.slice(index + 1), tab.key),
+        disabled: right.length === 0,
+        run: () => state.closeMany(right, tab.key),
       },
       {
         action: "move-left",
         label: t("documents.moveLeft"),
-        disabled: index <= 1,
+        disabled: group[0] === tab.key,
         run: () => moveFocused(tab.key, -1),
       },
       {
         action: "move-right",
         label: t("documents.moveRight"),
-        disabled: index === keys.length - 1,
+        disabled: group.at(-1) === tab.key,
         run: () => moveFocused(tab.key, 1),
+      },
+      {
+        action: tab.pinned ? "unpin" : "pin",
+        label: tab.pinned ? t("documents.unpinTab") : t("documents.pinTab"),
+        run: () => {
+          flushSync(() => state.togglePin(tab.key));
+          focusKey(tab.key);
+        },
       },
       ...(path !== undefined && tab.content?.kind !== "artifact"
         ? actions.items({ path, displayPath: tab.content?.displayPath, type: "file", ignored }, () =>
@@ -202,16 +224,17 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   };
   const openMenu = (key: string, x: number, y: number) => {
     if (key === CHAT) return;
-    setMenu({ key, x, y });
+    setMenu({ scope: state.scope, key, x, y });
   };
-  const menuTab = menu && tabs.find((tab) => tab.key === menu.key);
+  const menuTab = menu && !menuGone && tabs.find((tab) => tab.key === menu.key);
   const endDrag = () => {
     dragged.current = undefined;
     setDrop(undefined);
   };
   /** Accepts a drop only while a document tab of this strip is dragged. */
   const over = (target: string | null) => (event: ReactDragEvent) => {
-    if (dragged.current === undefined) return;
+    if (dragged.current === undefined || (target !== null && !pinGroup(dragged.current).includes(target)))
+      return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
     setDrop(target);
@@ -225,112 +248,169 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   };
   return (
     <div className="document-tabs">
-      <div className="document-tab-strip" role="tablist" aria-label={t("documents.tabs")} data-document-tabs>
-        {entries.map((entry, index) => {
-          const document_ = entry.key !== CHAT;
-          return (
-            // biome-ignore lint/a11y/noStaticElementInteractions: drag and drop only; the keyboard moves tabs with Ctrl+Shift+PageUp/PageDown and the tab menu.
-            <div
-              className="document-tab"
-              key={entry.key}
-              data-selected={index === selectedIndex}
-              data-drop={drop === entry.key || undefined}
-              draggable={document_ || undefined}
-              onDragStart={
-                document_
-                  ? (event) => {
-                      dragged.current = entry.key;
-                      event.dataTransfer?.setData("application/x-vera-tab", entry.key);
-                      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-                    }
-                  : undefined
-              }
-              onDragOver={document_ ? over(entry.key) : undefined}
-              onDrop={document_ ? dropOn(entry.key) : undefined}
-              onDragEnd={endDrag}
-            >
-              <button
-                type="button"
-                role="tab"
-                id={tabId(index)}
-                data-tab-key={entry.key}
-                aria-selected={index === selectedIndex}
-                aria-controls={panelId(index)}
-                aria-haspopup={document_ ? "menu" : undefined}
-                tabIndex={index === selectedIndex ? 0 : -1}
-                title={entry.title}
-                onClick={() => state.select(entry.key)}
-                onContextMenu={(event) => {
-                  if (!document_) return;
-                  event.preventDefault();
-                  openMenu(entry.key, event.clientX, event.clientY);
-                }}
-                onMouseDown={(event) => {
-                  // Middle-button press would start autoscroll; the release closes the tab instead.
-                  if (event.button === 1 && document_) event.preventDefault();
-                }}
-                onAuxClick={(event) => {
-                  if (event.button === 1 && document_) closeTab(entry.key);
-                }}
-                onKeyDown={(event) => {
-                  if ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") {
-                    if (!document_) return;
-                    event.preventDefault();
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    openMenu(entry.key, rect.left, rect.bottom);
-                    return;
-                  }
-                  if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing) return;
-                  if (event.key === "Delete" && document_) {
-                    event.preventDefault();
-                    closeTab(entry.key);
-                    return;
-                  }
-                  const next =
-                    event.key === "Home"
-                      ? 0
-                      : event.key === "End"
-                        ? entries.length - 1
-                        : event.key === "ArrowRight"
-                          ? (index + 1) % entries.length
-                          : event.key === "ArrowLeft"
-                            ? (index + entries.length - 1) % entries.length
-                            : undefined;
-                  const target = next === undefined ? undefined : entries[next];
-                  if (next === undefined || !target) return;
-                  event.preventDefault();
-                  flushSync(() => state.select(target.key));
-                  focusTab(next);
-                }}
+      <div className="document-tab-bar">
+        <div
+          className="document-tab-strip"
+          role="tablist"
+          aria-label={t("documents.tabs")}
+          data-document-tabs
+        >
+          {entries.map((entry, index) => {
+            const document_ = entry.key !== CHAT;
+            const pinned = "pinned" in entry && entry.pinned === true;
+            return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: drag and drop only; the keyboard moves tabs with Ctrl+Shift+PageUp/PageDown and the tab menu.
+              <div
+                className="document-tab"
+                key={entry.key}
+                data-selected={index === selectedIndex}
+                data-pinned={pinned || undefined}
+                data-drop={drop === entry.key || undefined}
+                draggable={document_ || undefined}
+                onDragStart={
+                  document_
+                    ? (event) => {
+                        dragged.current = entry.key;
+                        event.dataTransfer?.setData("application/x-vera-tab", entry.key);
+                        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+                      }
+                    : undefined
+                }
+                onDragOver={document_ ? over(entry.key) : undefined}
+                onDrop={document_ ? dropOn(entry.key) : undefined}
+                onDragEnd={endDrag}
               >
-                {entry.label}
-              </button>
-              {document_ && (
                 <button
                   type="button"
-                  className="document-tab-close"
-                  data-action="close-tab"
-                  data-tab-label={entry.label}
-                  aria-label={t("documents.closeTab", { name: entry.label })}
-                  title={t("documents.closeTab", { name: entry.label })}
-                  tabIndex={-1}
-                  onClick={() => closeTab(entry.key)}
+                  role="tab"
+                  id={tabId(index)}
+                  data-tab-key={entry.key}
+                  aria-selected={index === selectedIndex}
+                  aria-description={pinned ? t("documents.pinnedTab") : undefined}
+                  aria-controls={panelId(index)}
+                  aria-haspopup={document_ ? "menu" : undefined}
+                  tabIndex={index === selectedIndex ? 0 : -1}
+                  title={entry.title}
+                  onClick={() => state.select(entry.key)}
+                  onContextMenu={(event) => {
+                    if (!document_) return;
+                    event.preventDefault();
+                    openMenu(entry.key, event.clientX, event.clientY);
+                  }}
+                  onMouseDown={(event) => {
+                    // Middle-button press would start autoscroll; the release closes the tab instead.
+                    if (event.button === 1 && document_) event.preventDefault();
+                  }}
+                  onAuxClick={(event) => {
+                    if (event.button === 1 && document_) closeTab(entry.key);
+                  }}
+                  onKeyDown={(event) => {
+                    if ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") {
+                      if (!document_) return;
+                      event.preventDefault();
+                      const rect = event.currentTarget.getBoundingClientRect();
+                      openMenu(entry.key, rect.left, rect.bottom);
+                      return;
+                    }
+                    if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
+                      return;
+                    if (event.key === "Delete" && document_) {
+                      event.preventDefault();
+                      closeTab(entry.key);
+                      return;
+                    }
+                    const next =
+                      event.key === "Home"
+                        ? 0
+                        : event.key === "End"
+                          ? entries.length - 1
+                          : event.key === "ArrowRight"
+                            ? (index + 1) % entries.length
+                            : event.key === "ArrowLeft"
+                              ? (index + entries.length - 1) % entries.length
+                              : undefined;
+                    const target = next === undefined ? undefined : entries[next];
+                    if (next === undefined || !target) return;
+                    event.preventDefault();
+                    flushSync(() => state.select(target.key));
+                    focusTab(next);
+                  }}
                 >
-                  <X aria-hidden="true" />
+                  {pinned && <Pin className="document-tab-pin" aria-hidden="true" />}
+                  {entry.label}
                 </button>
-              )}
-            </div>
-          );
-        })}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: a drop target at the strip's end; the keyboard uses Ctrl+Shift+PageDown. */}
-        <div
-          className="document-tab-strip-end"
-          data-tab-strip-end
-          data-drop={drop === null || undefined}
-          onDragOver={over(null)}
-          onDrop={dropOn(null)}
-        />
+                {document_ && (
+                  <button
+                    type="button"
+                    className="document-tab-close"
+                    data-action="close-tab"
+                    data-tab-label={entry.label}
+                    aria-label={t("documents.closeTab", { name: entry.label })}
+                    title={t("documents.closeTab", { name: entry.label })}
+                    tabIndex={-1}
+                    onClick={() => closeTab(entry.key)}
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: a drop target at the strip's end; the keyboard uses Ctrl+Shift+PageDown. */}
+          <div
+            className="document-tab-strip-end"
+            data-tab-strip-end
+            data-drop={drop === null || undefined}
+            onDragOver={over(null)}
+            onDrop={dropOn(null)}
+          />
+        </div>
+        <div className="document-tab-actions">
+          <button
+            type="button"
+            data-action="reopen-tab"
+            aria-label={t("documents.reopenTab")}
+            title={t("documents.reopenTab")}
+            disabled={!state.canReopen}
+            onClick={() => {
+              flushSync(state.reopen);
+              document
+                .querySelector<HTMLElement>('[data-document-tabs] [role="tab"][aria-selected="true"]')
+                ?.focus();
+            }}
+          >
+            <RotateCcw aria-hidden="true" />
+          </button>
+          <button
+            ref={searchButton}
+            type="button"
+            data-action="search-tabs"
+            aria-label={t("documents.searchTabs")}
+            title={t("documents.searchTabs")}
+            aria-haspopup="dialog"
+            disabled={tabs.length === 0}
+            onClick={() => setSearchScope(state.scope)}
+          >
+            <Search aria-hidden="true" />
+          </button>
+        </div>
       </div>
+      {searchScope === state.scope && (
+        <TabSearch
+          tabs={entries.slice(1)}
+          select={(key) => {
+            flushSync(() => {
+              setSearchScope(undefined);
+              state.select(key);
+            });
+            focusKey(key);
+          }}
+          dismiss={() => {
+            flushSync(() => setSearchScope(undefined));
+            searchButton.current?.focus();
+          }}
+        />
+      )}
       <div className="document-tab-notices" data-tab-notices>
         {actions.error !== undefined && <ErrorMessage error={actions.error} />}
         {actions.notice && <p role="status">{actions.notice}</p>}

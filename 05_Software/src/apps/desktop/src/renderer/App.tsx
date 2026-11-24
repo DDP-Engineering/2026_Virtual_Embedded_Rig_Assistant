@@ -745,7 +745,8 @@ export function App() {
             remove={(id) =>
               operation(async () => {
                 await api.invoke("session.delete", { sessionId: id });
-                if (benchId) removeTabs(localStorage, benchId, id);
+                if (benchId && benchFolder)
+                  removeTabs(localStorage, { folder: benchFolder, workbenchId: benchId, sessionId: id });
                 if (id === activeSession) {
                   setActiveSession(undefined);
                   try {
@@ -773,9 +774,10 @@ export function App() {
       <HelpContext.Provider value={showHelp}>
         <AttachmentsContext.Provider value={attachments}>
           <DocumentViewerProvider
-            scope={`${benchId}/${activeSession ?? ""}`}
+            scope={JSON.stringify([benchFolder, benchId, activeSession])}
             sessionId={activeSession}
             workbenchId={benchId ?? ""}
+            workbenchFolder={benchFolder}
             gitLease={bench.data?.config.interface.git_status ? indexLease : undefined}
             reveal={revealChat}
           >

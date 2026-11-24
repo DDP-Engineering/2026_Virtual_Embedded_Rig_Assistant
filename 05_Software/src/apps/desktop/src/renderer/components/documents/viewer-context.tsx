@@ -24,7 +24,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
+import { readTabs, type StoredTabs, type TabStorageOwner, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
 import { type FileMode, type FileModeInfo, readFileMode, rememberFileMode } from "./file-mode.js";
 import type { HexFile } from "./hex-source.js";
@@ -68,6 +68,7 @@ export interface DocumentTab {
   target: ViewerTarget;
   label: string;
   title: string;
+  pinned?: true | undefined;
   content?: ViewerContent | undefined;
   changeDetail?: ChangeDetail | undefined;
   gitDiff?: GitDiffResponse | undefined;
@@ -87,11 +88,38 @@ export interface DocumentTab {
 }
 /** The Chat tab's key in a session's tab set. */
 export const CHAT = "chat";
+type ClosedTab = Pick<
+  DocumentTab,
+  "key" | "target" | "label" | "title" | "pinned" | "modeChoice" | "imageFormat"
+>;
 interface TabSet {
   tabs: DocumentTab[];
   active: string;
+  closed: ClosedTab[];
 }
-const EMPTY: TabSet = { tabs: [], active: CHAT };
+const EMPTY: TabSet = { tabs: [], active: CHAT, closed: [] };
+const MAX_CLOSED_TABS = 200;
+
+function atPinBoundary(tabs: DocumentTab[], tab: DocumentTab): DocumentTab[] {
+  const firstUnpinned = tabs.findIndex((entry) => !entry.pinned);
+  const at = firstUnpinned === -1 ? tabs.length : firstUnpinned;
+  return [...tabs.slice(0, at), tab, ...tabs.slice(at)];
+}
+
+function rememberClosed(history: ClosedTab[], tabs: DocumentTab[]): ClosedTab[] {
+  return [
+    ...history,
+    ...tabs.map(({ key, target, label, title, pinned, modeChoice, imageFormat }) => ({
+      key,
+      target,
+      label,
+      title,
+      pinned,
+      modeChoice,
+      imageFormat,
+    })),
+  ].slice(-MAX_CLOSED_TABS);
+}
 
 function retiredGitTarget(target: ViewerTarget, lease: number | undefined) {
   if ("gitHistory" in target) return target.gitHistory.indexLease !== lease;
@@ -100,8 +128,9 @@ function retiredGitTarget(target: ViewerTarget, lease: number | undefined) {
 
 function currentGitTabs(set: TabSet, lease: number | undefined): TabSet {
   const tabs = set.tabs.filter(({ target }) => !retiredGitTarget(target, lease));
-  if (tabs.length === set.tabs.length) return set;
-  return { tabs, active: tabs.some((tab) => tab.key === set.active) ? set.active : CHAT };
+  const closed = set.closed.filter(({ target }) => !retiredGitTarget(target, lease));
+  if (tabs.length === set.tabs.length && closed.length === set.closed.length) return set;
+  return { tabs, closed, active: tabs.some((tab) => tab.key === set.active) ? set.active : CHAT };
 }
 
 const displayName = (path: string) =>
@@ -144,9 +173,13 @@ function describe(target: ViewerTarget, download: string): { label: string; titl
 
 interface TabsState {
   workbenchId: string;
+  scope: string;
   tabs: DocumentTab[];
   active: string;
+  canReopen: boolean;
   select: (key: string) => void;
+  reopen: () => void;
+  togglePin: (key: string) => void;
   close: (key: string) => void;
   /** Closes several tabs; `keep` is selected when the selected tab is among them (TASK-6c4aeed8). */
   closeMany: (keys: readonly string[], keep: string) => void;
@@ -174,6 +207,7 @@ export function useDocumentTabs() {
  */
 export function DocumentViewerProvider({
   workbenchId,
+  workbenchFolder,
   scope: contextScope,
   sessionId,
   gitLease,
@@ -181,6 +215,7 @@ export function DocumentViewerProvider({
   children,
 }: {
   workbenchId: string;
+  workbenchFolder?: string | undefined;
   scope?: string;
   /** The session whose tabs are saved and restored (TASK-061fe00e); none keeps them for the run only. */
   sessionId?: string | undefined;
@@ -283,7 +318,7 @@ export function DocumentViewerProvider({
                 attempt: ++attempts.current,
               },
             ];
-        return { tabs, active: key };
+        return { tabs, active: key, closed: set.closed.filter((tab) => tab.key !== key) };
       });
       reveal?.();
     },
@@ -297,26 +332,61 @@ export function DocumentViewerProvider({
       change((set) => {
         const index = set.tabs.findIndex((tab) => tab.key === key);
         if (index < 0) return set;
+        const tab = set.tabs[index];
+        if (!tab) return set;
         const tabs = set.tabs.filter((tab) => tab.key !== key);
         // The closed tab's right neighbour takes its place, else the left one, else Chat.
         const active = set.active === key ? (tabs[index]?.key ?? tabs[index - 1]?.key ?? CHAT) : set.active;
-        return { tabs, active };
+        return { tabs, active, closed: rememberClosed(set.closed, [tab]) };
       });
     },
     [scope, change],
   );
   const closeMany = useCallback(
     (keys: readonly string[], keep: string) => {
-      for (const key of keys) {
+      const closing = current.tabs.filter((tab) => !tab.pinned && keys.includes(tab.key));
+      for (const { key } of closing) {
         places.current.delete(`${scope}\n${key}`);
         openers.current.delete(`${scope}\n${key}`);
       }
       change((set) => {
-        const tabs = set.tabs.filter((tab) => !keys.includes(tab.key));
-        return { tabs, active: keys.includes(set.active) ? keep : set.active };
+        const closed = set.tabs.filter((tab) => !tab.pinned && keys.includes(tab.key));
+        if (!closed.length) return set;
+        const closedKeys = new Set(closed.map(({ key }) => key));
+        const tabs = set.tabs.filter((tab) => !closedKeys.has(tab.key));
+        return {
+          tabs,
+          active: closedKeys.has(set.active) ? keep : set.active,
+          closed: rememberClosed(set.closed, closed),
+        };
       });
     },
-    [scope, change],
+    [scope, change, current.tabs],
+  );
+  const reopen = useCallback(
+    () =>
+      change((set) => {
+        const { closed } = currentGitTabs(set, gitLease);
+        const latest = closed.at(-1);
+        if (!latest) return set;
+        const tab = { ...latest, attempt: ++attempts.current };
+        return {
+          tabs: tab.pinned ? atPinBoundary(set.tabs, tab) : [...set.tabs, tab],
+          active: tab.key,
+          closed: closed.slice(0, -1),
+        };
+      }),
+    [change, gitLease],
+  );
+  const togglePin = useCallback(
+    (key: string) =>
+      change((set) => {
+        const tab = set.tabs.find((entry) => entry.key === key);
+        if (!tab) return set;
+        const tabs = set.tabs.filter((entry) => entry !== tab);
+        return { ...set, tabs: atPinBoundary(tabs, { ...tab, pinned: tab.pinned ? undefined : true }) };
+      }),
+    [change],
   );
   const move = useCallback(
     (key: string, before: string | null) =>
@@ -324,8 +394,9 @@ export function DocumentViewerProvider({
         const moving = set.tabs.find((tab) => tab.key === key);
         if (!moving || key === before) return set;
         const rest = set.tabs.filter((tab) => tab.key !== key);
+        if (before === null && moving.pinned) return { ...set, tabs: atPinBoundary(rest, moving) };
         const at = before === null ? rest.length : rest.findIndex((tab) => tab.key === before);
-        if (at < 0) return set;
+        if (at < 0 || (before !== null && rest[at]?.pinned !== moving.pinned)) return set;
         return { ...set, tabs: [...rest.slice(0, at), moving, ...rest.slice(at)] };
       }),
     [change],
@@ -407,7 +478,7 @@ export function DocumentViewerProvider({
   // ---- Saving and restoring a session's tabs in localStorage (TASK-061fe00e).
   /** Sessions whose stored tabs were read (and checked) in this run; only those are saved. */
   const restored = useRef(new Set<string>());
-  const owners = useRef(new Map<string, { workbenchId: string; sessionId: string }>());
+  const owners = useRef(new Map<string, TabStorageOwner>());
   const pending = useRef(new Set<string>());
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const flush = useCallback(() => {
@@ -420,14 +491,14 @@ export function DocumentViewerProvider({
       const persistable = set.tabs.flatMap((tab) => {
         if ("gitDiff" in tab.target || "gitHistory" in tab.target || "sessionChange" in tab.target) return [];
         const place = places.current.get(`${owned}\n${tab.key}`);
-        return [{ key: tab.key, target: tab.target, ...(place ? { place } : {}) }];
+        return [{ key: tab.key, target: tab.target, ...(place ? { place } : {}), pinned: tab.pinned }];
       });
       const record: StoredTabs = {
         version: 1,
         active: persistable.some((tab) => tab.key === set.active) ? set.active : CHAT,
         tabs: persistable.map(({ key: _key, ...tab }) => tab),
       };
-      writeTabs(localStorage, owner.workbenchId, owner.sessionId, record);
+      writeTabs(localStorage, owner, record);
     }
     pending.current.clear();
   }, []);
@@ -456,15 +527,17 @@ export function DocumentViewerProvider({
   // A session's stored tabs come back the first time it is shown in a run, without those whose
   // documents are gone; tabs opened meanwhile stay after them.
   useEffect(() => {
-    if (!sessionId || restored.current.has(scope) || !workbenchId) return;
-    owners.current.set(scope, { workbenchId, sessionId });
-    const record = readTabs(localStorage, workbenchId, sessionId);
+    if (!sessionId || restored.current.has(scope) || !workbenchId || !workbenchFolder) return;
+    const owner = { folder: workbenchFolder, workbenchId, sessionId };
+    owners.current.set(scope, owner);
+    const record = readTabs(localStorage, owner);
     // The record's schema mirrors ViewerTarget and DocumentPlace; it only spells optionals out.
     const stored = record && {
       active: record.active,
       tabs: record.tabs.map((tab) => ({
         target: tab.target as ViewerTarget,
         place: tab.place as DocumentPlace | undefined,
+        pinned: tab.pinned,
       })),
     };
     if (!stored?.tabs.length) {
@@ -506,13 +579,14 @@ export function DocumentViewerProvider({
       setSets((map) => {
         const live = map.get(owned) ?? EMPTY;
         // A document opened while the check ran keeps its live tab, target and place.
-        const liveKeys = new Set(live.tabs.map((tab) => tab.key));
+        const liveKeys = new Set([...live.tabs, ...live.closed].map((tab) => tab.key));
         const fresh = kept.filter((tab) => !liveKeys.has(documentKey(tab.target)));
         for (const tab of fresh)
           if (tab.place) places.current.set(`${owned}\n${documentKey(tab.target)}`, tab.place);
         const restoredTabs: DocumentTab[] = fresh.map((tab) => ({
           key: documentKey(tab.target),
           target: tab.target,
+          pinned: tab.pinned,
           ...(documentKey(tab.target).startsWith("file:")
             ? { label: "[REDACTED]", title: "[REDACTED]" }
             : describe(tab.target, download)),
@@ -521,7 +595,12 @@ export function DocumentViewerProvider({
         const restoredKeys = new Set(restoredTabs.map((tab) => tab.key));
         // Keep an explicit Chat selection, including before the first document has restored.
         const active = map.has(owned) ? live.active : restoredKeys.has(stored.active) ? stored.active : CHAT;
-        return new Map(map).set(owned, { tabs: [...restoredTabs, ...live.tabs], active });
+        const tabs = [...restoredTabs, ...live.tabs];
+        return new Map(map).set(owned, {
+          ...live,
+          tabs: [...tabs.filter((tab) => tab.pinned), ...tabs.filter((tab) => !tab.pinned)],
+          active,
+        });
       });
       restored.current.add(owned);
       // A record that lost tabs is rewritten without them.
@@ -530,7 +609,7 @@ export function DocumentViewerProvider({
     return () => {
       alive = false;
     };
-  }, [scope, sessionId, workbenchId, download, schedule]);
+  }, [scope, sessionId, workbenchId, workbenchFolder, download, schedule]);
   // A tab loads when it is first selected, once per attempt; switching back reuses the content, and
   // a session's restored tabs cost nothing until they are shown.
   const loading = useRef(new Set<string>());
@@ -748,6 +827,11 @@ export function DocumentViewerProvider({
                 ownedScope,
                 {
                   ...set,
+                  closed: set.closed.map((tab) =>
+                    "downloadId" in tab.target || "runId" in tab.target
+                      ? tab
+                      : { ...tab, label: "[REDACTED]", title: "[REDACTED]" },
+                  ),
                   tabs: set.tabs.map((tab) =>
                     "downloadId" in tab.target
                       ? tab
@@ -825,9 +909,13 @@ export function DocumentViewerProvider({
   const state = useMemo(
     () => ({
       workbenchId,
+      scope,
       tabs: current.tabs,
       active: current.active,
+      canReopen: current.closed.length > 0,
       select,
+      reopen,
+      togglePin,
       close,
       closeMany,
       move,
@@ -838,7 +926,22 @@ export function DocumentViewerProvider({
       opener,
       focusRequest,
     }),
-    [workbenchId, current, select, close, closeMany, move, retry, setMode, place, setPlace, opener],
+    [
+      workbenchId,
+      scope,
+      current,
+      select,
+      reopen,
+      togglePin,
+      close,
+      closeMany,
+      move,
+      retry,
+      setMode,
+      place,
+      setPlace,
+      opener,
+    ],
   );
   return (
     <ViewerContext.Provider value={open}>

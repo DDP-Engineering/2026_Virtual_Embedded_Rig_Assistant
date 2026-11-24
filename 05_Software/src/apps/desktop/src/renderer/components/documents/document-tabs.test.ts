@@ -7,7 +7,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
-import { removeTabs } from "../../lib/document-tabs-store.js";
+import { removeTabs, tabStorageKey } from "../../lib/document-tabs-store.js";
 import { DocumentTabs } from "./document-tabs.js";
 import {
   DocumentViewerProvider,
@@ -31,6 +31,7 @@ HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
   this.removeAttribute("open");
 };
 const id = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+const tabOwner = (sessionId: string, folder = "/mock/demo-board") => ({ folder, workbenchId: id, sessionId });
 const settle = () =>
   act(async () => {
     await new Promise((done) => setTimeout(done, 50));
@@ -67,6 +68,8 @@ const targets: Record<string, ViewerTarget> = {
   mdHex: { textPath: "docs/a.md", hex: true },
   unindexed: { textPath: "unindexed.md" },
   md: { path: "docs/a.md" },
+  archivedMd: { path: "archive/a.md" },
+  recordedEdit: { sessionChange: { sessionId: "tab-actions", changeId: 1, path: "docs/a.md" } },
   mdOther: { path: "docs/other.md" },
   reset: { ref: "docs/a.md#h=reset" },
   html: { path: "docs/a.html" },
@@ -195,12 +198,14 @@ it("remembers explicit Files Hex by real extension and replaces its saved overri
   await act(async () => h.view.querySelector<HTMLButtonElement>('[data-viewer-mode="text"]')?.click());
   await settle();
   await act(async () => window.dispatchEvent(new Event("pagehide")));
-  expect(JSON.parse(localStorage.getItem(`vera.tabs.${id}.${session}`) ?? "null").tabs[0].target).toEqual({
-    textPath: "docs/a.md",
-  });
+  expect(JSON.parse(localStorage.getItem(tabStorageKey(tabOwner(session))) ?? "null").tabs[0].target).toEqual(
+    {
+      textPath: "docs/a.md",
+    },
+  );
   await h.open("md");
   expect(h.view.querySelector('[data-viewer-mode="text"]')?.getAttribute("aria-pressed")).toBe("true");
-  removeTabs(localStorage, id, session);
+  removeTabs(localStorage, tabOwner(session));
 });
 
 it("remembers clicking the active Text fallback without reloading and applies it to indexed Markdown", async () => {
@@ -341,6 +346,12 @@ it("retires a comparison opener when the workbench lease changes", async () => {
   await render(2);
   expect(latest()?.tabs).toEqual([]);
   expect(latest()?.opener(key)).toBeNull();
+  await render(1);
+  await act(async () => opener?.click());
+  await act(async () => latest()?.close(key));
+  expect(latest()?.canReopen).toBe(true);
+  await render(2);
+  expect(latest()?.canReopen).toBe(false);
 });
 
 async function mount(scope = `${id}/session-a`, sessionId?: string) {
@@ -350,7 +361,7 @@ async function mount(scope = `${id}/session-a`, sessionId?: string) {
   root = createRoot(container);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const reveal = vi.fn();
-  const render = (next: string) =>
+  const render = (next: string, workbenchFolder = "/mock/demo-board") =>
     act(async () =>
       root?.render(
         createElement(
@@ -358,7 +369,7 @@ async function mount(scope = `${id}/session-a`, sessionId?: string) {
           { client },
           createElement(
             DocumentViewerProvider,
-            { workbenchId: id, scope: next, sessionId, reveal },
+            { workbenchId: id, workbenchFolder, scope: next, sessionId, reveal },
             createElement(Openers, { targets }),
             createElement(DocumentTabs, {
               chat: createElement("textarea", { "aria-label": "Message", "data-chat": true }),
@@ -705,6 +716,154 @@ const closeMenu = () =>
     document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
   });
 
+it("reopens the last closed document or diff in order and within the session", async () => {
+  const h = await mount(`${id}/tab-actions`, "tab-actions");
+  const reopen = () => h.view.querySelector<HTMLButtonElement>('[data-action="reopen-tab"]');
+  expect(reopen()?.disabled).toBe(true);
+  await h.open("md");
+  await h.open("recordedEdit");
+  const diff = h.selected() ?? "";
+  expect(diff).toContain("a.md");
+  expect(diff).not.toBe("a.md");
+  await act(async () => h.close("a.md")?.click());
+  await act(async () => h.close(diff)?.click());
+  await h.render(`${id}/tab-actions-other`);
+  expect(reopen()?.disabled).toBe(true);
+  await h.render(`${id}/tab-actions`);
+  await act(async () => reopen()?.click());
+  expect(h.selected()).toBe(diff);
+  await act(async () => reopen()?.click());
+  expect(h.selected()).toBe("a.md");
+  expect(reopen()?.disabled).toBe(true);
+  await act(async () => window.dispatchEvent(new Event("pagehide")));
+  localStorage.removeItem(tabStorageKey(tabOwner("tab-actions")));
+});
+
+it("keeps pinned tabs after Chat and protects them from both bulk-close actions", async () => {
+  const h = await mount();
+  await h.open("md");
+  await h.open("html");
+  await h.open("board");
+  await openMenu(h, "board.txt");
+  expect(menuActions(h.view)).toContainEqual(["pin", false]);
+  await runItem(h.view, "pin");
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md", "a.html"]);
+  await press({ key: "PageDown", ctrlKey: true, shiftKey: true });
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md", "a.html"]);
+  await openMenu(h, "a.md");
+  await runItem(h.view, "close-right");
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md"]);
+  await h.open("html");
+  await openMenu(h, "a.md");
+  await runItem(h.view, "close-others");
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md"]);
+  await openMenu(h, "a.md");
+  expect(menuActions(h.view)).toContainEqual(["close-others", true]);
+  await closeMenu();
+  await act(async () => h.close("board.txt")?.click());
+  expect(h.tabs()).toEqual(["Chat", "a.md"]);
+  await act(async () => h.view.querySelector<HTMLButtonElement>('[data-action="reopen-tab"]')?.click());
+  expect(h.selected()).toBe("board.txt");
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md"]);
+  await openMenu(h, "board.txt");
+  await runItem(h.view, "unpin");
+  expect(h.tab("board.txt")?.closest(".document-tab")?.hasAttribute("data-pinned")).toBe(false);
+});
+
+it("restores and saves pin state with the current open-tab record", async () => {
+  const session = "pinned-tab-storage";
+  const key = tabStorageKey(tabOwner(session));
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      version: 1,
+      active: "file:docs/a.md",
+      tabs: [{ target: { path: "board.txt" }, pinned: true }, { target: { path: "docs/a.md" } }],
+    }),
+  );
+  const h = await mount(`${id}/${session}`, session);
+  await settle();
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md"]);
+  expect(h.tab("board.txt")?.closest(".document-tab")?.hasAttribute("data-pinned")).toBe(true);
+  await openMenu(h, "a.md");
+  await runItem(h.view, "pin");
+  await openMenu(h, "board.txt");
+  expect(menuActions(h.view)).toContainEqual(["close-right", true]);
+  await closeMenu();
+  await act(async () => window.dispatchEvent(new Event("pagehide")));
+  expect(stored(key).tabs.map((tab: { pinned?: true }) => tab.pinned)).toEqual([true, true]);
+  localStorage.removeItem(key);
+});
+
+it("keeps saved tab pins separate for copied workbenches with identical IDs", async () => {
+  const session = "copied-tabs";
+  const first = "/mock/demo-board";
+  const copy = "/mock/copied-board";
+  const storageKey = (folder: string) => tabStorageKey(tabOwner(session, folder));
+  localStorage.setItem(
+    storageKey(first),
+    JSON.stringify({ version: 1, active: "chat", tabs: [{ target: { path: "board.txt" }, pinned: true }] }),
+  );
+  const h = await mount(`${id}/${session}/first`, session);
+  try {
+    await settle();
+    expect(h.tabs()).toEqual(["Chat", "board.txt"]);
+    await h.render(`${id}/${session}/copy`, copy);
+    await settle();
+    expect(h.tabs()).toEqual(["Chat"]);
+    await h.open("md");
+    await act(async () => window.dispatchEvent(new Event("pagehide")));
+    expect(stored(storageKey(first)).tabs[0].pinned).toBe(true);
+    expect(stored(storageKey(copy)).tabs.map((tab: { target: unknown }) => tab.target)).toEqual([
+      { path: "docs/a.md" },
+    ]);
+  } finally {
+    localStorage.removeItem(storageKey(first));
+    localStorage.removeItem(storageKey(copy));
+  }
+});
+
+it("finds duplicate filenames by their path and opens results by keyboard or mouse", async () => {
+  const h = await mount();
+  await h.open("md");
+  await h.open("archivedMd");
+  const show = h.view.querySelector<HTMLButtonElement>('[data-action="search-tabs"]');
+  await act(async () => show?.click());
+  const dialog = () => h.view.querySelector<HTMLDialogElement>("dialog[open][data-tab-search]");
+  const input = () => dialog()?.querySelector<HTMLInputElement>("input") ?? null;
+  const results = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>("[data-tab-result]") ?? [])];
+  expect(results()).toHaveLength(2);
+  const cancel = [...(dialog()?.querySelectorAll<HTMLButtonElement>("button") ?? [])].find(
+    (button) => button.textContent === "Cancel",
+  );
+  expect(cancel).toBeDefined();
+  await act(async () => cancel?.click());
+  expect(dialog()).toBeNull();
+  expect(document.activeElement).toBe(show);
+  await act(async () => show?.click());
+  const key = (path: string) => h.view.querySelector(`[role="tab"][data-tab-key="file:${path}"]`);
+  expect(results().map((result) => result.textContent)).toEqual(
+    expect.arrayContaining([expect.stringContaining("docs/a.md"), expect.stringContaining("archive/a.md")]),
+  );
+  await typeInto(input(), "A.MD");
+  expect(results()).toHaveLength(2);
+  await typeInto(input(), "missing");
+  expect(results()).toHaveLength(0);
+  await typeInto(input(), "DOCS/");
+  expect(results()).toHaveLength(1);
+  await keyOn(input(), "ArrowDown");
+  expect(document.activeElement).toBe(results()[0]);
+  await keyOn(results()[0] ?? null, "Enter");
+  expect(dialog()).toBeNull();
+  expect(key("docs/a.md")?.getAttribute("aria-selected")).toBe("true");
+  await act(async () => show?.click());
+  await typeInto(input(), "archive");
+  await act(async () => results()[0]?.click());
+  expect(key("archive/a.md")?.getAttribute("aria-selected")).toBe("true");
+  await h.render(`${id}/another-search-session`);
+  expect(show?.disabled).toBe(true);
+});
+
 it("moves a dragged document tab before the tab it is dropped on, or to the end, never before Chat", async () => {
   const h = await mount();
   await h.open("md");
@@ -725,6 +884,11 @@ it("moves a dragged document tab before the tab it is dropped on, or to the end,
   await drag("a.md", h.tab("Chat"));
   expect(h.tabs()).toEqual(["Chat", "a.md", "board.txt", "a.html"]);
   expect(h.tab("Chat")?.closest('[draggable="true"]')).toBeNull();
+  await openMenu(h, "board.txt");
+  await runItem(h.view, "pin");
+  await drag("a.html", h.tab("board.txt"));
+  await drag("board.txt", h.view.querySelector("[data-tab-strip-end]"));
+  expect(h.tabs()).toEqual(["Chat", "board.txt", "a.md", "a.html"]);
 });
 
 it("moves the selected document tab with Ctrl+Shift+PageUp and PageDown, staying at the ends", async () => {
@@ -884,7 +1048,7 @@ it("shows only the document in a tab and offers its file actions in the tab menu
   expect(
     menuActions(h.view)
       .map(([action]) => action)
-      .slice(5),
+      .slice(6),
   ).toEqual(["reveal-download"]);
   await closeMenu();
   await h.open("artifact");
@@ -895,6 +1059,7 @@ it("shows only the document in a tab and offers its file actions in the tab menu
     "close-right",
     "move-left",
     "move-right",
+    "pin",
   ]);
 });
 
@@ -942,7 +1107,7 @@ it("shows a menu action's message above the panels, with Chat too, and clears it
 
 // REQ-FUNC-8a061992 REQ-REL-4622d972 REQ-DATA-3b6664f9
 it("restores a session's saved tabs, order, selection and places, leaving out documents that are gone", async () => {
-  const key = `vera.tabs.${id}.session-r`;
+  const key = tabStorageKey(tabOwner("session-r"));
   localStorage.setItem(
     key,
     JSON.stringify({
@@ -988,7 +1153,7 @@ it("restores a session's saved tabs, order, selection and places, leaving out do
 });
 
 it("saves nothing for a session-less scope and keeps tabs opened before the restore finished", async () => {
-  const key = `vera.tabs.${id}.session-s`;
+  const key = tabStorageKey(tabOwner("session-s"));
   localStorage.setItem(
     key,
     JSON.stringify({ version: 1, active: "chat", tabs: [{ target: { path: "docs/a.md" } }] }),
@@ -1010,7 +1175,7 @@ it("saves nothing for a session-less scope and keeps tabs opened before the rest
 
 // REQ-REL-f19a4bc2 REQ-REL-4622d972 REQ-DATA-3b6664f9
 it("starts from Chat on an unreadable record and keeps a restored tab whose document fails to load", async () => {
-  const key = `vera.tabs.${id}.session-t`;
+  const key = tabStorageKey(tabOwner("session-t"));
   localStorage.setItem(key, JSON.stringify({ version: 2, active: "chat", tabs: [] }));
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation(async (channel: string, request: unknown) => {
@@ -1124,7 +1289,7 @@ it("goes to a line with Ctrl+G and finds text with Ctrl+F in a text tab, Escape 
 
 // REQ-REL-4622d972
 it("leaves out a selected missing document and unlisted downloads and artifacts, selecting Chat", async () => {
-  const key = `vera.tabs.${id}.session-g`;
+  const key = tabStorageKey(tabOwner("session-g"));
   localStorage.setItem(
     key,
     JSON.stringify({
@@ -1161,7 +1326,7 @@ it("leaves out a selected missing document and unlisted downloads and artifacts,
 
 // REQ-FUNC-8a061992 REQ-DATA-3b6664f9
 it("restores a log at its line, saves moves and new places, and restores a session once per run", async () => {
-  const key = `vera.tabs.${id}.session-u`;
+  const key = tabStorageKey(tabOwner("session-u"));
   localStorage.setItem(
     key,
     JSON.stringify({
@@ -1214,7 +1379,7 @@ it("restores a log at its line, saves moves and new places, and restores a sessi
 
 // REQ-FUNC-8a061992 REQ-DATA-3b6664f9 REQ-FUNC-d9d16533
 it("keeps a document opened during the restore, works without storage and forgets a deleted session", async () => {
-  const key = `vera.tabs.${id}.session-v`;
+  const key = tabStorageKey(tabOwner("session-v"));
   localStorage.setItem(
     key,
     JSON.stringify({
@@ -1254,7 +1419,7 @@ it("keeps a document opened during the restore, works without storage and forget
     refuse.mockRestore();
     // Deleting the session within the throttle: the pending save does not write the record back.
     await act(async () => h.close("a.html")?.click());
-    removeTabs(localStorage, id, "session-v");
+    removeTabs(localStorage, tabOwner("session-v"));
     await act(async () => window.dispatchEvent(new Event("pagehide")));
     expect(localStorage.getItem(key)).toBeNull();
   } finally {
@@ -1324,6 +1489,25 @@ it("clears inactive tab labels and contents when Display changes", async () => {
   expect(f.view.textContent).not.toContain("cached-secret");
   expect(f.view.querySelector("[data-source-current]")?.textContent).toContain("[REDACTED]");
 });
+
+it("reopens a previously closed tab with the current Display masking", async () => {
+  const h = await mount();
+  await api.invoke("app.settings.update", { privacy: { mask: { display: false } } });
+  let masked = false;
+  serveDisplayContent(() => masked);
+  await h.open("md");
+  expect(h.selected()).toBe("cached-secret-a.md");
+  await act(async () => h.close("cached-secret-a.md")?.click());
+  masked = true;
+  await act(async () => {
+    await api.invoke("app.settings.update", { privacy: { mask: { display: true } } });
+  });
+  await act(async () => h.view.querySelector<HTMLButtonElement>('[data-action="reopen-tab"]')?.click());
+  expect(h.view.textContent).not.toContain("cached-secret");
+  await settle();
+  expect(h.selected()).toBe("[REDACTED]-a.md");
+  expect(h.view.textContent).not.toContain("cached-secret");
+});
 it.each(["app", "workbench"])(
   "reloads a cached inactive session scope after %s Display changes",
   async (area) => {
@@ -1360,7 +1544,7 @@ it("restores raw current-format targets through host presentation after their na
     second = "later-secret-second.txt";
   const sessionId = "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
   localStorage.setItem(
-    `vera.tabs.${id}.${sessionId}`,
+    tabStorageKey(tabOwner(sessionId)),
     JSON.stringify({
       version: 1,
       active: `file:${second}`,

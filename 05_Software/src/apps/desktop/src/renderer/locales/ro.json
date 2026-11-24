@@ -726,6 +726,13 @@
     "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
   },
   "documents": {
+    "reopenTab": "Redeschide ultima filă închisă",
+    "searchTabs": "Caută în filele deschise",
+    "filterTabs": "Filtrează după titlu sau cale",
+    "noMatchingTabs": "Nicio filă găsită.",
+    "pinTab": "Fixează fila",
+    "unpinTab": "Anulează fixarea filei",
+    "pinnedTab": "Filă fixată",
     "imageZoom": "Zoom imagine",
     "imageFit": "Potrivire",
     "imagePreview": "Previzualizare imagine",

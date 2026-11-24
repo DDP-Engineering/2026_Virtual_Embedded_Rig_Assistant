@@ -179,10 +179,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Bookmark keys/export, send times, saved summaries, paged Changes, edit tabs and one chat status."
-      ro: "Taste/export marcaje, ora trimiterii, rezumate salvate, Modificări paginate, taburi diff, o stare."
-      de: "Lesezeichentasten, Export, Sendezeit, Kurzfassungen, Änderungsseiten, Diff-Tabs, Status."
-      fr: "Raccourcis/export signets, heure d’envoi, résumés, modifs paginées, onglets diff, un état de chat."
+      en: "Reopen, pin and search tabs beside Chat. Export bookmarks and navigate changes by page."
+      ro: "Redeschide, fixează și caută file lângă Chat. Exportă marcaje și răsfoiește modificările."
+      de: "Tabs neben Chat öffnen, anheften und suchen. Lesezeichen exportieren, Änderungen durchblättern."
+      fr: "Rouvrez, épinglez et cherchez les onglets du chat. Exportez les signets et parcourez les modifs."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

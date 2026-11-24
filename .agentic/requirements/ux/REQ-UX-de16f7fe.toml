@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-de16f7fe"
+title = "Restore the latest closed tab in the current session"
+status = "active"
+requirement = "When the user invokes Reopen last closed tab, VERA shall restore and select the most recently closed eligible document or diff tab in the current session, disabling the action when no entry remains."
+verification = "Close files and a recorded diff, reopen in order, and verify that another session cannot see that history."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx","05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

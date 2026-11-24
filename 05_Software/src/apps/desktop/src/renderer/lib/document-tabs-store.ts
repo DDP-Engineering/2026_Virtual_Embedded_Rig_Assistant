@@ -3,8 +3,15 @@
 import { programRunIdSchema } from "@vera/shared";
 import { z } from "zod";
 
-/** One renderer record per workbench session: `vera.tabs.<workbenchId>.<sessionId>` (TASK-061fe00e). */
-const key = (workbenchId: string, sessionId: string) => `vera.tabs.${workbenchId}.${sessionId}`;
+export interface TabStorageOwner {
+  folder: string;
+  workbenchId: string;
+  sessionId: string;
+}
+
+/** Copied workbenches can have identical stored IDs, so the opened folder identifies the record too. */
+export const tabStorageKey = ({ folder, workbenchId, sessionId }: TabStorageOwner) =>
+  `vera.tabs.${workbenchId}.${sessionId}.${JSON.stringify(folder)}`;
 const text = z.string().min(1).max(4096);
 const identity = z
   .string()
@@ -32,8 +39,12 @@ const placeSchema = z.union([
   z.strictObject({ scroll: z.number().min(0).max(Number.MAX_SAFE_INTEGER) }),
 ]);
 /** The stored format; its version stays 1 during development (AGENTS.md). */
-const tabSchema = z.strictObject({ target: targetSchema, place: placeSchema.optional() });
-/** The most tabs one session keeps; more are dropped from the front (the oldest) when saving. */
+const tabSchema = z.strictObject({
+  target: targetSchema,
+  place: placeSchema.optional(),
+  pinned: z.literal(true).optional(),
+});
+/** The most tabs one session keeps, giving open pins priority. */
 const MAX_TABS = 200;
 export const storedTabsSchema = z.strictObject({
   version: z.literal(1),
@@ -45,15 +56,9 @@ export type StoredTabs = z.infer<typeof storedTabsSchema>;
 const deleted = new Set<string>();
 
 /** The session's stored tabs, or nothing for a missing, unreadable or invalid record. */
-export function readTabs(
-  storage: Pick<Storage, "getItem">,
-  workbenchId: string,
-  sessionId: string,
-): StoredTabs | undefined {
+export function readTabs(storage: Pick<Storage, "getItem">, owner: TabStorageOwner): StoredTabs | undefined {
   try {
-    const result = storedTabsSchema.safeParse(
-      JSON.parse(storage.getItem(key(workbenchId, sessionId)) ?? "null"),
-    );
+    const result = storedTabsSchema.safeParse(JSON.parse(storage.getItem(tabStorageKey(owner)) ?? "null"));
     return result.success ? result.data : undefined;
   } catch {
     return undefined;
@@ -61,32 +66,30 @@ export function readTabs(
 }
 export function writeTabs(
   storage: Pick<Storage, "setItem">,
-  workbenchId: string,
-  sessionId: string,
+  owner: TabStorageOwner,
   value: StoredTabs,
 ): void {
-  if (deleted.has(key(workbenchId, sessionId))) return;
+  if (deleted.has(tabStorageKey(owner))) return;
   // One tab that cannot be stored (an over-long path) is left out instead of losing the record.
-  const tabs = value.tabs.filter((tab) => tabSchema.safeParse(tab).success).slice(-MAX_TABS);
+  const valid = value.tabs.filter((tab) => tabSchema.safeParse(tab).success);
+  const pinned = valid.filter((tab) => tab.pinned).slice(-MAX_TABS);
+  const unpinned = valid.filter((tab) => !tab.pinned);
+  const tabs = [...pinned, ...unpinned.slice(Math.max(0, unpinned.length - (MAX_TABS - pinned.length)))];
   const active = activeKey.safeParse(value.active).success ? value.active : "chat";
   try {
     storage.setItem(
-      key(workbenchId, sessionId),
+      tabStorageKey(owner),
       JSON.stringify(storedTabsSchema.parse({ version: value.version, active, tabs })),
     );
   } catch {
     /* Unavailable storage keeps the tabs working for this run. */
   }
 }
-export function removeTabs(
-  storage: Pick<Storage, "removeItem">,
-  workbenchId: string,
-  sessionId: string,
-): void {
+export function removeTabs(storage: Pick<Storage, "removeItem">, owner: TabStorageOwner): void {
   // Session ids are never reused, so the record stays deleted for the rest of the run.
-  deleted.add(key(workbenchId, sessionId));
+  deleted.add(tabStorageKey(owner));
   try {
-    storage.removeItem(key(workbenchId, sessionId));
+    storage.removeItem(tabStorageKey(owner));
   } catch {
     /* Unavailable storage has nothing to remove. */
   }

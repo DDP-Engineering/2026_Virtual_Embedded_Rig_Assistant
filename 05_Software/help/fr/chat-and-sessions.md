@@ -108,6 +108,10 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 
 Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans un onglet à côté du Chat.
 
+## Onglets ouverts
+
+Choisissez **Rouvrir le dernier onglet fermé** à côté du chat pour retrouver un document ou une comparaison de la session en cours. Faites un clic droit et choisissez **Épingler l’onglet** pour le garder près du chat lors d’une fermeture groupée. Choisissez **Rechercher dans les onglets ouverts** pour filtrer par titre ou chemin, puis sélectionnez un résultat avec la souris ou avec les flèches et Entrée.
+
 ## Commenter et réviser le plan
 
 Choisissez **Ouvrir le plan** dans le chat pour voir ses étapes. Répondez à une demande de décision dans la carte de question. Si vous êtes dans une autre session, la notification ou l’entrée dans **Activité** ouvre la session et l’onglet **Plan**.

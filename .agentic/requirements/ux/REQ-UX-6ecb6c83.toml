@@ -6,9 +6,9 @@ title = "Move the selected document tab from the keyboard"
 
 status = "active"
 
-requirement = "When the user presses Ctrl+Shift+PageUp or Ctrl+Shift+PageDown while a document tab is selected in the shown chat area, the desktop app shall move that tab one place left or right among the document tabs, leaving it in place at the first or last place."
+requirement = "When the user presses Ctrl+Shift+PageUp or Ctrl+Shift+PageDown while a document tab is selected in the shown chat area, the desktop app shall move that tab one place left or right within its pin group, leaving it in place at either end of the group."
 
-verification = "Renderer test: with a.md selected among Chat, a.md, board.txt, Ctrl+Shift+PageDown gives Chat, board.txt, a.md and a second press keeps that order; Ctrl+Shift+PageUp moves it back; boundary: with Chat selected the keys move nothing."
+verification = "Renderer test: with a.md selected among Chat, a.md, board.txt, Ctrl+Shift+PageDown gives Chat, board.txt, a.md and a second press keeps that order; Ctrl+Shift+PageUp moves it back; boundary: with Chat or a lone pinned tab selected the keys move nothing."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-24

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-b51d6193"
+title = "Keep pinned tabs first in the document strip"
+status = "active"
+requirement = "While a session has pinned document tabs, VERA shall place them after Chat and before unpinned tabs until the user unpins or explicitly closes them."
+verification = "Pin and unpin tabs, attempt to move across the pin boundary, explicitly close a pin, and restore an open pin after remount."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx","05_Software/src/apps/desktop/src/renderer/styles.css","05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

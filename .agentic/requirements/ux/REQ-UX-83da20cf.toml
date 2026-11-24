@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-83da20cf"
+title = "Preserve pinned tabs during bulk closure"
+status = "active"
+requirement = "When the user invokes a bulk-close tab action, VERA shall close only the unpinned tabs targeted by that action."
+verification = "With pinned and unpinned tabs open, use Close others and Close to the right and check the resulting strip and menu availability."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

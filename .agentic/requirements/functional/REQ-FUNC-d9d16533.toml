@@ -8,7 +8,7 @@ status = "active"
 
 requirement = "When the user deletes a session, the desktop app shall remove that session's stored tab record."
 
-verification = "Renderer test: removing a session's record deletes `vera.tabs.<workbenchId>.<sessionId>`, and a save still pending for that session writes nothing; native e2e: deleting a session from its menu removes its record; boundary: the records of other sessions stay."
+verification = "Renderer test: removing a session's record deletes `vera.tabs.<workbenchId>.<sessionId>.<JSON folder>`, and a save still pending for that session writes nothing; native e2e: deleting a session from its menu removes its record; boundary: the records of other sessions and copied workbench folders stay."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-24

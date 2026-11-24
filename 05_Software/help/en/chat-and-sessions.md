@@ -108,6 +108,10 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 
 Select an edit in **Changes** to open its recorded diff in a tab beside Chat.
 
+## Open tabs
+
+Use **Reopen last closed tab** beside Chat to recover a document or diff from the current session. Right-click a tab and choose **Pin tab** to keep it next to Chat and protect it from bulk closing. Choose **Search open tabs** to match a title or path, then click a result or use the arrow keys and Enter.
+
 ## Plan feedback and review
 
 Choose **Open plan** in Chat to see the current plan and its steps. A plan decision uses the question card in Chat. If you are away from the session, the notification or the entry in **Activity** opens that session and its **Plan** tab.

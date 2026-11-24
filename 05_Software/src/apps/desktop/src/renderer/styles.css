@@ -1555,13 +1555,60 @@ legend {
   grid-row: 2;
   padding-inline: 1.5rem;
 }
-.document-tab-strip {
+.document-tab-bar {
   display: flex;
-  flex-shrink: 0;
-  gap: 0.25rem;
-  overflow-x: auto;
+  min-width: 0;
   padding: 0.4rem 1.5rem 0;
   border-bottom: 0.0714286rem solid var(--border);
+}
+.document-tab-strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+.document-tab-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding-inline-start: 0.4rem;
+}
+.document-tab-actions button {
+  display: grid;
+  place-items: center;
+  padding: 0.3rem;
+}
+.document-tab-actions svg,
+.document-tab-pin {
+  width: 1rem;
+  height: 1rem;
+}
+.document-tab-pin {
+  vertical-align: text-bottom;
+  margin-inline-end: 0.35rem;
+  color: var(--primary);
+}
+.tab-search-dialog {
+  width: min(34rem, calc(100% - 2rem));
+}
+.tab-search-dialog input {
+  width: 100%;
+}
+.tab-search-results {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+  padding: 0;
+  max-height: 45vh;
+  overflow: auto;
+}
+.tab-search-results button {
+  display: grid;
+  gap: 0.15rem;
+  text-align: start;
+  width: 100%;
+  overflow-wrap: anywhere;
 }
 .document-tab {
   display: flex;

@@ -1,6 +1,12 @@
 // REQ-DATA-3b6664f9 REQ-REL-f19a4bc2 REQ-FUNC-d9d16533
 import { expect, it } from "vitest";
-import { readTabs, removeTabs, type StoredTabs, writeTabs } from "./document-tabs-store.js";
+import { readTabs, removeTabs, type StoredTabs, tabStorageKey, writeTabs } from "./document-tabs-store.js";
+
+const owner = (workbenchId: string, sessionId: string, folder = "/board") => ({
+  folder,
+  workbenchId,
+  sessionId,
+});
 
 function memory() {
   const items = new Map<string, string>();
@@ -26,19 +32,40 @@ const record: StoredTabs = {
 
 it("keeps one record per workbench session under its own key", () => {
   const storage = memory();
-  writeTabs(storage, "wb_1", "s_1", record);
-  writeTabs(storage, "wb_1", "s_2", { ...record, tabs: [] });
-  expect([...storage.items.keys()]).toEqual(["vera.tabs.wb_1.s_1", "vera.tabs.wb_1.s_2"]);
-  expect(readTabs(storage, "wb_1", "s_1")).toEqual(record);
-  expect(readTabs(storage, "wb_2", "s_1")).toBeUndefined();
-  removeTabs(storage, "wb_1", "s_1");
-  expect([...storage.items.keys()]).toEqual(["vera.tabs.wb_1.s_2"]);
+  writeTabs(storage, owner("wb_1", "s_1"), record);
+  writeTabs(storage, owner("wb_1", "s_2"), { ...record, tabs: [] });
+  expect([...storage.items.keys()]).toEqual([
+    tabStorageKey(owner("wb_1", "s_1")),
+    tabStorageKey(owner("wb_1", "s_2")),
+  ]);
+  expect(readTabs(storage, owner("wb_1", "s_1"))).toEqual(record);
+  expect(readTabs(storage, owner("wb_2", "s_1"))).toBeUndefined();
+  removeTabs(storage, owner("wb_1", "s_1"));
+  expect([...storage.items.keys()]).toEqual([tabStorageKey(owner("wb_1", "s_2"))]);
+});
+
+it("keeps pins inside the record cap and deletes only the owning folder's record", () => {
+  const storage = memory();
+  const original = owner("wb_copy", "s_copy", "/original");
+  const copy = owner("wb_copy", "s_copy", "/copy");
+  const pins = { target: { path: "pinned.md" }, pinned: true } as const;
+  const unpinned = Array.from({ length: 205 }, (_, i) => ({ target: { path: `docs/${i}.md` } }));
+  writeTabs(storage, original, { ...record, tabs: [pins, ...unpinned] });
+  writeTabs(storage, copy, record);
+  const tabs = readTabs(storage, original)?.tabs;
+  expect(tabs).toHaveLength(200);
+  expect(tabs?.[0]).toEqual(pins);
+  expect(tabs?.[1]?.target).toEqual({ path: "docs/6.md" });
+  removeTabs(storage, original);
+  writeTabs(storage, original, record);
+  expect(readTabs(storage, original)).toBeUndefined();
+  expect(readTabs(storage, copy)).toEqual(record);
 });
 
 it("reads a missing, unparsable, foreign-version or tampered record as nothing", () => {
   const storage = memory();
-  const key = "vera.tabs.wb_1.s_1";
-  expect(readTabs(storage, "wb_1", "s_1")).toBeUndefined();
+  const key = tabStorageKey(owner("wb_1", "s_1"));
+  expect(readTabs(storage, owner("wb_1", "s_1"))).toBeUndefined();
   for (const bad of [
     "{not json",
     JSON.stringify({ ...record, version: 2 }),
@@ -49,7 +76,7 @@ it("reads a missing, unparsable, foreign-version or tampered record as nothing",
     JSON.stringify({ ...record, tabs: [{ target: { runId: "../outside" } }] }),
   ]) {
     storage.items.set(key, bad);
-    expect(readTabs(storage, "wb_1", "s_1")).toBeUndefined();
+    expect(readTabs(storage, owner("wb_1", "s_1"))).toBeUndefined();
   }
 });
 
@@ -65,29 +92,29 @@ it("never throws when storage is unavailable or full", () => {
       throw new Error("denied");
     },
   };
-  expect(readTabs(broken, "wb_1", "s_1")).toBeUndefined();
-  expect(() => writeTabs(broken, "wb_1", "s_1", record)).not.toThrow();
-  expect(() => removeTabs(broken, "wb_1", "s_1")).not.toThrow();
+  expect(readTabs(broken, owner("wb_1", "s_1"))).toBeUndefined();
+  expect(() => writeTabs(broken, owner("wb_1", "s_1"), record)).not.toThrow();
+  expect(() => removeTabs(broken, owner("wb_1", "s_1"))).not.toThrow();
 });
 
 it("leaves out tabs it cannot store, keeps the newest 200 and never rewrites a deleted record", () => {
   const storage = memory();
   const many = Array.from({ length: 205 }, (_, i) => ({ target: { path: `docs/${i}.md` } }));
-  writeTabs(storage, "wb_1", "s_3", {
+  writeTabs(storage, owner("wb_1", "s_3"), {
     version: 1,
     active: "",
     tabs: [{ target: { path: "x".repeat(5000) } }, ...many],
   });
-  const saved = readTabs(storage, "wb_1", "s_3");
+  const saved = readTabs(storage, owner("wb_1", "s_3"));
   expect(saved?.active).toBe("chat");
   expect(saved?.tabs).toHaveLength(200);
   expect(saved?.tabs[0]?.target).toEqual({ path: "docs/5.md" });
   // A save still pending when the session is deleted must not bring its record back.
-  removeTabs(storage, "wb_1", "s_3");
-  writeTabs(storage, "wb_1", "s_3", record);
-  expect(readTabs(storage, "wb_1", "s_3")).toBeUndefined();
-  writeTabs(storage, "wb_1", "s_4", record);
-  expect(readTabs(storage, "wb_1", "s_4")).toEqual(record);
+  removeTabs(storage, owner("wb_1", "s_3"));
+  writeTabs(storage, owner("wb_1", "s_3"), record);
+  expect(readTabs(storage, owner("wb_1", "s_3"))).toBeUndefined();
+  writeTabs(storage, owner("wb_1", "s_4"), record);
+  expect(readTabs(storage, owner("wb_1", "s_4"))).toEqual(record);
 });
 
 it("retains expanded opaque path and reference targets with their active key at format 1", () => {
@@ -99,6 +126,6 @@ it("retains expanded opaque path and reference targets with their active key at 
     active: `file:${path}`,
     tabs: [{ target: { path } }, { target: { ref: `${path}#L1-L1` } }],
   };
-  writeTabs(storage, "wb_long", "s_long", record);
-  expect(readTabs(storage, "wb_long", "s_long")).toEqual(record);
+  writeTabs(storage, owner("wb_long", "s_long"), record);
+  expect(readTabs(storage, owner("wb_long", "s_long"))).toEqual(record);
 });

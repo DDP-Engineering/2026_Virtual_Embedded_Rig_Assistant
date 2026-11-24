@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-ba7db808"
+title = "Find and select open tabs in the current session"
+status = "active"
+requirement = "When the user searches open tabs, VERA shall filter the current session's open document and diff tabs by visible title or path, showing paths and allowing mouse or keyboard selection."
+verification = "Open two tabs with the same filename, filter by a unique directory, and select results by keyboard and mouse. Check an empty result and session isolation."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/tab-search.tsx","05_Software/src/apps/desktop/src/renderer/styles.css","05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+created = 2026-11-24
+updated = 2026-11-24

@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, type ElectronApplication, expect, type Page, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { tabStorageKey } from "../../src/apps/desktop/src/renderer/lib/document-tabs-store.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const tool = (name: string, args: Record<string, unknown>) => ({ name, args });
@@ -188,24 +189,26 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
 
     const completedParent = await createParent(page, "parent-complete", "Coordinate jumper inspection");
     await expect(delegation(page)).toContainText("Running");
-    const linkedChild = await page.evaluate(async (parentSessionId) => {
+    const owner = await page.evaluate(async (parentSessionId) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;
-      const { config } = await api.invoke("workbench.config.get", {});
+      const { config, folder } = await api.invoke("workbench.config.get", {});
       const rows = await api.invoke("session.list", { workbenchId: config.id });
       const child = rows.find((row) => row.delegation?.parentSessionId === parentSessionId);
       if (!child) throw Error("Missing delegated child");
+      return { folder, workbenchId: config.id, sessionId: child.id };
+    }, completedParent);
+    await page.evaluate((key) => {
       localStorage.setItem(
-        `vera.tabs.${config.id}.${child.id}`,
+        key,
         JSON.stringify({
           version: 1,
           active: "file:board.txt",
           tabs: [{ target: { textPath: "board.txt" } }],
         }),
       );
-      return child.id;
-    }, completedParent);
+    }, tabStorageKey(owner));
     const childId = await followChild(page, "Inspect the jumper");
-    expect(childId).toBe(linkedChild);
+    expect(childId).toBe(owner.sessionId);
     await expect(page.locator('[data-tab-key="file:board.txt"]')).toBeVisible();
     await expect(page.getByRole("tab", { name: "Chat", exact: true })).toHaveAttribute(
       "aria-selected",

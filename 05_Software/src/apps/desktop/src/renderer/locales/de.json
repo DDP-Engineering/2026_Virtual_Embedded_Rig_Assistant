@@ -726,6 +726,13 @@
     "renewalDue": "Das Token muss erneuert werden; dies erfolgt bei Bedarf automatisch."
   },
   "documents": {
+    "reopenTab": "Zuletzt geschlossenen Tab wieder öffnen",
+    "searchTabs": "Offene Tabs durchsuchen",
+    "filterTabs": "Nach Titel oder Pfad filtern",
+    "noMatchingTabs": "Keine passenden Tabs.",
+    "pinTab": "Tab anheften",
+    "unpinTab": "Tab lösen",
+    "pinnedTab": "Angehefteter Tab",
     "imageZoom": "Bildzoom",
     "imageFit": "Einpassen",
     "imagePreview": "Bildvorschau",

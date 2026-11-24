@@ -108,6 +108,10 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 
 Selectează o editare din **Modificări** pentru a-i deschide diferențele într-un tab lângă Chat.
 
+## File deschise
+
+Alege **Redeschide ultima filă închisă** lângă Chat pentru a recupera un document sau o comparație din sesiunea curentă. Fă clic dreapta pe o filă și alege **Fixează fila** ca să rămână lângă Chat când închizi mai multe file. Alege **Caută în filele deschise** pentru a filtra după titlu sau cale, apoi selectează rezultatul cu mouse-ul ori cu săgețile și Enter.
+
 ## Feedback și revizuirea planului
 
 Alege **Deschide planul** în Chat pentru a vedea pașii planului curent. Răspunde la cererea de decizie din cardul întrebării. Dacă ești în altă sesiune, notificarea sau intrarea din **Activitate** deschide sesiunea și fila **Plan**.

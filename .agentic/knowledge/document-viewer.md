@@ -94,11 +94,11 @@ progress travels through existing workbench events.
 - The document panel shows its applicable Rendered/Text/Hex toolbar ([file viewing modes](document-viewer-file-modes.md)) and the document (or its load error with Retry), without a path line or file-action buttons for ordinary documents; the path is the tab's tooltip (REQ-UX-968b89b0). Patch documents show a source heading and comparison context. A tab menu action's error or notice
   shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is
   selected, and clears when another tab is selected. Tab keys and stale menus: the window listener
-  is idle while any `[data-tree-menu]` is open, and a menu whose tab closed goes away.
+  is idle while any `[data-tree-menu]` is open, and a menu whose tab closed or session changed goes away.
 - Document tabs: HTML5 drag and drop moves a document tab before the tab it is
-  dropped on or to the strip end (`[data-tab-strip-end]`); Chat is not draggable and refuses drops
+  dropped on in its pin group or to the end of that group via `[data-tab-strip-end]`; Chat is not draggable and refuses drops
   (REQ-UX-e0410483). The tab context menu (right click, Shift+F10, menu key; `TreeMenu`) offers
-  Close, Close others, Close to the right, Move left, Move right, then the file actions of the [Docs panel](document-viewer-docs-panel.md)
+  Close, Close others, Close to the right, Move left, Move right, Pin tab or Unpin tab, then the file actions of the [Docs panel](document-viewer-docs-panel.md)
   (REQ-UX-67abf562); the provider's `move(key, before)` and `closeMany(keys, keep)` back it. One
   window keydown listener, idle while a `dialog[open]` exists or an IME composes, handles
   Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PageDown / Ctrl+PageUp (select with wrap, REQ-UX-fd131983),
@@ -106,6 +106,11 @@ progress travels through existing workbench events.
   (close it, REQ-UX-a45c4384). These keys are fixed: the shortcut registry's grammar cannot express
   Tab or PageUp and reserves Mod+W. A managed download's tab has no Open in default app (`.vera/` is
   outside the allowlist).
+- Pinned tabs form a prefix after Chat, stay in place during bulk close and remain explicitly closable. Each
+  workbench folder and session keeps a bounded current-run closed stack with target descriptors and pin
+  state. Reopen selects its newest eligible member and loads it in a new attempt. Display policy changes
+  conceal closed labels as well as open labels, and a Git index lease change removes stale targets.
+  `TabSearch` matches visible labels and paths in the shown strip and returns focus to the chosen tab.
 - The Chat panel (`[data-chat-panel]`) shares the grid cell of the document panel; while a document
   is selected it is `inert` with `visibility: hidden` (never the `hidden` attribute, whose
   `display: none` resets the transcript's scroll in Chromium), so the transcript keeps its scroll. While it is hidden,
@@ -136,12 +141,12 @@ progress travels through existing workbench events.
   denied (REQ-UX-c514899c, REQ-FUNC-6d1fb02f). Find and Go to line bump the same requests as
   Ctrl+F/Ctrl+G; zoom sends a `ZoomRequest {step, id}` to PdfViewer (REQ-UX-160f9f68).
 - Saved tabs: `lib/document-tabs-store.ts` keeps one localStorage record per
-  workbench session, `vera.tabs.<workbenchId>.<sessionId>`, `{version: 1, active, tabs: [{target,
+  workbench folder and session, `vera.tabs.<workbenchId>.<sessionId>.<JSON folder>`, `{version: 1, active, tabs: [{target,
   place?}]}` under a strict zod schema; a missing, unreadable or invalid record reads as none, and
   storage errors never throw (REQ-DATA-3b6664f9, REQ-REL-f19a4bc2). The provider restores a
   session the first time it is shown in a run: it checks downloads (`downloads.list`), artifacts
   (`artifacts.list`) and files (`docs.stat`, only NOT_FOUND drops a tab; other failures keep the
-  tab with its load error), puts the restored tabs before tabs opened meanwhile and keeps their
+  tab with its load error), puts the restored tabs before live tabs within each pin group and keeps their pin state and
   places (REQ-FUNC-8a061992, REQ-REL-4622d972). A delegation link explicitly selects Chat, even
   when stored document tabs are still being restored. Only restored sessions are saved: 500 ms after a
   change and at once on `pagehide`. Deleting a session removes its record (REQ-FUNC-d9d16533).
