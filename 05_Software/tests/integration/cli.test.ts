@@ -1493,6 +1493,22 @@ it.each([true, false])(
   },
 );
 
+it("CLI preserves pin with an MQTT username of pi and masks the password in replay output", async () => {
+  const { workbench, dir } = await fixture();
+  const password = 'mqtt-password-385"\\canary';
+  const escaped = JSON.stringify(password).slice(1, -1);
+  const script = join(dir, "mqtt-masking.jsonl");
+  await writeFile(script, JSON.stringify({ text: `Check pin. Raw ${password}. Escaped ${escaped}.` }));
+  const result = await launch(replay(workbench, script), {
+    VERA_MQTT_USERNAME_X: "pi",
+    VERA_MQTT_PASSWORD_X: password,
+  }).result;
+  expect(result.code).toBe(0);
+  const message = events(result.stdout).findLast((row) => row.event.type === "message.done");
+  expect(message?.event.text).toBe("Check pin. Raw [REDACTED]. Escaped [REDACTED].");
+  expect(result.stdout + result.stderr).not.toContain("mqtt-password-385");
+}, 15_000);
+
 it.each([true, false])(
   "CLI model references honor agent=%s for a later registered MQTT credential",
   async (agent) => {

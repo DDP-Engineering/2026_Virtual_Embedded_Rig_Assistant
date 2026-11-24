@@ -1,27 +1,32 @@
 // REQ-FUNC-f250eee7, REQ-FUNC-fb24a0e4
 import { expect, it } from "vitest";
-import { MemoryCredentials } from "./host-ports.js";
+import { ConsoleLogger, MemoryCredentials } from "./host-ports.js";
 import { cliProgramCredentials, pluginCredentialsFromEnvironment } from "./plugin-credentials-env.js";
 
-it("holds MQTT credentials from the environment in memory and registers them as secrets", async () => {
-  const registered: string[] = [];
-  const store = new MemoryCredentials((secret) => registered.push(secret));
+it("hands off the MQTT username privately and masks only the password in diagnostics", async () => {
+  const lines: string[] = [];
+  const logger = new ConsoleLogger((line) => lines.push(line));
+  const register = (secret: string) => logger.registerSecret(secret);
+  const store = new MemoryCredentials(register);
+  const password = 'bench-password-1"\\canary';
   const refs = await pluginCredentialsFromEnvironment(
     {
-      VERA_MQTT_PASSWORD_BENCH_1: "bench-password-1",
-      VERA_MQTT_USERNAME_BENCH_1: "bench-user",
+      VERA_MQTT_PASSWORD_BENCH_1: password,
+      VERA_MQTT_USERNAME_BENCH_1: "pi",
       VERA_MQTT_USERNAME_ONLY: "no-password-user",
       VERA_MQTT_PASSWORD_LAB: "lab-password",
     },
     store,
-    (secret) => registered.push(secret),
+    register,
   );
   expect(refs).toEqual(["mqtt:bench-1", "mqtt:lab"]);
-  expect(registered).toEqual(expect.arrayContaining(["bench-password-1", "bench-user", "lab-password"]));
+  expect(logger.knownSecrets().sort()).toEqual([password, "lab-password"]);
+  logger.log("error", `pin ${password}`);
+  expect(lines.map((line) => JSON.parse(line))).toEqual([{ level: "error", message: "pin [REDACTED]" }]);
   const port = cliProgramCredentials(store);
   expect(await port.read("mqtt", "bench-1")).toEqual({
-    username: "bench-user",
-    password: "bench-password-1",
+    username: "pi",
+    password,
   });
   expect(await port.read("mqtt", "lab")).toEqual({ password: "lab-password" });
   expect(await port.has("mqtt", "only")).toBe(false);

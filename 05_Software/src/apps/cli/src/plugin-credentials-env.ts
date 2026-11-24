@@ -11,7 +11,8 @@ const WOKWI_TOKEN = /^VERA_WOKWI_TOKEN_([A-Z0-9_]{1,64})$/;
 /**
  * Puts plugin credentials from the environment into memory-only entries (spec REQ-DATA-96d18686 §1):
  * `VERA_MQTT_PASSWORD_<REF>` (with `VERA_MQTT_USERNAME_<REF>`) as `mqtt:<ref>` and `VERA_WOKWI_TOKEN_<REF>` as
- * `wokwi:<ref>`, where `<REF>` is the reference upper-cased with `-` as `_`. Returns the stored ids, sorted.
+ * `wokwi:<ref>`, where `<REF>` is the reference upper-cased with `-` as `_`. The MQTT username is a broker
+ * identifier. Passwords and tokens are registered for masking. Returns the stored ids, sorted.
  */
 export async function pluginCredentialsFromEnvironment(
   env: Record<string, string | undefined>,
@@ -22,7 +23,6 @@ export async function pluginCredentialsFromEnvironment(
   const put = async (scope: PluginCredentialScope, name: string, secret: string, username?: string) => {
     const ref = name.toLowerCase().replaceAll("_", "-");
     register(secret);
-    if (username) register(username);
     if (!credentialReferenceSchema.safeParse(ref).success || /\p{Cc}/u.test(secret + (username ?? "")))
       throw veraError("INVALID");
     await store.modify(pluginCredentialId(scope, ref), async () => ({

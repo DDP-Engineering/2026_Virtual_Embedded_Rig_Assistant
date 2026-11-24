@@ -77,7 +77,11 @@ export class MemoryCredentials implements CredentialStore {
       if (value) {
         if (value.type === "api_key") {
           if (value.key) this.register(value.key);
-          for (const text of Object.values(value.env ?? {})) this.register(text);
+          for (const [name, text] of Object.entries(value.env ?? {})) {
+            // Match Desktop's classification of the MQTT broker identifier.
+            if (name === "username" && id.startsWith("mqtt:")) continue;
+            this.register(text);
+          }
         } else {
           this.register(value.access);
           this.register(value.refresh);

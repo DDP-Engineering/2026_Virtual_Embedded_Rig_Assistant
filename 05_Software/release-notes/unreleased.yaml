@@ -130,10 +130,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
-      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
-      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
-      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
+      en: Area masking keeps secret-named files accessible. MQTT usernames no longer trigger CLI masking.
+      ro: Mascare pe zone. Fișiere cu nume secrete accesibile. Textul CLI păstrează numele de utilizator MQTT.
+      de: Maskierung je Bereich. Dateien mit geheimen Namen bleiben nutzbar. MQTT-Nutzernamen im CLI bleiben.
+      fr: Masquage par zone. Fichiers aux noms secrets accessibles. Noms d’utilisateur MQTT préservés en CLI.
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:

@@ -49,6 +49,7 @@ shared real shell path; `src/apps/cli/src/approval-prompt.test.ts` covers immedi
 - JSONL(default) writes sessionId/optional seq/shared event in order; pretty writes escaped single-line details. stderr contains scrubbed structured operational errors, console JSON log lines and interactive approval prompts with terminal controls escaped. End/help returns0; operational error/error/aborted/limit returns1.
 - Resume subscribes after the stored sequence and uses explicit invocation model; core preserves the historical transcript. New sessions include creation metadata from sequence0.
 - PathProvider points to preserved supplied data or an owned temporary folder. Node Clock and atomic FileAccess supply settings/workbench operations. MemoryCredentials serializes mutations, clones values and honors abort. ConsoleLogger retains all registered raw/escaped secrets through exit.
+- MQTT credentials from the environment stay in memory. The broker username is a private identifier passed through the approved helper's credential port and excluded from global text masking registration. MQTT passwords and Wokwi tokens register for masking of output and diagnostics. `plugin-credentials-env.test.ts` and the built replay in `tests/integration/cli.test.ts` cover the distinction (REQ-FUNC-f250eee7).
 
 ## Plugin drafts
 

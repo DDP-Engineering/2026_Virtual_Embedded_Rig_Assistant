@@ -123,7 +123,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `lab-validation` | 0.3.1 | real runner and uv provisioning; a real capture of a real circuit open |
 | `microchip-pymcuprog` | 0.2.0 | real pymcuprog: hex conversion, failed ping on a missing port; UPDI board open |
 | `micropython` | 0.2.1 | real mpremote 1.29.0 against a simulated board; real board open |
-| `mqtt-tools` | 0.2.1 | real paho-mqtt 2.1.0 against the local TLS test broker; product broker and device open |
+| `mqtt-tools` | 0.2.2 | real paho-mqtt 2.1.0 against the local TLS test broker; product broker and device open |
 | `platformio` | 0.2.1 | real PlatformIO 6.2.0 builds, host tests, Renode device tests; board upload open |
 | `power-profiler` | 0.2.1 | real pyjoulescope_driver 2.5.5 without a meter; JS220 and board open |
 | `probe-rs` | 0.2.1 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |

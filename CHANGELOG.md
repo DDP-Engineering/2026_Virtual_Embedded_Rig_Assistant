@@ -159,6 +159,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- mqtt-tools 0.2.2: CLI output stays intact with MQTT usernames, and passwords remain masked.
 - Show concrete citation examples to models for local files, indexed documents and VERA help.
 - GitHub release downloads include the Chromium and Whisper archives and licence notices for offline installation.
 - Chat and Files search published documents while indexing continues and recover from concurrent publication.
