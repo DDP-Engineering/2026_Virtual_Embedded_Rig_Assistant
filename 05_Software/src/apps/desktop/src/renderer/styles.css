@@ -1590,17 +1590,27 @@ legend {
   color: var(--primary);
 }
 .tab-search-dialog {
-  width: min(34rem, calc(100% - 2rem));
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+}
+.tab-search-dialog h2,
+.tab-search-dialog input {
+  margin-block-end: 0.65rem;
 }
 .tab-search-dialog input {
   width: 100%;
+}
+.tab-search-dialog > button {
+  display: block;
+  margin-block-start: 0.75rem;
+  margin-inline-start: auto;
 }
 .tab-search-results {
   display: grid;
   gap: 0.25rem;
   list-style: none;
   padding: 0;
-  max-height: 45vh;
+  max-height: 45dvh;
   overflow: auto;
 }
 .tab-search-results button {

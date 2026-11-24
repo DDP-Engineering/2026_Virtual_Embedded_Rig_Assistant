@@ -27,6 +27,38 @@ async function markdownModes(page: Page) {
   await expect(panel(page).locator('[data-hex-byte="0"]')).toBeVisible();
 }
 
+test("tab search opens in the viewport center and keeps its controls visible", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator("[data-workbench-entry] .workbench-group-name").click();
+  await page.locator('[data-toggle="right"]').click();
+  await page.locator("#tab-docs").click();
+  const docs = page.locator('[data-tree-path="docs"]');
+  if ((await docs.getAttribute("aria-expanded")) === "false") await docs.click();
+  await page.locator('[data-tree-path="docs/a.md"]').click();
+  const search = page.getByRole("button", { name: "Search open tabs", exact: true });
+  await search.click();
+  const dialog = page.getByRole("dialog", { name: "Search open tabs" });
+  await expect(dialog.getByRole("searchbox")).toBeFocused();
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 600, height: 360 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const box = await dialog.boundingBox();
+    if (!box) throw new Error("Search dialog is not visible");
+    expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(2);
+    expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
+    expect(box.x).toBeGreaterThan(0);
+    expect(box.y).toBeGreaterThan(0);
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeInViewport();
+  }
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(search).toBeFocused();
+});
+
 test("browser unknown defaults Hex, Markdown switches and remembers its extension on reload", {
   tag: "@parallel-browser",
 }, async ({ page, rendererUrl }) => {

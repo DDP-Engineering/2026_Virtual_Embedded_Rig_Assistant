@@ -179,10 +179,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Reopen, pin and search tabs beside Chat. Export bookmarks and navigate changes by page."
-      ro: "Redeschide, fixează și caută file lângă Chat. Exportă marcaje și răsfoiește modificările."
-      de: "Tabs neben Chat öffnen, anheften und suchen. Lesezeichen exportieren, Änderungen durchblättern."
-      fr: "Rouvrez, épinglez et cherchez les onglets du chat. Exportez les signets et parcourez les modifs."
+      en: Reopen and pin tabs. Search tabs in a centered dialog. Export bookmarks and browse changes.
+      ro: Redeschide și fixează file. Caută într-un dialog centrat. Exportă marcaje și vezi modificările.
+      de: Tabs öffnen, anheften und mittig suchen. Lesezeichen exportieren, Änderungen durchblättern.
+      fr: Rouvrez et épinglez les onglets. Recherche centrée. Exportez les signets et parcourez les modifs.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

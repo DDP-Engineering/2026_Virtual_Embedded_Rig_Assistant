@@ -33,7 +33,7 @@ export function TabSearch({
   return (
     <dialog
       ref={dialog}
-      className="tab-search-dialog"
+      className="pinned-dialog tab-search-dialog"
       data-tab-search
       aria-labelledby={titleId}
       onCancel={(event) => {
