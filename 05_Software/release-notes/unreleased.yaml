@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Grouped models, translated tool labels, readable plans, no empty blocks and clearer citations.
-      ro: Modele grupate, etichete traduse, planuri lizibile, fără blocuri goale și citări mai clare.
-      de: Modellgruppen, übersetzte Tooltexte, lesbare Pläne, keine Leerblöcke und klarere Quellenangaben.
-      fr: Modèles groupés, outils traduits, plans lisibles, sans blocs vides, citations plus claires.
+      en: Grouped models, localized tools, readable plans, clear cites, no gaps. Chat input stays visible.
+      ro: Modele grupate, unelte traduse, planuri lizibile, citări clare, fără goluri. Casetă vizibilă.
+      de: Modellgruppen, Tooltexte, lesbare Pläne, klare Zitate, keine Lücken. Eingabefeld bleibt sichtbar.
+      fr: Modèles groupés, outils traduits, plans lisibles, citations nettes, sans vides et saisie visible.
   - category: fixed
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:

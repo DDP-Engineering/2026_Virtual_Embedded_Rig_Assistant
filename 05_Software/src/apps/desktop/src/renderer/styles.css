@@ -1617,6 +1617,7 @@ legend {
 .document-tab-panel[data-chat-panel] {
   display: flex;
   flex-direction: column;
+  container-type: size;
 }
 .document-tab-panel[data-chat-panel][inert] {
   visibility: hidden;
@@ -2941,7 +2942,7 @@ legend {
   background: transparent;
   padding: 0.4rem 0.5rem;
   min-height: 2.75rem;
-  max-height: min(35vh, 20rem);
+  max-height: min(35cqh, 20rem);
   resize: none;
   overflow-y: auto;
 }

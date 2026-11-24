@@ -282,7 +282,7 @@ it("reports measured work, searchable passages and exceptions for the exact acti
     await Promise.all(
       ["a.txt", "b.txt", "c.txt", "d.txt"].map((name) => writeFile(join(h.folder, "docs", name), "text")),
     );
-    await h.service.updateConfig({ docs: { maxFileMB: 1 } }, config.id);
+    await h.service.updateConfig({ advanced: { textFileMB: 1 } }, config.id);
     await writeFile(join(h.folder, "docs/e.txt"), Buffer.alloc(1024 * 1024 + 1, 65));
     const pass = h.service.reindexDocuments();
     await entered;

@@ -114,6 +114,7 @@ export function fixtures() {
           items,
           turns,
           approvals: [],
+          questions: [],
           changes: [],
           artifacts: [{ artifactId: `art_${tier}_${side}`, name: "capture.md", bytes: 16 }],
           todos: [],

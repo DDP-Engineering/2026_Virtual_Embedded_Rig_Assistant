@@ -8,6 +8,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
+import { setAppAdvanced } from "../hooks/app-advanced.js";
 import i18n from "../i18n.js";
 import { WorkbenchEditor } from "./workbench-editor.js";
 
@@ -25,11 +26,13 @@ let root: Root;
 let container: HTMLDivElement;
 const testSettings = () => defaultSettings("00000000-0000-4000-8000-000000000001");
 beforeEach(() => {
+  setAppAdvanced({ pageSize: 50 });
   vi.mocked(api.getSettings).mockResolvedValue({ settings: testSettings() });
 });
 afterEach(async () => {
   await act(async () => root?.unmount());
   container?.remove();
+  setAppAdvanced(undefined);
   vi.clearAllMocks();
 });
 
@@ -169,6 +172,9 @@ it.each([false, true])(
           acceptsImages: (args as { modelRef: string | null }).modelRef === "custom:local/vision",
         } as never;
       if (channel === "app.settings.get") return (await getSettings()) as never;
+      if (channel === "providers.list")
+        return { openai: { configured: false }, chatgpt: {}, custom: [], secureStorage: true } as never;
+      if (channel === "providers.chatgpt.status") return { connected: false, state: "idle" } as never;
       return (
         ["skills.list", "workbench.additionalFolders.list", "workbench.commandPrefixes.list"].includes(
           channel,

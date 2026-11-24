@@ -95,12 +95,13 @@ test("marked Bypass selectors confirm each change and cancellation retains the p
       return { labelRight: label.right, controlLeft: control.left, top: control.top };
     }),
   );
-  expect(rows).toHaveLength(4);
+  await expect(form.locator(".workbench-question-toggle input")).toBeVisible();
+  expect(rows).toHaveLength(5);
   expect(
     rows.every(({ labelRight, controlLeft }) => labelRight < controlLeft),
     JSON.stringify(rows),
   ).toBe(true);
-  expect(rows.map(({ controlLeft }) => controlLeft)).toEqual(Array(4).fill(rows[0]?.controlLeft));
+  expect(rows.map(({ controlLeft }) => controlLeft)).toEqual(Array(5).fill(rows[0]?.controlLeft));
   expect(rows.every(({ top }, index) => index === 0 || top > (rows[index - 1]?.top ?? 0))).toBe(true);
 });
 

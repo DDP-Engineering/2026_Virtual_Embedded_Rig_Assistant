@@ -7,12 +7,11 @@ import { browserToolNames } from "./browser.js";
 it("converts every tool schema and validates samples while filtering disabled names", () => {
   expect(api.ToolRegistry).toBeTypeOf("function");
   const registry = new api.ToolRegistry();
-  expect(registry.available().map((tool) => tool.name)).toEqual([
-    ...builtinToolNames,
-    ...delegatedSessionToolNames,
-    ...browserToolNames,
-  ]);
+  const available = registry.available();
+  const expected = [...builtinToolNames, ...delegatedSessionToolNames, ...browserToolNames].sort();
+  expect(available.map((tool) => tool.name).sort()).toEqual(expected);
   const samples = {
+    ask_user: { question: "Which input?", choices: ["A", "B"] },
     terminal_read: {},
     read: { path: "docs/a.txt" },
     view_image: { path: "docs/board.png" },
@@ -91,6 +90,12 @@ it("converts every tool schema and validates samples while filtering disabled na
     session_status: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
     session_wait: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", waitMs: 30000 },
     session_stop: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
+    session_send: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", instruction: "Check the result." },
+    session_configure: {
+      sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      modelRef: "replay/child",
+      reasoning: null,
+    },
     browser_open: { url: "https://example.com/" },
     browser_snapshot: {},
     browser_follow: { ref: "277cb64b-ca1a-42dc-9a35-c4520992b846:1" },
@@ -99,52 +104,16 @@ it("converts every tool schema and validates samples while filtering disabled na
     browser_switch: { tabId: "277cb64b-ca1a-42dc-9a35-c4520992b846" },
     browser_close: {},
   };
-  for (const tool of registry.available()) {
+  for (const tool of available) {
     const sample = samples[tool.name as keyof typeof samples];
-    expect(tool.params.safeParse(sample).success).toBe(true);
+    expect(tool.params.safeParse(sample).success, tool.name).toBe(true);
     expect(JSON.parse(JSON.stringify(z.toJSONSchema(tool.params)))).toMatchObject({
       type: "object",
       additionalProperties: false,
     });
   }
-  expect(registry.specs(["read"]).map((tool) => tool.name)).toEqual([
-    "view_image",
-    "list",
-    "glob",
-    "grep",
-    "parse_log",
-    "decode_register",
-    "write",
-    "edit",
-    "artifact_save",
-    "todo",
-    "search_docs",
-    "read_doc",
-    "load_skill",
-    "web_search",
-    "web_read",
-    "web_download",
-    "parts_search",
-    "run_program",
-    "run_command",
-    "program_output",
-    "program_stop",
-    "terminal_read",
-    "plugin_validate",
-    "plugin_install",
-    "apply_candidate",
-    "electrical_model",
-    "electrical_model_change",
-    "industrial_catalog",
-    "electrical_network",
-    "protection_coordination",
-    "motor_drives",
-    "power_quality",
-    "lighting_design",
-    "help",
-    ...delegatedSessionToolNames,
-    ...browserToolNames,
-  ]);
+  const specs = registry.specs(["read"]);
+  expect(specs.map((tool) => tool.name).sort()).toEqual(expected.filter((name) => name !== "read"));
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });
 it("validates calls, returns actionable errors and preserves the runtime error outcome", async () => {

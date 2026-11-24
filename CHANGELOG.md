@@ -164,6 +164,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Keep the conversation and composer visible when the update banner takes space in a compact window.
 - Keep Windows portable session alerts in VERA without registering with the Windows shell.
 - Write the VERA product name into unsigned Windows packages.
 - mqtt-tools 0.2.2: CLI output stays intact with MQTT usernames, and passwords remain masked.

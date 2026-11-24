@@ -37,6 +37,21 @@ test("native tool checkbox configuration persists, cancels drafts and translates
   try {
     await installNetworkGuard(app);
     let page = await app.firstWindow();
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        advanced: { pageSize: 50 },
+      }),
+    );
+    await page.evaluate(
+      async (paths) => {
+        const api = (window as unknown as { vera: VeraBridge }).vera;
+        for (const path of paths) {
+          const { sha256 } = await api.invoke("plugins.review", { path });
+          await api.invoke("plugins.install", { path, sha256 });
+        }
+      },
+      [resolve("plugins/electrical-network"), resolve("plugins/kicad-layout")],
+    );
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Tool selection");
     await page.locator('[data-action="choose-create"]').click();
@@ -92,9 +107,6 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await expect(page.locator("[data-shared-capabilities]")).toBeVisible();
     await expect(page.locator("[data-shared-dependency]")).toContainText("Unavailable");
     await page.locator('[data-tool-toggle="electrical_model_change"]').uncheck();
-    const missing = page.locator("[data-missing-capabilities]");
-    await missing.locator("summary").focus();
-    await page.keyboard.press("Enter");
     const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
     await candidate.focus();
     await page.keyboard.press("Space");
@@ -150,7 +162,6 @@ test("native tool checkbox configuration persists, cancels drafts and translates
         await expect(page.locator("[data-project-save]")).toBeVisible();
         await page.locator('[data-project-section="plugins"]').click();
         await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
-        await page.locator("[data-missing-capabilities] > summary").click();
         const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
         await candidate.scrollIntoViewIfNeeded();
         await candidate.focus();
@@ -184,7 +195,6 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-project-section="plugins"]').click();
     await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="electrical_model_change"]').check();
-    await page.locator("[data-missing-capabilities] > summary").click();
     await expect(page.locator('[data-tool-toggle="apply_candidate"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="apply_candidate"]').check();
     await page.locator("[data-project-save]").click();
