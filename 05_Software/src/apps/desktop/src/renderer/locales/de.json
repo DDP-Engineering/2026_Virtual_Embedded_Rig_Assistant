@@ -878,6 +878,7 @@
     "moveLeft": "Nach links verschieben",
     "moveRight": "Nach rechts verschieben",
     "tabActions": "Aktionen für {{name}}",
+    "goToPage": "Gehe zu Seite",
     "goToLine": "Gehe zu Zeile",
     "matchOf": "{{current}} von {{total}}",
     "pageOf": "{{page}} / {{count}}",

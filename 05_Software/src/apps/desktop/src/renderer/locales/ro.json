@@ -878,6 +878,7 @@
     "moveLeft": "Mută la stânga",
     "moveRight": "Mută la dreapta",
     "tabActions": "Acțiuni pentru {{name}}",
+    "goToPage": "Mergi la pagina",
     "goToLine": "Mergi la linia",
     "matchOf": "{{current}} din {{total}}",
     "pageOf": "{{page}} / {{count}}",

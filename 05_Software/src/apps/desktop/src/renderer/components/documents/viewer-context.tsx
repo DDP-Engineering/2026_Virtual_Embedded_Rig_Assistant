@@ -1028,6 +1028,7 @@ export function DocumentBody({
         page={place && "page" in place ? place.page : undefined}
         onPage={(page) => onPlace?.({ page })}
         findRequest={findRequest}
+        gotoRequest={gotoRequest}
         zoomRequest={zoomRequest}
       />
     );

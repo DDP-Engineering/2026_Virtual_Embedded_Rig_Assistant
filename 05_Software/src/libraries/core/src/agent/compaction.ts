@@ -312,22 +312,29 @@ export class ContextCompactor {
     if (response?.stopReason !== "stop" || response.content.some((block) => block.type === "toolCall"))
       return finish(base, "failed");
     const text = response.content.map((block) => (block.type === "text" ? block.text : "")).join("");
+    // Smaller models wrap the object in a sentence, leave a list out or put objects in it. What matters
+    // is the summary text; a failed parse would repeat the whole summary request on every model call.
+    const body = withoutFence(text);
+    const object = body.slice(body.indexOf("{"), body.lastIndexOf("}") + 1);
     let parsed: unknown;
     try {
-      parsed = JSON.parse(withoutFence(text));
+      parsed = JSON.parse(body);
     } catch {
-      return finish(base, "failed");
+      try {
+        parsed = JSON.parse(object);
+      } catch {
+        return finish(base, "failed");
+      }
     }
     if (!parsed || typeof parsed !== "object") return finish(base, "failed");
     const summary = parsed as Record<string, unknown>;
-    if (
-      typeof summary.summary !== "string" ||
-      !summary.summary.trim() ||
-      !Array.isArray(summary.decisions) ||
-      !Array.isArray(summary.outstandingWork) ||
-      ![...summary.decisions, ...summary.outstandingWork].every((item) => typeof item === "string")
-    )
-      return finish(base, "failed");
+    if (typeof summary.summary !== "string" || !summary.summary.trim()) return finish(base, "failed");
+    const strings = (value: unknown): string[] =>
+      (Array.isArray(value) ? value : value === undefined || value === null ? [] : [value]).map((item) =>
+        typeof item === "string" ? item : JSON.stringify(item),
+      );
+    summary.decisions = strings(summary.decisions);
+    summary.outstandingWork = strings(summary.outstandingWork);
     const refs = sourceRefs(candidate.history, new Set(cached?.refs));
     // Tool result JSON can contain structured refs without citation markup.
     for (const message of candidate.history)

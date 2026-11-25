@@ -75,6 +75,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Offer Compact now on a context-limit error in chat.
 - Step through transcript search matches with Enter and Shift+Enter.
 - Keep Save off in Edit workbench while chunk size, overlap, results per search or the default model is invalid.
+- Go to a page in a PDF with Ctrl+G or the document menu, and start Find at the page in view.
+- Accept a compaction summary with text around its JSON object, a missing list or non-text list items.
 
 ## [0.3.0] - 2026-11-25
 

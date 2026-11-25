@@ -176,6 +176,7 @@ export default function PdfViewer({
   page: kept,
   onPage,
   findRequest = 0,
+  gotoRequest = 0,
   zoomRequest,
 }: {
   content: Extract<ViewerContent, { kind: "pdf" }>;
@@ -183,6 +184,8 @@ export default function PdfViewer({
   page?: number | undefined;
   onPage?: ((page: number) => void) | undefined;
   findRequest?: number | undefined;
+  /** Grows when the tab asks for the page field (Ctrl+G). */
+  gotoRequest?: number | undefined;
   zoomRequest?: ZoomRequest | undefined;
 }) {
   const { t } = useTranslation();
@@ -357,6 +360,11 @@ export default function PdfViewer({
   useEffect(() => {
     if (findRequest) setFinding(true);
   }, [findRequest]);
+  const [going, setGoing] = useState(false),
+    [goto, setGoto] = useState("");
+  useEffect(() => {
+    if (gotoRequest) setGoing(true);
+  }, [gotoRequest]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: each request id zooms once.
   useEffect(() => {
     if (zoomRequest) stepRef.current(zoomRequest.step);
@@ -400,9 +408,19 @@ export default function PdfViewer({
           }
           change={(value) => {
             setQuery(value);
-            setMatch(0);
             const next = normalize(value);
-            const hit = next ? content.pages.findIndex((text) => normalize(text).includes(next)) : -1;
+            // The first match at or after the page in view, so a search does not jump back to page 1.
+            const has = (text: string) => normalize(text).includes(next);
+            const ahead = next ? content.pages.findIndex((text, i) => i >= current - 1 && has(text)) : -1;
+            const hit = ahead >= 0 || !next ? ahead : content.pages.findIndex(has);
+            let before = 0;
+            if (hit > 0)
+              for (const text of content.pages.slice(0, hit)) {
+                const page = normalize(text);
+                for (let at = page.indexOf(next); at >= 0; at = page.indexOf(next, at + next.length))
+                  before++;
+              }
+            setMatch(before);
             if (hit >= 0) show(hit + 1);
           }}
           step={(forward) => {
@@ -413,6 +431,24 @@ export default function PdfViewer({
           }}
           close={() => {
             setFinding(false);
+            scroll.current?.focus();
+          }}
+        />
+      )}
+      {going && (
+        <FindBar
+          numeric
+          label={t("documents.goToPage")}
+          value={goto}
+          status={t("documents.pageOf", { page: current, count })}
+          change={(value) => {
+            setGoto(value);
+            const page = Number.parseInt(value, 10);
+            if (page >= 1) show(page);
+          }}
+          step={(forward) => show(current + (forward ? 1 : -1))}
+          close={() => {
+            setGoing(false);
             scroll.current?.focus();
           }}
         />

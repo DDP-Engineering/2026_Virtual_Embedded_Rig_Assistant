@@ -252,6 +252,7 @@ it("offers only Copy for other documents and zooms a PDF from its menu like the 
   expect(h.items().map((item) => [item.label, item.shown])).toEqual([
     ["Copy", "Ctrl+C"],
     ["Find text", "Ctrl+F"],
+    ["Go to page", "Ctrl+G"],
     ["Zoom in", "Ctrl+="],
     ["Zoom out", "Ctrl+-"],
     ["Reset zoom", "Ctrl+0"],

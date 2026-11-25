@@ -605,6 +605,12 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
       return [
         copy,
         findItem,
+        {
+          action: "go-to-page",
+          label: t("documents.goToPage"),
+          keys: "Control+G",
+          run: () => setGotoRequest((value) => value + 1),
+        },
         { action: "zoom-in", label: t("documents.zoomIn"), keys: "Control+=", run: zoom(1) },
         { action: "zoom-out", label: t("documents.zoomOut"), keys: "Control+-", run: zoom(-1) },
         { action: "zoom-reset", label: t("documents.zoomReset"), keys: "Control+0", run: zoom(0) },
@@ -657,7 +663,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
             event.stopPropagation();
             find(event.currentTarget);
           }
-          if (mod && key === "g" && !tab.imageFile && content?.kind === "text") {
+          if (mod && key === "g" && !tab.imageFile && (content?.kind === "text" || content?.kind === "pdf")) {
             event.preventDefault();
             event.stopPropagation();
             setGotoRequest((value) => value + 1);
