@@ -2821,7 +2821,8 @@ legend {
   min-height: 0;
   width: 100%;
   margin-inline: auto;
-  overflow: hidden;
+  /* Clip, never scroll: focusing an edge rail marker must not shift the frame above the composer. */
+  overflow: clip;
 }
 .transcript-frame > .transcript {
   height: 100%;

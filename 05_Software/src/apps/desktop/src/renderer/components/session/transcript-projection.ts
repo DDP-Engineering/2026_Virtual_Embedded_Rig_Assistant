@@ -70,13 +70,21 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
       !item.citations.length
     )
       continue;
+    // Verbose keeps every call as its own row. A device-write or irreversible plugin program the mode
+    // approved stays visible; shell commands always carry device-write risk and still group.
+    const decided = item.kind === "tool" ? externalApprovals.get(item.id) : undefined;
     const external =
+      detail !== "verbose" &&
       item.kind === "tool" &&
       item.status === "ok" &&
       (item.name === "run_program" || item.name === "run_command") &&
       !questions.has(item.id) &&
-      (externalApprovals.get(item.id)?.length ?? 0) > 0 &&
-      externalApprovals.get(item.id)?.every((approval) => approval.decision !== null);
+      !!decided?.length &&
+      decided.every(
+        (approval) =>
+          approval.decision !== null &&
+          (approval.tool !== "run_program" || approval.by !== "mode" || routineByMode(approval)),
+      );
     if (external && item.kind === "tool") {
       group = undefined;
       if (externalGroup && item.turnId !== null && externalGroup.tools[0]?.turnId === item.turnId)

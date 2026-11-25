@@ -5,6 +5,7 @@ import {
   programCommandLine,
   type SessionState,
 } from "@vera/shared";
+import type { TFunction } from "i18next";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -98,6 +99,15 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
   );
 }
 
+type Approval = SessionState["approvals"][number];
+function outcomeText(t: TFunction, decision: Approval["decision"]): string {
+  return decision === "approved"
+    ? t("approval.approved")
+    : decision === "denied"
+      ? t("approval.denied")
+      : t("approval.aborted");
+}
+
 export function CompletedProgramDetails({ approval }: { approval: SessionState["approvals"][number] }) {
   const { t } = useTranslation();
   const program = approval.program;
@@ -124,11 +134,7 @@ export function CompletedProgramDetails({ approval }: { approval: SessionState["
           <ProgramDetails program={program} />
         ))}
       <p role="status">
-        {approval.decision === "approved"
-          ? t("approval.approved")
-          : approval.decision === "denied"
-            ? t("approval.denied")
-            : t("approval.aborted")}
+        {outcomeText(t, approval.decision)}
         {" · "}
         {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
       </p>
@@ -184,16 +190,11 @@ export function ApprovalCard({
     approval.decision &&
     (approval.tool === "run_program" || approval.tool === "run_command")
   ) {
-    const outcome =
-      approval.decision === "approved"
-        ? t("approval.approved")
-        : approval.decision === "denied"
-          ? t("approval.denied")
-          : t("approval.aborted");
+    const subject = approval.tool === "run_command" ? program?.args[0] : program?.program;
     return (
       <Disclosure
         className="completed-approval"
-        title={`${approval.tool} · ${program?.program ?? approval.path} · ${outcome}`}
+        title={`${approval.tool} · ${subject ?? approval.path} · ${outcomeText(t, approval.decision)}`}
       >
         <ApprovalCard approval={approval} sessionId={sessionId} disabled={disabled} />
       </Disclosure>
@@ -202,11 +203,7 @@ export function ApprovalCard({
   if (approval.tool === "web_download" && approval.decision)
     return (
       <p className="muted" data-approval-card={approval.approvalId}>
-        {approval.decision === "approved"
-          ? t("approval.approved")
-          : approval.decision === "denied"
-            ? t("approval.denied")
-            : t("approval.aborted")}
+        {outcomeText(t, approval.decision)}
         {" · "}
         {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
       </p>
@@ -312,12 +309,8 @@ export function ApprovalCard({
       {error !== undefined && <ErrorMessage error={error} />}
       {approval.decision ? (
         <p role="status">
-          {approval.decision === "approved"
-            ? t("approval.approved")
-            : approval.decision === "denied"
-              ? t("approval.denied")
-              : t("approval.aborted")}{" "}
-          · {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
+          {outcomeText(t, approval.decision)} ·{" "}
+          {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
         </p>
       ) : (
         <>

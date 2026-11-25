@@ -1891,8 +1891,9 @@ export class SessionService {
       model,
       !history.some((message) => message.role === "user"),
     );
-    let initialReasoning =
-      staged?.reasoning !== undefined ? staged.reasoning : delegated ? this.savedReasoning(id) : undefined;
+    // A delegated turn keeps the reasoning saved at admission; an explicit launch value must be supported.
+    const savedInitial = staged?.reasoning === undefined && delegated;
+    let initialReasoning = savedInitial ? this.savedReasoning(id) : staged?.reasoning;
     const self = this;
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
@@ -1941,8 +1942,11 @@ export class SessionService {
           }
           request.signal.throwIfAborted();
           if (initialReasoning && !capabilities.reasoningOptions?.includes(initialReasoning)) {
-            yield { type: "error", error: veraError("INVALID"), aborted: false };
-            return;
+            if (!savedInitial) {
+              yield { type: "error", error: veraError("INVALID"), aborted: false };
+              return;
+            }
+            initialReasoning = null;
           }
           const readOnly = mode() === "read-only";
           const tools = request.tools.filter((tool) => {

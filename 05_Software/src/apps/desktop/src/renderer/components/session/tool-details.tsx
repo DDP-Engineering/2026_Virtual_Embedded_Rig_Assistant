@@ -203,6 +203,8 @@ export const ToolDetails = memo(function ToolDetails({
             string(result?.text) ??
             string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
+  // A program approval shows the exact command, folder and shell, so the raw arguments are not repeated.
+  const programApproval = approvals?.some((approval) => approval.program) ?? false;
   return (
     <Disclosure
       tool={item.name}
@@ -226,10 +228,10 @@ export const ToolDetails = memo(function ToolDetails({
     >
       <div className="tool-activity-body">
         {plan?.success && <PlanItems items={plan.data} />}
-        {!approvals?.some((approval) => approval.program) && typeof args.command === "string" && (
+        {!programApproval && typeof args.command === "string" && (
           <pre className="tool-command">{args.command}</pre>
         )}
-        {!approvals?.some((approval) => approval.program) && typeof args.cwd === "string" && (
+        {!programApproval && typeof args.cwd === "string" && (
           <p>{t("toolActivity.folder", { path: args.cwd })}</p>
         )}
         {approvals?.map((approval) => (

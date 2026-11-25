@@ -199,7 +199,7 @@ it.each([
   );
   const disclosure = container.querySelector<HTMLButtonElement>(".completed-approval button");
   expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
-  expect(disclosure?.textContent).toContain("shell");
+  expect(disclosure?.textContent).toContain(tool === "run_command" ? "echo hello" : "shell");
   await act(async () => disclosure?.click());
   expect(disclosure?.getAttribute("aria-expanded")).toBe("true");
   expect(container.textContent).toContain("/repo");

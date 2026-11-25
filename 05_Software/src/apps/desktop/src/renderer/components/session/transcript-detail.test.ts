@@ -164,6 +164,8 @@ it("groups consecutive completed external calls without hiding pending approvals
     container.querySelectorAll("[data-completed-approval-details] [data-approval-command]"),
   ).toHaveLength(1);
   expect(container.querySelector("[data-external-tool-group] .tool-command")).toBeNull();
+  await render(state, "verbose");
+  expect(container.querySelector("[data-external-tool-group]")).toBeNull();
 });
 
 it("treats calls the mode approved automatically as routine, but keeps user decisions visible", async () => {
@@ -193,6 +195,8 @@ it("treats calls the mode approved automatically as routine, but keeps user deci
 });
 it("keeps an irreversible program approved by the mode visible at every detail level", async () => {
   const state = fixture();
+  // A completed run_program call would otherwise join a collapsed external group.
+  state.items = state.items.map((item) => (item.id === "one" ? { ...item, name: "run_program" } : item));
   state.approvals.push({
     approvalId: "grant-one",
     callId: "one",
