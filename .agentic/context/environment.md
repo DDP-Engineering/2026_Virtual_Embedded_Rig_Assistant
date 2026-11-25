@@ -99,6 +99,7 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 - Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. The native Git tab scenario uses bundled replay to check a scrollable Chat transcript alongside TXT/PDF, comparison and history tabs. See [Files Git status](../knowledge/files-git-status.md).
 - Typed Wireshark replay uses an externally discovered TShark and local fixtures. Set
   `VERA_REQUIRE_TSHARK=1` for acceptance to make a missing executable fail the focused check.
+- `wireshark-frame.spec.ts` uses `VERA_WIRESHARK_ACCEPTANCE` with the absolute native Windows Wireshark installation directory. It opens cited saved frames in Wireshark and reads its packet details and display filter through Windows UI Automation.
 
 ### Commands
 

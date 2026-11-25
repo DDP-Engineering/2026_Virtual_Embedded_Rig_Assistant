@@ -1,5 +1,11 @@
 # Chat și sesiuni
 
+## Deschide un cadru citat în Wireshark
+
+În răspunsul agentului, alege **Deschide cadrul … în Wireshark**, apoi **Deschide în Wireshark**. Instalează local Wireshark Desktop și TShark. VERA verifică fișierul PCAP sau PCAPNG citat și deschide o copie verificată la numărul cadrului din acel fișier, inclusiv pentru o captură derivată.
+
+Lasă câmpul **Filtru de afișare** gol pentru a folosi filtrul citării, dacă există. Poți introduce alt filtru de afișare offline. Dacă filtrul ascunde cadrul citat, VERA îl include în filtru și te anunță. Dacă fișierul s-a schimbat sau nu este disponibil, inspectează-l din nou pentru a obține o citare nouă.
+
 O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp. Cel mult trei ture rulează simultan în toate workbench-urile deschise, sau câte sunt setate la **Ture simultane** în [Setări avansate](advanced-settings.md); un mesaj trimis la limită rămâne netrimis în caseta de mesaj până se termină o tură.
 
 ## Pornește și gestionează sesiuni

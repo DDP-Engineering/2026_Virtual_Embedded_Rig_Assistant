@@ -65,6 +65,7 @@ const details = [
 ];
 const selectable = new Set(details);
 const intrinsic = ["frame.number", "frame.interface_id", "frame.time_epoch", "frame.len", "frame.cap_len"];
+export const emptyPcap = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
 const filterFields = new Set([
   ...details,
   ...intrinsic,
@@ -146,7 +147,7 @@ export function selectedFields(fields: string[] = defaultFields) {
   return [...new Set(fields)];
 }
 
-function profileEnvironment(folder: string) {
+export function captureProfileEnvironment(folder: string) {
   return {
     WIRESHARK_CONFIG_DIR: folder,
     WIRESHARK_DATA_DIR: folder,
@@ -166,6 +167,13 @@ function profileEnvironment(folder: string) {
   };
 }
 
+export function captureDecodeArgs(decodeAs: CaptureAnalysis["decodeAs"]) {
+  return decodeAs.flatMap(({ transport, port, protocol }) => [
+    "-d",
+    `${transport}.port==${port},${protocol}`,
+  ]);
+}
+
 export class OfflineTshark {
   constructor(
     private readonly runner: ProgramRunner,
@@ -179,7 +187,7 @@ export class OfflineTshark {
       executable: this.executable,
       args: phase === "discovery" ? args : ["-n", ...args],
       cwd: this.folder,
-      env: profileEnvironment(this.folder),
+      env: captureProfileEnvironment(this.folder),
       maxBytes,
       signal: this.signal,
     });
@@ -225,10 +233,7 @@ export class OfflineTshark {
       path,
       "-c",
       String(maxFrames),
-      ...analysis.decodeAs.flatMap(({ transport, port, protocol }) => [
-        "-d",
-        `${transport}.port==${port},${protocol}`,
-      ]),
+      ...captureDecodeArgs(analysis.decodeAs),
       ...(filter ? ["-Y", filter] : []),
     ];
   }

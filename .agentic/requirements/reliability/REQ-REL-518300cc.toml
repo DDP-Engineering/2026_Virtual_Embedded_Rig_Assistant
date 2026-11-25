@@ -1,0 +1,17 @@
+schema = 1
+id = "REQ-REL-518300cc"
+title = "Diagnose missing or stale capture files"
+status = "active"
+requirement = "If a cited capture file is missing, inaccessible, or changed, VERA shall diagnose the unavailable or stale capture without launching it."
+verification = "Delete or replace the issued capture and verify the corresponding diagnostic and absence of a new native window."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.ts",
+  "05_Software/src/libraries/core/src/wireshark/storage.ts",
+  "05_Software/src/apps/desktop/src/main/wireshark.ts",
+]
+linked_tests = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.test.ts",
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

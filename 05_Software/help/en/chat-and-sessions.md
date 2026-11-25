@@ -1,5 +1,11 @@
 # Chat and sessions
 
+## Open a cited frame in Wireshark
+
+Select **Open frame … in Wireshark** in the agent’s reply, then select **Open in Wireshark**. Install Wireshark Desktop and TShark locally. VERA checks the cited saved PCAP or PCAPNG and opens a verified copy at the packet number in that file, including for a derived capture.
+
+Leave **Display filter** empty to use the filter from the citation, if there is one. You can enter another offline display filter. If that filter hides the cited frame, VERA adds the frame to the filter and tells you. If the capture changed or is unavailable, inspect it again to get a new citation.
+
 A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. At most three turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
 
 ## Start and manage sessions

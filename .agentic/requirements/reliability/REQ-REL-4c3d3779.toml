@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-REL-4c3d3779"
+title = "Diagnose unavailable Wireshark Desktop"
+status = "active"
+requirement = "If the native Wireshark executable cannot be discovered, VERA shall report that Wireshark Desktop is unavailable."
+verification = "Run discovery with no eligible executable and observe its distinct localized diagnostic."
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/wireshark.ts",
+]
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/wireshark.test.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

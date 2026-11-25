@@ -1,6 +1,14 @@
 import { expect, it } from "vitest";
 import * as api from "./index.js";
 
+it("recognizes a bounded opaque capture citation", () => {
+  const identity = "a".repeat(64);
+  const ref = `capture:${identity}#f=17`;
+  expect(api.parseRef(ref)).toEqual({ kind: "capture", identity, frame: 17 });
+  expect(api.parseRef(`capture:${identity}#f=0`)).toBeUndefined();
+  expect(api.parseRef(`capture:${identity}#f=4294967296`)).toBeUndefined();
+});
+
 // REQ-FUNC-7cd31fe3
 it("round trips every reference kind and labels its exact locator", () => {
   expect(api.parseRef).toBeTypeOf("function");

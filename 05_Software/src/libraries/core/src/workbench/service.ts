@@ -538,7 +538,7 @@ export class WorkbenchService {
           const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
           return async (hit, searchSignal) => {
             const ref = parseRef(hit.ref);
-            if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) return false;
+            if (!ref || !("path" in ref) || ref.path !== hit.path) return false;
             if (!checked.has(hit.path))
               checked.set(hit.path, await viewer.currentBounds(hit.path, searchSignal));
             const bounds = checked.get(hit.path);

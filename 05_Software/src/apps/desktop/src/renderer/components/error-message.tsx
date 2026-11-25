@@ -18,6 +18,15 @@ export function ErrorMessage({ error }: { error: unknown }) {
     ...(parsed.success ? (parsed.data.params ?? {}) : {}),
   };
   const messages: Record<string, string> = {
+    "wireshark.invalidCitation": t("wireshark.invalidCitation"),
+    "wireshark.fileUnavailable": t("wireshark.fileUnavailable"),
+    "wireshark.staleCapture": t("wireshark.staleCapture"),
+    "wireshark.invalidFilter": t("wireshark.invalidFilter"),
+    "wireshark.desktopUnavailable": t("wireshark.desktopUnavailable"),
+    "wireshark.tsharkUnavailable": t("wireshark.tsharkUnavailable"),
+    "wireshark.launchFailed": t("wireshark.launchFailed"),
+    "wireshark.timedOut": t("wireshark.timedOut"),
+    "wireshark.verificationFailed": t("wireshark.verificationFailed"),
     "chatgpt.timeout": t("chatgpt.timeout"),
     "chatgpt.portBusy": t("chatgpt.portBusy"),
     "chatgpt.loginFailed": t("chatgpt.loginFailed"),

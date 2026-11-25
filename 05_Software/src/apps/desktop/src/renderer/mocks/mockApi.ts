@@ -1451,6 +1451,8 @@ What this plugin does.
         };
         break;
       }
+      case "wireshark.openFrame":
+        throw { ...veraError("NOT_FOUND"), messageKey: "wireshark.desktopUnavailable" };
       case "docs.open": {
         const request = channels["docs.open"].request.parse(input.data);
         if (request.workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");

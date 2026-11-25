@@ -161,6 +161,7 @@ import {
   webAccessTestResultSchema,
   webAccessTestSchema,
 } from "./web-access.js";
+import { captureCitationRefSchema, captureDisplayFilterSchema } from "./wireshark.js";
 import {
   configSnapshotSchema,
   documentScanSchema,
@@ -861,6 +862,16 @@ export const channels = {
       field: z.enum(["preview", "args", "diff"]),
     }),
     z.strictObject({ text: z.string() }),
+  ),
+  "wireshark.openFrame": defineChannel(
+    "wireshark.openFrame",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      messageId: z.string().min(1).max(200),
+      ref: captureCitationRefSchema,
+      filter: captureDisplayFilterSchema.optional(),
+    }),
+    z.strictObject({ filterAdjusted: z.boolean() }),
   ),
   "session.question.answer": defineChannel(
     "session.question.answer",

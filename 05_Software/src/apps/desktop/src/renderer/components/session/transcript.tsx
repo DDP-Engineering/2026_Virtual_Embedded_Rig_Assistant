@@ -439,7 +439,14 @@ const MessageRow = memo(function MessageRow({
               <Markdown key={String(index)} text={block} assistantActions streaming />
             ))
           ) : (
-            <Markdown text={item.text} citations={item.citations} onCitation={onCitation} assistantActions />
+            <Markdown
+              text={item.text}
+              citations={item.citations}
+              onCitation={onCitation}
+              captureSessionId={sessionId}
+              captureMessageId={id}
+              assistantActions
+            />
           )}
           {item.streaming && <span role="status">{t("chat.streaming")}</span>}
         </ExternalSourceScope>

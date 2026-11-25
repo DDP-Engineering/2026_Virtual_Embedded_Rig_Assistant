@@ -1,0 +1,17 @@
+schema = 1
+id = "REQ-PLAT-0513a15b"
+title = "Discover native Wireshark Desktop"
+status = "active"
+requirement = "When opening a verified cited capture on Windows or Ubuntu, VERA shall discover the native Wireshark executable and pass each validated launch argument separately."
+verification = "Exercise native executable discovery and assert distinct capture, frame and filter argv. Observe native Windows selection for a path containing spaces and Unicode, with Ubuntu acceptance at the final cycle gate."
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/wireshark.ts",
+  "05_Software/src/libraries/core/src/wireshark/desktop.ts",
+  "05_Software/src/libraries/core/src/index.ts",
+]
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/wireshark.test.ts",
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

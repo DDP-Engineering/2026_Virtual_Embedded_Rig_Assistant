@@ -1,6 +1,7 @@
 import type { Message } from "@earendil-works/pi-ai";
 import { decodeRegisterResultSchema, parseRef } from "@vera/shared";
 import { readWindow } from "../tools/read-window.js";
+import { issuedCaptureCitations } from "../wireshark/citations.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
 function refs(value: unknown, out: Set<string>): void {
@@ -67,7 +68,7 @@ export async function validateCitations(
             /* plain text issues no refs */
           }
   for (const message of messages)
-    if (message.role === "toolResult" && !message.isError)
+    if (message.role === "toolResult" && !message.isError && message.toolName !== "wireshark_capture")
       for (const block of message.content)
         if (block.type === "text") {
           try {
@@ -81,7 +82,12 @@ export async function validateCitations(
             /* refs originate structured tool fields */
           }
         }
-  const found = [...new Set([...text.matchAll(/\[\[([^\]]+)\]\]/g)].map((m) => m[1]!))];
+  const found = [
+    ...new Set(Array.from(text.matchAll(/\[\[([^\]]+)\]\]/g), (match) => match[0].slice(2, -2))),
+  ];
+  const captures = found.some((ref) => ref.startsWith("capture:"))
+    ? issuedCaptureCitations(messages)
+    : undefined;
   let guard: PathGuard;
   try {
     guard = await PathGuard.create(root);
@@ -92,7 +98,8 @@ export async function validateCitations(
     found.map(async (ref) => {
       const parsed = parseRef(ref);
       let valid = false;
-      if (parsed && withinIssued(ref, issued))
+      if (parsed?.kind === "capture") valid = captures?.has(ref) ?? false;
+      else if (parsed && withinIssued(ref, issued))
         try {
           if (parsed.kind === "artifact") valid = !!artifactExists?.(parsed.name);
           // Help pages ship with the application; the help tool issued this ref.

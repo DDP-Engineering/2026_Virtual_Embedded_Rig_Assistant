@@ -93,7 +93,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures. Browser-test triggers in mocks/sessions.ts: a message `seed N messages` appends N seeded question/answer pairs; `stream slowly…` streams a 40-line reply over about 6 s.
 - CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
   heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
-  Unverified and malformed refs render inert warning chips; verified chips open the scoped document viewer through session/message-bound host revalidation.
+  Unverified and malformed refs render inert warning chips. Verified document chips open the scoped viewer through session/message-bound host revalidation. Verified packet chips open the localized Wireshark dialog with an optional display filter, native launch diagnostics and a status when VERA adds the cited frame to a hiding filter.
 
 - Queued user rows show a localized pending status until message.delivered clears the marker; the event-backed projection retains pending rows after interruption and restart.
 
@@ -166,7 +166,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 |---|---|---|
 | Navigation/CRUD/read-only | App, session-list | workspace.test.ts |
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
-| Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
+| Markdown/citations/tools | markdown, transcript, capture-citation, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts; tests/e2e/wireshark-frame.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
 | Sent image previews, viewer activation and missing paths | transcript-images; main/display-documents | transcript-images.spec.ts; display-documents.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |

@@ -170,6 +170,7 @@ const workbenchHandlers = {
   "session.model.set": unused,
   "session.reasoning.get": unused,
   "session.item.detail": unused,
+  "wireshark.openFrame": unused,
   "session.reasoning.set": unused,
   "session.mode.set": unused,
   "app.settings.delegatedFullAccess.set": unused,

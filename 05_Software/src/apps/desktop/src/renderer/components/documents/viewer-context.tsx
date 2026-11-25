@@ -147,8 +147,8 @@ export function documentKey(target: ViewerTarget): string {
   if ("textPath" in target) return `file:${target.textPath}`;
   if ("path" in target) return `file:${target.path}`;
   const parsed = parseRef(target.ref);
-  if (!parsed || parsed.kind === "help") return `ref:${target.ref}`;
-  return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${sourcePath(parsed.path)}`;
+  if (parsed?.kind === "artifact") return `artifact:${parsed.name}`;
+  return parsed && "path" in parsed ? `file:${sourcePath(parsed.path)}` : `ref:${target.ref}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
   if ("sessionChange" in target) {
@@ -165,10 +165,10 @@ function describe(target: ViewerTarget, download: string): { label: string; titl
     return { label: fileName(displayName(target.textPath)), title: displayName(target.textPath) };
   if ("path" in target) return { label: fileName(displayName(target.path)), title: displayName(target.path) };
   const parsed = parseRef(target.ref);
-  if (!parsed || parsed.kind === "help") return { label: referenceLabel(target.ref), title: target.ref };
-  return parsed.kind === "artifact"
-    ? { label: parsed.name, title: parsed.name }
-    : { label: fileName(displayName(sourcePath(parsed.path))), title: displayName(sourcePath(parsed.path)) };
+  if (parsed?.kind === "artifact") return { label: parsed.name, title: parsed.name };
+  if (!parsed || !("path" in parsed)) return { label: referenceLabel(target.ref), title: target.ref };
+  const path = displayName(sourcePath(parsed.path));
+  return { label: fileName(path), title: path };
 }
 
 interface TabsState {

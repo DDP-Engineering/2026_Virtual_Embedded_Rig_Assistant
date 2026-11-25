@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: new
+    topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
+    text:
+      en: Open a cited packet from a saved capture in Wireshark Desktop.
+      ro: Deschide în Wireshark Desktop un cadru citat dintr-o captură salvată.
+      de: Ein zitiertes Paket aus einem gespeicherten Mitschnitt in Wireshark Desktop öffnen.
+      fr: Ouvrez une trame citée d’une capture enregistrée dans Wireshark Desktop.
+  - category: new
     topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
     text:
       en: Inspect saved captures offline with Wireshark, using filters and frame references.

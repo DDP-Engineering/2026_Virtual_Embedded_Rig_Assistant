@@ -16,12 +16,12 @@ import type { ProgramHost } from "../plugins/program-tools.js";
 import type { LoadedPlugin } from "../plugins/store.js";
 import type { ToolContext } from "../tools/context.js";
 import { toolLimit } from "../tools/context.js";
-import { CaptureError, OfflineTshark, selectedFields } from "./native.js";
+import { captureCitation } from "./citations.js";
+import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { publishCapture, snapshotCapture } from "./storage.js";
 
 type Query = Extract<WiresharkCaptureArgs, { operation: "query" }>;
 const installations = new WeakMap<ProgramHost["runner"], number>();
-const emptyPcap = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
 
 export function officialCapturePlugin({ manifest, record }: Pick<LoadedPlugin, "manifest" | "record">) {
   return manifest.id === wiresharkPluginId && record.tier === "official";
@@ -183,7 +183,7 @@ async function captureOperation(
       capture,
       analysis,
       fields,
-      packet,
+      packet: { ...packet, ref: captureCitation(capture, packet.frame, analysis) },
       coverage: {
         ...coverage,
         matchedInScope: 1,
@@ -213,13 +213,9 @@ async function captureOperation(
       "The cursor is outside the matching range. Start at the first page.",
     );
   const remaining = inScope.filter((number) => number > (args.cursor?.afterFrame ?? 0));
-  const packets = await native.packets(
-    snapshot,
-    analysis,
-    remaining.slice(0, args.limit ?? 12),
-    fields,
-    capture.sha256,
-  );
+  const packets = (
+    await native.packets(snapshot, analysis, remaining.slice(0, args.limit ?? 12), fields, capture.sha256)
+  ).map((packet) => ({ ...packet, ref: captureCitation(capture, packet.frame, analysis) }));
   return packetPage(
     args,
     capture,

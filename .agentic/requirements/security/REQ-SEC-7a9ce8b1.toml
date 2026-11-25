@@ -1,0 +1,28 @@
+schema = 1
+id = "REQ-SEC-7a9ce8b1"
+title = "Reject invalid capture citations"
+status = "active"
+requirement = "If a capture citation is unissued for the completed session message, outside its owning workbench, or incompatible with the identified file or frame, VERA shall reject opening it with a localized diagnostic."
+verification = "Invoke with an unissued citation and verify a rejected launch. Verify that mismatched frame association and paths outside the owning workbench never reach native launch."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/citations.ts",
+  "05_Software/src/libraries/core/src/agent/citations.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/libraries/core/src/knowledge/search.ts",
+  "05_Software/src/libraries/core/src/workbench/service.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx",
+  "05_Software/src/libraries/core/src/wireshark/desktop.ts",
+]
+linked_tests = [
+  "05_Software/src/libraries/core/src/agent/citations.test.ts",
+  "05_Software/src/libraries/shared/src/refs.test.ts",
+  "05_Software/src/apps/desktop/src/main/ipc-router.test.ts",
+  "05_Software/src/apps/desktop/src/preload/bridge.test.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts",
+  "05_Software/src/libraries/core/src/wireshark/desktop.test.ts",
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,4 +1,22 @@
 {
+  "wireshark": {
+    "open": "Ouvrir dans Wireshark",
+    "openFrame": "Ouvrir la trame {{frame}} dans Wireshark",
+    "frame": "Trame {{frame}}",
+    "displayFilter": "Filtre d’affichage (facultatif)",
+    "opening": "Ouverture de Wireshark…",
+    "filterAdjusted": "Le filtre d’affichage a été ajusté pour inclure la trame {{frame}}.",
+    "close": "Fermer",
+    "invalidCitation": "La citation de capture est invalide ou obsolète. Inspectez de nouveau la trame.",
+    "fileUnavailable": "Le fichier de capture est introuvable ou inaccessible depuis cet espace de travail.",
+    "staleCapture": "Le fichier de capture a changé. Inspectez-le de nouveau pour créer une nouvelle citation.",
+    "invalidFilter": "Wireshark n’a pas pu valider ce filtre d’affichage hors ligne.",
+    "desktopUnavailable": "Wireshark Desktop est introuvable. Installez-le et réessayez.",
+    "tsharkUnavailable": "TShark, fourni avec Wireshark, est nécessaire pour vérifier cette trame.",
+    "launchFailed": "Wireshark Desktop n’a pas pu démarrer.",
+    "timedOut": "La vérification de la trame a expiré. Réessayez.",
+    "verificationFailed": "VERA n’a pas pu vérifier cette trame de la capture."
+  },
   "gitHistory": {
     "view": "Voir l’historique du fichier",
     "tab": "Historique : {{path}}",

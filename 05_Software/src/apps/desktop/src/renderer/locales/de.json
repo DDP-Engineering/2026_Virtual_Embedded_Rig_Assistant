@@ -1,4 +1,22 @@
 {
+  "wireshark": {
+    "open": "In Wireshark öffnen",
+    "openFrame": "Paket {{frame}} in Wireshark öffnen",
+    "frame": "Paket {{frame}}",
+    "displayFilter": "Anzeigefilter (optional)",
+    "opening": "Wireshark wird geöffnet…",
+    "filterAdjusted": "Der Anzeigefilter wurde angepasst, damit Paket {{frame}} sichtbar ist.",
+    "close": "Schließen",
+    "invalidCitation": "Der Mitschnittverweis ist ungültig oder veraltet. Prüfen Sie das Paket erneut.",
+    "fileUnavailable": "Die Mitschnittdatei fehlt oder ist aus diesem Arbeitsbereich nicht zugänglich.",
+    "staleCapture": "Die Mitschnittdatei wurde geändert. Prüfen Sie sie erneut, um einen neuen Verweis zu erstellen.",
+    "invalidFilter": "Wireshark konnte diesen Offline-Anzeigefilter nicht überprüfen.",
+    "desktopUnavailable": "Wireshark Desktop wurde nicht gefunden. Installieren Sie es und versuchen Sie es erneut.",
+    "tsharkUnavailable": "Zur Überprüfung dieses Pakets wird TShark aus der Wireshark-Installation benötigt.",
+    "launchFailed": "Wireshark Desktop konnte nicht gestartet werden.",
+    "timedOut": "Die Paketprüfung hat zu lange gedauert. Versuchen Sie es erneut.",
+    "verificationFailed": "VERA konnte dieses Paket nicht überprüfen."
+  },
   "gitHistory": {
     "view": "Dateiverlauf anzeigen",
     "tab": "Verlauf: {{path}}",

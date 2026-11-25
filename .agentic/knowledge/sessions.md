@@ -48,6 +48,7 @@ SessionHost.masking(area) resolves live validated app/workbench choices. Tool pu
 - Successful schema-validated decode_register results issue sourceRefs as line-citation provenance alongside source.ref; other tool arrays and failed/malformed decode results issue no sourceRefs. Existing confined path/current line bounds validate them; openCitation revalidates after restart before the text viewer opens the source.
 
 - Successful parse_log provenance permits verifying and opening valid UTF8 log line refs containing control bytes; ordinary file-tool refs keep binary refusal. openCitation derives this mode from preceding successful tool results, never renderer input.
+- Capture citations bind typed successful `wireshark_capture` results to the capture, frame and dissection context. `openCaptureCitation` requires a valid citation on a completed assistant message and recovers its evidence from preceding successful results in that session. Native file and frame verification happens when Desktop opens the citation.
 
 SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownload and ctx.downloads. Prepared web_download requests use the write approval gate; close cancels/drains downloads before releasing storage. Download files remain workbench-owned after deleting their session. See [PDF downloads](pdf-downloads.md).
 
@@ -135,7 +136,7 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 | User-message bookmarks | shared events/session-state/ipc, core sessions/service | shared session-state.test.ts; core sessions/bookmarks.test.ts; main session-bookmarks.test.ts; renderer mocks/sessions.test.ts |
 | Replay/live ordering | sessions/hub.ts | service.test.ts replay/reentrancy |
 | Terminal projection | shared session-state.ts/events.ts | session-state.test.ts |
-| Citation resolution | agent/citations.ts; knowledge/search.ts | citations.test.ts; search.test.ts; artifacts.test.ts; tests/e2e/citations.spec.ts |
+| Citation resolution | agent/citations.ts; knowledge/search.ts; wireshark/citations.ts | citations.test.ts; search.test.ts; artifacts.test.ts; tests/e2e/citations.spec.ts; tests/e2e/wireshark-frame.spec.ts |
 | Model output wait | sessions/timed-gateway.ts | timed-gateway.test.ts; service.test.ts timeout/ignored abort |
 | Main host/transport/bridge | desktop main sessions/session-events,index;preload bridge | sessions/session-events/bridge tests; tests/e2e/sessions.spec.ts |
 | Owner routing/activity across workbenches | main/session-router.ts, index.ts handlers | session-router.test.ts, session-router.replay.test.ts; tests/e2e/session-routing.spec.ts |

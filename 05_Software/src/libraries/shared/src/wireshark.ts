@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseRef } from "./refs.js";
 
 export const wiresharkPluginId = "wireshark-tshark";
 export const wiresharkProfile = "vera-offline-v1";
@@ -53,7 +54,12 @@ const profile = {
   profile: z.literal(wiresharkProfile).optional(),
   decodeAs: z.array(decodeAs).max(8).optional(),
 };
-const filter = z.string().min(1).max(1024).regex(singleLine);
+export const captureDisplayFilterSchema = z.string().min(1).max(1024).regex(singleLine);
+const filter = captureDisplayFilterSchema;
+export const captureCitationRefSchema = z
+  .string()
+  .max(85)
+  .refine((ref) => parseRef(ref)?.kind === "capture");
 const field = z.string().regex(/^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,79}$/);
 const fields = z.array(field).min(1).max(10);
 const source = z.union([z.strictObject({ path }), z.strictObject({ reference: captureReferenceSchema })]);
@@ -164,6 +170,7 @@ export const captureEvidenceSchema = z.strictObject({
 export type CaptureEvidence = z.infer<typeof captureEvidenceSchema>;
 
 export const capturePacketSchema = z.strictObject({
+  ref: captureCitationRefSchema.optional(),
   frame: captureFrameReferenceSchema,
   wireBytes: z.number().int().nonnegative(),
   capturedBytes: z.number().int().nonnegative(),

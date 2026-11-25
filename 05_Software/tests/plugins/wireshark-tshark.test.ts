@@ -593,7 +593,11 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     expect(outputs[10]).toMatchObject({ reason: "field_unavailable" });
     expect(outputs[11]).toMatchObject({ reason: "cursor_mismatch" });
     expect(outputs[12]).toMatchObject({ capture: managed });
-    expect(outputs[13]).toMatchObject({ capture: managed, packet: outputs[8].packet });
+    const { ref: sourceCitation, ...sourcePacket } = outputs[8].packet;
+    expect(outputs[13]).toMatchObject({ capture: managed, packet: sourcePacket });
+    expect(sourceCitation).toMatch(/^capture:[a-f0-9]{64}#f=1$/);
+    expect(outputs[13].packet.ref).toMatch(/^capture:[a-f0-9]{64}#f=1$/);
+    expect(outputs[13].packet.ref).not.toBe(sourceCitation);
     expect(outputs[14]).toMatchObject({ reason: "invalid_capture" });
     expect(outputs[15]).toMatchObject({ reason: "capture_byte_limit" });
     expect(outputs[16]).toMatchObject({ reason: "capture_inaccessible" });

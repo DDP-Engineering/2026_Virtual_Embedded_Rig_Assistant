@@ -152,6 +152,8 @@ import { Updates } from "./updates.js";
 import { WebAccessService } from "./web-access.js";
 import { popupWindowMenu, restoreWindowBounds, titleBarOverlay, windowBackground } from "./window-chrome.js";
 import { loadWindowState, saveWindowState, type WindowState } from "./window-state.js";
+import { openWiresharkFrame } from "./wireshark.js";
+import { WiresharkFrameSnapshots } from "./wireshark-snapshots.js";
 import { publicWorkbenchFolders } from "./workbench-folders.js";
 import { WorkbenchRuntimes } from "./workbench-runtimes.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
@@ -180,6 +182,7 @@ installSessionPolicy(app);
 registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");
 const dataLocations = configureDataLocations(app, process.execPath, userData);
+const wiresharkSnapshots = new WiresharkFrameSnapshots(dataLocations.paths.userData);
 const allowDelegatedFullAccess = () => delegatedFullAccessEnabled(dataLocations.paths.userData);
 // Electron keys the lock on the user data folder, so it follows the data locations. A second instance
 // leaves here, before it opens the first one's stores, key files, workers or native modules.
@@ -1712,6 +1715,20 @@ ipcMain.handle(
         router.inSession(sessionId, (s, owner) => ({
           text: sessionContent(owner)(s.itemDetail(sessionId, itemId, field)),
         })),
+      "wireshark.openFrame": async ({ sessionId, messageId, ref, filter }) => {
+        const route = router.session(sessionId);
+        return router.run(route, (service) =>
+          openWiresharkFrame(
+            () => service.openCaptureCitation(sessionId, messageId, ref),
+            () => {
+              router.verify(route);
+            },
+            filter,
+            programs,
+            wiresharkSnapshots,
+          ),
+        );
+      },
       // Plan feedback and review reach the runtime holding the session in the named workbench.
       ...planReviewHandlers(
         (workbenchId, sessionId) => router.session(sessionId, workbenchId).runtime.sessions,
@@ -2259,6 +2276,7 @@ if (!firstInstance) {
       ]);
       announcedSettings = settings.get().settings;
       void dictation.recover().catch(() => logger.log("error", "dictation.recovery.failed"));
+      void wiresharkSnapshots.reclaim().catch(() => logger.log("error", "wireshark.recovery.failed"));
       updates = new Updates({
         distribution: updateDistribution(dataLocations.portable),
         configured: Boolean(__VERA_UPDATE_URL__),

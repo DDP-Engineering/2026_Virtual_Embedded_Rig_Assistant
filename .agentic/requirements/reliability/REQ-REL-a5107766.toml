@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-REL-a5107766"
+title = "Diagnose failed native capture launches"
+status = "active"
+requirement = "If the native Wireshark Desktop process cannot start, VERA shall report a localized launch failure."
+verification = "Make the process launcher reject and assert its distinct localized diagnostic."
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/wireshark.ts",
+]
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/wireshark.test.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

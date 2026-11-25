@@ -1,4 +1,22 @@
 {
+  "wireshark": {
+    "open": "Open in Wireshark",
+    "openFrame": "Open frame {{frame}} in Wireshark",
+    "frame": "Frame {{frame}}",
+    "displayFilter": "Display filter (optional)",
+    "opening": "Opening Wireshark…",
+    "filterAdjusted": "The display filter was adjusted to include frame {{frame}}.",
+    "close": "Close",
+    "invalidCitation": "This capture citation is invalid or out of date. Inspect the frame again.",
+    "fileUnavailable": "The capture file is missing or inaccessible from this workbench.",
+    "staleCapture": "The capture file changed. Inspect it again to create a new citation.",
+    "invalidFilter": "Wireshark could not validate this offline display filter.",
+    "desktopUnavailable": "Wireshark Desktop was not found. Install it and try again.",
+    "tsharkUnavailable": "TShark from the Wireshark installation is required to verify this frame.",
+    "launchFailed": "Wireshark Desktop could not start.",
+    "timedOut": "Frame verification timed out. Try again.",
+    "verificationFailed": "VERA could not verify this capture frame."
+  },
   "gitHistory": {
     "view": "View file history",
     "tab": "History: {{path}}",

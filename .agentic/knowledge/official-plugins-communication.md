@@ -67,6 +67,12 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   inspection, queries, frame details and reference verification. Reference verification uses the
   stored bytes independently of externally discovered TShark. The capture contract includes
   SHA-256, frame number, available interface and timestamp, version, profile, filter and coverage.
+  Query rows and frame details carry opaque frame refs for assistant citations. Desktop reopens a
+  cited source or managed file through its owner, checks the exact bytes and packet in a private
+  snapshot, then starts the installed Wireshark Desktop with the file's own frame number. It preserves
+  applicable display filters and visibly adds the frame when a filter would hide it. Desktop removes
+  completed or failed private viewer profiles, and reclaims orphaned profiles on startup after both
+  associated processes have exited.
 
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,

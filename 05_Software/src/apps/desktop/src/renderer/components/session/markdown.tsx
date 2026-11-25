@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import { CaptureCitation } from "./capture-citation.js";
 import { ExternalSourceLink } from "./external-source-link.js";
 import { CodeBlock } from "./message-actions.js";
 
@@ -45,15 +46,29 @@ function CitationChip({
   reference,
   valid,
   onOpen,
+  captureSessionId,
+  captureMessageId,
 }: {
   reference: string;
   valid: boolean;
   onOpen?: ((ref: string) => void) | undefined;
+  captureSessionId?: string | undefined;
+  captureMessageId?: string | undefined;
 }) {
   const { t } = useTranslation();
   const parsed = parseRef(reference);
-  const label = referenceLabel(reference);
-  if (!valid || !parsed)
+  const label =
+    parsed?.kind === "capture" ? t("wireshark.frame", { frame: parsed.frame }) : referenceLabel(reference);
+  if (valid && parsed?.kind === "capture" && captureSessionId && captureMessageId)
+    return (
+      <CaptureCitation
+        sessionId={captureSessionId}
+        messageId={captureMessageId}
+        reference={reference}
+        frame={parsed.frame}
+      />
+    );
+  if (!valid || !parsed || parsed.kind === "capture")
     return (
       <button
         type="button"
@@ -82,7 +97,7 @@ function CitationChip({
     </button>
   );
 }
-function CitationIcon({ kind }: { kind: Reference["kind"] }) {
+function CitationIcon({ kind }: { kind: Exclude<Reference["kind"], "capture"> }) {
   const Icon = {
     page: File,
     "page-range": Files,
@@ -135,6 +150,8 @@ export const Markdown = memo(function Markdown({
   text,
   citations = NO_CITATIONS,
   onCitation,
+  captureSessionId,
+  captureMessageId,
   link,
   assistantActions = false,
   streaming = false,
@@ -144,11 +161,29 @@ export const Markdown = memo(function Markdown({
   streaming?: boolean;
   citations?: { ref: string; valid: boolean }[];
   onCitation?: ((ref: string) => void) | undefined;
+  captureSessionId?: string | undefined;
+  captureMessageId?: string | undefined;
   /** An in-app target for a link (help pages); other links stay external-confirmed or inert. */
   link?: ((href: string) => { page: string; open: () => void } | undefined) | undefined;
 }) {
-  const options = useRef({ citations, onCitation, link, assistantActions, streaming });
-  options.current = { citations, onCitation, link, assistantActions, streaming };
+  const options = useRef({
+    citations,
+    onCitation,
+    captureSessionId,
+    captureMessageId,
+    link,
+    assistantActions,
+    streaming,
+  });
+  options.current = {
+    citations,
+    onCitation,
+    captureSessionId,
+    captureMessageId,
+    link,
+    assistantActions,
+    streaming,
+  };
   // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
   const components = useMemo<Components>(
     () => ({
@@ -171,6 +206,8 @@ export const Markdown = memo(function Markdown({
               reference={reference}
               valid={options.current.citations.some((c) => c.ref === reference && c.valid)}
               onOpen={options.current.onCitation}
+              captureSessionId={options.current.captureSessionId}
+              captureMessageId={options.current.captureMessageId}
             />
           );
         },

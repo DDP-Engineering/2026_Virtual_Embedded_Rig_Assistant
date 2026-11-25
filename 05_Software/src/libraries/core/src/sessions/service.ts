@@ -89,6 +89,7 @@ import type { TerminalReader } from "../tools/terminal-read.js";
 import { todoTool } from "../tools/todo.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
+import { issuedCaptureCitations } from "../wireshark/citations.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { type TurnAdmission, type TurnSlot, turnLimitError } from "./admission.js";
 import { attachComposerImage } from "./composer-images.js";
@@ -892,8 +893,7 @@ export class SessionService {
     this.row(id);
     return this.hub.itemDetail(id, itemId, field);
   }
-  /** Revalidate a completed assistant citation; snippet comes only from successful issued results. */
-  async openCitation(id: string, messageId: string, ref: string): Promise<ViewerContent> {
+  private citationMessages(id: string, messageId: string, ref: string) {
     this.row(id);
     const items = this.hub.get(id).snapshot.items;
     const at = items.findIndex((i) => i.kind === "assistant" && i.id === messageId);
@@ -906,9 +906,27 @@ export class SessionService {
         .filter((i) => i.kind === "tool" && i.status === "ok")
         .map((i) => i.id),
     );
-    const messages = this.transcript(id).filter(
+    return this.transcript(id).filter(
       (m) => m.role === "toolResult" && !m.isError && calls.has(m.toolCallId),
     );
+  }
+  /** Resolve a completed capture citation within its session and return its current file-access scope. */
+  openCaptureCitation(id: string, messageId: string, ref: string) {
+    const evidence = issuedCaptureCitations(this.citationMessages(id, messageId, ref)).get(ref);
+    if (!evidence) throw veraError("NOT_FOUND");
+    return {
+      evidence,
+      context: {
+        ...createToolContext(this.host.root),
+        ...(this.host.managedRoots ? { managedRoots: this.host.managedRoots } : {}),
+        ...(this.host.pluginBuilder ? { pluginBuilder: this.host.pluginBuilder } : {}),
+      },
+    };
+  }
+  /** Revalidate a completed assistant citation; snippet comes only from successful issued results. */
+  async openCitation(id: string, messageId: string, ref: string): Promise<ViewerContent> {
+    if (parseRef(ref)?.kind === "capture") throw veraError("NOT_FOUND");
+    const messages = this.citationMessages(id, messageId, ref);
     const valid = await validateCitations(
       this.host.root,
       `[[${ref}]]`,

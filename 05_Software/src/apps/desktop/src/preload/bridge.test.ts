@@ -286,6 +286,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.revision"
     | "session.get"
     | "session.item.detail"
+    | "wireshark.openFrame"
     | "session.rename"
     | "session.bookmark"
     | "session.question.answer"

@@ -1,0 +1,25 @@
+schema = 1
+id = "REQ-FUNC-b89e6361"
+title = "Open cited saved capture frames"
+status = "active"
+requirement = "When a desktop user chooses Open in Wireshark on an issued saved-capture citation, VERA shall open the verified packet number in the cited PCAP or PCAPNG, using that file's numbering for derived captures."
+verification = "Cite saved source and derived packets from offline tool results, click each citation, and observe its selected frame in Wireshark, including a Unicode path with spaces."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/citations.ts",
+  "05_Software/src/libraries/core/src/wireshark/service.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/shared/src/refs.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/session/capture-citation.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/markdown.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx",
+  "05_Software/src/libraries/shared/src/wireshark.ts",
+  "05_Software/src/apps/desktop/src/main/wireshark-snapshots.ts",
+]
+linked_tests = [
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+  "05_Software/tests/plugins/wireshark-tshark.test.ts",
+  "05_Software/src/apps/desktop/src/main/wireshark-snapshots.test.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,5 +1,11 @@
 # Discussion et sessions
 
+## Ouvrir une trame citée dans Wireshark
+
+Dans la réponse de l’agent, sélectionnez **Ouvrir la trame … dans Wireshark**, puis **Ouvrir dans Wireshark**. Installez Wireshark Desktop et TShark localement. VERA vérifie le fichier PCAP ou PCAPNG cité et ouvre une copie vérifiée au numéro de trame propre à ce fichier, y compris pour une capture dérivée.
+
+Laissez **Filtre d’affichage** vide pour reprendre le filtre de la citation, s’il existe. Vous pouvez saisir un autre filtre d’affichage hors ligne. Si le filtre masque la trame citée, VERA l’ajoute au filtre et vous en informe. Si la capture a changé ou est inaccessible, inspectez-la de nouveau pour obtenir une nouvelle citation.
+
 Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Au plus trois tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
 
 ## Démarrer et gérer des sessions

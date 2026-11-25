@@ -1,0 +1,16 @@
+schema = 1
+id = "REQ-UX-87a0888e"
+title = "Keep a cited packet visible with its display filter"
+status = "active"
+requirement = "When a valid requested display filter would hide a verified cited frame, VERA shall retain it while adding the cited frame to the filter and explaining the adjustment."
+verification = "Launch once with a filter that includes the packet and once with one that excludes it. Verify the first is preserved and the second includes the selected packet with an adjustment status."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/session/capture-citation.tsx",
+]
+linked_tests = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.test.ts",
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

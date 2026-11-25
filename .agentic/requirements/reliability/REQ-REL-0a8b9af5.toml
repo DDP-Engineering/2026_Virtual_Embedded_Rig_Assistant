@@ -1,0 +1,17 @@
+schema = 1
+id = "REQ-REL-0a8b9af5"
+title = "Reject invalid capture display filters"
+status = "active"
+requirement = "If the requested display filter is invalid for offline verification, VERA shall report the filter error without opening Wireshark."
+verification = "Pass a syntactically invalid filter to a valid citation and assert the localized error and no native launch."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.ts",
+  "05_Software/src/libraries/core/src/wireshark/native.ts",
+  "05_Software/src/apps/desktop/src/main/wireshark.ts",
+]
+linked_tests = [
+  "05_Software/src/libraries/core/src/wireshark/desktop.test.ts",
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

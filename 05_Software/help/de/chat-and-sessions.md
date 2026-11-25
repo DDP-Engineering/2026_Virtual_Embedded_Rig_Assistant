@@ -1,5 +1,11 @@
 # Chat und Sitzungen
 
+## Ein zitiertes Paket in Wireshark öffnen
+
+Wählen Sie in der Antwort des Agenten **Paket … in Wireshark öffnen** und dann **In Wireshark öffnen**. Installieren Sie Wireshark Desktop und TShark lokal. VERA prüft die zitierte PCAP- oder PCAPNG-Datei und öffnet eine geprüfte Kopie bei der Paketnummer dieser Datei. Das gilt auch für abgeleitete Mitschnitte.
+
+Lassen Sie **Anzeigefilter** leer, um den Filter des Verweises zu verwenden, sofern vorhanden. Sie können einen anderen Offline-Anzeigefilter eingeben. Blendet der Filter das zitierte Paket aus, ergänzt VERA den Filter um dieses Paket und weist Sie darauf hin. Ist der Mitschnitt geändert worden oder nicht verfügbar, prüfen Sie ihn erneut, um einen neuen Verweis zu erhalten.
+
 Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen. Höchstens drei Durchläufe laufen gleichzeitig in allen geöffneten Workbenches, oder so viele, wie unter **Gleichzeitige Durchläufe** in [Erweiterte Einstellungen](advanced-settings.md) eingestellt; eine am Limit gesendete Nachricht bleibt ungesendet im Eingabefeld, bis ein Durchlauf endet.
 
 ## Sitzungen starten und verwalten

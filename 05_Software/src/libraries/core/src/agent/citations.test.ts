@@ -3,7 +3,49 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
+import { captureCitation } from "../wireshark/citations.js";
 import { validateCitations } from "./citations.js";
+
+it("accepts capture citations only from matching verified offline evidence", async () => {
+  const capture = {
+    format: 1,
+    source: { kind: "workbench", path: "Prüfung ici.pcapng" },
+    fileFormat: "pcapng",
+    bytes: 123,
+    sha256: "a".repeat(64),
+  } as const;
+  const analysis = {
+    tool: "tshark",
+    profile: "vera-offline-v1",
+    version: "4.6.10",
+    decodeAs: [],
+    filter: null,
+  } as const;
+  const context = { ...analysis, decodeAs: [] };
+  const frame = { captureSha256: capture.sha256, number: 7, interfaceId: 0, timestampEpoch: "1767225600.6" };
+  const ref = captureCitation(capture, frame, context);
+  const packet = { ref, frame, capturedBytes: 63, wireBytes: 63, fields: {}, truncated: false };
+  const message = (body: unknown, toolName = "wireshark_capture", isError = false): Message => ({
+    role: "toolResult",
+    toolName,
+    isError,
+    toolCallId: "capture",
+    timestamp: 0,
+    content: [{ type: "text", text: JSON.stringify(body) }],
+  });
+  const text = `[[${ref}]]`;
+  await expect(
+    validateCitations(tmpdir(), text, [message({ capture, analysis: context, packets: [packet] })]),
+  ).resolves.toEqual([{ ref, valid: true }]);
+  for (const result of [
+    message({ capture, analysis: context, packet }, "read"),
+    message({ capture, analysis: context, packet }, "wireshark_capture", true),
+    message({ capture, analysis: context, packet: { ...packet, frame: { ...frame, number: 1 } } }),
+    message({ capture: { ...capture, source: { kind: "managed" } }, analysis: context, packet }),
+  ]) {
+    await expect(validateCitations(tmpdir(), text, [result])).resolves.toEqual([{ ref, valid: false }]);
+  }
+});
 
 it("issues sourceRefs only from validated successful decode_register evidence and keeps current path bounds", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-register-citations-"));

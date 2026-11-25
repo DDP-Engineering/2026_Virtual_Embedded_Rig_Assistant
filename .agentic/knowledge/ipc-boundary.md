@@ -68,6 +68,8 @@ downloads.list/open are strict workbench-scoped channels; open takes only a UUID
 
 - session.item.detail takes sessionId, itemId (1-200 chars) and field preview/args/diff and returns `{ text }`: the full text of one field that session.get and live session events carry as an excerpt (`truncated` sizes). Main scrubs the text; core reads only that item's stored event and answers NOT_FOUND for an unknown item, a field the item lacks, or a session outside the open workbench.
 
+- `wireshark.openFrame` accepts a session ID, completed message ID, opaque capture citation and optional bounded display filter. Main routes through the owning session and checks the active workbench again before launching. The renderer receives `{ filterAdjusted }` or a localized diagnostic.
+
 - session.reasoning.get takes sessionId; session.reasoning.set takes sessionId/modelRef/reasoning (nullable for Default). Both return strict modelRef/options/selected metadata. Main delegates to the owned session, scrubs returned strings, and rejects credential-bearing setters. Preload derives channel authorization from shared contracts; mock metadata/save behavior mirrors current provider profiles and session events.
 
 - session.archive.set requires an exact sessionId and boolean archived, rejects

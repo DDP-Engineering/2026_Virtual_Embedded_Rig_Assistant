@@ -1,0 +1,24 @@
+schema = 1
+id = "REQ-UX-d766ee40"
+title = "Localize Wireshark frame opening"
+status = "active"
+requirement = "The VERA Desktop action, adjustment status, diagnostics and help for opening cited frames shall be available in English, Romanian, German and French."
+verification = "Run translation and help checks and inspect the action, status and diagnostic keys and corresponding help in all four languages."
+affected_paths = [
+  "05_Software/src/apps/desktop/src/renderer/components/session/capture-citation.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx",
+  "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts",
+  "05_Software/src/apps/desktop/src/renderer/locales/en.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/ro.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/de.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/fr.json",
+  "05_Software/help/en/chat-and-sessions.md",
+  "05_Software/help/ro/chat-and-sessions.md",
+  "05_Software/help/de/chat-and-sessions.md",
+  "05_Software/help/fr/chat-and-sessions.md",
+]
+linked_tests = [
+  "05_Software/tests/e2e/wireshark-frame.spec.ts",
+]
+created = 2026-11-25
+updated = 2026-11-25

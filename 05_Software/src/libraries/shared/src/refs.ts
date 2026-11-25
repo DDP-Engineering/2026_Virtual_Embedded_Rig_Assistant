@@ -52,6 +52,7 @@ export type Reference =
   | { kind: "heading"; path: string; slug: string }
   | ({ kind: "lines" } & LineRef)
   | { kind: "artifact"; name: string }
+  | { kind: "capture"; identity: string; frame: number }
   | { kind: "help"; page: string }
   | { kind: "help"; plugin: string };
 const helpName = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -70,6 +71,11 @@ function parseHelpRef(text: string): Reference | undefined {
 export function parseRef(text: string): Reference | undefined {
   if (/[\r\n\u2028\u2029]/.test(text)) return undefined;
   if (text.startsWith("help:")) return parseHelpRef(text);
+  if (text.startsWith("capture:")) {
+    const [, identity, number] = /^capture:([a-f0-9]{64})#f=([1-9]\d{0,9})$/.exec(text) ?? [];
+    const frame = Number(number);
+    return identity && frame <= 4_294_967_295 ? { kind: "capture", identity, frame } : undefined;
+  }
   const artifact = parseArtifactRef(text);
   if (artifact) return { kind: "artifact", ...artifact };
   const lines = parseLineRef(text);
@@ -92,6 +98,9 @@ export function formatRef(value: Reference): string {
   switch (value.kind) {
     case "artifact":
       return formatArtifactRef(value.name);
+    case "capture":
+      ref = `capture:${value.identity}#f=${value.frame}`;
+      break;
     case "help":
       ref = "plugin" in value ? `help:plugin/${value.plugin}` : `help:${value.page}`;
       break;
@@ -123,6 +132,7 @@ export function referenceLabel(ref: string): string {
   const value = parseRef(ref);
   if (!value) return ref;
   if (value.kind === "artifact") return value.name;
+  if (value.kind === "capture") return String(value.frame);
   if (value.kind === "help") return "plugin" in value ? value.plugin : value.page;
   const file = value.path.split("/").at(-1) ?? value.path;
   switch (value.kind) {

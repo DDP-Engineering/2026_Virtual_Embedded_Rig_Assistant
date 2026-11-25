@@ -340,7 +340,13 @@ export class DocumentKnowledge {
    */
   async validDocumentRef(ref: string, verified?: Map<string, Promise<void>>): Promise<boolean> {
     const parsed = parseRef(ref);
-    if (!parsed || parsed.kind === "artifact" || parsed.kind === "lines" || parsed.kind === "help")
+    if (
+      !parsed ||
+      parsed.kind === "artifact" ||
+      parsed.kind === "lines" ||
+      parsed.kind === "help" ||
+      parsed.kind === "capture"
+    )
       return false;
     try {
       const target = await (await PathGuard.create(this.root)).resolve(parsed.path);

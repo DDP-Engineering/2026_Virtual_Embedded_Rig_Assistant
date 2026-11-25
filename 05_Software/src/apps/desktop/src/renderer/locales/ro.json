@@ -1,4 +1,22 @@
 {
+  "wireshark": {
+    "open": "Deschide în Wireshark",
+    "openFrame": "Deschide cadrul {{frame}} în Wireshark",
+    "frame": "Cadrul {{frame}}",
+    "displayFilter": "Filtru de afișare (opțional)",
+    "opening": "Se deschide Wireshark…",
+    "filterAdjusted": "Filtrul de afișare a fost ajustat pentru a include cadrul {{frame}}.",
+    "close": "Închide",
+    "invalidCitation": "Citarea capturii este nevalidă sau învechită. Inspectează din nou cadrul.",
+    "fileUnavailable": "Fișierul capturii lipsește sau nu este accesibil din acest spațiu de lucru.",
+    "staleCapture": "Fișierul capturii s-a schimbat. Inspectează-l din nou pentru a crea o citare nouă.",
+    "invalidFilter": "Wireshark nu a putut valida acest filtru de afișare offline.",
+    "desktopUnavailable": "Wireshark Desktop nu a fost găsit. Instalează-l și încearcă din nou.",
+    "tsharkUnavailable": "Este necesar TShark din instalarea Wireshark pentru a verifica acest cadru.",
+    "launchFailed": "Wireshark Desktop nu a putut porni.",
+    "timedOut": "Verificarea cadrului a expirat. Încearcă din nou.",
+    "verificationFailed": "VERA nu a putut verifica acest cadru al capturii."
+  },
   "gitHistory": {
     "view": "Vezi istoricul fișierului",
     "tab": "Istoric: {{path}}",
