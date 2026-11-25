@@ -970,6 +970,62 @@ export class ProgramRunner {
     this.nextId = options.id ?? monotonicFactory();
   }
 
+  /** Private bounded stdout for host-owned analysis. The process and its text never enter Runs. */
+  async captureOutput(request: {
+    executable: string;
+    args: readonly string[];
+    cwd: string;
+    env: Readonly<Record<string, string>>;
+    maxBytes: number;
+    signal: AbortSignal;
+  }) {
+    const { host, clock, killGraceMs } = this.settings;
+    const { executable, args, cwd, env, maxBytes, signal } = request;
+    signal.throwIfAborted();
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    let stdoutBytes = 0;
+    let stderrBytes = 0;
+    let exceeded = false;
+    let killing: Promise<void> | undefined;
+    const kill = () => {
+      if (child.pid !== undefined)
+        killing ??= killProcessTree(host, child.pid, clock, killGraceMs).catch(() => {});
+    };
+    const child = host.spawn(executable, args, {
+      cwd,
+      env: programEnvironment(host, [], env),
+      group: host.platform !== "win32",
+      output(stream, chunk) {
+        if (exceeded) return;
+        const remaining = stream === "stdout" ? maxBytes - stdoutBytes : 16_384 - stderrBytes;
+        const captured = stream === "stdout" ? stdout : stderr;
+        if (remaining > 0) captured.push(Buffer.from(chunk.subarray(0, remaining)));
+        if (stream === "stdout") stdoutBytes += chunk.length;
+        else stderrBytes += chunk.length;
+        if (stdoutBytes > maxBytes || stderrBytes > 16_384) {
+          exceeded = true;
+          queueMicrotask(kill);
+        }
+      },
+    });
+    signal.addEventListener("abort", kill, { once: true });
+    if (signal.aborted) kill();
+    try {
+      const exit = await child.exit;
+      await killing;
+      signal.throwIfAborted();
+      return {
+        exit,
+        exceeded,
+        stdout: Buffer.concat(stdout).toString("utf8"),
+        stderr: Buffer.concat(stderr).toString("utf8"),
+      };
+    } finally {
+      signal.removeEventListener("abort", kill);
+    }
+  }
+
   /** Runs share the settings object, so a refreshed log size applies to every run's next write. */
   private refreshLimits(): void {
     const next = this.limits?.() ?? {};

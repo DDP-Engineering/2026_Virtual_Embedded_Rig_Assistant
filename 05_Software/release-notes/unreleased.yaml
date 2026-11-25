@@ -1,3 +1,10 @@
 version: Unreleased
 date: null
-entries: []
+entries:
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Inspect saved captures offline with Wireshark, using filters and frame references.
+      ro: Inspectează capturi offline cu Wireshark, folosind filtre și referințe la cadre.
+      de: Gespeicherte Mitschnitte offline mit Wireshark, Filtern und Paketverweisen prüfen.
+      fr: Inspectez les captures hors ligne avec Wireshark, des filtres et des références de trame.

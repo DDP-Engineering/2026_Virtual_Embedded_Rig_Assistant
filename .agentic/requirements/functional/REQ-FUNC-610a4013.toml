@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-610a4013"
+title = "Bind packet pages to their query"
+status = "active"
+requirement = "When a caller queries packets, VERA shall return an ordered bounded page with explicit coverage and a continuation bound to the capture, tool version, profile, filter and selected fields."
+verification = "Request successive pages with a small limit, then change a bound member and observe a stale cursor error."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/src/libraries/shared/src/wireshark.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]

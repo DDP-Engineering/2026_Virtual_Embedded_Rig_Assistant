@@ -139,6 +139,8 @@ Facts that span components:
   separate model catalogs and credential scopes.
 - The composer takes pasted, dropped and picked raster images, retains imported originals in the workbench and attaches existing Files images by reference. Chat messages keep primary-workbench image paths in the transcript. Session dispatch loads bounded raster parts for image-capable models, and exports and compacted history retain the paths. The model-gated `view_image` tool uses a strictly confined workbench path and sends the image as a current-turn tool result. The workbench Tools editor resolves support for its draft default model.
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
+- The official Wireshark plugin enables typed offline capture inspection and reference verification
+  with managed binary capture storage. See [communication plugins](../knowledge/official-plugins-communication.md).
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.
 - The official plugins are verified against simulators and stand-ins. Real-hardware acceptance and native Ubuntu acceptance are pending; official-plugins lists what is pending per plugin.
 - Clean, offline Windows execution and VC++ self-containment remain required before a final release. See native-packaging.

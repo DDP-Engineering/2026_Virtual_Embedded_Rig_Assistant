@@ -75,6 +75,8 @@ export function WorkbenchTools({
     motor_drives: t("workbenchTools.motor_drives"),
     power_quality: t("workbenchTools.power_quality"),
     lighting_design: t("workbenchTools.lighting_design"),
+    wireshark_capture: t("workbenchTools.wireshark_capture"),
+    wireshark_import: t("workbenchTools.wireshark_import"),
   };
   // Rows per page follow Advanced > Rows per page (10 by default), like every other list.
   const { rows, pager } = usePaged(names);

@@ -1,12 +1,20 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { createSocket } from "node:dgram";
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import * as core from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
+import {
+  captureLimits,
+  captureReferenceSchema,
+  classifyCommand,
+  type PluginManifest,
+  validatePluginManifest,
+} from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
 import { reportSkip } from "../support/skip-marker.js";
@@ -240,22 +248,50 @@ const step = (args: readonly string[]) => ({
   toolCalls: [{ name: "run_program", args: { program: "tshark", args } }],
 });
 const script = (items: unknown[]) => items.map((item) => JSON.stringify(item)).join("\n");
+const typed = (operation: string, args: Record<string, unknown> = {}) => ({
+  toolCalls: [{ name: "wireshark_capture", args: { operation, ...args } }],
+});
+const importCapture = (path: string) => ({ toolCalls: [{ name: "wireshark_import", args: { path } }] });
+
+it("offers the typed capture contract in the model tool registry", () => {
+  const spec = new core.ToolRegistry().available().find(({ name }) => name === "wireshark_capture");
+  expect(spec?.params.safeParse({ operation: "capabilities" }).success).toBe(true);
+  expect(spec?.params.safeParse({ operation: "capabilities", argv: ["-i", "1"] }).success).toBe(false);
+  expect(spec?.params.safeParse({ operation: "inspect" }).success).toBe(false);
+  expect(
+    spec?.params.safeParse({ operation: "inspect", source: { path: classicPath }, profile: "custom" })
+      .success,
+  ).toBe(false);
+  expect(
+    new core.ToolRegistry().specs().find(({ name }) => name === "wireshark_capture")?.parameters,
+  ).toMatchObject({
+    type: "object",
+    properties: { operation: { type: "string" } },
+  });
+});
 
 /**
  * A workbench with the catalog-installed plugin, its skills and the host's real tshark. The host keeps
  * PATH and ProgramFiles for discovery but isolates the personal Wireshark profile through HOME.
  */
-async function workbench(scripts: Record<string, unknown[]>) {
+async function workbench(
+  scripts: Record<string, unknown[]>,
+  state: "enabled" | "missing_binary" | "local" = "enabled",
+  permissions?: core.PermissionEngine,
+) {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-tshark-replay-")));
   const bench = join(root, "bench");
   const home = join(root, "home");
+  const personal = windows ? join(home, "AppData", "Wireshark") : join(home, ".config", "wireshark");
   const native = new core.NodeProcessHost(spawn);
   const starts: (readonly string[])[] = [];
+  const configurations: string[] = [];
   const host: core.ProcessHost = {
     platform: native.platform,
     env: { ...native.env, HOME: home, USERPROFILE: home, APPDATA: join(home, "AppData") },
     spawn(executable, args, options) {
       starts.push([...args]);
+      configurations.push(options.env.WIRESHARK_CONFIG_DIR ?? "");
       return native.spawn(executable, args, options);
     },
     signal: native.signal.bind(native),
@@ -276,15 +312,21 @@ async function workbench(scripts: Record<string, unknown[]>) {
   await mkdir(join(bench, ".vera"), { recursive: true });
   await mkdir(join(bench, "captures"));
   await mkdir(home);
+  await mkdir(personal, { recursive: true });
   await writeFile(join(bench, "captures/sample.pcapng"), await readFile(sample));
   await mkdir(join(root, "scripts"));
-  for (const [name, items] of Object.entries(scripts))
-    await writeFile(join(root, `scripts/${name}.jsonl`), script(items));
+  const writeReplay = (name: string, items: unknown[]) =>
+    writeFile(join(root, `scripts/${name}.jsonl`), script(items));
+  for (const [name, items] of Object.entries(scripts)) await writeReplay(name, items);
   const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
   expect(release.issues).toEqual([]);
   expect(release.index?.plugins.find((item) => item.id === "wireshark-tshark")?.tier).toBe("official");
   const store = new core.PluginStore({ root: join(root, "plugins") });
-  await store.install(join(root, "release/wireshark-tshark-0.3.1.zip"));
+  await store.install(
+    join(root, `release/wireshark-tshark-${(await manifest()).version}.zip`),
+    undefined,
+    state === "local" ? undefined : { tier: "official", url: "https://fixture.invalid/wireshark.zip" },
+  );
   const plugin = await store.load("wireshark-tshark");
   const skills = new core.SkillCatalog({
     root: bench,
@@ -305,8 +347,19 @@ async function workbench(scripts: Record<string, unknown[]>) {
   opened.provisioner = provisioner;
   const tshark = await provisioner.resolve(plugin, "tshark");
   let model = "";
+  let resultChars = 32_000;
+  let redact = (text: string) => text;
+  const modelResults: string[] = [];
   const start = async () => {
-    const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now });
+    const gateway = new (class extends ReplayGateway {
+      override async *stream(request: Parameters<ReplayGateway["stream"]>[0]) {
+        for (const message of request.messages) {
+          if (message.role === "toolResult" && message.toolName === "wireshark_capture")
+            for (const item of message.content) if (item.type === "text") modelResults.push(item.text);
+        }
+        yield* super.stream(request);
+      }
+    })({ dir: join(root, "scripts"), now: Date.now, contextWindow: 131_072 });
     await gateway.models("replay", new AbortController().signal);
     opened.database = await core.openDb(join(bench, ".vera/vera.db"), {
       workbenchId: "wb_test",
@@ -318,9 +371,19 @@ async function workbench(scripts: Record<string, unknown[]>) {
       gateway,
       clock: { now: () => new Date(), sleep },
       model: () => model,
+      maxToolCallsPerTurn: 50,
+      advanced: { app: () => ({ toolResultChars: resultChars }), workbench: () => undefined },
+      scrub: (text) => redact(text),
+      ...(permissions && { permissions }),
       prompt: () => "Use the Wireshark plugin",
       skills,
-      programs: { runner, clock: { sleep }, plugins: async () => [plugin], resolver: provisioner },
+      programs: {
+        runner,
+        clock: { sleep },
+        plugins: async () => [plugin],
+        resolver: state === "missing_binary" ? core.unresolvedPrograms : provisioner,
+      },
+      wiresharkPackage: state === "local" ? undefined : plugin.record.sha256,
     });
     await opened.service.waitReady();
     return opened.service;
@@ -335,11 +398,307 @@ async function workbench(scripts: Record<string, unknown[]>) {
     const pending = () => service.get(created.id).snapshot.approvals.find((item) => !item.decision);
     return { id: created.id, outputs, pending };
   };
-  return { skills, tshark, starts, start, session, close };
+  return {
+    bench,
+    skills,
+    tshark,
+    starts,
+    configurations,
+    start,
+    session,
+    close,
+    writeReplay,
+    modelResults,
+    resultBudget(limit: number, scrub: (text: string) => string) {
+      resultChars = limit;
+      redact = scrub;
+    },
+    async personalProfileControl() {
+      if (!tshark) throw Error("TShark is required.");
+      await writeFile(join(personal, "disabled_protos"), "coap\n");
+      const { stdout } = await promisify(execFile)(
+        tshark.executable,
+        ["-n", "-r", sample, "-Y", "coap", "-T", "fields", "-e", "frame.number"],
+        {
+          env: { ...host.env, WIRESHARK_CONFIG_DIR: personal },
+          timeout: 10_000,
+          windowsHide: true,
+        },
+      );
+      return stdout.trim();
+    },
+  };
 }
 
 const results = (outputs: { summary: string }[]) =>
   outputs.map((output) => JSON.parse(output.summary) as { exitCode: number; output: string });
+
+const classicPath = "captures/independent.pcap";
+const classicPcap = Buffer.from(
+  "d4c3b2a1020004000000000000000000ffff000001000000" +
+    "0100000020a107002e0000002e000000" +
+    "0200000000020200000000010800450000200001000040110000c0000201c0000202bf3f1634000c000040010001",
+  "hex",
+);
+
+it("gates typed capture capabilities on the official plugin independently of the executable", async () => {
+  const hash = createHash("sha256").update(classicPcap).digest("hex");
+  const reference = {
+    format: 1,
+    bytes: classicPcap.length,
+    sha256: hash,
+    fileFormat: "pcap",
+    source: { kind: "managed" },
+  };
+  for (const state of ["missing_binary", "local"] as const) {
+    const rig = await workbench(
+      {
+        test: [
+          typed("capabilities"),
+          typed("inspect", { source: { path: classicPath } }),
+          typed("verify_reference", { source: { reference } }),
+          importCapture(classicPath),
+          { text: "Done." },
+        ],
+      },
+      state,
+      core.readPermissions,
+    );
+    try {
+      await mkdir(join(rig.bench, ".vera/captures"));
+      await writeFile(join(rig.bench, ".vera/captures", `${hash}.pcap`), classicPcap);
+      const service = await rig.start();
+      const session = rig.session(service, "test", "ask");
+      const firstStart = rig.starts.length;
+      service.send(session.id, "Check the offline capture capability.");
+      await service.waitIdle(session.id);
+      expect(rig.starts.length).toBe(firstStart);
+      if (state === "local") {
+        expect(session.outputs.every(({ ok }) => !ok)).toBe(true);
+        expect(JSON.stringify(session.outputs)).not.toContain("managedStorage");
+      } else {
+        expect(JSON.parse(session.outputs[0]?.summary ?? "")).toMatchObject({
+          tshark: { available: false },
+          managedStorage: { readable: true, writable: true, importAvailable: false },
+        });
+        expect(JSON.parse(session.outputs[1]?.summary ?? "")).toMatchObject({ reason: "tshark_unavailable" });
+        expect(JSON.parse(session.outputs[2]?.summary ?? "")).toEqual({ capture: reference, verified: true });
+        expect(session.outputs[3]).toMatchObject({ ok: false, summary: "Tool permission denied." });
+      }
+    } finally {
+      await rig.close();
+    }
+  }
+}, 90_000);
+
+it("replays typed Windows or Linux offline analysis with independent PCAP and PCAPNG evidence", async (ctx) => {
+  const pcapng = { path: "captures/sample.pcapng" };
+  const pcap = { path: classicPath };
+  const decodeAs = [{ transport: "udp", port: 5684, protocol: "coap" }];
+  const hash = createHash("sha256").update(classicPcap).digest("hex");
+  const managed = {
+    format: 1,
+    bytes: classicPcap.length,
+    sha256: hash,
+    fileFormat: "pcap",
+    source: { kind: "managed" },
+  };
+  const decodeFields = ["coap.code", "udp.dstport"];
+  const rig = await workbench({
+    test: [
+      typed("capabilities"),
+      typed("discover", { kind: "fields", search: "uri_path_recon" }),
+      typed("discover", { kind: "protocols", search: "coap", limit: 2 }),
+      typed("discover", { kind: "decoders", search: "coap" }),
+      typed("validate_filter", { filter: "(" }),
+      typed("validate_filter", { filter: "coap" }),
+      typed("inspect", { source: pcapng }),
+      typed("query", {
+        source: pcapng,
+        filter: "coap",
+        fields: ["coap.opt.uri_path_recon"],
+        scanFrames: 5,
+        limit: 1,
+      }),
+      typed("frame", { source: pcap, frame: 1, fields: decodeFields, decodeAs }),
+      typed("frame", { source: pcap, frame: 2 }),
+      typed("query", { source: pcap, fields: ["udp.payload"] }),
+      typed("query", { source: pcap, fields: decodeFields, cursor: { querySha256: hash, afterFrame: 1 } }),
+      importCapture(classicPath),
+      typed("frame", { source: { reference: managed }, frame: 1, fields: decodeFields, decodeAs }),
+      typed("inspect", { source: { path: "captures/corrupt.pcap" } }),
+      typed("inspect", { source: { path: "captures/huge.pcap" } }),
+      typed("inspect", { source: { path: "../outside.pcap" } }),
+      typed("inspect", { source: { reference: { ...managed, bytes: managed.bytes + 1 } } }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1")
+        throw Error("Native TShark is required for this acceptance run.");
+      ctx.skip("TShark unavailable for typed offline capture acceptance.");
+      return;
+    }
+    expect(await rig.personalProfileControl()).toBe("");
+    await writeFile(join(rig.bench, classicPath), classicPcap);
+    await writeFile(join(rig.bench, "captures/corrupt.pcap"), classicPcap.subarray(0, 31));
+    await writeFile(join(rig.bench, "captures/huge.pcap"), classicPcap);
+    await truncate(join(rig.bench, "captures/huge.pcap"), captureLimits.captureBytes + 1);
+    const service = await rig.start();
+    const session = rig.session(service, "test", "ask");
+    const firstStart = rig.starts.length;
+    service.send(session.id, "Analyze the saved fixtures offline.");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const outputs = session.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(outputs).toHaveLength(18);
+    expect(outputs[0]).toMatchObject({ tshark: { available: true }, profile: "vera-offline-v1" });
+    expect(outputs[1].entries).toEqual([expect.objectContaining({ name: "coap.opt.uri_path_recon" })]);
+    expect(outputs[2].entries).toContainEqual(expect.objectContaining({ name: "coap" }));
+    expect(outputs[3].entries).toContainEqual(expect.objectContaining({ name: "coap", transport: "udp" }));
+    expect(outputs[4]).toMatchObject({ isError: true, reason: "invalid_filter" });
+    expect(outputs[5]).toMatchObject({ valid: true });
+    const inspected = captureReferenceSchema.parse(outputs[6].capture);
+    expect(inspected.fileFormat).toBe("pcapng");
+    expect(inspected.sha256).toBe(
+      createHash("sha256")
+        .update(await readFile(sample))
+        .digest("hex"),
+    );
+    expect(outputs[6].coverage).toMatchObject({ scannedThrough: 8, scanComplete: true, partial: false });
+    expect(outputs[7]).toMatchObject({
+      packets: [
+        {
+          frame: {
+            number: 3,
+            captureSha256: inspected.sha256,
+            interfaceId: 0,
+            timestampEpoch: "1767225600.200000000",
+          },
+          fields: { "coap.opt.uri_path_recon": ["/sensors/temp"] },
+        },
+      ],
+      packetData: "untrusted_capture_data",
+      coverage: { scannedThrough: 5, scanComplete: false, partial: true, returned: 1 },
+      page: { limit: 1, next: { afterFrame: 3 } },
+    });
+    expect(outputs[8]).toMatchObject({
+      analysis: { profile: "vera-offline-v1", decodeAs },
+      packet: {
+        frame: { captureSha256: hash, number: 1, timestampEpoch: "1.500000000" },
+        fields: { "coap.code": ["1"], "udp.dstport": ["5684"] },
+      },
+    });
+    expect(outputs[9]).toMatchObject({ reason: "frame_not_found" });
+    expect(outputs[10]).toMatchObject({ reason: "field_unavailable" });
+    expect(outputs[11]).toMatchObject({ reason: "cursor_mismatch" });
+    expect(outputs[12]).toMatchObject({ capture: managed });
+    expect(outputs[13]).toMatchObject({ capture: managed, packet: outputs[8].packet });
+    expect(outputs[14]).toMatchObject({ reason: "invalid_capture" });
+    expect(outputs[15]).toMatchObject({ reason: "capture_byte_limit" });
+    expect(outputs[16]).toMatchObject({ reason: "capture_inaccessible" });
+    expect(outputs[17]).toMatchObject({ reason: "capture_changed" });
+    const stored = join(rig.bench, ".vera/captures");
+    expect(await readdir(stored)).toEqual([`${hash}.pcap`]);
+    expect(await readFile(join(stored, `${hash}.pcap`))).toEqual(classicPcap);
+    expect(service.get(session.id).snapshot.approvals).toEqual([]);
+    expect(
+      rig.starts
+        .slice(firstStart)
+        .every((args) => args[0] === "-G" || (args[0] === "-n" && args.includes("-r"))),
+    ).toBe(true);
+    expect(rig.configurations.slice(firstStart).every((folder) => folder.includes("vera-offline-"))).toBe(
+      true,
+    );
+
+    const cursor = outputs[7].page.next;
+    const changed = Buffer.from(classicPcap);
+    changed[changed.length - 1] = 9;
+    await writeFile(join(stored, `${hash}.pcap`), changed);
+    const nextCapture = "captures/next.pcap";
+    await writeFile(join(rig.bench, nextCapture), changed);
+    for (let index = 1; index < captureLimits.managedFiles; index++)
+      await writeFile(join(stored, `${index.toString(16).padStart(64, "0")}.pcap`), classicPcap);
+    const nextPage = {
+      source: { reference: inspected },
+      filter: "coap",
+      fields: ["coap.opt.uri_path_recon"],
+      scanFrames: 5,
+      limit: 1,
+      cursor,
+    };
+    await rig.writeReplay("continue", [
+      typed("query", nextPage),
+      typed("query", { ...nextPage, filter: "udp" }),
+      typed("inspect", { source: { reference: managed } }),
+      importCapture(nextCapture),
+      typed("validate_filter", { filter: "udp.payload contains 12:34" }),
+      typed("validate_filter", { filter: 'ip.addr == "not-resolved.example"' }),
+      typed("validate_filter", {
+        filter: "udp",
+        decodeAs: [{ transport: "udp", port: 5684, protocol: "absent" }],
+      }),
+      { text: "Done." },
+    ]);
+    const continuation = rig.session(service, "continue", "ask");
+    service.send(continuation.id, "Continue the saved query.");
+    expect(await service.waitIdle(continuation.id)).toEqual({ stopReason: "end" });
+    const more = continuation.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(more[0]).toMatchObject({
+      packets: [{ frame: { number: 4, captureSha256: inspected.sha256 } }],
+      page: { limit: 1, afterFrame: 3, next: null },
+      coverage: { matchedInScope: 2, partial: true },
+    });
+    expect(more.slice(1).map(({ reason }) => reason)).toEqual([
+      "cursor_mismatch",
+      "capture_changed",
+      "storage_quota",
+      "filter_unavailable",
+      "filter_unavailable",
+      "invalid_decode_as",
+    ]);
+    expect(await readdir(stored)).toHaveLength(captureLimits.managedFiles);
+
+    const repeated = "captures/repeated.pcap";
+    const frameBytes = classicPcap.subarray(24);
+    await writeFile(
+      join(rig.bench, repeated),
+      Buffer.concat([classicPcap.subarray(0, 24), ...Array<Buffer>(28).fill(frameBytes)]),
+    );
+    await rig.writeReplay("budget", [
+      typed("query", { source: { path: repeated }, fields: ["ip.src"], limit: 28 }),
+      { text: "Done." },
+    ]);
+    const mask = (text: string) => text.replaceAll("192.0.2.1", "[masked]".repeat(22));
+    for (const limit of [8000, 32_000]) {
+      rig.resultBudget(limit, mask);
+      rig.modelResults.length = 0;
+      const budget = rig.session(service, "budget", "ask");
+      service.send(budget.id, "Summarize this controlled capture.");
+      expect(await service.waitIdle(budget.id)).toEqual({ stopReason: "end" });
+      const text = rig.modelResults.at(-1) ?? "";
+      expect(text.length).toBeLessThanOrEqual(limit);
+      expect(text).not.toContain("192.0.2.1");
+      const page = JSON.parse(text);
+      expect(page.packets[0].fields["ip.src"]).toEqual(["[masked]".repeat(22)]);
+      if (limit === 8000) {
+        expect(page.packets.length).toBeLessThan(28);
+        expect(page.coverage).toMatchObject({
+          partial: true,
+          truncated: true,
+          returned: page.packets.length,
+        });
+        expect(page.page.next.afterFrame).toBe(page.packets.at(-1).frame.number);
+      } else {
+        expect(page.packets).toHaveLength(28);
+        expect(page.coverage).toMatchObject({ partial: false, truncated: false, returned: 28 });
+        expect(page.page.next).toBeNull();
+      }
+    }
+  } finally {
+    await rig.close();
+  }
+}, 120_000);
 
 it("answers questions about the sample capture without approvals and gates live capture", async (ctx) => {
   const file = "captures/sample.pcapng";

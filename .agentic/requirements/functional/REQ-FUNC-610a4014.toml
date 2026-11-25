@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-610a4014"
+title = "Diagnose an invalid display filter"
+status = "active"
+requirement = "When TShark rejects a display filter, VERA shall return a recoverable invalid-filter diagnosis without disclosing native stderr."
+verification = "Validate an invalid filter, observe its typed reason, and submit a corrected filter successfully."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/core/src/wireshark/service.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]

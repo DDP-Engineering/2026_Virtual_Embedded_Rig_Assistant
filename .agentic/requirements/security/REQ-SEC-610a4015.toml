@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-SEC-610a4015"
+title = "Constrain native offline analysis"
+status = "active"
+requirement = "When VERA invokes TShark for typed analysis, the host shall use isolated configuration, disabled name resolution, typed Decode As and explicitly bounded selected output."
+verification = "Exercise controlled UDP decoding and profile isolation, and reject raw fields, custom profile arguments and unauthorized paths."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts","05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/core/src/workbench/path-guard.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts"]

@@ -42,6 +42,8 @@ it("associates specialized tools with their providers, including parts and KiCad
     lighting_design: "lighting-design",
     apply_candidate: "kicad-layout",
     parts_search: "parts-search",
+    wireshark_capture: "wireshark-tshark",
+    wireshark_import: "wireshark-tshark",
   });
   expect(electricalModelToolNames).toEqual(["electrical_model", "electrical_model_change"]);
 });

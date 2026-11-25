@@ -53,6 +53,8 @@ export interface ToolContext {
   help?: HelpHost;
   /** Plugin programs of the session; absent when the host composes no program host. */
   programs?: ProgramContext;
+  /** Digest of the enabled official capture plugin at turn binding. */
+  wiresharkPackage?: string;
   pluginBuilder?: PluginStore;
   /** Host-owned application data: never accessible through agent file paths, even in bypass. */
   managedRoots?: readonly string[];

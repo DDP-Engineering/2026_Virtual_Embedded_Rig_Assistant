@@ -84,7 +84,8 @@ export class PathGuard {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
     if (!(await lstat(canonical)).isDirectory()) throw Error("Workbench root must be a directory.");
-    const excluded: string[] = [];
+    // The managed capture namespace is reserved without following any workbench-authored redirect.
+    const excluded = [pathIdentity(join(canonical, ".vera", "captures"))];
     for (const root of excludedRoots) {
       if (!isAbsolute(root)) throw Error("Application data root must be absolute.");
       excluded.push(pathIdentity(resolve(root)), pathIdentity((await canonicalPath(root)).canonical));

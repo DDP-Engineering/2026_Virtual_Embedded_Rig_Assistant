@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-DATA-610a4016"
+title = "Publish validated managed capture bytes"
+status = "active"
+requirement = "When a writable workbench imports a valid in-quota capture, VERA shall publish an atomic content-addressed reference that reopens the exact verified bytes."
+verification = "Import a fixture, reopen the published identity, then change its bytes and check the integrity diagnostic."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/core/src/tools/wireshark.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts"]

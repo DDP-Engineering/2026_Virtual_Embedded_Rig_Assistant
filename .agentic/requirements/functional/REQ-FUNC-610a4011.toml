@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-610a4011"
+title = "Gate capture operations on the official plugin"
+status = "active"
+requirement = "When an ordinary session has the enabled, verified official Wireshark package, VERA shall offer the typed capture tool and report whether TShark is available."
+verification = "Replay with enabled official, missing executable and absent or local plugin and observe tool exposure and capabilities."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/context.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/core/src/tools/wireshark.ts","05_Software/src/libraries/shared/src/tools.ts","05_Software/src/apps/cli/src/run.ts","05_Software/src/apps/desktop/src/main/sessions.ts","05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx","05_Software/src/libraries/core/src/index.ts","05_Software/src/apps/desktop/src/renderer/locales/en.json","05_Software/src/apps/desktop/src/renderer/locales/de.json","05_Software/src/apps/desktop/src/renderer/locales/fr.json","05_Software/src/apps/desktop/src/renderer/locales/ro.json","05_Software/plugins/wireshark-tshark/plugin.yaml","05_Software/src/libraries/shared/src/tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/shared/src/tools.test.ts"]

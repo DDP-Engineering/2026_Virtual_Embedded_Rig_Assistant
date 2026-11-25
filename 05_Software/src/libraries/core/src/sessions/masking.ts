@@ -7,6 +7,7 @@ import type { LlmEvent } from "../llm/gateway.js";
 import { scrubAssistantMessage } from "../llm/message-scrub.js";
 import { createStreamScrubber } from "../llm/stream-scrub.js";
 import { capToolResult } from "../tools/registry.js";
+import { maskCaptureOutput } from "../wireshark/model-output.js";
 
 /** Project arbitrary tool data while retaining enclosing protocol fields. */
 export function maskValue(value: unknown, scrub: (text: string) => string): unknown {
@@ -36,7 +37,14 @@ export function documentSearchToolMetadata(text: string) {
 }
 
 /** Redact tool data while keeping the search coverage and usage protocol readable to the model. */
-export function maskToolOutput(name: string, text: string, scrub: (text: string) => string): string {
+export function maskToolOutput(
+  name: string,
+  text: string,
+  scrub: (text: string) => string,
+  limit = 32_000,
+): string {
+  if (name === "wireshark_capture" || name === "wireshark_import")
+    return maskCaptureOutput(text, scrub, limit);
   const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
   if (!result) return scrub(text);
   const { coverage, usage, ...rest } = result;
@@ -45,7 +53,11 @@ export function maskToolOutput(name: string, text: string, scrub: (text: string)
 }
 
 /** Retained transcript messages are projected again at each model dispatch. */
-export function maskMessages(messages: Message[], scrub: (text: string) => string): Message[] {
+export function maskMessages(
+  messages: Message[],
+  scrub: (text: string) => string,
+  limit?: number,
+): Message[] {
   return messages.map((message) => {
     if (message.role === "assistant") return scrubAssistantMessage(message, scrub, message.timestamp);
     if (message.role === "system")
@@ -60,7 +72,9 @@ export function maskMessages(messages: Message[], scrub: (text: string) => strin
       return {
         ...message,
         content: message.content.map((part) =>
-          part.type === "text" ? { ...part, text: maskToolOutput(message.toolName, part.text, scrub) } : part,
+          part.type === "text"
+            ? { ...part, text: maskToolOutput(message.toolName, part.text, scrub, limit) }
+            : part,
         ),
       };
     return {
@@ -80,6 +94,7 @@ export class MaskingContextPolicy extends ContextPolicy {
   constructor(
     private readonly policy: ContextPolicy,
     private readonly scrub: (text: string) => string,
+    private readonly toolLimit?: () => number,
   ) {
     super();
   }
@@ -91,7 +106,7 @@ export class MaskingContextPolicy extends ContextPolicy {
     scale?: number,
   ) {
     return this.policy.prepare(
-      { ...input, messages: maskMessages(input.messages, this.scrub) },
+      { ...input, messages: maskMessages(input.messages, this.scrub, this.toolLimit?.()) },
       capabilities,
       reduce,
       this.scrub,

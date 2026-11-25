@@ -4,8 +4,8 @@
 
 Select for `can-python` (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills
 can-capture and can-transmit); `can-dbc` (pip cantools plus the `can-decode` script; skill can-decode);
-`wireshark-tshark` (capture-file analysis and bounded live capture through the user's TShark, tshark option-role
-classification, two skills); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
+`wireshark-tshark` (typed offline capture evidence, generic program risk classification, and bounded
+live capture through the user's TShark); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
 bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with
 devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills
 bus-transactions and bus-profiles).
@@ -48,7 +48,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.3.1, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.3.2, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -60,7 +60,13 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   filters, field export, statistics, frame citations) and wireshark-capture (tshark -D, confirmed interface,
   capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
   generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captures self-sent loopback datagrams after
-  approval on Windows/Npcap. Linux execution remains unverified. `-o extcap.*` credential values are not refused.
+  approval on Windows/Npcap. Native Linux live capture remains unverified. `-o extcap.*` credential values are not refused.
+
+- The verified enabled official package enables `wireshark_capture` (read) and `wireshark_import`
+  (session) in ordinary Desktop and CLI sessions. The typed read tool offers discovery, validation,
+  inspection, queries, frame details and reference verification. Reference verification uses the
+  stored bytes independently of externally discovered TShark. The capture contract includes
+  SHA-256, frame number, available interface and timestamp, version, profile, filter and coverage.
 
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
@@ -100,8 +106,18 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   attached or separate values, exact-or-unique long abbreviations (ambiguous is `<unknown>`), and the end of
   options at the first non-option or `--`. Arguments after that end are still read for raising roles
   (capture, write, execute, credentials), never for `<info>` or `<file>`, so filter text cannot lower risk. A
-  command that writes an output file asks like a capture; `-w -` stays safe. The user's Wireshark profile
-  Lua/binary plugins still load; argv rules cannot prevent that.
+  command that writes an output file asks like a capture; `-w -` stays safe. Generic runs use the
+  user's Wireshark profile and its extensions.
+
+- The typed host isolates personal configuration and plugin/extension directories, disables name
+  resolution, and restricts output to selected fields and Decode As to TCP/UDP port selectors.
+  Filters use protocol presence or comparisons on offline fields with numeric addresses.
+  Packet field values are untrusted. Agent masking preserves structured coverage and pagination.
+- Typed operations snapshot ordinary confined files. Query cursors bind the exact file, tool
+  version, profile, filter, fields and query bounds. Coverage describes the scan and the remaining
+  matching range after the cursor. Limits are 64 MiB per capture, 50,000 scan frames, 50 rows per
+  page and a 30-second deadline. Import requires full validation and verified same-directory
+  staging, with 32 files and 256 MiB per workbench.
 
 - bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
   self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
@@ -114,6 +130,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 | CAN commands, listen-only map, driver hints | `plugins/can-python/scripts/can_bus.py`, `plugin.yaml` | `can.test.ts` matrix, fake python-can script cases, gate; `VERA_CAN_UV` real udp_multicast acceptance |
 | DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
 | tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
+| Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
@@ -130,6 +147,8 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 - `REQ-UX-c68ec8b8` / `REQ-TEST-1fbadc3c` — analysis/capture skills; real-TShark replay of the sample capture.
 - `REQ-PLAT-0b1587fd` — approved bounded live capture (opt-in loopback test; Windows run, Linux pending).
 - `REQ-PLAT-c2323ad5` — capture-file analysis on Linux x64 (manual, pending a Linux host with tshark).
+- `REQ-FUNC-610a4011`–`REQ-FUNC-610a4014`, `REQ-SEC-610a4015`, `REQ-DATA-610a4016` and
+  `REQ-REL-610a4017`–`REQ-REL-610a4018` — typed capture evidence, managed storage and limits.
 
 ## Files
 
@@ -139,5 +158,8 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 - `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
 - `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
+- `05_Software/src/libraries/shared/src/wireshark.ts` — typed inputs, capture and frame evidence.
+- `05_Software/src/libraries/core/src/wireshark/` — native dissection, reference verification,
+  managed storage and model result masking.
 - `05_Software/tests/plugins/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
   find/hint with a fake host, generated CoAP/Modbus `sample.pcapng` (`build.py`) and real-TShark replay.

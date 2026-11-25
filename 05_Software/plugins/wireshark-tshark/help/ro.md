@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Folosește instrumentul offline pentru a selecta câmpuri, a filtra pachete și a cita cadre dintr-o captură verificată. Importă o captură pentru a păstra fișierul verificat în spațiul de lucru.
+
 Acest plugin îi permite agentului să analizeze fișiere de captură de rețea cu TShark și să captureze trafic live de pe o interfață a computerului tău. Răspunde la întrebări despre capturi `.pcap` și `.pcapng` ale traficului Ethernet, Wi-Fi sau USB al unei plăci, cu filtre de afișare, export de câmpuri, statistici de protocol și detalii de pachete, și salvează în workbench capturi live limitate.
 
 ## Ce necesită
@@ -28,5 +30,5 @@ Agentul folosește skill-urile `wireshark-analyze` și `wireshark-capture`. Cite
 ## Limitări
 
 - Windows x64 și Linux x64. Regulile au fost măsurate cu TShark 4.6.8.
-- TShark încarcă la fiecare rulare pluginurile Lua și binare ale profilului tău Wireshark; regulile nu pot împiedica asta.
+- Analiza offline folosește un profil Wireshark izolat. Rulările TShark generice încarcă profilul tău Wireshark și extensiile lui.
 - Interfețele la distanță și extcap (sshdump, `rpcap://`) capturează pe alte gazde. Configurează captura la distanță și credențialele ei în afara VERA.

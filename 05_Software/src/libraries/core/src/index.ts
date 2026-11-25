@@ -116,6 +116,7 @@ export * from "./web/download-transfer.js";
 export * from "./web/downloads.js";
 export * from "./web/exa.js";
 export * from "./web/provider.js";
+export { officialCapturePlugin } from "./wireshark/service.js";
 export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";
 export * from "./workbench/ignore.js";
 export * from "./workbench/path-guard.js";

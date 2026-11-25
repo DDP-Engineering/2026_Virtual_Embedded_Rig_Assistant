@@ -6,6 +6,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Added
+
+- wireshark-tshark 0.3.2: Inspect saved captures offline with typed packet queries and verified capture references.
+
 ### Fixed
 
 - Verify update metadata against the installer files and blockmaps in each delivery.

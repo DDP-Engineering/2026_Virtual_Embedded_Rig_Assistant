@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-REL-610a4018"
+title = "Identify incomplete packet evidence"
+status = "active"
+requirement = "When scan, value, process or result bounds prevent full packet evidence, VERA shall explicitly identify the incomplete coverage or return a typed limit error."
+verification = "Run a restricted scan and result budget and observe the partial state, then verify a complete response with larger bounds."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/core/src/plugins/runner.ts","05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/core/src/wireshark/model-output.ts","05_Software/src/libraries/core/src/sessions/masking.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]

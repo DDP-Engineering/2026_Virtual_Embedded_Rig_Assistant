@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-610a4012"
+title = "Inspect offline capture evidence"
+status = "active"
+requirement = "When a caller requests offline capture inspection, discovery, or frame details, VERA shall return bounded typed capture metadata, selected field and protocol definitions, or the selected frame with its evidence reference."
+verification = "Replay independent PCAP and PCAPNG fixtures and check the inspection, metadata and selected frame fields and reference."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/shared/src/index.ts","05_Software/plugins/wireshark-tshark/README.md","05_Software/plugins/wireshark-tshark/skills/wireshark-analyze/SKILL.md","05_Software/release-notes/unreleased.yaml","05_Software/plugins/wireshark-tshark/help/en.md","05_Software/plugins/wireshark-tshark/help/de.md","05_Software/plugins/wireshark-tshark/help/fr.md","05_Software/plugins/wireshark-tshark/help/ro.md"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]

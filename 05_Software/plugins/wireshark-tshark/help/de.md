@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Mit dem Offline-Werkzeug Felder auswählen, Pakete filtern und Frames aus einem geprüften Mitschnitt belegen. Beim Import bleibt die geprüfte Datei im Arbeitsbereich erhalten.
+
 Dieses Plugin ermöglicht dem Agenten, Netzwerk-Aufzeichnungsdateien mit TShark zu analysieren und Live-Verkehr von einer Schnittstelle Ihres Computers aufzuzeichnen. Es beantwortet Fragen zu `.pcap`- und `.pcapng`-Aufzeichnungen des Ethernet-, WLAN- oder USB-Verkehrs eines Boards mit Anzeigefiltern, Feldexport, Protokollstatistiken und Paketdetails und speichert begrenzte Live-Aufzeichnungen in der Workbench.
 
 ## Voraussetzungen
@@ -28,5 +30,5 @@ Der Agent verwendet die Skills `wireshark-analyze` und `wireshark-capture`. Er l
 ## Grenzen
 
 - Windows x64 und Linux x64. Die Regeln wurden an TShark 4.6.8 ermittelt.
-- TShark lädt bei jedem Lauf die Lua- und Binär-Plugins Ihres eigenen Wireshark-Profils; die Regeln können das nicht verhindern.
+- Die Offline-Analyse verwendet ein isoliertes Wireshark-Profil. Allgemeine TShark-Aufrufe verwenden Ihr Wireshark-Profil und dessen Erweiterungen.
 - Remote- und extcap-Schnittstellen (sshdump, `rpcap://`) zeichnen auf anderen Hosts auf. Richten Sie Remote-Aufzeichnung und ihre Zugangsdaten außerhalb von VERA ein.

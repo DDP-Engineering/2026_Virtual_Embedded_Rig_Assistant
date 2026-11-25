@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Use the offline capture tool to select fields, filter packets and cite frames from a verified capture. Import a capture to keep its verified bytes in the workbench.
+
 This plugin lets the agent analyse network capture files with TShark and capture live traffic from an interface of your computer. It answers questions about `.pcap` and `.pcapng` captures of a board's Ethernet, Wi-Fi or USB traffic with display filters, field export, protocol statistics and packet details, and saves bounded live captures in the workbench.
 
 ## What it needs
@@ -28,5 +30,5 @@ The agent uses the `wireshark-analyze` and `wireshark-capture` skills. It always
 ## Limits
 
 - Windows x64 and Linux x64. The rules were measured against TShark 4.6.8.
-- TShark loads the Lua and binary plugins of your own Wireshark profile on every run; the rules cannot prevent that.
+- Typed offline analysis uses an isolated Wireshark profile. Generic TShark runs load your Wireshark profile and its extensions.
 - Remote and extcap interfaces (sshdump, `rpcap://`) capture on other hosts. Configure remote capture and its credentials outside VERA.

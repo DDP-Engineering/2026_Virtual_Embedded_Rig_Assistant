@@ -208,6 +208,8 @@ export interface SessionHost {
   writeQueue?: WriteQueue;
   /** Plugin programs of the workbench; without it the program tools are not offered. */
   programs?: ProgramHost;
+  /** Current verified official Wireshark package digest, supplied when the host loads the workbench. */
+  wiresharkPackage?: string | undefined;
   /** Live workbench grants, supplied only by the host; model arguments never select them. */
   commandPrefixes?: () => readonly string[];
   additionalFolders?: () => readonly string[];
@@ -1719,6 +1721,9 @@ export class SessionService {
         }
         ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
       } else delete ctx.programs;
+      delete ctx.wiresharkPackage;
+      const capturePackage = this.host.wiresharkPackage;
+      if (!delegated && ctx.programs && capturePackage) ctx.wiresharkPackage = capturePackage;
     }
     const registry = review ? new ToolRegistry([todoTool]) : (this.host.registry ?? new ToolRegistry());
     const permissions = this.host.permissions;
@@ -1742,7 +1747,12 @@ export class SessionService {
         ...tool,
         publish: (args: unknown, output: string) => {
           const authorized = tool.publish?.(args, output) ?? output;
-          return maskToolOutput(tool.name, authorized, (text) => this.maskContent("agent", text));
+          return maskToolOutput(
+            tool.name,
+            authorized,
+            (text) => this.maskContent("agent", text),
+            this.resolveAdvanced(id, "toolResultChars"),
+          );
         },
         execute: async (args: unknown, signal: AbortSignal, callId?: string) => {
           await durable();
@@ -1807,8 +1817,10 @@ export class SessionService {
       }));
     const writeToolNames = new Set(tools.filter((tool) => tool.class === "write").map((tool) => tool.name));
     const reviewToolNames = new Set(tools.map((tool) => tool.name));
-    const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
-      this.maskContent("agent", text),
+    const contextPolicy = new MaskingContextPolicy(
+      this.host.contextPolicy ?? new ContextPolicy(),
+      (text) => this.maskContent("agent", text),
+      () => this.resolveAdvanced(id, "toolResultChars"),
     );
     const contextCompactor = this.compactor(id);
     contextCompactor.settings = this.compactionSettings(id);

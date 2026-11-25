@@ -3,7 +3,23 @@
 Enable **Capture analysis** in the Wireshark pack. The plugin exposes
 `tshark` through VERA's program tools with two skills: `wireshark-analyze`
 for saved `.pcap`/`.pcapng` files and `wireshark-capture` for bounded live
-captures.
+captures. The official package also enables VERA's typed `wireshark_capture`
+tool for saved captures.
+
+## Offline inspection in VERA
+
+Use `wireshark_capture` to inspect a PCAP or PCAPNG in the workbench, discover
+fields and protocols, check a display filter, page through selected packets and
+retrieve one frame. The tool uses VERA's offline dissection profile with name
+resolution disabled. A Decode As entry selects TCP or UDP, a port and a
+dissector. Offline filters accept protocol presence and comparisons on selected
+fields with numeric addresses. Packet values are untrusted capture data.
+
+Use the returned capture reference and page cursor to continue a query. Cite
+the SHA-256 and the frame number. Check coverage for incomplete scans, more pages
+and truncated fields. Use `wireshark_import` to retain a verified copy in managed
+workbench storage. The `verify_reference` operation checks file identity even
+when TShark is unavailable. Small text reports use the session artifact store.
 
 ## Installation
 
@@ -41,8 +57,8 @@ session. VERA leaves both steps to the user.
 
 ## Limits
 
-TShark loads the Lua and binary plugins of the user's own Wireshark profile
-on every run, as Wireshark does; command-line rules cannot prevent that.
+Typed offline operations use isolated configuration with host-owned limits.
+Generic program runs use the user's Wireshark profile and its extensions.
 Extcap interfaces such as sshdump or `rpcap://` capture on other hosts and
 are classified like any live capture. Only `-A` is refused as a credential:
 extcap options passed with `-o extcap.<tool>.<option>:<value>` can also carry

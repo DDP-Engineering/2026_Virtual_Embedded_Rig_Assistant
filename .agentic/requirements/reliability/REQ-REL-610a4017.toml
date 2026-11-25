@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-REL-610a4017"
+title = "Reject invalid capture inputs"
+status = "active"
+requirement = "If a capture is inaccessible, changed, corrupt or over budget, VERA shall report an actionable typed error without publishing a managed reference."
+verification = "Exercise denied, changed, corrupt and over-budget inputs and verify the distinct diagnostic and absence of publication."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/core/src/wireshark/service.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]

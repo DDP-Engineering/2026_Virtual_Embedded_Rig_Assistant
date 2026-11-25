@@ -13,6 +13,7 @@ import {
   type LlmGateway,
   leaseRoot,
   ModelCalibrationStore,
+  officialCapturePlugin,
   officialPartsPlugin,
   PluginStore,
   type ProgramHost,
@@ -242,7 +243,8 @@ export async function runTurn(
       credentials: cliProgramCredentials(store),
     };
     const programEntries = await programPromptEntries(programHost, skillList);
-    const partsPlugin = (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin);
+    const plugins = await workbench.loadPlugins(snapshot.config.id);
+    const partsPlugin = plugins.some(officialPartsPlugin);
     const service = new SessionService({
       db,
       allowDelegatedFullAccess: () => delegatedFullAccessEnabled(location.paths.userData),
@@ -271,6 +273,7 @@ export async function runTurn(
       workers,
       skills,
       programs: programHost,
+      wiresharkPackage: plugins.find(officialCapturePlugin)?.record.sha256,
       commandPrefixes: () => workbench.getSnapshot().config.agent.allowed_commands,
       pluginBuilder: new PluginStore({ root: join(location.paths.userData, "plugins") }),
       managedRoots: [location.paths.userData],

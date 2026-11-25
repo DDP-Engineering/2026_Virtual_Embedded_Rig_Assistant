@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Utilisez l’outil hors ligne pour sélectionner des champs, filtrer des paquets et citer des trames d’une capture vérifiée. Importez une capture pour conserver le fichier vérifié dans l’espace de travail.
+
 Ce plugin permet à l’agent d’analyser des fichiers de capture réseau avec TShark et de capturer du trafic en direct sur une interface de votre ordinateur. Il répond aux questions sur des captures `.pcap` et `.pcapng` du trafic Ethernet, Wi-Fi ou USB d’une carte à l’aide de filtres d’affichage, d’exports de champs, de statistiques de protocoles et du détail des paquets, et enregistre des captures en direct limitées dans le banc de travail.
 
 ## Prérequis
@@ -28,5 +30,5 @@ L’agent utilise les compétences `wireshark-analyze` et `wireshark-capture`. I
 ## Limites
 
 - Windows x64 et Linux x64. Les règles ont été établies avec TShark 4.6.8.
-- TShark charge les plugins Lua et binaires de votre propre profil Wireshark à chaque exécution ; les règles ne peuvent pas l’empêcher.
+- L’analyse hors ligne utilise un profil Wireshark isolé. Les exécutions TShark génériques chargent votre profil Wireshark et ses extensions.
 - Les interfaces distantes et extcap (sshdump, `rpcap://`) capturent sur d’autres hôtes. Configurez la capture à distance et ses identifiants en dehors de VERA.

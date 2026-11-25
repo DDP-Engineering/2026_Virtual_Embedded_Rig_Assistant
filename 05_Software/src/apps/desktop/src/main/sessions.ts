@@ -9,6 +9,7 @@ import {
   type HelpLibrary,
   type LiveSessionActivity,
   type ModelCalibrationStore,
+  officialCapturePlugin,
   officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
@@ -79,6 +80,7 @@ export class SessionsHost {
   private programGeneration = 0;
   /** Whether the open workbench has the official parts-search plugin loaded; refreshed by run(). */
   private partsPlugin = false;
+  private wiresharkPackage: string | undefined;
   /** Whether the open workbench has the official kicad-layout plugin loaded (apply_candidate); refreshed by run(). */
   private layoutPlugin = false;
   /** Whether a loaded plugin builds on the electrical model (electrical, automation); refreshed by run(). */
@@ -227,6 +229,7 @@ export class SessionsHost {
             : [];
         assertCurrent();
         this.partsPlugin = loaded.some(officialPartsPlugin);
+        this.wiresharkPackage = loaded.find(officialCapturePlugin)?.record.sha256;
         this.layoutPlugin = loaded.some(officialLayoutPlugin);
         this.electricalPlugins = loaded.filter(electricalModelPlugin).map((plugin) => plugin.manifest.id);
         const key = JSON.stringify([
@@ -355,6 +358,9 @@ export class SessionsHost {
             : {}),
           get applyCandidate() {
             return self.layoutPlugin;
+          },
+          get wiresharkPackage() {
+            return self.wiresharkPackage;
           },
           get electricalPlugins() {
             return self.electricalPlugins;
