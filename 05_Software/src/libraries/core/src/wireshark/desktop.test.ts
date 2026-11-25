@@ -62,12 +62,12 @@ it("keeps the exact cited bytes and frame, adjusts hiding filters, and refuses i
     return { exit: { code: 0, signal: null }, stdout, stderr: "", exceeded: false };
   });
   const runner = { captureOutput: run } as unknown as ProgramRunner;
-  async function prepare(filter?: string, expected = frame, reference = capture) {
+  async function prepare(filter?: string, expected = frame, reference = capture, dissection = analysis) {
     const folder = await mkdtemp(join(root, "scratch-"));
     const path = join(folder, name);
     const result = await prepareWiresharkFrame(
       createToolContext(workbench),
-      { capture: reference, frame: expected, analysis },
+      { capture: reference, frame: expected, analysis: dissection },
       filter,
       runner,
       "tshark",
@@ -84,6 +84,19 @@ it("keeps the exact cited bytes and frame, adjusts hiding filters, and refuses i
     const preserved = await prepare();
     expect(preserved.args).toEqual(["-n", "-r", preserved.path, "-g", "3", "-Y", "coap"]);
     expect(preserved.filterAdjusted).toBe(false);
+    const traffic = await prepare(undefined, frame, capture, {
+      ...analysis,
+      trafficPreferences: {
+        tcpSequenceAnalysis: true,
+        tcpDesegmentation: true,
+        tcpReassembleOutOfOrder: false,
+        httpDesegmentation: true,
+        dnsDesegmentation: true,
+        validateChecksums: true,
+      },
+    });
+    expect(traffic.args).toContain("tcp.check_checksum:TRUE");
+    expect(run.mock.lastCall?.[0].args).toContain("tcp.check_checksum:TRUE");
     const adjusted = await prepare("arp");
     expect(adjusted.args.at(-1)).toBe("(arp) || frame.number == 3");
     expect(adjusted.filterAdjusted).toBe(true);

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-610a4023"
+title = "Measure interval traffic with coverage"
+status = "active"
+requirement = "When a caller requests interval traffic for a capture window, VERA shall report bounded interval packet and byte rates and source frames with explicit window and scan coverage."
+verification = "Compare native packet timestamps and lengths against populated, empty and final short intervals."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/statistics.ts","05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

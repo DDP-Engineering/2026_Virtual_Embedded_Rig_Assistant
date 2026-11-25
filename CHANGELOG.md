@@ -11,6 +11,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Open cited frames from verified saved captures in Wireshark Desktop.
 
 - wireshark-tshark 0.3.2: Inspect saved captures offline with typed packet queries and verified capture references.
+- wireshark-tshark 0.4.0: Analyze saved traffic, timing, diagnostics and streams with frame evidence.
 
 ### Fixed
 

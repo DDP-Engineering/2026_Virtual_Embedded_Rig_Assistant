@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+L’outil hors ligne répertorie les conversations et les terminaux, mesure le trafic et les temps de réponse DNS ou HTTP et affiche les informations d’expert par trame. Ouvrez une trame citée dans Wireshark Desktop pour examiner localement le contenu du flux.
+
 Utilisez l’outil hors ligne pour sélectionner des champs, filtrer des paquets et citer des trames d’une capture vérifiée. Importez une capture pour conserver le fichier vérifié dans l’espace de travail.
 
 Ce plugin permet à l’agent d’analyser des fichiers de capture réseau avec TShark et de capturer du trafic en direct sur une interface de votre ordinateur. Il répond aux questions sur des captures `.pcap` et `.pcapng` du trafic Ethernet, Wi-Fi ou USB d’une carte à l’aide de filtres d’affichage, d’exports de champs, de statistiques de protocoles et du détail des paquets, et enregistre des captures en direct limitées dans le banc de travail.

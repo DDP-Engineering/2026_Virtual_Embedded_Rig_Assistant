@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Instrumentul offline listează conversațiile și endpointurile, măsoară traficul și timpii de răspuns DNS sau HTTP și afișează diagnosticele pe cadre. Deschide un cadru citat în Wireshark Desktop pentru a examina local conținutul fluxului.
+
 Folosește instrumentul offline pentru a selecta câmpuri, a filtra pachete și a cita cadre dintr-o captură verificată. Importă o captură pentru a păstra fișierul verificat în spațiul de lucru.
 
 Acest plugin îi permite agentului să analizeze fișiere de captură de rețea cu TShark și să captureze trafic live de pe o interfață a computerului tău. Răspunde la întrebări despre capturi `.pcap` și `.pcapng` ale traficului Ethernet, Wi-Fi sau USB al unei plăci, cu filtre de afișare, export de câmpuri, statistici de protocol și detalii de pachete, și salvează în workbench capturi live limitate.

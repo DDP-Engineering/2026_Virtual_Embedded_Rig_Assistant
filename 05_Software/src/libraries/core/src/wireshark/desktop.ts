@@ -8,7 +8,7 @@ import {
 } from "@vera/shared";
 import type { ProgramRunner } from "../plugins/runner.js";
 import type { ToolContext } from "../tools/context.js";
-import { CaptureError, captureDecodeArgs, emptyPcap, OfflineTshark } from "./native.js";
+import { CaptureError, captureDissectionArgs, emptyPcap, OfflineTshark } from "./native.js";
 import { snapshotCapture } from "./storage.js";
 
 interface DesktopFrame {
@@ -65,7 +65,7 @@ export async function prepareWiresharkFrame(
       path,
       "-g",
       String(frame.number),
-      ...captureDecodeArgs(analysis.decodeAs),
+      ...captureDissectionArgs(analysis),
       ...(filter ? ["-Y", filter] : []),
     ],
     filterAdjusted: !matches,

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-610a4025"
+title = "Measure supported response timing"
+status = "active"
+requirement = "When a caller requests supported DNS or HTTP response timing, VERA shall report native unambiguous request and response timing evidence with source-frame references and explicit missing-pair coverage."
+verification = "Compare request and response fields and exact native timing, then filter the request out and verify scope metadata."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/diagnostics.ts","05_Software/src/libraries/core/src/wireshark/traffic-native.ts","05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

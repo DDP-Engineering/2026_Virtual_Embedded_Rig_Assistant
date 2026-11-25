@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-610a4024"
+title = "Report native expert and transport observations"
+status = "active"
+requirement = "When a caller requests capture diagnostics, VERA shall report expert severity and group counts and per-frame native TCP, truncation and checksum observations with their source evidence and observational limits."
+verification = "Compare native fields for retransmission, missing segments, truncation and partial or bad checksums."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/diagnostics.ts","05_Software/src/libraries/core/src/wireshark/traffic-native.ts","05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

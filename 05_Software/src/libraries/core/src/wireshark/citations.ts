@@ -9,6 +9,7 @@ import {
   captureLimits,
   capturePacketSchema,
   captureReferenceSchema,
+  captureTrafficFrameSchema,
   formatRef,
 } from "@vera/shared";
 import { z } from "zod";
@@ -18,6 +19,9 @@ const resultSchema = z.object({
   analysis: captureAnalysisSchema,
   packet: capturePacketSchema.optional(),
   packets: z.array(capturePacketSchema).max(captureLimits.pageRows).optional(),
+  traffic: z
+    .object({ evidence: z.array(captureTrafficFrameSchema).max(captureLimits.pageRows * 2 + 9) })
+    .optional(),
 });
 
 export function captureCitation(
@@ -51,8 +55,8 @@ export function issuedCaptureCitations(messages: readonly Message[]) {
       try {
         const parsed = resultSchema.safeParse(JSON.parse(part.text));
         if (!parsed.success) continue;
-        const { capture, analysis, packet, packets } = parsed.data;
-        for (const row of packets ?? (packet ? [packet] : [])) {
+        const { capture, analysis, packet, packets, traffic } = parsed.data;
+        for (const row of traffic?.evidence ?? packets ?? (packet ? [packet] : [])) {
           const { ref, frame } = row;
           if (
             ref &&

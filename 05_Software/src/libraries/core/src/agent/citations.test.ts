@@ -37,6 +37,28 @@ it("accepts capture citations only from matching verified offline evidence", asy
   await expect(
     validateCitations(tmpdir(), text, [message({ capture, analysis: context, packets: [packet] })]),
   ).resolves.toEqual([{ ref, valid: true }]);
+  const trafficAnalysis = {
+    ...context,
+    trafficPreferences: {
+      tcpSequenceAnalysis: true,
+      tcpDesegmentation: true,
+      tcpReassembleOutOfOrder: false,
+      httpDesegmentation: true,
+      dnsDesegmentation: true,
+      validateChecksums: true,
+    } as const,
+  };
+  const trafficRef = captureCitation(capture, frame, trafficAnalysis);
+  const traffic = { evidence: [{ section: 1, frame, ref: trafficRef }] };
+  expect(trafficRef).not.toBe(ref);
+  await expect(
+    validateCitations(tmpdir(), `[[${trafficRef}]]`, [
+      message({ capture, analysis: trafficAnalysis, traffic }),
+    ]),
+  ).resolves.toEqual([{ ref: trafficRef, valid: true }]);
+  await expect(
+    validateCitations(tmpdir(), `[[${trafficRef}]]`, [message({ capture, analysis: context, traffic })]),
+  ).resolves.toEqual([{ ref: trafficRef, valid: false }]);
   for (const result of [
     message({ capture, analysis: context, packet }, "read"),
     message({ capture, analysis: context, packet }, "wireshark_capture", true),

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-610a4021"
+title = "Summarize offline protocol stacks"
+status = "active"
+requirement = "When a caller requests a protocol hierarchy, VERA shall report scoped packet and byte counts for observed stack prefixes with representative source frames."
+verification = "Compare nested hierarchy counts and frames with TShark on the synthetic capture."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/statistics.ts","05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

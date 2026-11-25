@@ -22,6 +22,8 @@ import { reportSkip } from "../support/skip-marker.js";
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = new URL("wireshark-tshark/", plugins);
 const sample = fileURLToPath(new URL("../fixtures/wireshark-tshark/sample.pcapng", import.meta.url));
+const trafficSample = fileURLToPath(new URL("../fixtures/wireshark-tshark/traffic.pcapng", import.meta.url));
+const untimedSample = fileURLToPath(new URL("../fixtures/wireshark-tshark/untimed.pcapng", import.meta.url));
 const manifest = async (): Promise<PluginManifest> =>
   parse(await readFile(new URL("plugin.yaml", source), "utf8"));
 const hint =
@@ -703,6 +705,402 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     await rig.close();
   }
 }, 120_000);
+
+it("reconciles typed offline traffic statistics and directional streams with native TShark", async (ctx) => {
+  const source = { path: "captures/sample.pcapng" };
+  const trafficSource = { path: "captures/traffic.pcapng" };
+  const stat = (statistic: object, options: object = {}) =>
+    typed("statistics", { source, statistic, ...options });
+  const follow = (transport: string, stream: number, options: object = {}) =>
+    typed("follow", { source, transport, stream, ...options });
+  const rates = { kind: "traffic", intervalMs: 300 };
+  const window = { startMs: -300, endMs: 800 };
+  const rig = await workbench({
+    traffic: [
+      stat({ kind: "protocol_hierarchy" }),
+      stat({ kind: "endpoints", layer: "udp" }),
+      stat({ kind: "conversations", layer: "tcp" }),
+      stat(rates, { window }),
+      follow("udp", 0),
+      follow("tcp", 0),
+      stat({ kind: "diagnostics" }, { source: trafficSource, validateChecksums: true }),
+      stat({ kind: "response_timing", protocol: "dns" }, { source: trafficSource }),
+      stat(
+        { kind: "response_timing", protocol: "http" },
+        {
+          source: trafficSource,
+          filter: "frame.number == 15",
+        },
+      ),
+      follow("tcp", 0, { source: trafficSource, limit: 2 }),
+      follow("udp", 1, { source: trafficSource }),
+      stat({ kind: "endpoints", layer: "ipv6" }, { source: trafficSource }),
+      stat({ kind: "endpoints", layer: "ethernet" }),
+      stat({ kind: "conversations", layer: "ipv4" }),
+      follow("tcp", 12, { source: trafficSource, scanFrames: 5 }),
+      stat({ kind: "traffic", intervalMs: 1 }, { window }),
+      stat(rates),
+      stat({ kind: "protocol_hierarchy" }, { scanFrames: 5, filter: "udp" }),
+      stat({ kind: "response_timing", protocol: "quic" }),
+      follow("tcp", 12, { source: trafficSource }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("TShark unavailable for offline traffic acceptance.");
+      return;
+    }
+    await writeFile(join(rig.bench, trafficSource.path), await readFile(trafficSample));
+    const untimedSource = { path: "captures/untimed.pcapng" };
+    await writeFile(join(rig.bench, untimedSource.path), await readFile(untimedSample));
+    const executable = rig.tshark.executable;
+    const native = async (capture: string, args: string[]) =>
+      (
+        await promisify(execFile)(executable, ["-n", "-r", capture, ...args], {
+          timeout: 10_000,
+          windowsHide: true,
+        })
+      ).stdout;
+    const fields = (...names: string[]) => ["-T", "fields", ...names.flatMap((name) => ["-e", name])];
+    const nativeSample = (
+      await native(sample, fields("frame.number", "frame.time_relative", "frame.len", "frame.protocols"))
+    )
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => line.split("\t"));
+    const service = await rig.start();
+    const session = rig.session(service, "traffic", "ask");
+    service.send(session.id, "Summarize this synthetic capture.");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const outputs = session.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(session.outputs).toHaveLength(20);
+    expect(session.outputs.slice(0, 14).filter(({ ok }) => !ok)).toEqual([]);
+
+    const paths = new Set(
+      nativeSample.flatMap(
+        ([, , , stack]) =>
+          stack?.split(":").map((_protocol, index, layers) => layers.slice(0, index + 1).join(":")) ?? [],
+      ),
+    );
+    expect(outputs[0].traffic.rows).toEqual(
+      [...paths].sort().map((path) => {
+        const matches = nativeSample.filter(
+          ([, , , stack]) => stack === path || stack?.startsWith(`${path}:`),
+        );
+        const bytes = matches.reduce((sum, row) => sum + Number(row[2]), 0);
+        return {
+          path: path.split(":"),
+          frames: [Number(matches[0]?.[0])],
+          packets: matches.length,
+          wireBytes: bytes,
+          capturedBytes: bytes,
+        };
+      }),
+    );
+    expect(outputs[0].traffic.summary).toMatchObject({ packets: 8, wireBytes: 445, capturedBytes: 445 });
+    const nativeUdp = await native(sample, ["-q", "-z", "endpoints,udp"]);
+    expect(nativeUdp).toMatch(/192\.168\.7\.1\s+40000\s+4\s+228 bytes\s+2\s+124 bytes\s+2\s+104 bytes/);
+    expect(outputs[1].traffic.rows).toMatchObject([
+      {
+        endpoint: { address: "192.168.7.1", port: 40000 },
+        tx: { packets: 2, wireBytes: 124 },
+        rx: { packets: 2, wireBytes: 104 },
+        packets: 4,
+        wireBytes: 228,
+        frames: [3, 4],
+      },
+      {
+        endpoint: { address: "192.168.7.10", port: 5683 },
+        tx: { packets: 2, wireBytes: 104 },
+        rx: { packets: 2, wireBytes: 124 },
+        packets: 4,
+        wireBytes: 228,
+        frames: [4, 3],
+      },
+    ]);
+    const nativeTcp = await native(sample, ["-q", "-z", "conv,tcp"]);
+    expect(nativeTcp).toMatch(
+      /192\.168\.7\.1:50200\s+<->\s+192\.168\.7\.10:502\s+1 67 bytes\s+1 66 bytes\s+2 133 bytes/,
+    );
+    expect(outputs[2].traffic.rows).toMatchObject([
+      {
+        stream: 0,
+        frames: [5, 6],
+        packets: 2,
+        wireBytes: 133,
+        aToB: { packets: 1, wireBytes: 66 },
+        bToA: { packets: 1, wireBytes: 67 },
+      },
+    ]);
+    expect(outputs[3].traffic.rows).toEqual(
+      [-300, 0, 300, 600].map((startMs) => {
+        const endMs = Math.min(startMs + 300, window.endMs);
+        const observed = nativeSample.filter(
+          ([, seconds]) => Number(seconds) * 1000 >= startMs && Number(seconds) * 1000 < endMs,
+        );
+        const bytes = observed.reduce((sum, frame) => sum + Number(frame[2]), 0);
+        const duration = (endMs - startMs) / 1000;
+        return {
+          startMs,
+          endMs,
+          packets: observed.length,
+          wireBytes: bytes,
+          capturedBytes: bytes,
+          packetsPerSecond: observed.length / duration,
+          wireBytesPerSecond: bytes / duration,
+          capturedBytesPerSecond: bytes / duration,
+          frames: observed.length ? [Number(observed[0]?.[0])] : [],
+        };
+      }),
+    );
+    expect(outputs[3].traffic.scopeCoverage.windowExtendsOutsideScannedTimeRange).toBe(true);
+
+    for (const [index, capture, transport, stream] of [
+      [4, sample, "udp", 0],
+      [5, sample, "tcp", 0],
+      [10, trafficSample, "udp", 1],
+    ] as const) {
+      const tap = await native(capture, ["-q", "-z", ["follow", transport, "yaml", stream].join(",")]);
+      const rows = [
+        ...tap.matchAll(
+          /packet: (\d+)\r?\n +peer: (\d)\r?\n +timestamp: [^\r\n]+\r?\n +data: !!binary \|\r?\n +(\S+)/g,
+        ),
+      ].map(([, frame, peer, data]) => ({
+        kind: "data",
+        frames: [Number(frame)],
+        direction: peer === "0" ? "a_to_b" : "b_to_a",
+        payloadBytes: Buffer.from(data ?? "", "base64").length,
+      }));
+      expect(outputs[index].traffic.rows).toMatchObject(rows);
+      expect(
+        outputs[index].traffic.evidence.map(({ frame }: { frame: { number: number } }) => frame.number),
+      ).toEqual([...new Set(rows.flatMap((row) => row.frames))].sort((a, b) => a - b));
+    }
+    expect(outputs[5].traffic.summary.tcp).toMatchObject({
+      handshakeMarkersObserved: false,
+      endMarkersObserved: false,
+    });
+    expect(outputs[10].traffic.summary.a.address).toBe("2001:db8::1");
+    expect(outputs[11].traffic.rows).toMatchObject([
+      { endpoint: { address: "2001:db8::1" }, frames: [16, 17], packets: 2, wireBytes: 130 },
+      { endpoint: { address: "2001:db8::2" }, frames: [17, 16], packets: 2, wireBytes: 130 },
+    ]);
+    expect(outputs[12].traffic.rows).toMatchObject([
+      { endpoint: { address: "02:00:00:00:00:01" }, frames: [1, 2], packets: 8, wireBytes: 445 },
+      { endpoint: { address: "ff:ff:ff:ff:ff:ff" }, frames: [1], packets: 1, wireBytes: 42 },
+      { endpoint: { address: "02:00:00:00:00:10" }, frames: [2, 3], packets: 7, wireBytes: 403 },
+    ]);
+    expect(outputs[13].traffic.rows).toMatchObject([
+      {
+        frames: [3, 4],
+        packets: 6,
+        wireBytes: 361,
+        aToB: { packets: 3, wireBytes: 190 },
+        bToA: { packets: 3, wireBytes: 171 },
+      },
+    ]);
+
+    const verifiedFields = await native(trafficSample, [
+      "-o",
+      "tcp.check_checksum:TRUE",
+      "-o",
+      "udp.check_checksum:TRUE",
+      ...fields(
+        "frame.number",
+        "tcp.analysis.retransmission",
+        "tcp.analysis.lost_segment",
+        "tcp.checksum.partial",
+        "udp.checksum.status",
+        "frame.len",
+        "frame.cap_len",
+        "_ws.expert.severity",
+        "_ws.expert.group",
+      ),
+    ]);
+    const nativeDiagnostics = verifiedFields
+      .trimEnd()
+      .split(/\r?\n/)
+      .map((line) => line.split("\t"));
+    expect(nativeDiagnostics.find((row) => row[0] === "5")?.[1]).toBe("1");
+    expect(nativeDiagnostics.find((row) => row[0] === "7")?.[2]).toBe("1");
+    expect(nativeDiagnostics.find((row) => row[0] === "10")?.[3]).toBe("1");
+    expect(nativeDiagnostics.find((row) => row[0] === "13")?.[4]).toBe("0");
+    expect(outputs[6].traffic.summary).toMatchObject({
+      tcpObservations: { retransmission: 1, previousSegmentUnseen: 1, acknowledgedSegmentUnseen: 1 },
+      partialChecksumMarkers: { tcp: 1, udp: 0 },
+      checksumStatuses: { tcp: { partial_offload_evidence: 1, unverified: 1 }, udp: { bad: 1 } },
+    });
+    for (const [index, key] of [
+      [7, "expertSeverity"],
+      [8, "expertGroup"],
+    ] as const) {
+      const histogram: Record<string, number> = {};
+      for (const row of nativeDiagnostics)
+        for (const code of row[index]?.split(",").filter(Boolean) ?? [])
+          histogram[code] = (histogram[code] ?? 0) + 1;
+      expect(outputs[6].traffic.summary[key]).toEqual(histogram);
+    }
+    expect(outputs[6].traffic.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ frames: [5], tcp: ["retransmission"] }),
+        expect.objectContaining({ frames: [7], tcp: ["previousSegmentUnseen"] }),
+        expect.objectContaining({ frames: [9], truncated: true, wireBytes: 68, capturedBytes: 56 }),
+        expect.objectContaining({ frames: [10], checksum: { tcp: ["partial_offload_evidence"], udp: [] } }),
+      ]),
+    );
+    expect(outputs[6].traffic.scopeCoverage).toMatchObject({
+      truncatedFrames: 1,
+      observationPoints: [
+        { section: 1, interfaceId: 0, packets: 10 },
+        { section: 1, interfaceId: 1, packets: 7 },
+      ],
+    });
+    for (const [index, protocol, requestField] of [
+      [7, "dns", "dns.response_to"],
+      [8, "http", "http.request_in"],
+    ] as const) {
+      const output = await native(trafficSample, [
+        "-Y",
+        requestField,
+        ...fields("frame.number", requestField, `${protocol}.time`),
+      ]);
+      const [response, request, durationSeconds] = output.trim().split("\t");
+      expect(outputs[index].traffic.rows).toMatchObject([
+        {
+          frames: [Number(request), Number(response)],
+          requestInScope: protocol === "dns",
+          durationSeconds,
+        },
+      ]);
+    }
+    expect(outputs[7].traffic.summary).toMatchObject({ pairs: 1, requestsWithoutObservedResponse: 1 });
+    expect(outputs[8].traffic.summary.pairsWithRequestOutsideScope).toBe(1);
+
+    const tcpEvidence = outputs[9].traffic;
+    expect(tcpEvidence.summary).toMatchObject({
+      nativeGapRecords: 1,
+      truncatedStreamFrames: 1,
+      directions: [
+        { direction: "a_to_b", payloadBytes: 23, missingBytes: 5 },
+        { direction: "b_to_a", payloadBytes: 2 },
+      ],
+      tcp: {
+        synFrame: 1,
+        synAckFrame: 2,
+        ackAfterSynAckFrame: 3,
+        handshakeMarkersObserved: true,
+        endMarkersObserved: false,
+      },
+    });
+    expect(tcpEvidence.rows).toMatchObject([
+      { frames: [4], kind: "data", direction: "a_to_b", payloadBytes: 19 },
+      { frames: [8], kind: "gap", direction: "a_to_b", payloadBytes: 0, missingBytes: 5 },
+    ]);
+    expect(outputs.slice(14, 17).map(({ reason }) => reason)).toEqual([
+      "stream_not_observed",
+      "traffic_interval_limit",
+      "traffic_window_required",
+    ]);
+    expect(outputs[17].coverage).toMatchObject({ scanComplete: false, scannedThrough: 5, matchedInScope: 2 });
+    expect(session.outputs[18]?.ok).toBe(false);
+    expect(outputs[19]).toMatchObject({ reason: "stream_not_found" });
+    const proof = await native(trafficSample, ["-q", "-z", "follow,tcp,yaml,0"]);
+    expect([...proof.matchAll(/packet: (\d+)/g)].map((match) => Number(match[1]))).toEqual([4, 8, 7, 9]);
+    const marker = "VERA_LOCAL_SENTINEL";
+    expect(proof).toContain(Buffer.from(marker).toString("base64"));
+    expect(JSON.stringify(rig.modelResults)).not.toContain(marker);
+    expect(JSON.stringify(rig.modelResults)).not.toContain(Buffer.from(marker).toString("base64"));
+    expect(await readFile(join(rig.bench, trafficSource.path))).toEqual(await readFile(trafficSample));
+
+    const continuation = {
+      source: { reference: outputs[9].capture },
+      limit: 2,
+      trafficCursor: tcpEvidence.page.next,
+    };
+    await rig.writeReplay("trafficContinuation", [
+      follow("tcp", 0, continuation),
+      follow("tcp", 0, { ...continuation, window: { startMs: 0, endMs: 1000 } }),
+      stat({ kind: "endpoints", layer: "tcp" }, { source: trafficSource }),
+      stat(
+        { kind: "response_timing", protocol: "http" },
+        { source: trafficSource, filter: "frame.number == 14" },
+      ),
+      stat(
+        { kind: "traffic", intervalMs: 50 },
+        {
+          source: untimedSource,
+          filter: "frame.number >= 2",
+          window: { startMs: 0, endMs: 100 },
+        },
+      ),
+      stat({ kind: "protocol_hierarchy" }, { source: untimedSource }),
+      { text: "Done." },
+    ]);
+    rig.resultBudget(8000, (text) => text.replaceAll("192.168.7.1", "[masked]"));
+    rig.modelResults.length = 0;
+    const cont = rig.session(service, "trafficContinuation", "ask");
+    service.send(cont.id, "Continue the stream and list endpoints.");
+    expect(await service.waitIdle(cont.id)).toEqual({ stopReason: "end" });
+    const more = cont.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(more[0].traffic).toMatchObject({
+      rows: [
+        { frames: [7], direction: "a_to_b", payloadBytes: 4 },
+        { frames: [9], direction: "b_to_a", payloadBytes: 2 },
+      ],
+      summary: { directions: tcpEvidence.summary.directions },
+      page: { offset: 2, totalRows: 4, next: null },
+    });
+    expect(more[1]).toMatchObject({ reason: "cursor_mismatch" });
+    expect(more[3].traffic).toMatchObject({
+      summary: {
+        pairs: 0,
+        requests: 1,
+        requestsWithoutObservedResponse: 0,
+        requestsWithResponseOnlyOutsideScope: 1,
+      },
+      scopeCoverage: { measurementIncomplete: true },
+    });
+    const rawUntimed = (
+      await native(
+        untimedSample,
+        fields(
+          "frame.number",
+          "frame.section_number",
+          "frame.interface_id",
+          "frame.time_epoch",
+          "frame.time_relative",
+        ),
+      )
+    )
+      .trimEnd()
+      .split(/\r?\n/)
+      .map((line) => line.split("\t"));
+    expect(rawUntimed[0]?.slice(3)).toEqual(["", ""]);
+    expect(rawUntimed[1]?.[4]).toBe("0.000000000");
+    expect(more[4].traffic).toMatchObject({
+      timeOrigin: { basis: "first_timestamped_frame", frame: 2, timestampEpoch: rawUntimed[1]?.[3] },
+      scopeCoverage: { framesWithoutTimestamp: 1, missingTimeFrames: 0, measurementIncomplete: true },
+      rows: [
+        { packets: 1, frames: [2] },
+        { packets: 0, frames: [] },
+      ],
+    });
+    const nativePoints = rawUntimed.map(([frame, section, interfaceId]) => ({
+      section: Number(section),
+      frame: { number: Number(frame), interfaceId: Number(interfaceId) },
+    }));
+    expect(more[5].traffic.evidence).toMatchObject([nativePoints[0], nativePoints[2]]);
+    const model = rig.modelResults
+      .map((text) => JSON.parse(text))
+      .find((result) => result.traffic?.selection?.kind === "endpoints");
+    expect(model.traffic.rows[0].endpoint.address).toBe("[masked]");
+    expect(JSON.stringify(rig.modelResults)).not.toContain("192.168.7.1");
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
 
 it("answers questions about the sample capture without approvals and gates live capture", async (ctx) => {
   const file = "captures/sample.pcapng";

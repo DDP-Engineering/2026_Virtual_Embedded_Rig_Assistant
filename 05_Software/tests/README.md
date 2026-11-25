@@ -18,6 +18,10 @@ infrastructure. Unit and component tests stay beside the implementation, in `src
 `e2e/composer-images.spec.ts` covers composer paste, drop and picker, Files image references, previews, model warnings and format refusal.
 `e2e/transcript-images.spec.ts` covers native restart, keyboard and pointer viewer activation, and persisted path labels after deleting an attachment.
 `e2e/wireshark-frame.spec.ts` uses `VERA_WIRESHARK_ACCEPTANCE` to select a native Windows Wireshark installation. It checks the selected frame and display filter from two saved PCAPNG files, including a derived capture, and stale, missing and invalid inputs.
+
+`plugins/wireshark-tshark.test.ts` reconciles typed traffic statistics, diagnostic markers,
+DNS/HTTP timing and follow records against independent native TShark output from synthetic
+captures. Set `VERA_REQUIRE_TSHARK=1` to require native execution.
 Native `e2e/workbench-runtimes.spec.ts` runs a slow replay turn in workbench A, opens B and runs a turn there, and checks that A's turn completes in A before A is released.
 Native `e2e/background-sessions.spec.ts` drives the sidebar over replay turns in workbenches A and B: live running and approval marks (collapsed rows included), returning to completed replies, Stop of one background session, opening a background approval by keyboard, and the Concurrent turns limit set by keyboard with the draft kept.
 

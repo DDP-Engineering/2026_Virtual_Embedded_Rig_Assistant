@@ -21,6 +21,29 @@ and truncated fields. Use `wireshark_import` to retain a verified copy in manage
 workbench storage. The `verify_reference` operation checks file identity even
 when TShark is unavailable. Small text reports use the session artifact store.
 
+Use `statistics` for protocol stack prefixes, directional endpoint and conversation counts
+(Ethernet, IPv4, IPv6, TCP or UDP), interval traffic, Expert Info and capture diagnostics,
+or DNS and HTTP response timing. Traffic intervals cover a half-open window in milliseconds
+relative to the first timestamped frame and return counts and per-second rates. Wire bytes come from frame
+lengths and captured bytes come from saved lengths. Evidence includes the capture section and
+interface identifiers when available. A capture records one or more observation points, and the
+tool cannot infer where a packet was lost or why a checksum was marked. Set `validateChecksums`
+to request TCP and UDP validation and partial checksum observations. The result identifies the
+applied reassembly preferences and reports truncated frames and incomplete measurements.
+
+Use `follow` with a TCP or UDP stream ID from the conversation rows. Its directional byte
+totals count native follow records anchored to frames in the requested scope. TCP retransmissions
+can appear in packet and diagnostic counts while contributing no repeated bytes to the followed
+stream. Gap records carry the frame that revealed the gap and a byte estimate when TShark
+provides one. Follow reads the scanned capture prefix before selecting records by filter or window.
+Open a cited frame in Wireshark Desktop and use **Follow Stream** there for payload.
+The verified local capture retains the exact bytes.
+
+Continue evidence pages with `trafficCursor` and the original query. Check scan and measurement
+coverage before interpreting an empty interval, missing response, absent stream or transport
+observation. The capabilities list names the typed statistics and dissectors. A native tool that
+lacks their required fields or preferences returns an explicit capability diagnostic.
+
 ## Installation
 
 VERA uses the user's TShark and never downloads it. On Windows it searches

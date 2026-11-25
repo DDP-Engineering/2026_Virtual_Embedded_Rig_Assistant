@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-610a4029"
+title = "Report unsupported native traffic capabilities"
+status = "active"
+requirement = "If a requested traffic capability is unsupported or cannot run within the host limits, VERA shall return an explicit unsupported or budget diagnostic."
+verification = "Request an unsupported mode or simulate unavailable native fields and exceed the chart or scan bound."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/core/src/wireshark/traffic-native.ts","05_Software/src/libraries/core/src/wireshark/native.ts","05_Software/src/libraries/core/src/wireshark/statistics.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/traffic-native.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

@@ -19,6 +19,7 @@ import { toolLimit } from "../tools/context.js";
 import { captureCitation } from "./citations.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { publishCapture, snapshotCapture } from "./storage.js";
+import { analyzeTraffic, trafficCapabilities } from "./traffic-analysis.js";
 
 type Query = Extract<WiresharkCaptureArgs, { operation: "query" }>;
 const installations = new WeakMap<ProgramHost["runner"], number>();
@@ -38,6 +39,18 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     profile: wiresharkProfile,
     decodeAs,
     filter: "filter" in args ? (args.filter ?? null) : null,
+    ...(args.operation === "statistics" || args.operation === "follow"
+      ? {
+          trafficPreferences: {
+            tcpSequenceAnalysis: true,
+            tcpDesegmentation: true,
+            tcpReassembleOutOfOrder: false,
+            httpDesegmentation: true,
+            dnsDesegmentation: true,
+            validateChecksums: args.validateChecksums ?? false,
+          },
+        }
+      : {}),
   };
 }
 
@@ -136,6 +149,16 @@ async function captureOperation(
     throw new CaptureError(
       "frame_scan_limit",
       "The frame exceeds the host scan limit. Use a smaller capture.",
+    );
+  if (args.operation === "statistics" || args.operation === "follow")
+    return analyzeTraffic(
+      args,
+      capture,
+      analysis,
+      native,
+      snapshot,
+      scanLimit,
+      toolLimit(ctx, "toolResultChars"),
     );
   const fields = "fields" in args ? selectedFields(args.fields) : selectedFields();
   if (analysis.filter || analysis.decodeAs.length) await native.validate(analysis);
@@ -287,6 +310,7 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
         },
         profile: wiresharkProfile,
         limits: captureLimits,
+        traffic: usable ? trafficCapabilities : { available: false },
       };
     }
     if (!isolated)

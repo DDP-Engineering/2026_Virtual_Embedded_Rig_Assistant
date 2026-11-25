@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { parseRef } from "./refs.js";
+import {
+  trafficPageCursorSchema,
+  trafficPreferencesSchema,
+  trafficStatisticSchema,
+  trafficStreamSchema,
+  trafficTransportSchema,
+  trafficWindowSchema,
+} from "./wireshark-traffic.js";
 
 export const wiresharkPluginId = "wireshark-tshark";
 export const wiresharkProfile = "vera-offline-v1";
@@ -72,6 +80,16 @@ const search = z
 const offset = z.number().int().min(0).max(150_000);
 const limit = z.number().int().min(1).max(captureLimits.pageRows);
 export const captureQueryCursorSchema = z.strictObject({ querySha256: sha256, afterFrame: positive });
+const trafficInputs = {
+  source,
+  filter: filter.optional(),
+  window: trafficWindowSchema.optional(),
+  scanFrames: scanFrames.optional(),
+  limit: limit.optional(),
+  trafficCursor: trafficPageCursorSchema.optional(),
+  validateChecksums: z.boolean().optional(),
+  ...profile,
+};
 
 export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
   z.strictObject({ operation: z.literal("capabilities") }),
@@ -101,6 +119,13 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     fields: fields.optional(),
     ...profile,
   }),
+  z.strictObject({ operation: z.literal("statistics"), statistic: trafficStatisticSchema, ...trafficInputs }),
+  z.strictObject({
+    operation: z.literal("follow"),
+    transport: trafficTransportSchema,
+    stream: trafficStreamSchema,
+    ...trafficInputs,
+  }),
   z.strictObject({ operation: z.literal("import"), path }),
   z.strictObject({
     operation: z.literal("verify_reference"),
@@ -121,6 +146,8 @@ export const wiresharkCaptureToolSchema = z
       "inspect",
       "query",
       "frame",
+      "statistics",
+      "follow",
       "verify_reference",
     ]),
     kind: kind.optional(),
@@ -133,6 +160,12 @@ export const wiresharkCaptureToolSchema = z
     fields: fields.optional(),
     cursor: captureQueryCursorSchema.optional(),
     frame: positive.optional(),
+    statistic: trafficStatisticSchema.optional(),
+    transport: trafficTransportSchema.optional(),
+    stream: trafficStreamSchema.optional(),
+    window: trafficWindowSchema.optional(),
+    trafficCursor: trafficPageCursorSchema.optional(),
+    validateChecksums: z.boolean().optional(),
     ...profile,
   })
   .refine((args) => wiresharkCaptureArgsSchema.safeParse(args).success, {
@@ -146,6 +179,7 @@ export const captureAnalysisSchema = z.strictObject({
   profile: z.literal(wiresharkProfile),
   decodeAs: z.array(decodeAs).max(8),
   filter: filter.nullable(),
+  trafficPreferences: trafficPreferencesSchema.optional(),
 });
 export type CaptureAnalysis = z.infer<typeof captureAnalysisSchema>;
 
@@ -178,3 +212,9 @@ export const capturePacketSchema = z.strictObject({
   truncated: z.boolean(),
 });
 export type CapturePacket = z.infer<typeof capturePacketSchema>;
+
+export const captureTrafficFrameSchema = z.strictObject({
+  section: z.number().int().nonnegative().nullable(),
+  ref: captureCitationRefSchema,
+  frame: captureFrameReferenceSchema,
+});

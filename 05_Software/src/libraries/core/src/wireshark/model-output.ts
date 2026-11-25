@@ -6,6 +6,8 @@ import {
   capturePacketSchema,
   captureQueryCursorSchema,
   captureReferenceSchema,
+  captureTrafficFrameSchema,
+  trafficPageCursorSchema,
 } from "@vera/shared";
 import { z } from "zod";
 import { capToolResult } from "../tools/registry.js";
@@ -37,6 +39,23 @@ const modelResult = z.looseObject({
   total: z.number().optional(),
 });
 
+const address = z.looseObject({ address: z.string() });
+const projectedAddresses = { a: address.optional(), b: address.optional(), endpoint: address.optional() };
+const trafficResult = z.looseObject({
+  summary: z.looseObject(projectedAddresses),
+  summaryFrames: z.array(z.number().int()).max(9),
+  rows: z
+    .array(z.looseObject({ frames: z.array(z.number().int()).max(2), ...projectedAddresses }))
+    .max(captureLimits.pageRows),
+  evidence: z.array(captureTrafficFrameSchema).max(captureLimits.pageRows * 2 + 9),
+  page: z.looseObject({
+    querySha256: trafficPageCursorSchema.shape.querySha256,
+    offset: z.number().int(),
+    totalRows: z.number().int(),
+    next: trafficPageCursorSchema.nullable(),
+  }),
+});
+
 function maskPacket(packet: CapturePacket, scrub: (text: string) => string) {
   for (const values of Object.values(packet.fields)) {
     for (const [index, value] of values.entries()) {
@@ -62,6 +81,29 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);
   if (result.analysis?.filter) result.analysis.filter = scrub(result.analysis.filter).slice(0, 1024);
   if (typeof result.error === "string") result.error = scrub(result.error);
+  if (result.traffic !== undefined && result.coverage) {
+    const traffic = trafficResult.safeParse(result.traffic);
+    if (!traffic.success) return JSON.stringify({ isError: true, reason: "traffic_projection_invalid" });
+    const view = traffic.data;
+    result.traffic = view;
+    for (const row of [view.summary, ...view.rows]) {
+      for (const endpoint of [row.a, row.b, row.endpoint]) {
+        if (endpoint) endpoint.address = scrub(endpoint.address).slice(0, captureLimits.valueChars);
+      }
+    }
+    let masked = JSON.stringify(result);
+    while (masked.length > limit && view.rows.length > 1) {
+      view.rows.pop();
+      const frames = new Set([...view.summaryFrames, ...view.rows.flatMap((row) => row.frames)]);
+      view.evidence = view.evidence.filter((item) => frames.has(item.frame.number));
+      view.page.next = { querySha256: view.page.querySha256, offset: view.page.offset + view.rows.length };
+      result.coverage.returned = view.rows.length;
+      result.coverage.partial = true;
+      result.coverage.truncated = true;
+      masked = JSON.stringify(result);
+    }
+    return masked.length <= limit ? masked : JSON.stringify({ isError: true, reason: "result_limit" });
+  }
   if (Array.isArray(result.entries)) {
     for (const entry of result.entries) entry.description = scrub(entry.description).slice(0, 160);
   }

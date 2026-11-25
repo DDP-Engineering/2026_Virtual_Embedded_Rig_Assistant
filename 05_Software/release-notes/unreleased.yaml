@@ -15,3 +15,10 @@ entries:
       ro: Inspectează capturi offline cu Wireshark, folosind filtre și referințe la cadre.
       de: Gespeicherte Mitschnitte offline mit Wireshark, Filtern und Paketverweisen prüfen.
       fr: Inspectez les captures hors ligne avec Wireshark, des filtres et des références de trame.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze traffic, timing and streams in saved Wireshark captures with frame references.
+      ro: Analizează traficul, timpii și fluxurile din capturi Wireshark, cu referințe la cadre.
+      de: Verkehr, Antwortzeiten und Datenströme in Wireshark-Mitschnitten mit Paketverweisen prüfen.
+      fr: Analysez le trafic, les temps de réponse et les flux Wireshark avec des renvois aux trames.

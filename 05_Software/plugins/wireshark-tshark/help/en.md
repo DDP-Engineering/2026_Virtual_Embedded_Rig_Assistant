@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+The offline capture tool lists conversations and endpoints, measures traffic and DNS or HTTP response times, and shows Expert Info by frame. Open a cited frame in Wireshark Desktop to inspect stream payload locally.
+
 Use the offline capture tool to select fields, filter packets and cite frames from a verified capture. Import a capture to keep its verified bytes in the workbench.
 
 This plugin lets the agent analyse network capture files with TShark and capture live traffic from an interface of your computer. It answers questions about `.pcap` and `.pcapng` captures of a board's Ethernet, Wi-Fi or USB traffic with display filters, field export, protocol statistics and packet details, and saves bounded live captures in the workbench.

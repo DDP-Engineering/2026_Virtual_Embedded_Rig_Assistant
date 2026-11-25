@@ -167,11 +167,32 @@ export function captureProfileEnvironment(folder: string) {
   };
 }
 
-export function captureDecodeArgs(decodeAs: CaptureAnalysis["decodeAs"]) {
-  return decodeAs.flatMap(({ transport, port, protocol }) => [
+export function captureDissectionArgs(analysis: CaptureAnalysis) {
+  const decode = analysis.decodeAs.flatMap(({ transport, port, protocol }) => [
     "-d",
     `${transport}.port==${port},${protocol}`,
   ]);
+  if (!analysis.trafficPreferences) return decode;
+  const checksum = analysis.trafficPreferences.validateChecksums ? "TRUE" : "FALSE";
+  return [
+    ...decode,
+    "-o",
+    "tcp.analyze_sequence_numbers:TRUE",
+    "-o",
+    "tcp.desegment_tcp_streams:TRUE",
+    "-o",
+    "tcp.reassemble_out_of_order:FALSE",
+    "-o",
+    "http.desegment_headers:TRUE",
+    "-o",
+    "http.desegment_body:TRUE",
+    "-o",
+    "dns.desegment_dns_messages:TRUE",
+    "-o",
+    `tcp.check_checksum:${checksum}`,
+    "-o",
+    `udp.check_checksum:${checksum}`,
+  ];
 }
 
 export class OfflineTshark {
@@ -182,7 +203,7 @@ export class OfflineTshark {
     private readonly signal: AbortSignal,
   ) {}
 
-  private async run(args: string[], phase: "filter" | "capture" | "discovery", maxBytes: number) {
+  private async run(args: string[], phase: "filter" | "capture" | "discovery" | "traffic", maxBytes: number) {
     const { exit, stdout, stderr, exceeded } = await this.runner.captureOutput({
       executable: this.executable,
       args: phase === "discovery" ? args : ["-n", ...args],
@@ -206,6 +227,16 @@ export class OfflineTshark {
         "Native output exceeded its bound. Narrow the capture or the selection.",
       );
     if (exit.code === 0) return stdout;
+    if (
+      (phase === "traffic" || args.includes("-o")) &&
+      /(?:not valid fields|fields aren't valid|isn't a valid field|unknown preference|invalid -o flag|invalid follow|valid follow|invalid (?:output|display) mode)/i.test(
+        stderr,
+      )
+    )
+      throw new CaptureError(
+        "traffic_unavailable",
+        "The installed TShark does not support the fields, preferences or stream output for this operation.",
+      );
     if (exit.error || exit.signal)
       throw new CaptureError(
         "tshark_unavailable",
@@ -221,6 +252,11 @@ export class OfflineTshark {
         "invalid_capture",
         "TShark could not complete the capture read. Verify the PCAP or PCAPNG file.",
       );
+    if (phase === "traffic")
+      throw new CaptureError(
+        "traffic_failed",
+        "TShark could not complete this saved-capture traffic operation.",
+      );
     throw new CaptureError(
       "tshark_unavailable",
       "TShark could not read its catalogs. Check the external installation.",
@@ -233,7 +269,7 @@ export class OfflineTshark {
       path,
       "-c",
       String(maxFrames),
-      ...captureDecodeArgs(analysis.decodeAs),
+      ...captureDissectionArgs(analysis),
       ...(filter ? ["-Y", filter] : []),
     ];
   }
@@ -272,6 +308,17 @@ export class OfflineTshark {
     )
       throw invalidOutput();
     return numbers;
+  }
+
+  trafficOutput(
+    path: string,
+    analysis: CaptureAnalysis,
+    maxFrames: number,
+    output: string[],
+    maxBytes: number,
+    filter?: string,
+  ) {
+    return this.run([...this.read(path, analysis, maxFrames, filter), ...output], "traffic", maxBytes);
   }
 
   async packets(path: string, analysis: CaptureAnalysis, frames: number[], fields: string[], sha256: string) {
@@ -387,7 +434,7 @@ function inertText(value: string) {
   return value.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "\ufffd");
 }
 
-function invalidOutput() {
+export function invalidOutput() {
   return new CaptureError(
     "native_output_invalid",
     "TShark returned unexpected output. Check the installed version and retry.",

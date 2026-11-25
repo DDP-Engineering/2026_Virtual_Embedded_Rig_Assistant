@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Das Offline-Werkzeug listet Verbindungen und Endpunkte auf, misst den Datenverkehr und DNS- oder HTTP-Antwortzeiten und zeigt Experteninformationen zu einzelnen Paketen. Öffnen Sie ein referenziertes Paket in Wireshark Desktop, um die Nutzdaten des Datenstroms lokal zu prüfen.
+
 Mit dem Offline-Werkzeug Felder auswählen, Pakete filtern und Frames aus einem geprüften Mitschnitt belegen. Beim Import bleibt die geprüfte Datei im Arbeitsbereich erhalten.
 
 Dieses Plugin ermöglicht dem Agenten, Netzwerk-Aufzeichnungsdateien mit TShark zu analysieren und Live-Verkehr von einer Schnittstelle Ihres Computers aufzuzeichnen. Es beantwortet Fragen zu `.pcap`- und `.pcapng`-Aufzeichnungen des Ethernet-, WLAN- oder USB-Verkehrs eines Boards mit Anzeigefiltern, Feldexport, Protokollstatistiken und Paketdetails und speichert begrenzte Live-Aufzeichnungen in der Workbench.

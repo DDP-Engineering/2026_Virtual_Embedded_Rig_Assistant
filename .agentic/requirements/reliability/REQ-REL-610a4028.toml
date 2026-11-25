@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-610a4028"
+title = "Bind traffic pages to their evidence scope"
+status = "active"
+requirement = "When a caller pages traffic evidence, VERA shall bind the continuation to capture, operation, filter, window, profile options and page size and report explicit incomplete or bounded coverage."
+verification = "Request multiple pages and change a scope input to check cursor rejection and stable counts."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts","05_Software/src/libraries/core/src/wireshark/model-output.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

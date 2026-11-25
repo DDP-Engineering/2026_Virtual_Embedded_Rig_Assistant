@@ -48,7 +48,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.3.2, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.4.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -73,6 +73,12 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   applicable display filters and visibly adds the frame when a filter would hide it. Desktop removes
   completed or failed private viewer profiles, and reclaims orphaned profiles on startup after both
   associated processes have exited.
+
+- The typed tool also returns measured protocol stacks, directional endpoints and conversations,
+  interval counts and rates, expert codes, TCP and checksum observations, DNS/HTTP response timing,
+  and TCP/UDP follow metadata. The scope carries saved observation interfaces, filter, time window,
+  applicable native preferences and completeness. Follow returns counts and frame evidence from
+  the native tap in stream order. The verified local capture holds exact payload for Wireshark Desktop.
 
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
@@ -124,6 +130,10 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   matching range after the cursor. Limits are 64 MiB per capture, 50,000 scan frames, 50 rows per
   page and a 30-second deadline. Import requires full validation and verified same-directory
   staging, with 32 files and 256 MiB per workbench.
+- Traffic cursors bind the selection, filter, window, dissection preferences, capture and page size.
+  The host bounds aggregate groups, intervals, native field and follow text, and returned evidence.
+  TShark follows the scanned prefix and VERA selects records by source frame. TCP loss and checksum
+  markers are observations at saved capture points. Expert messages and stream payload stay local.
 
 - bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
   self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
@@ -137,6 +147,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 | DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
 | tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
 | Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
+| Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
@@ -155,6 +166,8 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 - `REQ-PLAT-c2323ad5` — capture-file analysis on Linux x64 (manual, pending a Linux host with tshark).
 - `REQ-FUNC-610a4011`–`REQ-FUNC-610a4014`, `REQ-SEC-610a4015`, `REQ-DATA-610a4016` and
   `REQ-REL-610a4017`–`REQ-REL-610a4018` — typed capture evidence, managed storage and limits.
+- `REQ-FUNC-610a4021`–`REQ-FUNC-610a4026`, `REQ-SEC-610a4027`, `REQ-REL-610a4028`–`REQ-REL-610a4029`
+  cover traffic statistics, diagnostics, timing, follow, local payload and bounds.
 
 ## Files
 
@@ -164,8 +177,8 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 - `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
 - `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
-- `05_Software/src/libraries/shared/src/wireshark.ts` — typed inputs, capture and frame evidence.
+- `05_Software/src/libraries/shared/src/wireshark.ts`, `wireshark-traffic.ts` — typed inputs, capture and frame evidence.
 - `05_Software/src/libraries/core/src/wireshark/` — native dissection, reference verification,
   managed storage and model result masking.
 - `05_Software/tests/plugins/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
-  find/hint with a fake host, generated CoAP/Modbus `sample.pcapng` (`build.py`) and real-TShark replay.
+  find/hint with a fake host, generated CoAP/Modbus and traffic/diagnostic captures (`build.py`) and native TShark replay.
