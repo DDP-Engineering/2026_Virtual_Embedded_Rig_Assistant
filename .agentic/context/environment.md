@@ -101,6 +101,9 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
   `VERA_REQUIRE_TSHARK=1` for acceptance to make a missing executable fail the focused check.
 - The Wireshark plugin's native offline traffic replay compares saved synthetic capture results
   against field, statistics and follow output. The focused check uses no live capture interface.
+- Automotive Ethernet replay covers the independent `automotive.pcapng` and optionally the
+  published SOME/IP protocol samples in `VERA_WIRESHARK_AUTOMOTIVE_SAMPLES`. The native
+  replay requires TShark on the host and uses saved captures only.
 - `wireshark-frame.spec.ts` uses `VERA_WIRESHARK_ACCEPTANCE` with the absolute native Windows Wireshark installation directory. It opens cited saved frames in Wireshark and reads its packet details and display filter through Windows UI Automation.
 
 ### Commands

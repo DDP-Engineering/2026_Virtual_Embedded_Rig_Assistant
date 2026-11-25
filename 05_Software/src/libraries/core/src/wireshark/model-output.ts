@@ -1,6 +1,8 @@
 import {
+  automotiveLimits,
   type CapturePacket,
   captureAnalysisSchema,
+  captureAutomotiveEvidenceSchema,
   captureCoverageSchema,
   captureLimits,
   capturePacketSchema,
@@ -56,6 +58,78 @@ const trafficResult = z.looseObject({
   }),
 });
 
+const automotiveResult = z.looseObject({
+  selection: z.looseObject({
+    addresses: z.array(z.string()).max(automotiveLimits.selectors),
+  }),
+  conversations: z
+    .array(
+      z.looseObject({
+        id: z.number().int().positive(),
+        a: address,
+        b: address,
+      }),
+    )
+    .max(captureLimits.pageRows + automotiveLimits.issueFrameSamples),
+  scopeCoverage: z.looseObject({
+    issueFrames: z.record(z.string(), z.number().int().positive()),
+  }),
+  rows: z
+    .array(
+      z.looseObject({
+        conversation: z.number().int().positive(),
+        frames: z.array(z.number().int().positive()).max(automotiveLimits.framesPerPdu),
+      }),
+    )
+    .max(captureLimits.pageRows),
+  evidence: captureAutomotiveEvidenceSchema,
+  page: z.looseObject({
+    querySha256: trafficPageCursorSchema.shape.querySha256,
+    offset: z.number().int(),
+    totalRows: z.number().int(),
+    next: trafficPageCursorSchema.nullable(),
+  }),
+});
+
+function maskAutomotive(
+  result: z.infer<typeof modelResult>,
+  coverage: NonNullable<z.infer<typeof modelResult>["coverage"]>,
+  scrub: (text: string) => string,
+  limit: number,
+) {
+  const parsed = automotiveResult.safeParse(result.automotive);
+  if (!parsed.success) return JSON.stringify({ isError: true, reason: "automotive_projection_invalid" });
+  const view = parsed.data;
+  result.automotive = view;
+  view.selection.addresses = view.selection.addresses.map((value) =>
+    scrub(value).slice(0, captureLimits.valueChars),
+  );
+  for (const { a, b } of view.conversations) {
+    a.address = scrub(a.address).slice(0, captureLimits.valueChars);
+    b.address = scrub(b.address).slice(0, captureLimits.valueChars);
+  }
+  let masked = JSON.stringify(result);
+  while (masked.length > limit && view.rows.length > 1) {
+    view.rows.pop();
+    const issueFrames = new Set(Object.values(view.scopeCoverage.issueFrames));
+    const frames = new Set([...issueFrames, ...view.rows.flatMap((row) => row.frames)]);
+    const groups = new Set([
+      ...view.rows.map((row) => row.conversation),
+      ...view.evidence
+        .filter(({ frame }) => issueFrames.has(frame.number))
+        .map(({ conversation }) => conversation),
+    ]);
+    view.evidence = view.evidence.filter(({ frame }) => frames.has(frame.number));
+    view.conversations = view.conversations.filter(({ id }) => groups.has(id));
+    view.page.next = { querySha256: view.page.querySha256, offset: view.page.offset + view.rows.length };
+    coverage.returned = view.rows.length;
+    coverage.partial = true;
+    coverage.truncated = true;
+    masked = JSON.stringify(result);
+  }
+  return masked.length <= limit ? masked : JSON.stringify({ isError: true, reason: "result_limit" });
+}
+
 function maskPacket(packet: CapturePacket, scrub: (text: string) => string) {
   for (const values of Object.values(packet.fields)) {
     for (const [index, value] of values.entries()) {
@@ -81,6 +155,8 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);
   if (result.analysis?.filter) result.analysis.filter = scrub(result.analysis.filter).slice(0, 1024);
   if (typeof result.error === "string") result.error = scrub(result.error);
+  if (result.automotive !== undefined && result.coverage)
+    return maskAutomotive(result, result.coverage, scrub, limit);
   if (result.traffic !== undefined && result.coverage) {
     const traffic = trafficResult.safeParse(result.traffic);
     if (!traffic.success) return JSON.stringify({ isError: true, reason: "traffic_projection_invalid" });

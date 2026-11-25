@@ -16,6 +16,7 @@ import type { ProgramHost } from "../plugins/program-tools.js";
 import type { LoadedPlugin } from "../plugins/store.js";
 import type { ToolContext } from "../tools/context.js";
 import { toolLimit } from "../tools/context.js";
+import { analyzeAutomotive, automotiveCapabilities, automotiveDecodeAs } from "./automotive.js";
 import { captureCitation } from "./citations.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { publishCapture, snapshotCapture } from "./storage.js";
@@ -29,7 +30,12 @@ export function officialCapturePlugin({ manifest, record }: Pick<LoadedPlugin, "
 }
 
 function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalysis {
-  const decodeAs = "decodeAs" in args ? (args.decodeAs ?? []) : [];
+  const decodeAs =
+    args.operation === "automotive"
+      ? automotiveDecodeAs(args)
+      : "decodeAs" in args
+        ? (args.decodeAs ?? [])
+        : [];
   const selectors = decodeAs.map(({ transport, port }) => `${transport}:${port}`);
   if (new Set(selectors).size !== selectors.length)
     throw new CaptureError("invalid_decode_as", "Use one Decode As protocol per transport and port.");
@@ -39,7 +45,8 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     profile: wiresharkProfile,
     decodeAs,
     filter: "filter" in args ? (args.filter ?? null) : null,
-    ...(args.operation === "statistics" || args.operation === "follow"
+    ...(args.operation === "automotive" ? { automotiveProfile: args.automotiveProfile } : {}),
+    ...(args.operation === "statistics" || args.operation === "follow" || args.operation === "automotive"
       ? {
           trafficPreferences: {
             tcpSequenceAnalysis: true,
@@ -47,7 +54,7 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
             tcpReassembleOutOfOrder: false,
             httpDesegmentation: true,
             dnsDesegmentation: true,
-            validateChecksums: args.validateChecksums ?? false,
+            validateChecksums: "validateChecksums" in args ? (args.validateChecksums ?? false) : false,
           },
         }
       : {}),
@@ -152,6 +159,16 @@ async function captureOperation(
     );
   if (args.operation === "statistics" || args.operation === "follow")
     return analyzeTraffic(
+      args,
+      capture,
+      analysis,
+      native,
+      snapshot,
+      scanLimit,
+      toolLimit(ctx, "toolResultChars"),
+    );
+  if (args.operation === "automotive")
+    return analyzeAutomotive(
       args,
       capture,
       analysis,
@@ -311,6 +328,7 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
         profile: wiresharkProfile,
         limits: captureLimits,
         traffic: usable ? trafficCapabilities : { available: false },
+        automotive: usable ? automotiveCapabilities : { available: false },
       };
     }
     if (!isolated)

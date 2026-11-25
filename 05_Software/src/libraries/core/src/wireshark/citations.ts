@@ -5,6 +5,7 @@ import {
   type CaptureFrameReference,
   type CaptureReference,
   captureAnalysisSchema,
+  captureAutomotiveEvidenceSchema,
   captureFrameReferenceSchema,
   captureLimits,
   capturePacketSchema,
@@ -22,6 +23,7 @@ const resultSchema = z.object({
   traffic: z
     .object({ evidence: z.array(captureTrafficFrameSchema).max(captureLimits.pageRows * 2 + 9) })
     .optional(),
+  automotive: z.object({ evidence: captureAutomotiveEvidenceSchema }).optional(),
 });
 
 export function captureCitation(
@@ -55,8 +57,8 @@ export function issuedCaptureCitations(messages: readonly Message[]) {
       try {
         const parsed = resultSchema.safeParse(JSON.parse(part.text));
         if (!parsed.success) continue;
-        const { capture, analysis, packet, packets, traffic } = parsed.data;
-        for (const row of traffic?.evidence ?? packets ?? (packet ? [packet] : [])) {
+        const { capture, analysis, packet, packets, traffic, automotive } = parsed.data;
+        for (const row of automotive?.evidence ?? traffic?.evidence ?? packets ?? (packet ? [packet] : [])) {
           const { ref, frame } = row;
           if (
             ref &&

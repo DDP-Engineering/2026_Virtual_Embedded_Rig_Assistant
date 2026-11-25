@@ -9,6 +9,7 @@ import {
 } from "@vera/shared";
 import { z } from "zod";
 import type { ProgramRunner } from "../plugins/runner.js";
+import { automotiveFields } from "./automotive-fields.js";
 
 export class CaptureError extends Error {
   constructor(
@@ -63,11 +64,11 @@ const details = [
   "modbus.func_code",
   "modbus.regval_uint16",
 ];
-const selectable = new Set(details);
+const selectable = new Set([...details, ...automotiveFields]);
 const intrinsic = ["frame.number", "frame.interface_id", "frame.time_epoch", "frame.len", "frame.cap_len"];
 export const emptyPcap = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
 const filterFields = new Set([
-  ...details,
+  ...selectable,
   ...intrinsic,
   "ip.addr",
   "ipv6.addr",
@@ -192,6 +193,9 @@ export function captureDissectionArgs(analysis: CaptureAnalysis) {
     `tcp.check_checksum:${checksum}`,
     "-o",
     `udp.check_checksum:${checksum}`,
+    ...(analysis.automotiveProfile && analysis.automotiveProfile !== "doip"
+      ? ["-o", "someip.reassemble_tp:TRUE", "-o", "someip.payload_dissector_activated:FALSE"]
+      : []),
   ];
 }
 
@@ -265,6 +269,7 @@ export class OfflineTshark {
 
   private read(path: string, analysis: CaptureAnalysis, maxFrames: number, filter?: string) {
     return [
+      ...(analysis.automotiveProfile ? ["-2"] : []),
       "-r",
       path,
       "-c",
@@ -274,15 +279,14 @@ export class OfflineTshark {
     ];
   }
 
-  async validate(analysis: CaptureAnalysis) {
+  async validate(analysis: CaptureAnalysis, fields: readonly string[] = ["frame.number"]) {
     if (analysis.filter) assertOfflineFilter(analysis.filter);
     await this.run(
       [
         ...this.read(join(this.folder, "empty.pcap"), analysis, 1, analysis.filter ?? undefined),
         "-T",
         "fields",
-        "-e",
-        "frame.number",
+        ...fields.flatMap((name) => ["-e", name]),
       ],
       "filter",
       1024,

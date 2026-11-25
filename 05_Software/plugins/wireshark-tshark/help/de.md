@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Für gespeicherten Automotive-Ethernet-Verkehr kann der Agent DoIP, SOME/IP oder Service Discovery auswerten. Er zeigt Richtung, VLAN, PDU-Felder und beteiligte Pakete. Gib bei Bedarf den SOME/IP-Dienstport an.
+
 Das Offline-Werkzeug listet Verbindungen und Endpunkte auf, misst den Datenverkehr und DNS- oder HTTP-Antwortzeiten und zeigt Experteninformationen zu einzelnen Paketen. Öffnen Sie ein referenziertes Paket in Wireshark Desktop, um die Nutzdaten des Datenstroms lokal zu prüfen.
 
 Mit dem Offline-Werkzeug Felder auswählen, Pakete filtern und Frames aus einem geprüften Mitschnitt belegen. Beim Import bleibt die geprüfte Datei im Arbeitsbereich erhalten.

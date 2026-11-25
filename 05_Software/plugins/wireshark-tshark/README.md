@@ -44,6 +44,34 @@ coverage before interpreting an empty interval, missing response, absent stream 
 observation. The capabilities list names the typed statistics and dissectors. A native tool that
 lacks their required fields or preferences returns an explicit capability diagnostic.
 
+## Automotive Ethernet
+
+Use `automotive` with `automotiveProfile` set to `doip`, `someip` or `someip_sd` in a saved
+capture. DoIP uses native TCP/UDP port 13400. Service Discovery supplies a UDP 30490 Decode As
+mapping to SOME/IP. For a service on a capture-specific port, supply `decodeAs` with protocol
+`someip` and the relevant transport and port. The optional `vlan`, `addresses` and `ports`
+selectors constrain the observed frames. `expectedPoints` lists expected section and interface IDs.
+Continue with `automotiveCursor` and the original selection.
+
+A PDU locator identifies its native protocol occurrence and byte range within the frame or TCP
+reassembly buffer. Native field abbreviations identify header fields and fields within individual
+Service Discovery entries. Open the cited frame in Wireshark Desktop to inspect payload locally.
+Conversations use native streams and directional counts. They include the ordered VLAN tag stack
+and the observation section and interface where available. Frame records retain epoch timestamps
+and per-packet capture direction when present.
+
+Coverage describes the scanned prefix. Check for unsupported encapsulation, capture truncation,
+unfinished or malformed payload, missing observation points and timestamp backsteps. Drop counts
+use packet metadata when available. Clock synchronization remains unknown. The profiles support
+Ethernet and PPI-wrapped Ethernet with TCP or UDP and use upstream in-order TCP and SOME/IP-TP
+reassembly. IP-fragmented traffic is reported outside the exact PDU projection. Native field
+or preference support is checked when requested. The saved-capture host limits apply.
+The scan can report an unfinished TCP suffix alongside a completed PDU in the same frame.
+TCP bytes attributed to a completion from another VLAN or observation point remain unresolved
+in the selected context. A SOME/IP-TP fragment links to its corroborated completion frame.
+Mixed or unknown contributor context remains visible even when the completion is outside the selection.
+An address-matched IP fragment with an unknown port remains an unresolved observation.
+
 ## Installation
 
 VERA uses the user's TShark and never downloads it. On Windows it searches

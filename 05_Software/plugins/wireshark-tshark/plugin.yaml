@@ -1,6 +1,6 @@
 format: 1
 id: wireshark-tshark
-version: 0.4.0
+version: 0.5.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wireshark (TShark)
 summary: Analyse network capture files and capture live traffic with TShark.

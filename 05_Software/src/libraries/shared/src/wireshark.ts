@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseRef } from "./refs.js";
+import { automotiveInputs, automotiveLimits, automotiveProfileSchema } from "./wireshark-automotive.js";
 import {
   trafficPageCursorSchema,
   trafficPreferencesSchema,
@@ -126,6 +127,14 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     stream: trafficStreamSchema,
     ...trafficInputs,
   }),
+  z.strictObject({
+    operation: z.literal("automotive"),
+    source,
+    scanFrames: scanFrames.optional(),
+    limit: limit.optional(),
+    ...profile,
+    ...automotiveInputs,
+  }),
   z.strictObject({ operation: z.literal("import"), path }),
   z.strictObject({
     operation: z.literal("verify_reference"),
@@ -148,6 +157,7 @@ export const wiresharkCaptureToolSchema = z
       "frame",
       "statistics",
       "follow",
+      "automotive",
       "verify_reference",
     ]),
     kind: kind.optional(),
@@ -167,6 +177,8 @@ export const wiresharkCaptureToolSchema = z
     trafficCursor: trafficPageCursorSchema.optional(),
     validateChecksums: z.boolean().optional(),
     ...profile,
+    ...automotiveInputs,
+    automotiveProfile: automotiveInputs.automotiveProfile.optional(),
   })
   .refine((args) => wiresharkCaptureArgsSchema.safeParse(args).success, {
     message: "Supply only the inputs for the selected capture operation.",
@@ -180,6 +192,7 @@ export const captureAnalysisSchema = z.strictObject({
   decodeAs: z.array(decodeAs).max(8),
   filter: filter.nullable(),
   trafficPreferences: trafficPreferencesSchema.optional(),
+  automotiveProfile: automotiveProfileSchema.optional(),
 });
 export type CaptureAnalysis = z.infer<typeof captureAnalysisSchema>;
 
@@ -218,3 +231,16 @@ export const captureTrafficFrameSchema = z.strictObject({
   ref: captureCitationRefSchema,
   frame: captureFrameReferenceSchema,
 });
+
+export const captureAutomotiveFrameSchema = captureTrafficFrameSchema.extend({
+  conversation: positive.nullable(),
+  encapsulation: z.number().int().nonnegative().nullable(),
+  vlans: z.array(z.number().int().min(0).max(4095)),
+  direction: z.enum(["unknown", "inbound", "outbound", "reserved"]).nullable(),
+  wireBytes: z.number().int().nonnegative(),
+  capturedBytes: z.number().int().nonnegative(),
+});
+
+export const captureAutomotiveEvidenceSchema = z
+  .array(captureAutomotiveFrameSchema)
+  .max(captureLimits.pageRows * automotiveLimits.framesPerPdu + automotiveLimits.issueFrameSamples);

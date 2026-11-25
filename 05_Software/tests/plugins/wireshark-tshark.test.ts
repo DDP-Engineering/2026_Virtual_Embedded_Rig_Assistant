@@ -24,6 +24,283 @@ const source = new URL("wireshark-tshark/", plugins);
 const sample = fileURLToPath(new URL("../fixtures/wireshark-tshark/sample.pcapng", import.meta.url));
 const trafficSample = fileURLToPath(new URL("../fixtures/wireshark-tshark/traffic.pcapng", import.meta.url));
 const untimedSample = fileURLToPath(new URL("../fixtures/wireshark-tshark/untimed.pcapng", import.meta.url));
+const automotiveSample = new URL("../fixtures/wireshark-tshark/automotive.pcapng", import.meta.url);
+const automotiveCoverageSample = new URL(
+  "../fixtures/wireshark-tshark/automotive-coverage.pcapng",
+  import.meta.url,
+);
+const automotiveMixedVlanSample = new URL(
+  "../fixtures/wireshark-tshark/automotive-mixed-vlan.pcapng",
+  import.meta.url,
+);
+
+it("projects offline Automotive Ethernet PDUs, transport context, and coverage", async (ctx) => {
+  const source = { path: "captures/automotive.pcapng" };
+  const coverageSource = { path: "captures/automotive-coverage.pcapng" };
+  const mixedSource = { path: "captures/automotive-mixed-vlan.pcapng" };
+  const someip = { transport: "udp", port: 30501, protocol: "someip" };
+  const rig = await workbench({
+    automotive: [
+      typed("automotive", { source, automotiveProfile: "doip" }),
+      typed("automotive", { source, automotiveProfile: "someip", decodeAs: [someip] }),
+      typed("automotive", { source, automotiveProfile: "someip_sd" }),
+      typed("automotive", {
+        source,
+        automotiveProfile: "doip",
+        vlan: 7,
+        addresses: ["192.168.7.10"],
+        ports: [13400],
+        expectedPoints: [
+          { section: 1, interfaceId: 1 },
+          { section: 1, interfaceId: 7 },
+        ],
+      }),
+      typed("automotive", { source, automotiveProfile: "doip", scanFrames: 1 }),
+      typed("automotive", { source, automotiveProfile: "doip", decodeAs: [someip] }),
+      typed("automotive", { source, automotiveProfile: "doip", limit: 1 }),
+      typed("automotive", {
+        source: coverageSource,
+        automotiveProfile: "doip",
+        addresses: ["192.168.7.10"],
+        ports: [13400],
+      }),
+      typed("automotive", { source: mixedSource, automotiveProfile: "doip" }),
+      typed("automotive", { source: mixedSource, automotiveProfile: "doip", vlan: 42 }),
+      typed("automotive", { source: mixedSource, automotiveProfile: "someip", vlan: 42, decodeAs: [someip] }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, source.path), await readFile(automotiveSample));
+    await writeFile(join(rig.bench, coverageSource.path), await readFile(automotiveCoverageSample));
+    await writeFile(join(rig.bench, mixedSource.path), await readFile(automotiveMixedVlanSample));
+    rig.resultBudget(32_000, (text) => text.replaceAll("192.168.7.10", "[masked]"));
+    const service = await rig.start();
+    const session = rig.session(service, "automotive", "bypass");
+    service.send(session.id, "Analyze saved Automotive Ethernet evidence.");
+    await service.waitIdle(session.id);
+    expect(
+      session.outputs.map(({ ok }) => ok),
+      session.outputs
+        .filter(({ ok }) => !ok)
+        .map(({ summary }) => summary)
+        .join("\n"),
+    ).toEqual([true, true, true, true, true, false, true, true, true, true, true]);
+    const [doip, tp, sd, vlan, prefix, invalid, page, tail, mixed, scopedMixed, scopedMixedTp] =
+      session.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(mixed.automotive.rows).toMatchObject([
+      { frames: [1, 2], pdu: { reassembly: { observationContext: "mixed" } } },
+    ]);
+    expect(scopedMixed.coverage).toMatchObject({
+      scanComplete: true,
+      partial: true,
+      matchedInScope: 1,
+      returned: 0,
+    });
+    expect(scopedMixed.automotive.scopeCoverage).toMatchObject({
+      undecodedPayloadFrames: 1,
+      issueFrames: { undecodedPayload: 1 },
+    });
+    expect(scopedMixedTp.coverage).toMatchObject({
+      scanComplete: true,
+      partial: true,
+      matchedInScope: 1,
+      returned: 1,
+    });
+    expect(scopedMixedTp.automotive.rows).toMatchObject([
+      {
+        frames: [3, 4],
+        pdu: { reassembly: { someipTp: "fragment", completedIn: 4, observationContext: "mixed" } },
+      },
+    ]);
+    expect(scopedMixedTp.automotive.scopeCoverage).toMatchObject({
+      unverifiedReassemblyContextPdus: 1,
+      issueFrames: { unverifiedReassemblyContext: 3 },
+    });
+    expect(tail.coverage).toMatchObject({
+      scanComplete: true,
+      partial: true,
+      matchedInScope: 2,
+      returned: 1,
+    });
+    expect(tail.automotive.scopeCoverage).toMatchObject({
+      undecodedPayloadFrames: 1,
+      unresolvedTransportFrames: 1,
+      issueFrames: { undecodedPayload: 1, unresolvedTransport: 2 },
+    });
+    expect(tail.automotive.rows).toMatchObject([{ frames: [1], pdu: { fields: { "doip.type": 7 } } }]);
+    expect(doip.analysis).toMatchObject({ tool: "tshark", automotiveProfile: "doip" });
+    expect(doip.automotive.rows).toMatchObject([
+      { frames: [1, 2], pdu: { occurrence: 1, fields: { "doip.type": 0x8001 }, payloadBytes: 15 } },
+      { frames: [2], pdu: { occurrence: 2, fields: { "doip.type": 7 } } },
+      { frames: [3], pdu: { occurrence: 1, fields: { "doip.diag_ack_code": 0 } } },
+      { frames: [3], pdu: { occurrence: 2, fields: { "doip.diag_nack_code": 3 } } },
+      { frames: [4], pdu: { occurrence: 1, fields: { "doip.type": 1 } } },
+    ]);
+    expect(
+      doip.automotive.evidence.find(({ frame }: { frame: { number: number } }) => frame.number === 1),
+    ).toMatchObject({
+      frame: { interfaceId: 0, timestampEpoch: "1767225600.000000000" },
+      direction: "inbound",
+    });
+    expect(doip.automotive.conversations[0]).toMatchObject({
+      transport: "tcp",
+      forward: { pdus: 2 },
+      reverse: { pdus: 2 },
+    });
+    expect(doip.automotive.scopeCoverage).toMatchObject({
+      unsupportedEncapsulationFrames: 1,
+      truncatedFrames: 1,
+      knownDrops: "2",
+      framesWithoutTimestamp: 1,
+      undecodedPayloadFrames: 2,
+      issueFrames: { undecodedPayload: 5, truncated: 10, unsupportedEncapsulation: 11 },
+    });
+    expect(doip.coverage.partial).toBe(true);
+    expect(tp.automotive.rows).toMatchObject([
+      {
+        frames: [6, 7],
+        pdu: { reassembly: { someipTp: "fragment", completedIn: 7, observationContext: "same" } },
+      },
+      {
+        frames: [6, 7],
+        pdu: {
+          reassembly: { someipTp: "reassembled", completedIn: 7 },
+          payloadBytes: 20,
+          fields: {
+            "someip.serviceid": 0x1234,
+            "someip.methodid": 2,
+            "someip.clientid": 9,
+            "someip.sessionid": 5,
+            "someip.protoversion": 1,
+            "someip.interfaceversion": 2,
+          },
+        },
+      },
+      { frames: [8], pdu: { reassembly: { someipTp: "fragment", completedIn: null } } },
+    ]);
+    expect(tp.automotive.scopeCoverage.unfinishedTpFragments).toBe(1);
+    expect(sd.analysis.decodeAs).toMatchObject([{ transport: "udp", port: 30490, protocol: "someip" }]);
+    expect(sd.automotive.rows).toMatchObject([
+      {
+        frames: [9],
+        pdu: {
+          entries: [
+            { "someipsd.entry.serviceid": 0x1234, "someipsd.entry.ttl": 5 },
+            { "someipsd.entry.serviceid": 0x1235, "someipsd.entry.ttl": 0 },
+          ],
+        },
+      },
+    ]);
+    expect(vlan.automotive.rows).toMatchObject([{ frames: [4] }]);
+    expect(vlan.automotive.evidence).toMatchObject([
+      { frame: { number: 4, interfaceId: 1 }, vlans: [7, 42] },
+    ]);
+    expect(vlan.automotive.scopeCoverage.missingExpectedPoints).toEqual([{ section: 1, interfaceId: 7 }]);
+    expect(prefix.coverage).toMatchObject({ scannedThrough: 1, scanComplete: false, partial: true });
+    expect(prefix.automotive.scopeCoverage.undecodedPayloadFrames).toBe(1);
+    expect(invalid.reason).toBe("invalid_decode_as");
+    expect(page.automotive.page.next).toMatchObject({ offset: 1 });
+    expect(page.coverage.partial).toBe(true);
+    const modelPage = rig.modelResults
+      .map((result) => JSON.parse(result))
+      .find(({ automotive }) => automotive?.selection.vlan === 7);
+    expect(modelPage.automotive.selection.addresses).toEqual(["[masked]"]);
+    expect(modelPage.automotive.conversations[0].b.address).toBe("[masked]");
+    expect(JSON.stringify(session.outputs)).not.toContain("VERA_DOIP_LOCAL");
+    expect(
+      rig.starts.filter((options) => options.includes("-r")).every((options) => options.includes("-n")),
+    ).toBe(true);
+    const cursor = page.automotive.page.next;
+    const ref = page.automotive.rows[0].pdu.ref;
+    await rig.writeReplay("next", [
+      typed("automotive", { source, automotiveProfile: "doip", limit: 1, automotiveCursor: cursor }),
+      typed("automotive", { source, automotiveProfile: "doip", limit: 1, vlan: 7, automotiveCursor: cursor }),
+      { text: `The next PDU is in the same source frame [[${ref}]].` },
+    ]);
+    const next = rig.session(service, "next", "bypass");
+    service.send(next.id, "Continue the page and cite the packet.");
+    await service.waitIdle(next.id);
+    const [continued, stale] = next.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(continued.automotive.rows).toMatchObject([{ frames: [2], pdu: { occurrence: 2, ref } }]);
+    expect(stale.reason).toBe("cursor_mismatch");
+    const assistant = service.get(next.id).snapshot.items.findLast((item) => item.kind === "assistant");
+    expect(assistant).toMatchObject({ citations: [{ ref, valid: true }] });
+    expect(service.openCaptureCitation(next.id, assistant?.id ?? "", ref).evidence).toMatchObject({
+      frame: { number: 2, captureSha256: page.capture.sha256 },
+      analysis: { automotiveProfile: "doip" },
+    });
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("reconciles offline Automotive Ethernet with the upstream SOME/IP samples", async (ctx) => {
+  const folder = process.env.VERA_WIRESHARK_AUTOMOTIVE_SAMPLES;
+  if (!folder) {
+    ctx.skip("Set VERA_WIRESHARK_AUTOMOTIVE_SAMPLES to the upstream sample directory.");
+    return;
+  }
+  const samples = [
+    { name: "someip_sd_sample.pcap", profile: "someip_sd" },
+    { name: "someip-udp-method-call.pcapng", profile: "someip", port: 49201 },
+    { name: "someip-tp.pcap", profile: "someip", port: 18193 },
+  ];
+  const rig = await workbench({
+    upstream: [
+      ...samples.map(({ name, profile, port }) =>
+        typed("automotive", {
+          source: { path: `captures/${name}` },
+          automotiveProfile: profile,
+          ...(port ? { decodeAs: [{ transport: "udp", port, protocol: "someip" }] } : {}),
+        }),
+      ),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) throw Error("Native TShark is required for upstream sample reconciliation.");
+    for (const { name } of samples)
+      await writeFile(join(rig.bench, "captures", name), await readFile(join(folder, name)));
+    const service = await rig.start();
+    const session = rig.session(service, "upstream", "bypass");
+    service.send(session.id, "Reconcile the published SOME/IP protocol samples.");
+    await service.waitIdle(session.id);
+    expect(
+      session.outputs.map(({ ok }) => ok),
+      JSON.stringify(session.outputs),
+    ).toEqual([true, true, true]);
+    const [sd, method, tp] = session.outputs.map(({ summary }) => JSON.parse(summary).automotive);
+    expect(sd.rows).toHaveLength(6);
+    expect(sd.rows[0]).toMatchObject({
+      frames: [1],
+      pdu: { entries: [{ "someipsd.entry.type": 1, "someipsd.entry.ttl": 30 }] },
+    });
+    expect(sd.evidence[0]).toMatchObject({ encapsulation: 97, frame: { interfaceId: null, number: 1 } });
+    expect(method.rows).toMatchObject([
+      {
+        frames: [2],
+        pdu: { fields: { "someip.serviceid": 0x1234, "someip.methodid": 8, "someip.messagetype": 0 } },
+      },
+      {
+        frames: [3],
+        pdu: { fields: { "someip.serviceid": 0x1234, "someip.methodid": 8, "someip.messagetype": 0x80 } },
+      },
+    ]);
+    expect(tp.rows).toHaveLength(9);
+    expect(tp.rows.at(-1)).toMatchObject({
+      frames: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      pdu: { payloadBytes: 12292, reassembly: { someipTp: "reassembled", completedIn: 9 } },
+    });
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
 const manifest = async (): Promise<PluginManifest> =>
   parse(await readFile(new URL("plugin.yaml", source), "utf8"));
 const hint =
@@ -1152,7 +1429,14 @@ it("answers questions about the sample capture without approvals and gates live 
     const listed = (await bench.skills.list()).filter((skill) => skill.plugin === "wireshark-tshark");
     expect(listed.map((skill) => skill.name)).toEqual(["wireshark-analyze", "wireshark-capture"]);
     const analyze = (await bench.skills.read("plugin", "wireshark-analyze")).content;
-    for (const text of ["-r captures/", "-n", "-Y ", "-T fields -e ", "-z io,phs", "-z conv,udp", "-c"])
+    for (const text of [
+      "`wireshark_capture`",
+      "`validate_filter`",
+      "`query`",
+      "`statistics`",
+      "`conversations`",
+      "`automotive`",
+    ])
       expect(analyze).toContain(text);
     const capture = (await bench.skills.read("plugin", "wireshark-capture")).content;
     for (const text of ["tshark -D", "-a duration:", "-c ", "-f ", "-w captures/"])

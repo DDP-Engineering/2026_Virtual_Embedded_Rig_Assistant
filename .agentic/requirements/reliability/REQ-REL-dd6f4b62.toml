@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-dd6f4b62"
+
+title = "Report bounded Automotive Ethernet observation coverage"
+
+status = "active"
+
+requirement = """
+When reporting Automotive Ethernet observations from a saved capture, the typed offline tool shall expose the bounds and material gaps in the observation and decoding coverage.
+"""
+
+verification = "Exercise a limited scan, a partial page, truncation, unsupported encapsulation, missing points or time, saved drops and unfinished segments so none appear to be complete observations."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/automotive.ts", "05_Software/src/libraries/core/src/wireshark/automotive-scope.ts", "05_Software/src/libraries/core/src/wireshark/automotive-reassembly.ts", "05_Software/src/libraries/core/src/wireshark/model-output.ts", "05_Software/src/libraries/shared/src/wireshark-automotive.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-1835b16c"
+
+title = "Reject unavailable Automotive Ethernet dissection explicitly"
+
+status = "active"
+
+requirement = """
+If the selected Automotive Ethernet dissection cannot be performed with the available native fields, profile settings or output bounds, the typed offline tool shall return a typed error without issuing unsupported evidence.
+"""
+
+verification = "Exercise a native unsupported-field error and an invalid mapping, and check that neither returns PDU references."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/native.ts", "05_Software/src/libraries/core/src/wireshark/automotive-native.ts", "05_Software/src/libraries/core/src/wireshark/automotive.ts", "05_Software/src/libraries/core/src/wireshark/service.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts", "05_Software/src/libraries/core/src/wireshark/automotive-native.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

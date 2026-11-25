@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-56598fdc"
+
+title = "Project native Automotive Ethernet PDU evidence"
+
+status = "active"
+
+requirement = """
+When TShark decodes an Automotive Ethernet PDU, the typed offline tool shall project the protocol metadata and its native frame and reassembly evidence in the observed directional conversation.
+"""
+
+verification = "Check PDU counts, separate PDUs in one frame, ACK/NACK metadata, service IDs, SD TTL including zero, TCP/SOME/IP-TP contributors and citation replay against independent fixtures and upstream samples."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/automotive-fields.ts", "05_Software/src/libraries/core/src/wireshark/automotive-native.ts", "05_Software/src/libraries/core/src/wireshark/automotive.ts", "05_Software/src/libraries/core/src/wireshark/citations.ts", "05_Software/src/libraries/core/src/wireshark/model-output.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = "specs/REQ-FUNC-56598fdc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

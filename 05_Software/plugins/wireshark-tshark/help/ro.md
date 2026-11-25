@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Pentru trafic Automotive Ethernet salvat, cere agentului o analiză DoIP, SOME/IP sau Service Discovery. Poate afișa direcția, VLAN-ul, câmpurile PDU și cadrele contributoare. Indică portul serviciului SOME/IP când este necesar.
+
 Instrumentul offline listează conversațiile și endpointurile, măsoară traficul și timpii de răspuns DNS sau HTTP și afișează diagnosticele pe cadre. Deschide un cadru citat în Wireshark Desktop pentru a examina local conținutul fluxului.
 
 Folosește instrumentul offline pentru a selecta câmpuri, a filtra pachete și a cita cadre dintr-o captură verificată. Importă o captură pentru a păstra fișierul verificat în spațiul de lucru.

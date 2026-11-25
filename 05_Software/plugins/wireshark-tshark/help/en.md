@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+For saved Automotive Ethernet traffic, ask the agent for DoIP, SOME/IP or Service Discovery. It can show the direction, VLAN, PDU fields and contributing frames. Supply the service port for SOME/IP when needed.
+
 The offline capture tool lists conversations and endpoints, measures traffic and DNS or HTTP response times, and shows Expert Info by frame. Open a cited frame in Wireshark Desktop to inspect stream payload locally.
 
 Use the offline capture tool to select fields, filter packets and cite frames from a verified capture. Import a capture to keep its verified bytes in the workbench.

@@ -22,3 +22,10 @@ entries:
       ro: Analizează traficul, timpii și fluxurile din capturi Wireshark, cu referințe la cadre.
       de: Verkehr, Antwortzeiten und Datenströme in Wireshark-Mitschnitten mit Paketverweisen prüfen.
       fr: Analysez le trafic, les temps de réponse et les flux Wireshark avec des renvois aux trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze DoIP, SOME/IP and Service Discovery in saved captures with PDU and frame references.
+      ro: Analizează DoIP, SOME/IP și Service Discovery în capturi salvate, cu referințe la PDU-uri și cadre.
+      de: DoIP, SOME/IP und Service Discovery in Mitschnitten mit PDU- und Paketverweisen prüfen.
+      fr: Analysez DoIP, SOME/IP et Service Discovery avec des références aux PDU et aux trames.

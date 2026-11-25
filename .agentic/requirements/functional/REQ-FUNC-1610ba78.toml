@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1610ba78"
+
+title = "Select offline Automotive Ethernet profiles"
+
+status = "active"
+
+requirement = """
+When a saved capture is analyzed for Automotive Ethernet, the typed offline tool shall apply the selected DoIP, SOME/IP or SOME/IP-SD profile with bounded endpoint, VLAN, transport port and Decode As declarations.
+"""
+
+verification = "Apply the three profiles and a VLAN/address/port selection to independent native fixture traffic, checking inclusion, exclusion and the recorded effective Decode As mapping."
+
+affected_paths = ["05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/wireshark-automotive.ts", "05_Software/src/libraries/shared/src/wireshark.ts", "05_Software/src/libraries/core/src/tools/wireshark.ts", "05_Software/src/libraries/core/src/wireshark/automotive.ts", "05_Software/src/libraries/core/src/wireshark/automotive-scope.ts", "05_Software/src/libraries/core/src/wireshark/service.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

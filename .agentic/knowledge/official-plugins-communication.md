@@ -23,6 +23,12 @@ levels) and the page of every other plugin are in [Official plugins](official-pl
 installs, classifies, approves and runs these programs is [Plugins](plugins.md); plugin skill discovery is
 [Skills](skills.md).
 
+## Purpose and boundaries
+
+These plugins provide capture and device evidence for embedded work. The typed Wireshark
+operations read verified saved files using externally installed TShark. Generic capture and
+device commands follow their own program risk and approval rules.
+
 ## Public interface
 
 - `can-python` 0.2.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
@@ -80,6 +86,12 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   applicable native preferences and completeness. Follow returns counts and frame evidence from
   the native tap in stream order. The verified local capture holds exact payload for Wireshark Desktop.
 
+- The typed `automotive` operation profiles saved DoIP, SOME/IP and SOME/IP-SD. Native
+  ordered protocol nodes provide per-PDU header and SD entry metadata, payload lengths and
+  frame/field locators. The projection keeps directional transport conversations, VLAN order,
+  capture observations, and verified contributor citations for upstream TCP and SOME/IP-TP.
+  Capture gaps, unsupported or ambiguous input and incomplete reassembly remain visible in coverage.
+
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
   `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
@@ -134,6 +146,9 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   The host bounds aggregate groups, intervals, native field and follow text, and returned evidence.
   TShark follows the scanned prefix and VERA selects records by source frame. TCP loss and checksum
   markers are observations at saved capture points. Expert messages and stream payload stay local.
+- Automotive Ethernet cursors bind the profile, declared selectors, native version/preferences,
+  capture and page bounds. The parser retains numeric fields and native node references only.
+  Unreported drop counts and timestamp synchronization remain unknown.
 
 - bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
   self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
@@ -148,6 +163,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 | tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
 | Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
+| Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
@@ -168,6 +184,8 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   `REQ-REL-610a4017`–`REQ-REL-610a4018` — typed capture evidence, managed storage and limits.
 - `REQ-FUNC-610a4021`–`REQ-FUNC-610a4026`, `REQ-SEC-610a4027`, `REQ-REL-610a4028`–`REQ-REL-610a4029`
   cover traffic statistics, diagnostics, timing, follow, local payload and bounds.
+- `REQ-FUNC-1610ba78`, `REQ-FUNC-56598fdc`, `REQ-REL-dd6f4b62`, `REQ-REL-1835b16c` —
+  offline Automotive Ethernet profiles, PDU evidence, coverage and native diagnostics.
 
 ## Files
 
@@ -177,8 +195,10 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 - `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
 - `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
-- `05_Software/src/libraries/shared/src/wireshark.ts`, `wireshark-traffic.ts` — typed inputs, capture and frame evidence.
+- `05_Software/src/libraries/shared/src/wireshark.ts`, `wireshark-traffic.ts`, `wireshark-automotive.ts` —
+  typed inputs, capture and frame evidence.
 - `05_Software/src/libraries/core/src/wireshark/` — native dissection, reference verification,
   managed storage and model result masking.
 - `05_Software/tests/plugins/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
-  find/hint with a fake host, generated CoAP/Modbus and traffic/diagnostic captures (`build.py`) and native TShark replay.
+  find/hint with a fake host, generated CoAP/Modbus, traffic/diagnostic and Automotive Ethernet
+  captures and native TShark replay. The Automotive Ethernet fixture generator is under `tests/support/`.

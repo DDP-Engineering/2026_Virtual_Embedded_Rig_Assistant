@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Pour le trafic Ethernet automobile enregistré, demandez à l’agent une analyse DoIP, SOME/IP ou Service Discovery. Il peut indiquer le sens, le VLAN, les champs PDU et les trames contributrices. Indiquez le port du service SOME/IP si nécessaire.
+
 L’outil hors ligne répertorie les conversations et les terminaux, mesure le trafic et les temps de réponse DNS ou HTTP et affiche les informations d’expert par trame. Ouvrez une trame citée dans Wireshark Desktop pour examiner localement le contenu du flux.
 
 Utilisez l’outil hors ligne pour sélectionner des champs, filtrer des paquets et citer des trames d’une capture vérifiée. Importez une capture pour conserver le fichier vérifié dans l’espace de travail.
