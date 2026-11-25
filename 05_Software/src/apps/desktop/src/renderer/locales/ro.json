@@ -1234,6 +1234,8 @@
     "wireshark_capture": "Inspectează offline fișiere PCAP și PCAPNG salvate cu pluginul Wireshark oficial.",
     "wireshark_derive": "Creează capturi derivate verificate și exporturi locale din capturi salvate.",
     "wireshark_import": "Validează o captură salvată și păstreaz-o în spațiul gestionat al proiectului.",
+    "wireshark_dumpcap": "Găsește interfețe locale, verifică starea capturii sesiunii sau oprește-o.",
+    "wireshark_dumpcap_start": "Solicită aprobarea pentru o captură locală limitată cu Wireshark.",
     "lighting_design": "Proiectează iluminatul interior dintr-un proiect de iluminat cu fotometrii IES sau LDT: o estimare preliminară prin metoda fluxului cu factori de utilizare citați și componenta directă pe grila de calcul, diagnostic pentru scară, unități, orientare și fotometrie, iar verificarea iluminării menținute, a uniformității și a orbirii numai dintr-un raport potrivit al unui motor fotometric precum DIALux evo; salvează rezultatul după aprobare ca o scriere și nu rulează niciun motor. Necesită pluginul lighting-design. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Acces web, plugin-ul oficial parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",

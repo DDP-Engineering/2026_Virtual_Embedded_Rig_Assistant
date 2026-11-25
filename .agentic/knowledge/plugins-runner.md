@@ -23,6 +23,9 @@ serial-port guard.
 
 ## Public interface
 
+The typed Dumpcap host supplies a private working directory inside the workbench. The runner verifies
+its canonical path before the preflight and again before spawning. Ordinary program calls use PathGuard.
+
 - Limits (ADV-03): `limits?()` returns the host's application Background programs per session, Run logs kept and
   Run log size; the runner refreshes them into its shared settings at each start, hold and prune, so a change
   applies to the next run and to running runs' next log write (REQ-FUNC-dd50ebed, REQ-FUNC-ddcd96b8,

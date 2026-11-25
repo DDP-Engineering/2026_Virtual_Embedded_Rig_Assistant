@@ -10,6 +10,8 @@ import type { WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
+import type { LiveCaptureSessions } from "../wireshark/live-session.js";
+import type { CaptureWriteAccess } from "../wireshark/storage.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { AskUser } from "./ask-user.js";
 import type { AgentBrowserPort } from "./browser.js";
@@ -55,6 +57,8 @@ export interface ToolContext {
   programs?: ProgramContext;
   /** Digest of the enabled official capture plugin at turn binding. */
   wiresharkPackage?: string;
+  /** Verified Dumpcap provider and publication authority owned by this workbench. */
+  liveCapture?: { packageSha256: string; sessions: LiveCaptureSessions; access: CaptureWriteAccess };
   pluginBuilder?: PluginStore;
   /** Host-owned application data: never accessible through agent file paths, even in bypass. */
   managedRoots?: readonly string[];

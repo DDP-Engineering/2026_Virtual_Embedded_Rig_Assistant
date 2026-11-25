@@ -57,7 +57,9 @@ function policyOf(
             prefixes.some((prefix) => commandPrefixMatches(request.args[0] ?? "", prefix)))
         ? "mode"
         : "user";
-  return request.tool === "run_program" ? programPolicy(mode, request.risk, request.trial) : undefined;
+  if (request.tool !== "run_program") return undefined;
+  const policy = programPolicy(mode, request.risk, request.trial);
+  return request.explicitUserApproval && (policy === "run" || policy === "mode") ? "user" : policy;
 }
 interface Pending {
   request: ChangeRequest;

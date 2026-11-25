@@ -57,3 +57,10 @@ entries:
       ro: Compară offline capturi salvate și vezi diferențele de trafic și cadrele originale.
       de: Gespeicherte Mitschnitte offline vergleichen und Unterschiede mit Paketverweisen sehen.
       fr: Comparez des captures hors ligne avec les écarts de trafic et les liens vers les trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Capture bounded local traffic with Wireshark and retain verified segments.
+      ro: Capturează trafic local cu Wireshark, în limite stabilite, și păstrează segmentele verificate.
+      de: Lokalen Verkehr begrenzt mit Wireshark mitschneiden und geprüfte Segmente behalten.
+      fr: Capturez le trafic local avec Wireshark et conservez les segments vérifiés.

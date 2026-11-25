@@ -229,6 +229,7 @@ export const programApprovalSchema = z
     args: z.array(z.string()).max(PROGRAM_ARGUMENTS.count),
     cwd: z.string().min(1),
     risk: pluginRiskSchema,
+    explicitUserApproval: z.literal(true).optional(),
     confirm: z.string().min(1).max(PROGRAM_ARGUMENTS.length).nullable(),
     notes: z.array(z.string().min(1)).max(512),
     files: z

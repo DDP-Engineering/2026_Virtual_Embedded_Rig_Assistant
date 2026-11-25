@@ -1234,6 +1234,8 @@
     "wireshark_capture": "Inspect saved PCAP and PCAPNG files offline with the official Wireshark plugin.",
     "wireshark_derive": "Derive verified saved captures and create local capture exports.",
     "wireshark_import": "Validate a saved capture and retain it in managed workbench storage.",
+    "wireshark_dumpcap": "Find local capture interfaces, check an owned capture or stop it.",
+    "wireshark_dumpcap_start": "Request approval for a bounded local Wireshark capture.",
     "lighting_design": "Design interior lighting from a lighting project with IES or LDT photometry: a preliminary lumen-method estimate with cited utilisation factors and the direct component on the calculation grid, diagnostics for scale, units, orientation and photometry, and verification of maintained illuminance, uniformity and glare only from a matched photometric engine report such as DIALux evo; stores the result after approval like a write and runs no engine. Needs the lighting-design plugin. Outside input paths require Bypass; VERA application data is refused.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device. Outside input paths require Bypass; VERA application data is refused.",
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the official parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",

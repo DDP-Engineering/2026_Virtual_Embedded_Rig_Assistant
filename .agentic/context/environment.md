@@ -193,6 +193,7 @@ Opt-in variables enable cases that use a real tool. Without them those cases are
 | `VERA_GDB_ORACLE_PYTHON`, `VERA_GDB_REAL_GDB`, `VERA_GDB_REAL_OPENOCD` | A Python with pyelftools 0.32 as oracle; a real arm-none-eabi-gdb 12 or newer against the fake target; a real OpenOCD 0.12 or newer that stops at the missing adapter. |
 | `VERA_POWER_REAL_PYTHON`, `VERA_TEST_BLE_PYTHON`, `VERA_TEST_WOKWI_CLI` | A Python with pyjoulescope_driver 2.5.5 (no device); a Python with bleak 3.1.0 for one real scan, never a connection; the real wokwi-cli 0.29.1 for offline checks. |
 | `VERA_TSHARK_LIVE_INTERFACE` | A bounded live capture of self-sent UDP on the loopback interface. The default live-capture step is denied. |
+| `VERA_DUMPCAP_TEST_BINARY`, `VERA_DUMPCAP_TEST_TSHARK`, `VERA_DUMPCAP_TEST_INTERFACE` | Dumpcap-only enables discovery. All three enable short and rolling PCAPNG with synthetic UDP on an isolated loopback. |
 
 ## Platform details
 

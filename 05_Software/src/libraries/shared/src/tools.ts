@@ -38,6 +38,8 @@ export const builtinToolNames = [
   "wireshark_capture",
   "wireshark_derive",
   "wireshark_import",
+  "wireshark_dumpcap",
+  "wireshark_dumpcap_start",
   "help",
 ] as const;
 
@@ -72,6 +74,8 @@ export const pluginToolProviders = {
   wireshark_capture: "wireshark-tshark",
   wireshark_derive: "wireshark-tshark",
   wireshark_import: "wireshark-tshark",
+  wireshark_dumpcap: "wireshark-dumpcap",
+  wireshark_dumpcap_start: "wireshark-dumpcap",
 } as const;
 export type PluginToolName = keyof typeof pluginToolProviders;
 export const pluginToolNames = Object.keys(pluginToolProviders) as PluginToolName[];
@@ -81,6 +85,8 @@ export const officialPluginToolNames: readonly PluginToolName[] = [
   "wireshark_capture",
   "wireshark_derive",
   "wireshark_import",
+  "wireshark_dumpcap",
+  "wireshark_dumpcap_start",
 ];
 export const coreToolNames = builtinToolNames.filter(
   (name) =>

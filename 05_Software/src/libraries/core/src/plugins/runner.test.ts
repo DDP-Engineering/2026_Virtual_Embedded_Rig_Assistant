@@ -92,6 +92,19 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
+it("admits a host-private cwd only when its canonical directory stays within the workbench", async () => {
+  const profile = join(root, ".vera", "captures", "private", "profile");
+  await mkdir(profile, { recursive: true });
+  await expect(runner.start(request({ privateCwd: tmpdir() }))).rejects.toMatchObject({ code: "DENIED" });
+  const link = join(root, ".vera", "outside");
+  await symlink(tmpdir(), link, process.platform === "win32" ? "junction" : "dir");
+  await expect(runner.start(request({ privateCwd: link }))).rejects.toMatchObject({ code: "DENIED" });
+  const run = await runner.start(request({ privateCwd: profile }));
+  expect(host.programs[0]?.options.cwd).toBe(profile);
+  host.programs[0]?.finish({ code: 0, signal: null });
+  await run.done;
+});
+
 describe("environment", () => {
   it("copies only allowlisted Windows variables case-insensitively, then program env, then the fixed two", async () => {
     host = new FakeHost("win32", {

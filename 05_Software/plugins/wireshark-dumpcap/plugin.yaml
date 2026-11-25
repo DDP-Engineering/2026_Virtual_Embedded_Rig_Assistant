@@ -1,0 +1,30 @@
+format: 1
+id: wireshark-dumpcap
+version: 0.1.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
+name: Wireshark (Dumpcap)
+summary: Capture bounded traffic on a selected local interface.
+description: Use the approved local capture tools for short and rolling PCAPNG acquisition with retention and loss reporting.
+translations:
+  ro:
+    summary: Capturează trafic în limitele stabilite pe o interfață locală selectată.
+    description: Folosește instrumentele de captură locală aprobate pentru capturi PCAPNG scurte sau rotative, cu retenție și raportarea pierderilor.
+  de:
+    summary: Verkehr begrenzt auf einer ausgewählten lokalen Schnittstelle mitschneiden.
+    description: Verwenden Sie die genehmigten lokalen Werkzeuge für kurze und rotierende PCAPNG-Mitschnitte mit Aufbewahrung und Verlustmeldung.
+  fr:
+    summary: Capturez le trafic dans des limites définies sur une interface locale choisie.
+    description: Utilisez les outils de capture locale approuvés pour produire des fichiers PCAPNG courts ou rotatifs, avec conservation et suivi des pertes.
+ecosystem: wireshark
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://www.wireshark.org/docs/man-pages/dumpcap.html"]
+programs:
+  dumpcap:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/Wireshark/dumpcap.exe"]
+        linux: ["$PATH", "/usr/bin/dumpcap"]
+      hint: Install Dumpcap from Wireshark 4.2 or newer or your Linux distribution. Windows live capture requires Npcap.
+    version: { args: [--version], match: '^Dumpcap \(Wireshark\) (\d+\.\d+\.\d+)' }
+rules:
+  - { match: "dumpcap *", risk: blocked, note: "Use the typed Wireshark Dumpcap tools for bounded local capture." }

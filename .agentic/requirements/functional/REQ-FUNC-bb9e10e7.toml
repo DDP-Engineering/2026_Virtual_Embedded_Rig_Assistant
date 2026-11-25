@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-FUNC-bb9e10e7"
+title = "Expose live capture status and owned Stop"
+status = "active"
+requirement = "When the owning session requests status or Stop, VERA shall expose the capture lifecycle and its terminal outcome after stopping only its owned run."
+verification = "Check running, stopped, expired and failed states and idempotent terminal Stop with runner stand-ins."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-session.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark-live.ts",
+  "05_Software/src/libraries/shared/src/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

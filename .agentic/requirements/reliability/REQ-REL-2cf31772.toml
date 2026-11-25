@@ -1,0 +1,16 @@
+schema = 1
+id = "REQ-REL-2cf31772"
+title = "Bound live capture duration and cumulative volume"
+status = "active"
+requirement = "When accepting short or rolling capture, VERA shall enforce finite host bounds on elapsed capture time, packet snapshot length, cumulative bytes and rolling segment count."
+verification = "Assert compiled native and runner limits at their boundaries and observe deadline and volume expiry with stand-ins and bounded loopback proof."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-native.ts",
+  "05_Software/src/libraries/core/src/wireshark/live-evidence.ts",
+  "05_Software/src/libraries/core/src/wireshark/storage.ts",
+  "05_Software/src/libraries/core/src/wireshark/storage.test.ts",
+  "05_Software/src/libraries/shared/src/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts", "05_Software/src/libraries/core/src/wireshark/storage.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

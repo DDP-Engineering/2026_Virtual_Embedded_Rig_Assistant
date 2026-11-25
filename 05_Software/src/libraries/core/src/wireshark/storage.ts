@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants, linkSync, lstatSync, renameSync, type Stats, unlinkSync } from "node:fs";
-import { type FileHandle, lstat, mkdir, open, readdir, realpath, unlink } from "node:fs/promises";
+import { type FileHandle, lstat, mkdir, mkdtemp, open, readdir, realpath, unlink } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import {
   type CaptureLineageReference,
@@ -27,6 +27,14 @@ const provenanceLimits = {
   managedBytes: 1024 * 1024,
   managedFiles: 64,
 };
+const captureBatches = {
+  captures: { limits: captureLimits, pattern: /^[a-f0-9]{64}\.(pcap|pcapng)$/ },
+  lineage: { limits: captureLineageLimits, pattern: /^[a-f0-9]{64}\.lineage\.json$/ },
+  provenance: { limits: provenanceLimits, pattern: /^[a-f0-9]{64}\.provenance\.json$/ },
+};
+type CapacityDemand = { files: number; bytes: number };
+export type CaptureCapacityReservation = { captures: CapacityDemand; release(): Promise<void> };
+const reservations = new WeakMap<WriteQueue, Set<CaptureCapacityReservation>>();
 
 export const managedCaptureDirectory = (workbench: string) => join(workbench, ".vera", "captures");
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
@@ -37,7 +45,10 @@ const inaccessible = () =>
 const corrupt = () =>
   new CaptureError("invalid_capture", "Select an ordinary, uncompressed PCAP or PCAPNG file.");
 const quota = () =>
-  new CaptureError("storage_quota", "Managed capture storage is full. Free space before importing.");
+  new CaptureError(
+    "storage_quota",
+    "Managed capture storage is full. Free space before saving new captures.",
+  );
 
 function matches(a: Stats, b: Stats) {
   return (
@@ -137,6 +148,87 @@ async function managedFolder(root: string, create = false) {
   await verifyDirectory(dirname(folder));
   await verifyDirectory(folder, create);
   return folder;
+}
+
+/** Private live capture staging under the existing managed path boundary. */
+export async function createLiveCaptureDirectory(root: string) {
+  return mkdtemp(join(await managedFolder(root, true), ".dumpcap-"));
+}
+
+function reservedCapacity(
+  queue: WriteQueue,
+  batch: keyof typeof captureBatches,
+  using?: CaptureCapacityReservation,
+): CapacityDemand {
+  let files = 0;
+  let bytes = 0;
+  for (const reservation of reservations.get(queue) ?? []) {
+    if (reservation === using || batch === "lineage") continue;
+    files += batch === "captures" ? reservation.captures.files : 1;
+    bytes += batch === "captures" ? reservation.captures.bytes : provenanceLimits.bytes;
+  }
+  return { files, bytes };
+}
+
+async function assertCapacity(
+  folder: string,
+  names: string[],
+  batch: keyof typeof captureBatches,
+  added: CapacityDemand,
+  existingReservations: CapacityDemand,
+  signal: AbortSignal,
+) {
+  const { limits, pattern } = captureBatches[batch];
+  const entries = names.filter((name) => pattern.test(name));
+  if (entries.length + added.files + existingReservations.files > limits.managedFiles) throw quota();
+  let bytes = added.bytes + existingReservations.bytes;
+  for (const name of entries) {
+    signal.throwIfAborted();
+    bytes += (await regularFile(join(folder, name))).size;
+  }
+  if (bytes > limits.managedBytes) throw quota();
+}
+
+/** Reserve managed bytes and slots before the approved run opens an interface. */
+export function reserveLiveCaptureCapacity(
+  root: string,
+  access: CaptureWriteAccess,
+  captures: CapacityDemand,
+  signal: AbortSignal,
+) {
+  const { queue } = access;
+  return queue.run(async () => {
+    access.assertWritable();
+    signal.throwIfAborted();
+    const folder = await managedFolder(root, true);
+    const names = await readdir(folder);
+    await assertCapacity(folder, names, "captures", captures, reservedCapacity(queue, "captures"), signal);
+    await assertCapacity(
+      folder,
+      names,
+      "provenance",
+      { files: 1, bytes: provenanceLimits.bytes },
+      reservedCapacity(queue, "provenance"),
+      signal,
+    );
+    signal.throwIfAborted();
+    access.assertWritable();
+    let held = reservations.get(queue);
+    if (!held) {
+      held = new Set();
+      reservations.set(queue, held);
+    }
+    const entries = held;
+    const reservation: CaptureCapacityReservation = {
+      captures,
+      release: () =>
+        queue.run(async () => {
+          entries.delete(reservation);
+        }),
+    };
+    entries.add(reservation);
+    return reservation;
+  });
 }
 
 const fileName = (reference: CaptureReference) => `${reference.sha256}.${reference.fileFormat}`;
@@ -292,6 +384,7 @@ export async function publishCaptures(
     preserveImportRename?: boolean;
     lineage?: { input: string; reference: CaptureLineageReference };
     provenance?: CompanionFile;
+    reservation?: CaptureCapacityReservation;
   } = {},
 ): Promise<CaptureReference[]> {
   return access.queue.run(async () => {
@@ -332,22 +425,19 @@ export async function publishCaptures(
       }
       if (missing.size) {
         const names = await readdir(folder);
-        const batches = [
-          { limits: captureLimits, pattern: /^[a-f0-9]{64}\.(pcap|pcapng)$/ },
-          { limits: captureLineageLimits, pattern: /^[a-f0-9]{64}\.lineage\.json$/ },
-          { limits: provenanceLimits, pattern: /^[a-f0-9]{64}\.provenance\.json$/ },
-        ];
-        for (const { limits, pattern } of batches) {
+        for (const batch of ["captures", "lineage", "provenance"] as const) {
+          const { pattern } = captureBatches[batch];
           const added = [...missing].filter(([path]) => pattern.test(path.slice(folder.length + 1)));
           if (!added.length) continue;
-          const entries = names.filter((name) => pattern.test(name));
-          if (entries.length + added.length > limits.managedFiles) throw quota();
-          let bytes = added.reduce((total, [, file]) => total + file.reference.bytes, 0);
-          for (const name of entries) {
-            signal.throwIfAborted();
-            bytes += (await regularFile(join(folder, name))).size;
-            if (bytes > limits.managedBytes) throw quota();
-          }
+          const bytes = added.reduce((total, [, file]) => total + file.reference.bytes, 0);
+          await assertCapacity(
+            folder,
+            names,
+            batch,
+            { files: added.length, bytes },
+            reservedCapacity(access.queue, batch, options.reservation),
+            signal,
+          );
         }
       }
       for (const [target, entry] of missing) {

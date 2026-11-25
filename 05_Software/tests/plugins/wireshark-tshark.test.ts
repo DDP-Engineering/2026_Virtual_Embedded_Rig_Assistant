@@ -1967,7 +1967,10 @@ it("publishes the official find-only tshark package, its pack and two skills", a
   expect(packs).toContainEqual({
     id: "wireshark",
     name: "Wireshark",
-    groups: [{ name: "Capture analysis", plugins: ["wireshark-tshark"], default: true }],
+    groups: [
+      { name: "Capture analysis", plugins: ["wireshark-tshark"], default: true },
+      { name: "Local capture", plugins: ["wireshark-dumpcap"], default: false },
+    ],
   });
 });
 

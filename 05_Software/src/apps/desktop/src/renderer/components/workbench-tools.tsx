@@ -78,6 +78,8 @@ export function WorkbenchTools({
     wireshark_capture: t("workbenchTools.wireshark_capture"),
     wireshark_derive: t("workbenchTools.wireshark_derive"),
     wireshark_import: t("workbenchTools.wireshark_import"),
+    wireshark_dumpcap: t("workbenchTools.wireshark_dumpcap"),
+    wireshark_dumpcap_start: t("workbenchTools.wireshark_dumpcap_start"),
   };
   // Rows per page follow Advanced > Rows per page (10 by default), like every other list.
   const { rows, pager } = usePaged(names);

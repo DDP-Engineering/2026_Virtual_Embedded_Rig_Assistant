@@ -117,6 +117,7 @@ export * from "./web/downloads.js";
 export * from "./web/exa.js";
 export * from "./web/provider.js";
 export { prepareWiresharkFrame } from "./wireshark/desktop.js";
+export { officialDumpcapPlugin } from "./wireshark/live-native.js";
 export { CaptureError, captureProfileEnvironment } from "./wireshark/native.js";
 export { officialCapturePlugin } from "./wireshark/service.js";
 export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";

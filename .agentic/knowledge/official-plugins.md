@@ -49,6 +49,7 @@ invariants, change map, requirements and files are on the page the table names. 
 | `serial-monitor` | [ESP32 and serial console](official-plugins-esp32-serial.md) |
 | `sigrok` | [Lab instruments, validation and HIL](official-plugins-lab.md) |
 | `stm32-cubeprog` | [Flashing and debug](official-plugins-flash-debug.md) |
+| `wireshark-dumpcap` | [CAN, network capture and bus transactions](official-plugins-communication.md) |
 | `wireshark-tshark` | [CAN, network capture and bus transactions](official-plugins-communication.md) |
 | `wokwi` | [Virtual boards (Renode and Wokwi)](official-plugins-virtual-boards.md) |
 | `zephyr` | [Zephyr and PlatformIO builds](official-plugins-firmware-build.md) |
@@ -60,7 +61,7 @@ serial-port guard, run_program) is [Plugins](plugins.md); plugin skill discovery
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, default on except Security), `catalog.yaml` (all packaged plugins
+source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, including optional Security and Wireshark Local capture), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `07_Delivery/plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -112,6 +113,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `parts-search` | 0.3.1 | real uv run on Windows 11; no hardware |
 | `renode` | 0.3.1 | real Renode 1.17.0 on Windows 11; virtual boards, no hardware |
 | `wireshark-tshark` | 0.6.0 | native Windows offline inspection, traffic statistics, follow, Automotive Ethernet and general networking profiles; earlier live loopback on Windows/Npcap |
+| `wireshark-dumpcap` | 0.1.0 | native Windows discovery and isolated WSL2 loopback with offline readback. Native Windows and Ubuntu live acceptance are milestone checks. |
 | `arduino-cli` | 0.2.2 | real compiles with arduino-cli 1.6.0; upload, serial readback, two boards open |
 | `ble-tools` | 0.2.1 | real Bleak 3.1.0 and one passive scan; read/notify/write, pairing, BlueZ open |
 | `can-python` | 0.2.2 | real python-can on a udp_multicast bus on Windows; real adapters and vcan0 open |

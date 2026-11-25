@@ -56,6 +56,8 @@ interface ProgramRequestBase {
   /** Workbench-relative working directory, or canonical absolute outside path in Bypass. */
   readonly cwd: string;
   readonly risk: PluginRisk;
+  /** Host-owned commands that require a fresh operator decision even in an automatic mode. */
+  readonly explicitUserApproval?: true;
   /** The word an irreversible command's approval needs typed; null for other risks. */
   readonly confirm: string | null;
   readonly notes: readonly string[];
@@ -398,6 +400,7 @@ export function programApproval(request: ProgramChangeRequest): ProgramApproval 
     args: [...request.args],
     cwd: request.cwd,
     risk: request.risk,
+    ...(request.explicitUserApproval ? { explicitUserApproval: true } : {}),
     confirm: request.confirm,
     notes: [...request.notes],
     files: request.files.map((file) => ({ ...file })),

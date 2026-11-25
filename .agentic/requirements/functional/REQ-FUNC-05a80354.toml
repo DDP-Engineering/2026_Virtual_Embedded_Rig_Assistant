@@ -1,0 +1,34 @@
+schema = 1
+id = "REQ-FUNC-05a80354"
+title = "Discover installed Dumpcap and local observation points"
+status = "active"
+requirement = "When the verified official live-capture plugin is enabled and discovery is requested, VERA shall return installed Dumpcap version and a bounded list restricted to host-local capture devices."
+verification = "Use the Windows and Linux interface probes and provider fixture to check installed versions, explicit loopback, and rejection of pseudo and external sources."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-native.ts",
+  "05_Software/src/libraries/core/src/index.ts",
+  "05_Software/src/libraries/core/src/tools/context.ts",
+  "05_Software/src/libraries/core/src/tools/registry.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/shared/src/tools.ts",
+  "05_Software/src/libraries/shared/src/index.ts",
+  "05_Software/src/apps/cli/src/run.ts",
+  "05_Software/src/apps/desktop/src/main/sessions.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx",
+  "05_Software/src/apps/desktop/src/renderer/locales/en.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/ro.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/de.json",
+  "05_Software/src/apps/desktop/src/renderer/locales/fr.json",
+  "05_Software/plugins/catalog.yaml",
+  "05_Software/plugins/packs.yaml",
+  "05_Software/plugins/wireshark-dumpcap/plugin.yaml",
+  "05_Software/plugins/wireshark-dumpcap/README.md",
+  "05_Software/plugins/wireshark-dumpcap/help/de.md",
+  "05_Software/plugins/wireshark-dumpcap/help/en.md",
+  "05_Software/plugins/wireshark-dumpcap/help/fr.md",
+  "05_Software/plugins/wireshark-dumpcap/help/ro.md",
+  "05_Software/src/libraries/shared/src/tools.test.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts", "05_Software/src/libraries/shared/src/tools.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

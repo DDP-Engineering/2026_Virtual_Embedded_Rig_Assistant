@@ -137,6 +137,28 @@ const decide = (
   });
 };
 
+it.each(["ask", "auto-edit", "bypass"] as const)(
+  "requires explicit live capture approval in %s",
+  async (mode) => {
+    const t = await setup(mode);
+    const request: ProgramChangeRequest = {
+      ...(await t.prepare(["read", "mac"])),
+      explicitUserApproval: true,
+    };
+    const waiting = t.gate.request(request, new AbortController().signal);
+    expect(await settled(waiting)).toBe("pending");
+    t.gate.approveBypass("ses_1");
+    expect(await settled(waiting)).toBe("pending");
+    expect(t.pending().program?.explicitUserApproval).toBe(true);
+    decide(t);
+    expect(await waiting).toBe("approved");
+    expect(() => t.gate.consume({ ...request, args: ["read", "other"] })).toThrow();
+    t.gate.consume(request);
+    expect(() => t.gate.consume(request)).toThrow();
+    expect(t.rows()[0]).toMatchObject({ decision: "approved", decided_by: "user" });
+  },
+);
+
 describe("shell command approval baseline", () => {
   it("honors live Auto-edit prefixes, Ask, destructive refusal and revocation", async () => {
     const t = await setup("auto-edit");

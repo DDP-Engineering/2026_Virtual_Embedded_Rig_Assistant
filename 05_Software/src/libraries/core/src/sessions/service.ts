@@ -96,6 +96,7 @@ import {
   publicToolResult,
   storedNetworkingCitationContext,
 } from "../wireshark/citations.js";
+import { LiveCaptureSessions } from "../wireshark/live-session.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { type TurnAdmission, type TurnSlot, turnLimitError } from "./admission.js";
 import { attachComposerImage } from "./composer-images.js";
@@ -217,6 +218,7 @@ export interface SessionHost {
   programs?: ProgramHost;
   /** Current verified official Wireshark package digest, supplied when the host loads the workbench. */
   wiresharkPackage?: string | undefined;
+  dumpcapPackage?: string | undefined;
   /** Live workbench grants, supplied only by the host; model arguments never select them. */
   commandPrefixes?: () => readonly string[];
   additionalFolders?: () => readonly string[];
@@ -278,6 +280,7 @@ export class SessionService {
   private readonly last = new Map<string, { stopReason: StopReason }>();
   private readonly contexts = new Map<string, ToolContext>();
   private readonly programSessions = new Map<string, ProgramSession>();
+  private readonly liveCaptures = new LiveCaptureSessions();
   private readonly bypassScopes = new Map<string, AbortController>();
   private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
@@ -1305,6 +1308,7 @@ export class SessionService {
       await this.compacting.get(id);
       // Background runs of a deleted session would hold ports no session can stop any more.
       await this.host.programs?.runner.stopSession(id);
+      await this.liveCaptures.stopOwner(id);
       await this.writeQueue.run(async () => {
         this.writable();
         this.artifacts.removeSession(id);
@@ -1317,6 +1321,7 @@ export class SessionService {
       this.hub.clear(id);
       this.contexts.delete(id);
       this.programSessions.delete(id);
+      this.liveCaptures.forgetOwner(id);
       this.bypassScopes.get(id)?.abort();
       this.bypassScopes.delete(id);
       this.compactors.get(id)?.abort();
@@ -1760,6 +1765,21 @@ export class SessionService {
       delete ctx.wiresharkPackage;
       const capturePackage = this.host.wiresharkPackage;
       if (!delegated && ctx.programs && capturePackage) ctx.wiresharkPackage = capturePackage;
+      delete ctx.liveCapture;
+      const dumpcapPackage = this.host.dumpcapPackage;
+      if (!delegated && ctx.programs && dumpcapPackage) {
+        ctx.liveCapture = {
+          packageSha256: dumpcapPackage,
+          sessions: this.liveCaptures,
+          access: {
+            queue: this.writeQueue,
+            assertWritable: () => {
+              this.row(id);
+              this.writable();
+            },
+          },
+        };
+      }
     }
     const registry = review ? new ToolRegistry([todoTool]) : (this.host.registry ?? new ToolRegistry());
     const permissions = this.host.permissions;
@@ -2446,7 +2466,10 @@ export class SessionService {
     turn?.runtime.abort();
     this.compactors.get(id)?.abort();
     // Background program runs of the session end with it; the foreground run ends with the turn's abort.
-    if (turn?.kind !== "plan-review") void this.host.programs?.runner.stopSession(id);
+    if (turn?.kind !== "plan-review") {
+      void this.host.programs?.runner.stopSession(id);
+      void this.liveCaptures.stopOwner(id);
+    }
     return !!turn;
   }
   /** Settles when the session's background compaction, if any, has finished. */
@@ -2579,6 +2602,7 @@ export class SessionService {
     const downloadsClosed = this.host.downloads?.close();
     const turns = [...this.active.values()];
     await Promise.allSettled(turns.map((turn) => turn.done));
+    await this.liveCaptures.stopOwner();
     // Each turn released its slot as it ended; this only covers one that left no end behind (REQ-REL-11f00fcd).
     for (const turn of turns) turn.slot?.release();
     await Promise.allSettled([...this.compacting.values()]);

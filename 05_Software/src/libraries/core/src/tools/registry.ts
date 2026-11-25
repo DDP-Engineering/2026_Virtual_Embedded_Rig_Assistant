@@ -36,6 +36,7 @@ import { viewImageTool } from "./view-image.js";
 import { webReadTool, webSearchTool } from "./web.js";
 import { webDownloadTool } from "./web-download.js";
 import { wiresharkCaptureTool, wiresharkDeriveTool, wiresharkImportTool } from "./wireshark.js";
+import { wiresharkDumpcapStartTool, wiresharkDumpcapTool } from "./wireshark-live.js";
 import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
@@ -77,6 +78,8 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   wireshark_capture: wiresharkCaptureTool,
   wireshark_derive: wiresharkDeriveTool,
   wireshark_import: wiresharkImportTool,
+  wireshark_dumpcap: wiresharkDumpcapTool,
+  wireshark_dumpcap_start: wiresharkDumpcapStartTool,
   help: helpTool,
 };
 // Identity also excludes host-provided definitions reusing a built-in name.

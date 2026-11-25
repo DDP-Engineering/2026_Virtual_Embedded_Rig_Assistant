@@ -90,6 +90,21 @@ const burn = {
   },
 };
 
+it("requires an operator prompt for a live capture despite the approve-all flag", () => {
+  const capture = {
+    ...burn,
+    program: {
+      ...burn.program,
+      risk: "device-read" as const,
+      confirm: null,
+      explicitUserApproval: true as const,
+    },
+  };
+  expect(flagDecision(capture, "all", true)).toBeUndefined();
+  expect(flagDecision(capture, "all", false)).toBe("denied");
+  expect(flagDecision(capture, "none", true)).toBe("denied");
+});
+
 it("shows the literal shell command, cwd and shell in the CLI approval prompt", async () => {
   const input = new PassThrough(),
     output = new PassThrough();

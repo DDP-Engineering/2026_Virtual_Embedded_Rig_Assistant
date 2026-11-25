@@ -95,6 +95,8 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   CONFLICT.
 - Switching to bypass approves pending non-trial program approvals by mode; trial ones keep waiting.
   A mode-decided program approval consumes only while the current policy is still `mode`.
+  Host-owned Dumpcap acquisition requires explicit user approval. It stays pending in
+  automatic modes and the CLI requests a per-call TTY decision even with the approve-all flag.
 - The resolver's leading arguments are part of the request (`executableArgs`), so a change of them after
   approval is CONFLICT like a change of the executable.
 - run_program prepares only with the session's per-call ids and `consume`; its `execute` always throws,

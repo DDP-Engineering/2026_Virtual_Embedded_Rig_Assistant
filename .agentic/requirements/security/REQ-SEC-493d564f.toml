@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-SEC-493d564f"
+title = "Reject unavailable interfaces and invalid capture filters"
+status = "active"
+requirement = "If a requested observation point is outside the current local interface set or a capture filter is outside host grammar or fails native compilation, VERA shall refuse acquisition."
+verification = "Submit a missing, aggregate or remote interface and unsafe or invalid filter, then assert acquisition never starts."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-native.ts",
+  "05_Software/src/libraries/core/src/plugins/runner.ts",
+  "05_Software/src/libraries/core/src/plugins/runner.test.ts",
+  "05_Software/src/libraries/shared/src/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

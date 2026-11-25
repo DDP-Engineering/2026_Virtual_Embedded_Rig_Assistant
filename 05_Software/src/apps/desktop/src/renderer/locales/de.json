@@ -1234,6 +1234,8 @@
     "wireshark_capture": "Gespeicherte PCAP- und PCAPNG-Dateien offline mit dem offiziellen Wireshark-Plugin prüfen.",
     "wireshark_derive": "Geprüfte Mitschnitte ableiten und lokale Exporte erstellen.",
     "wireshark_import": "Einen gespeicherten Mitschnitt prüfen und im verwalteten Arbeitsbereich ablegen.",
+    "wireshark_dumpcap": "Lokale Schnittstellen finden und Mitschnitte der Sitzung prüfen oder stoppen.",
+    "wireshark_dumpcap_start": "Genehmigung für einen begrenzten lokalen Wireshark-Mitschnitt anfordern.",
     "lighting_design": "Plant die Innenbeleuchtung aus einem Beleuchtungsprojekt mit IES- oder LDT-Photometrie: eine vorläufige Schätzung nach dem Wirkungsgradverfahren mit belegten Raumwirkungsgraden und der Direktanteil auf dem Berechnungsraster, Diagnosen für Maßstab, Einheiten, Ausrichtung und Photometrie sowie die Prüfung von Wartungswert, Gleichmäßigkeit und Blendung nur aus einem passenden Bericht eines photometrischen Rechenprogramms wie DIALux evo; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und startet kein Rechenprogramm. Erfordert das Plugin lighting-design. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Webzugriff, das offizielle Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",

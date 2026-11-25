@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-PLAT-818d0210"
+title = "Distinguish live capture prerequisites and native failures"
+status = "active"
+requirement = "If acquisition cannot start or finish, VERA shall classify missing Dumpcap, missing Npcap, denied capture access, invalid filter, unavailable interface and native startup or capture failure with distinct diagnostics."
+verification = "Exercise simulated missing program, driver, permission, interface, syntax and startup errors; verify the native Windows prerequisite diagnostic."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-native.ts",
+  "05_Software/src/libraries/core/src/wireshark/live-evidence.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-SEC-b3e2a49f"
+title = "Confine live capture to its owning session"
+status = "active"
+requirement = "When checking or stopping a live capture, VERA shall resolve only handles belonging to the requesting workbench session."
+verification = "Start a stand-in capture and check foreign status and Stop leave its process alive; stop the owner and observe the matching process end."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-session.ts",
+  "05_Software/src/libraries/core/src/wireshark/live-session.test.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

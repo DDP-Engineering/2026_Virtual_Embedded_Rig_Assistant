@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-DATA-f244eef4"
+title = "Publish retained finalized captures with loss provenance"
+status = "active"
+requirement = "When an owned capture ends, VERA shall publish a format-1 manifest with managed references for the bounded retained validated PCAPNG segments, their observation and time scope, available counters and explicit loss or partial-segment diagnostics."
+verification = "Feed completed and partial ring files; verify retention, omission of unfinalized files, measured and unknown loss, exact digests and reopening through saved-capture analysis."
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/live-evidence.ts",
+  "05_Software/src/libraries/core/src/wireshark/storage.ts",
+  "05_Software/src/libraries/shared/src/wireshark-live.ts",
+]
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts", "05_Software/src/libraries/core/src/wireshark/storage.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

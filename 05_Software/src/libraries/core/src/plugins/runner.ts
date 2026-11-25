@@ -6,12 +6,13 @@ import {
   open,
   readdir,
   readFile,
+  realpath,
   rename,
   rm,
   stat,
   writeFile,
 } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { performance } from "node:perf_hooks";
 import {
   type ProgramRunInfo,
@@ -50,6 +51,8 @@ export interface RunRequest {
   programArgs?: readonly string[];
   /** Workbench-relative cwd, or an absolute outside cwd accepted by the host policy. */
   cwd?: string;
+  /** Host-created, link-free directory within the workbench, reserved from ordinary tools. */
+  privateCwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
   /**
@@ -404,9 +407,25 @@ class Run implements ActiveRun {
         undefined,
         this.request.excludedRoots,
       ));
+    const locate = async () => {
+      const privateCwd = this.request.privateCwd;
+      if (privateCwd === undefined) return (await guard.resolve(this.request.cwd ?? ".")).absolute;
+      const rest = relative(guard.root, privateCwd);
+      if (
+        !isAbsolute(privateCwd) ||
+        this.request.cwd !== undefined ||
+        !rest ||
+        rest === ".." ||
+        rest.startsWith(`..${sep}`) ||
+        isAbsolute(rest) ||
+        (await realpath(privateCwd)) !== privateCwd
+      )
+        throw Error("Private working directory is unavailable.");
+      return privateCwd;
+    };
     let cwd: string;
     try {
-      cwd = (await guard.resolve(this.request.cwd ?? ".")).absolute;
+      cwd = await locate();
       if (!(await stat(cwd)).isDirectory()) throw Error("Not a directory.");
     } catch {
       throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
@@ -433,8 +452,7 @@ class Run implements ActiveRun {
       await this.writing;
       throw error;
     }
-    if ((await guard.resolve(this.request.cwd ?? ".")).absolute !== cwd)
-      throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
+    if ((await locate()) !== cwd) throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
     if (!(await stat(cwd)).isDirectory()) throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
     guard.assertAuthorized();
     // The last stop check stays right before the spawn: a stop during any await above ends the run here.

@@ -6,7 +6,39 @@ import type { CaptureReference } from "@vera/shared";
 import { expect, it } from "vitest";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
-import { publishCapture, publishCaptures } from "./storage.js";
+import { publishCapture, publishCaptures, reserveLiveCaptureCapacity } from "./storage.js";
+
+it("holds managed capacity for a live capture against other publishers until release", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "vera-capture-capacity-")));
+  try {
+    const folder = join(root, ".vera", "captures");
+    await mkdir(folder, { recursive: true });
+    const data = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
+    for (let slot = 0; slot < 31; slot++)
+      await writeFile(join(folder, `${slot.toString(16).padStart(64, "0")}.pcap`), data);
+    const input = join(root, "capture.pcap");
+    await writeFile(input, data);
+    const reference: CaptureReference = {
+      format: 1,
+      source: { kind: "workbench", path: "capture.pcap" },
+      fileFormat: "pcap",
+      bytes: data.length,
+      sha256: createHash("sha256").update(data).digest("hex"),
+    };
+    const access = { queue: new WriteQueue(), assertWritable() {} };
+    const signal = new AbortController().signal;
+    const held = await reserveLiveCaptureCapacity(root, access, { files: 1, bytes: 16_000 }, signal);
+    await expect(
+      reserveLiveCaptureCapacity(root, access, { files: 1, bytes: 16_000 }, signal),
+    ).rejects.toMatchObject({ reason: "storage_quota" });
+    const publish = () => publishCapture(root, access, input, reference, signal, async () => {});
+    await expect(publish()).rejects.toMatchObject({ reason: "storage_quota" });
+    await held.release();
+    await expect(publish()).resolves.toMatchObject({ source: { kind: "managed" } });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("reserves managed capture paths without following a workspace-owned redirect", async () => {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-capture-path-")));

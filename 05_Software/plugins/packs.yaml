@@ -18,6 +18,7 @@
   name: Wireshark
   groups:
     - { name: Capture analysis, plugins: [wireshark-tshark], default: true }
+    - { name: Local capture, plugins: [wireshark-dumpcap], default: false }
 - id: can
   name: CAN
   groups:

@@ -45,6 +45,8 @@ it("associates specialized tools with their providers, including parts and KiCad
     wireshark_capture: "wireshark-tshark",
     wireshark_derive: "wireshark-tshark",
     wireshark_import: "wireshark-tshark",
+    wireshark_dumpcap: "wireshark-dumpcap",
+    wireshark_dumpcap_start: "wireshark-dumpcap",
   });
   expect(electricalModelToolNames).toEqual(["electrical_model", "electrical_model_change"]);
 });

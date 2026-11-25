@@ -5,7 +5,8 @@
 Select for `can-python` (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills
 can-capture and can-transmit); `can-dbc` (pip cantools plus the `can-decode` script; skill can-decode);
 `wireshark-tshark` (typed offline capture evidence, generic program risk classification, and bounded
-live capture through the user's TShark); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
+live capture through the user's TShark); `wireshark-dumpcap` (typed, approved local acquisition with
+short and rolling PCAPNG); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
 bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with
 devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills
 bus-transactions and bus-profiles).
@@ -30,6 +31,13 @@ operations read verified saved files using externally installed TShark. Generic 
 device commands follow their own program risk and approval rules.
 
 ## Public interface
+
+- `wireshark-dumpcap` 0.1.0 is find-only and optional in the Wireshark pack. Discovery probes Dumpcap
+  4.2 or later and lists local devices. The prepared Start tool binds the selected ID, numeric BPF
+  filter, duration and byte/retention limits to an explicit user approval. The control tool provides
+  session-owned status and Stop. The short form waits in the foreground. Rolling capture returns an
+  owned handle. Verified retained files and the format-1 manifest are published together in managed
+  workbench capture storage. Retained references are readable by the separate TShark package.
 
 - `can-python` 0.2.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
   program `can` = `scripts/can_bus.py` on `python-can[serial,gs-usb,pcan,multicast]==4.6.1` (imports python-can
@@ -159,6 +167,14 @@ device commands follow their own program risk and approval rules.
 
 ## Invariants
 
+- Dumpcap accepts one discovered local device, uses non-promiscuous capture and reserves headroom for
+  native packet framing before applying the native size threshold. Start reserves managed quota through
+  the workbench write queue and compiles the filter in a private working directory. A spare ring slot protects completed
+  segments while one is being written. Close receipts and strict PCAPNG indexing precede publication.
+  A failed native exit leaves the last attempted member incomplete and keeps earlier verified members.
+  Interrupted or missing members, rotated-out evidence, truncated payloads and reported or unknown drops
+  remain explicit. The runner stops the owned process and the session waits for finalization.
+
 - can capture never opens a physical adapter actively by default: listen-only kwargs (pcan
   `state=PASSIVE`, vector/slcan `listen_only`, kvaser `driver_mode=False`), software buses
   (virtual, udp_multicast, socketcan `vcan*`) or a SocketCAN link that `ip -json -details` reports LISTEN-ONLY;
@@ -208,6 +224,7 @@ device commands follow their own program risk and approval rules.
 | DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
 | tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
 | Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
+| Bounded live acquisition | `plugins/wireshark-dumpcap/`, `core/src/tools/wireshark-live.ts`, `core/src/wireshark/live-*.ts` | `live-session.test.ts`, `wireshark-dumpcap.test.ts`, explicit isolated native loopback |
 | Capture metadata, derivation, cleanup and exports | `shared/src/wireshark-files.ts`, `core/src/wireshark/capture-file*.ts` | Focused native capture-file replay, including boundary refusals, in `wireshark-tshark.test.ts` |
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
@@ -217,6 +234,10 @@ device commands follow their own program risk and approval rules.
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
+
+- `REQ-FUNC-05a80354`, `REQ-PLAT-818d0210`, `REQ-SEC-493d564f` govern Dumpcap discovery and input failures.
+- `REQ-SEC-d4a52a4c`, `REQ-SEC-b3e2a49f`, `REQ-REL-2cf31772`, `REQ-FUNC-bb9e10e7` and
+  `REQ-DATA-f244eef4` govern approved acquisition, ownership, limits, status and publication.
 
 - `REQ-FUNC-ed24ef4a` / `REQ-REL-07f029dd` — can list with driver hints; open failure exit 3 with the hint.
 - `REQ-SEC-2eb33af8` / `REQ-SEC-9be4b959` — CAN and cantools risk rules.
@@ -245,6 +266,10 @@ device commands follow their own program risk and approval rules.
   readiness, conversion, provenance, bounds and failure handling.
 
 ## Files
+
+- `05_Software/plugins/wireshark-dumpcap/` — find-only package, four help locales and setup.
+- `05_Software/src/libraries/shared/src/wireshark-live.ts` — requests, limits and format-1 manifest.
+- `05_Software/tests/plugins/wireshark-dumpcap.test.ts` — official package, native discovery and opt-in live proof.
 
 - `05_Software/plugins/can-python/` — manifest, README (drivers, listen-only), `scripts/can_bus.py`, skills can-capture and can-transmit.
 - `05_Software/plugins/can-dbc/` — manifest, README, `scripts/can_decode.py`, skill can-decode.
