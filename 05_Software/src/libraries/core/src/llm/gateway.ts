@@ -12,7 +12,11 @@ export function resolveModelReference(
   workbench?: string | null,
   app?: string | null,
 ): string {
-  const result = modelReferenceSchema.safeParse(session ?? workbench ?? app);
+  const reference = session ?? workbench ?? app;
+  // No model chosen anywhere is a setup step the user can act on, not a malformed request.
+  if (reference === null || reference === undefined || reference === "")
+    throw { ...veraError("INVALID"), messageKey: "provider.noModel" };
+  const result = modelReferenceSchema.safeParse(reference);
   if (!result.success) throw veraError("INVALID");
   return result.data;
 }

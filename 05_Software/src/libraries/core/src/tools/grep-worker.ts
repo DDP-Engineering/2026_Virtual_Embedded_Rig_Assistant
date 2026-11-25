@@ -47,17 +47,26 @@ async function execute(task: WorkerTask) {
     let count = 0;
     let truncated = false;
     let limitReached = false;
+    // Files left unsearched are reported, so "no matches" is never mistaken for "searched and clean".
+    let skipped = 0;
     const content = !args.output || args.output === "content";
     const maxFileBytes = task.maxFileBytes ?? 5 * 1024 * 1024;
     for (const file of files) {
-      if (file.size > maxFileBytes) continue;
+      if (file.size > maxFileBytes) {
+        skipped++;
+        continue;
+      }
       let bytes: Buffer;
       try {
         bytes = (await readGuardedFile(guard, file.path, maxFileBytes, signal)).bytes;
       } catch {
+        skipped++;
         continue;
       }
-      if (isBinary(bytes)) continue;
+      if (isBinary(bytes)) {
+        skipped++;
+        continue;
+      }
       const lines = textLines(bytes.toString("utf8"));
       for (let i = 0; i < lines.length; i++) {
         const text = lines[i] ?? "";
@@ -89,7 +98,7 @@ async function execute(task: WorkerTask) {
       }
       if (limitReached) break;
     }
-    port.postMessage({ type: "done", truncated });
+    port.postMessage({ type: "done", truncated, skipped });
   } catch (error) {
     port.postMessage({
       type: "error",

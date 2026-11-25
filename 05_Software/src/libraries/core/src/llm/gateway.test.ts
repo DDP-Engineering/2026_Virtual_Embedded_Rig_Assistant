@@ -282,7 +282,10 @@ describe("model gateway", () => {
     expect(resolveModelReference("custom:a/org/model", "openai/b", "openai/c")).toBe("custom:a/org/model");
     expect(resolveModelReference(null, "openai/b", "openai/c")).toBe("openai/b");
     expect(resolveModelReference(undefined, null, "openai/c")).toBe("openai/c");
-    expect(() => resolveModelReference(null, null, null)).toThrow();
+    // No model anywhere names the setup step instead of "The request is invalid."
+    expect(() => resolveModelReference(null, null, null)).toThrow(
+      expect.objectContaining({ code: "INVALID", messageKey: "provider.noModel" }),
+    );
     expect(() => resolveModelReference("invalid", null, "openai/c")).toThrow();
   });
   it("keeps subscription OAuth-only and exposes fresh bounded capabilities before streaming", () => {

@@ -4,6 +4,8 @@ import type { Clock } from "../ports.js";
 export interface PromptEnvironment {
   clock: Clock;
   osFamily: "windows" | "linux";
+  /** The shell run_command uses, so the model writes that shell's syntax on the first try. */
+  shell?: string | undefined;
   veraVersion: string;
   /** The current session mode, independently of the workbench default. */
   permissionMode: WorkbenchConfig["agent"]["permission_mode"];
@@ -109,6 +111,7 @@ export function buildSystemPrompt({
       "Environment:",
       `- Date (UTC): ${env.clock.now().toISOString().slice(0, 10)}`,
       `- OS family: ${env.osFamily}`,
+      ...(env.shell ? [`- Shell for run_command: ${env.shell}`] : []),
       `- VERA version: ${env.veraVersion}`,
       `- Permission mode: ${env.permissionMode}`,
       `- Indexed documents: ${env.indexedDocuments}`,

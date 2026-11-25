@@ -34,6 +34,21 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 - Allow changing reasoning during delegated work without changing its admitted first request.
 - Verify update metadata against the installer files and blockmaps in each delivery.
+- Set the model of the first API-key or local provider as the default, and say "No model is selected" instead of "The request is invalid" when none is chosen.
+- Show a dialog naming the file and keys when `settings.json` is invalid, instead of exiting silently.
+- Offer Retry after a provider error, only while the failed message is still the latest one.
+- Stop refusing messages, session names and settings that contain a stored secret; masking still applies.
+- Search the file itself when `grep` gets a file as path, match bare patterns such as `*.log` at any depth in `grep` and `glob`, and report unsearched files as `skippedFiles`.
+- Keep the other bytes of a file that is not UTF-8 when `edit` changes it.
+- Report the real exit code of shell commands in Windows PowerShell 5.1, and tell the model which shell `run_command` uses.
+- Let the agent read the full log of a command it ran, in `.vera/runs`.
+- Keep subscripts, superscripts and font changes on their line in text extracted from PDFs. Delete `.vera/cache/extract` and reindex to apply it to documents indexed before.
+- Render a PDF that is not indexed instead of showing it as hex.
+- Accept a citation of one page inside a page range the agent read.
+- Ignore a click on the indexing progress indicator instead of queuing a full reindex.
+- Keep text typed in the message box when another session, Settings, Help or Plugins is opened.
+- Send text typed in the message box as the answer when the agent waits on a question; Enter in the question's text field submits it.
+- Show a notice with Continue when the model stops at its output limit.
 
 ## [0.3.0] - 2026-11-25
 

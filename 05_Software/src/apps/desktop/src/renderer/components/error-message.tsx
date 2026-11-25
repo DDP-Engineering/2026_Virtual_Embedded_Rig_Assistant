@@ -50,6 +50,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.INTERNAL": t("errors.INTERNAL", options),
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
+    "provider.noModel": t("provider.noModel"),
     "provider.auth": t("provider.auth", options),
     "provider.openCodePlan": t("provider.openCodePlan"),
     "provider.openCodeCatalog": t("provider.openCodeCatalog"),

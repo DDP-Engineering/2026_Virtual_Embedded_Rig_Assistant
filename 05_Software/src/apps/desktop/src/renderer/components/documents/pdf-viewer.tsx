@@ -190,7 +190,10 @@ export default function PdfViewer({
   const root = useRef<HTMLDivElement>(null);
   const report = useRef(onPage);
   report.current = onPage;
-  const count = content.pages.length;
+  // An unindexed PDF arrives with one empty page and no extraction: its page count comes from the file.
+  const unindexed = content.pages.length === 1 && content.pages[0] === "";
+  const [filePages, setFilePages] = useState<number>();
+  const count = unindexed ? (filePages ?? 1) : content.pages.length;
   // biome-ignore lint/correctness/useExhaustiveDependencies: attempt retries parsing after a PDF error.
   useEffect(() => {
     setError(false);
@@ -214,7 +217,9 @@ export default function PdfViewer({
     let alive = true;
     void loading.promise
       .then(async (doc) => {
-        if (doc.numPages !== count) throw Error("Page count mismatch");
+        if (!unindexed && doc.numPages !== content.pages.length) throw Error("Page count mismatch");
+        const total = doc.numPages;
+        if (unindexed) setFilePages(total);
         const size = async (number: number): Promise<Size> => {
           const viewport = (await doc.getPage(number)).getViewport({ scale: 1 });
           return { width: viewport.width, height: viewport.height };
@@ -225,9 +230,9 @@ export default function PdfViewer({
         const first = await size(1);
         if (!alive) return;
         setPdf(doc);
-        setSizes(Array.from({ length: count }, () => first));
+        setSizes(Array.from({ length: total }, () => first));
         const all = [first];
-        for (let number = 2; number <= count && alive; number++)
+        for (let number = 2; number <= total && alive; number++)
           all.push(await size(number).catch(() => first));
         if (alive && all.some((page) => page.width !== first.width || page.height !== first.height))
           setSizes(all);

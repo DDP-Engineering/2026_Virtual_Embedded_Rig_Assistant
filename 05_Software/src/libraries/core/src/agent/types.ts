@@ -57,7 +57,7 @@ export interface RuntimeHost {
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
-  | { type: "turn.done"; turnId: string; stopReason: StopReason; limit?: "toolCalls" }
+  | { type: "turn.done"; turnId: string; stopReason: StopReason; limit?: "toolCalls" | "output" }
   | ({ type: "message.user"; messageId: string } & Partial<RuntimeInput> & { text: string })
   | { type: "message.delivered"; messageIds: string[] }
   | {

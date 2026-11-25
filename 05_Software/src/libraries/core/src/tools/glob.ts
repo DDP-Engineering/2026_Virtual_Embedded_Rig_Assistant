@@ -12,7 +12,8 @@ const DISCOVERED = 5000;
 export const globTool: ToolDefinition = {
   name: "glob",
   class: "read",
-  description: "Find allowed workbench files, newest first, up to the configured number of paths.",
+  description:
+    "Find allowed workbench files, newest first, up to the configured number of paths. A pattern without a slash, such as *.log, matches at any depth.",
   params: z.strictObject({ pattern: z.string().min(1), path: z.string().min(1).optional() }),
   async execute(ctx, raw, signal) {
     const args = globTool.params.parse(raw) as { pattern: string; path?: string };

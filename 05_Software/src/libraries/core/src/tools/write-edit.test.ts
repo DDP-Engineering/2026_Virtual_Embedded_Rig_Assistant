@@ -150,6 +150,23 @@ it("preserves CRLF and BOM while matching LF arguments", async () => {
   expect(await edit(ctx, "one\ntwo\n", "three\nfour\n")).toMatchObject({ added: 2, removed: 2 });
   expect(await readFile(join(root, "file.txt"))).toEqual(Buffer.from("\ufeffthree\r\nfour\r\n"));
 });
+it("edits a file that is not UTF-8 without changing its other bytes", async () => {
+  // cp1252 degree and micro signs, as in vendor C sources.
+  const original = Buffer.concat([
+    Buffer.from("// 25 "),
+    Buffer.from([0xb0]),
+    Buffer.from("C, 10 "),
+    Buffer.from([0xb5]),
+    Buffer.from("F\nint gain = 1;\n"),
+  ]);
+  await writeFile(join(root, "file.txt"), original);
+  const ctx = context();
+  await read(ctx);
+  await edit(ctx, "int gain = 1;", "int gain = 2;");
+  const saved = await readFile(join(root, "file.txt"));
+  expect(saved.subarray(0, original.indexOf("int"))).toEqual(original.subarray(0, original.indexOf("int")));
+  expect(saved.toString("latin1")).toContain("int gain = 2;");
+});
 it.skipIf(process.platform === "win32")("preserves existing POSIX modes for edit and overwrite", async () => {
   await writeFile(join(root, "file.txt"), "old\n");
   await chmod(join(root, "file.txt"), 0o751);

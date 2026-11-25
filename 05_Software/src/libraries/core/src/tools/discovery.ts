@@ -18,7 +18,15 @@ export async function discoverFiles(
 ) {
   validateGlob(pattern);
   const base = await guard.resolve(path);
-  const paths = await glob(pattern, {
+  // A file as the search path is that one file; as a glob working directory it would match nothing.
+  const own = await lstat(base.absolute).catch(() => undefined);
+  if (own?.isFile()) {
+    guard.assertAuthorized();
+    return [{ path: base.relative, mtimeMs: own.mtimeMs, size: own.size }];
+  }
+  // A bare name pattern such as *.log means any depth, as in ripgrep and .gitignore.
+  const anywhere = /[\\/]/.test(pattern) ? pattern : `**/${pattern}`;
+  const paths = await glob(anywhere, {
     cwd: base.absolute,
     dot: true,
     onlyFiles: true,

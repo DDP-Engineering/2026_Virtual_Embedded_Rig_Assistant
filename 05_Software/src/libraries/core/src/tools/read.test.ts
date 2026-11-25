@@ -115,6 +115,18 @@ it("refuses binaries and PDFs and records no failed fingerprint", async () => {
   ).rejects.toThrow(/read_doc/);
   expect(ctx.lastReads.size).toBe(0);
 });
+it("reads the full log of a command run, the only readable file under .vera", async () => {
+  await mkdir(join(root, ".vera/runs"), { recursive: true });
+  await writeFile(join(root, ".vera/runs/run_01ABC.log"), "first error\n");
+  await writeFile(join(root, ".vera/other.txt"), "private\n");
+  const signal = new AbortController().signal;
+  expect(await api.readTool.execute(context(), { path: ".vera/runs/run_01ABC.log" }, signal)).toMatchObject({
+    text: expect.stringContaining("first error"),
+  });
+  await expect(api.readTool.execute(context(), { path: ".vera/other.txt" }, signal)).rejects.toThrow(
+    /ignored/,
+  );
+});
 // The FIFO has no writer: opening it would block the read for good.
 it.skipIf(process.platform === "win32")("refuses a FIFO without opening it", async () => {
   execFileSync("mkfifo", [join(root, "pipe")]);

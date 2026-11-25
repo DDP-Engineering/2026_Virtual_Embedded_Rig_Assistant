@@ -7,6 +7,7 @@ import {
   type SettingsSnapshot,
   settingsSchema,
   settingsServicePatchSchema,
+  type VeraError,
   veraError,
 } from "@vera/shared";
 import { z } from "zod";
@@ -61,12 +62,23 @@ export class SettingsService {
     try {
       stored = JSON.parse(raw);
     } catch {
-      throw veraError("INVALID");
+      throw this.unreadable("not valid JSON");
     }
     // The current format only: any other schemaVersion is invalid data (AGENTS.md).
     const parsed = settingsSchema.safeParse(stored);
-    if (!parsed.success) throw veraError("INVALID");
+    if (!parsed.success)
+      throw this.unreadable(
+        parsed.error.issues
+          .slice(0, 8)
+          .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.code}`)
+          .join("; "),
+      );
     this.state = { settings: parsed.data };
+  }
+
+  /** Names the file and the offending keys, never their values, so startup can say what to repair. */
+  private unreadable(detail: string): VeraError {
+    return { ...veraError("INVALID"), params: { file: this.host.paths.settings, detail } };
   }
 
   get(): SettingsSnapshot {

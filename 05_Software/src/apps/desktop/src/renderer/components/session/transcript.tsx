@@ -189,7 +189,12 @@ export function Transcript({
   const retryRef = useRef(retry);
   retryRef.current = retry;
   const onRetry = useCallback(() => retryRef.current(), []);
-  const latestError = useMemo(() => state.items.findLast((i) => i.kind === "error")?.id, [state.items]);
+  // Retry sends the latest user message again, so it is offered only while that is the message that failed.
+  const latestError = useMemo(() => {
+    const index = state.items.findLastIndex((i) => i.kind === "error" || i.kind === "user");
+    const item = state.items[index];
+    return item?.kind === "error" ? item.id : undefined;
+  }, [state.items]);
   const userMessages = useMemo(() => {
     const messages = new Map<string, NavigatorMessage>();
     for (const item of state.items)
@@ -219,8 +224,8 @@ export function Transcript({
     !state.activeTurnId &&
     latestTurn !== undefined &&
     (latestTurn.stopReason === "aborted" || state.interrupted.includes(latestTurn.turnId));
-  const toolLimit =
-    !state.activeTurnId && latestTurn?.stopReason === "limit" && latestTurn.limit === "toolCalls";
+  const turnLimit = !state.activeTurnId && latestTurn?.stopReason === "limit" ? latestTurn.limit : undefined;
+  const toolLimit = turnLimit === "toolCalls" || turnLimit === "output";
   return (
     <>
       {bookmarks.error !== undefined && <ErrorMessage error={bookmarks.error} />}
@@ -357,7 +362,9 @@ export function Transcript({
             )}
             {toolLimit && (
               <div className="turn-limit-notice" data-turn-limit>
-                <p role="status">{t("chatDetail.toolLimit")}</p>
+                <p role="status">
+                  {turnLimit === "output" ? t("chatDetail.outputLimit") : t("chatDetail.toolLimit")}
+                </p>
                 {continueTurn && (
                   <button
                     type="button"

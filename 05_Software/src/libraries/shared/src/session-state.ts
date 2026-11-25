@@ -100,7 +100,7 @@ export const sessionStateSchema = z.strictObject({
       turnId: z.string(),
       steps: z.number(),
       stopReason: stopReasonSchema.nullable(),
-      limit: z.literal("toolCalls").optional(),
+      limit: z.enum(["toolCalls", "output"]).optional(),
     }),
   ),
   questions: z.array(sessionQuestionSchema),

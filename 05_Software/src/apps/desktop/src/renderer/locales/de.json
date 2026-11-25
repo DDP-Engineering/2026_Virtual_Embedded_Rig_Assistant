@@ -427,6 +427,7 @@
     "noModels": "Keine Modelle aufgeführt."
   },
   "provider": {
+    "noModel": "Kein Modell ausgewählt. Fügen Sie unter Einstellungen → Anbieter einen Anbieter hinzu oder wählen Sie im Nachrichtenfeld ein Modell.",
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
     "openCodePlan": "Dieses Modell oder dieser Workspace kann den OpenCode-Tarif nicht nutzen. Prüfe das Modell und den Workspace-Zugriff.",
     "openCodeCatalog": "OpenCode verweigert den Zugriff auf die Modellliste. Prüfe die Leseberechtigung des Schlüssels für Modelle.",
@@ -452,6 +453,7 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
+    "outputLimit": "Das Modell hat sein Ausgabelimit erreicht, die Antwort ist daher abgeschnitten. Mit Fortsetzen macht VERA weiter.",
     "toolLimit": "Dieser Durchlauf hat sein Limit für Werkzeugaufrufe erreicht. Mit Fortsetzen macht VERA dort weiter, wo er stehen blieb.",
     "continue": "Fortsetzen",
     "continueMessage": "Mach dort weiter, wo du aufgehört hast.",

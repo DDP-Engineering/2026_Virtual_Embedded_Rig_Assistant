@@ -27,6 +27,8 @@ export interface WorkerResult {
   failure?: { code: VeraError["code"]; reason: string; message: string };
   matches: GrepMatch[];
   truncated: boolean;
+  /** Grep: files not searched because they are too large, binary or unreadable. */
+  skipped?: number;
   reason?: "timeout" | "aborted";
   error?: string;
 }

@@ -91,6 +91,11 @@ export function QuestionCard({
                   setText(event.currentTarget.value);
                   setSelected(undefined);
                 }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" || event.nativeEvent.isComposing || !text.trim()) return;
+                  event.preventDefault();
+                  void submit({ kind: "text", text: text.trim() });
+                }}
               />
             </label>
             {date && <p>{t("question.deadline", { date })}</p>}

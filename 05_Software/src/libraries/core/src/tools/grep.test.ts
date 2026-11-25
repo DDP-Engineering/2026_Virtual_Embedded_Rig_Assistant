@@ -57,6 +57,15 @@ it("runs all grep options inside a worker with ignored/binary/oversized skips an
     truncated: true,
   });
   await expect(call({ pattern: "[" })).rejects.toThrow(/regex|regular expression/i);
+  // One file as the path is searched itself, and unsearched files are counted, not silently dropped.
+  expect(await call({ pattern: "Hello", path: "docs/notes.txt" })).toMatchObject({
+    matches: [{ path: "docs/notes.txt", line: 2 }],
+  });
+  expect(await call({ pattern: "hello", path: "docs", ignoreCase: true })).toMatchObject({ skippedFiles: 2 });
+  // A bare name pattern reaches files below the top level.
+  expect(await call({ pattern: "Hello", glob: "*.txt", output: "files" })).toMatchObject({
+    paths: ["docs/notes.txt"],
+  });
 });
 
 // REQ-FUNC-0df8e905 REQ-FUNC-820e2701

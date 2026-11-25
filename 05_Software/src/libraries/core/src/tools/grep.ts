@@ -16,7 +16,7 @@ export const grepTool: ToolDefinition = {
   name: "grep",
   class: "read",
   description:
-    "Search allowed text files with a JavaScript regex in an isolated worker, within the configured worker deadline and match limit.",
+    "Search allowed text files with a JavaScript regex. path is a folder or one file; glob filters names (*.log matches at any depth). skippedFiles counts files not searched because they are too large or binary.",
   params: grepParams,
   async execute(ctx, raw, signal) {
     const parsed = grepParams.parse(raw);
@@ -40,7 +40,11 @@ export const grepTool: ToolDefinition = {
     guard.assertAuthorized();
     if (result.error) throw Error(result.error);
     if (result.reason === "aborted") throw Error("Grep aborted.");
-    const metadata = { truncated: result.truncated, ...(result.reason ? { reason: result.reason } : {}) };
+    const metadata = {
+      truncated: result.truncated,
+      ...(result.reason ? { reason: result.reason } : {}),
+      ...(result.skipped ? { skippedFiles: result.skipped } : {}),
+    };
     if (parsed.output === "files")
       return { paths: [...new Set(result.matches.map((match) => match.path))], ...metadata };
     if (parsed.output === "count") {

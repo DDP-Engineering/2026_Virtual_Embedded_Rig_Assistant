@@ -75,6 +75,34 @@ export class SessionsHost {
   private skills: SkillCatalog | undefined;
   private skillMetadata: { name: string; description: string }[] = [];
   private programHost: ProgramHost | undefined;
+  /** The last resolved run_command shell, for the prompt; refreshed whenever a prompt is built. */
+  private shellLabel: string | undefined;
+  private refreshShell(): void {
+    const shell = this.programHost?.shell;
+    if (!shell) {
+      this.shellLabel = undefined;
+      return;
+    }
+    shell.resolve().then(
+      ({ executable, kind }) => {
+        const name = executable
+          .replace(/^.*[\\/]/, "")
+          .replace(/\.exe$/i, "")
+          .toLowerCase();
+        this.shellLabel =
+          name === "pwsh"
+            ? "PowerShell 7 (pwsh)"
+            : name === "powershell"
+              ? "Windows PowerShell 5.1 (no && or ||; use ; and if ($?))"
+              : kind === "cmd"
+                ? "cmd.exe (one line; use & or &&)"
+                : kind;
+      },
+      () => {
+        this.shellLabel = undefined;
+      },
+    );
+  }
   private programEntries: ProgramPromptEntry[] = [];
   /** The prompt entries are reused until this key changes: workbench, generation and plugin skills. */
   private programKey = "";
@@ -269,8 +297,10 @@ export class SessionsHost {
         const partsProvider = options.parts;
         const browser = options.browser;
         const workbenchId = snapshot.config.id;
-        const prompt = (mode: PermissionMode, review: boolean) =>
-          buildSystemPrompt({
+        this.refreshShell();
+        const prompt = (mode: PermissionMode, review: boolean) => {
+          this.refreshShell();
+          return buildSystemPrompt({
             workbench: this.config ?? snapshot.config,
             pinned: this.pinned,
             skills: review ? [] : this.skillMetadata,
@@ -283,6 +313,7 @@ export class SessionsHost {
             env: {
               clock: options.clock,
               osFamily: process.platform === "win32" ? "windows" : "linux",
+              shell: this.shellLabel,
               veraVersion: options.version,
               permissionMode: mode,
               indexedDocuments: (
@@ -292,6 +323,7 @@ export class SessionsHost {
               ).n,
             },
           }).text;
+        };
         this.service = new SessionService({
           db,
           root: snapshot.folder,

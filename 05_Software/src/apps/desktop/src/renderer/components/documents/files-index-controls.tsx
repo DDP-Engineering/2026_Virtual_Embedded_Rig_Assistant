@@ -59,6 +59,9 @@ export function FilesIndexControls({
           aria-busy={indexing}
           disabled={!canReindex}
           onClick={() => {
+            // While a pass runs this button is its progress indicator; a click must not queue a rebuild
+            // that deletes the index behind it.
+            if (indexing) return;
             setFailure(undefined);
             reindex.mutate();
           }}

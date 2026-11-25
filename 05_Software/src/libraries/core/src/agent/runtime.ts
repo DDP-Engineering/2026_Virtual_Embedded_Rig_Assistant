@@ -39,7 +39,8 @@ function providerErrorEvent(error: VeraError, limit = false): Extract<RuntimeEve
     type: "error",
     code: limit ? "CONTEXT_LIMIT" : error.code,
     messageKey: limit ? "context.budget_exceeded" : error.messageKey,
-    retryable: false,
+    // A context limit needs a smaller input; every other provider failure can be sent again.
+    retryable: !limit,
     ...(retryAfter ? { retryAfter } : {}),
     ...(typeof seconds === "number" ? { params: { seconds } } : {}),
   };
@@ -129,6 +130,8 @@ export class ReferenceRuntime implements AgentRuntime {
   private lastTotals = { inputTokens: 0, outputTokens: 0 };
   /** Set when the current turn stopped at its tool-call limit (REQ-FUNC-0a886b84). */
   private toolCallLimit = false;
+  /** The model stopped at its output-length limit, so the answer is cut short. */
+  private outputLimit = false;
   private readonly listeners = new Set<(event: RuntimeEvent) => void>();
   constructor(private readonly host: RuntimeHost) {}
   start(init: RuntimeInit): void {
@@ -196,6 +199,7 @@ export class ReferenceRuntime implements AgentRuntime {
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     this.toolCallLimit = false;
+    this.outputLimit = false;
     try {
       stopReason = await this.run(init, controller.signal, currentStart, recovered, messageId);
     } catch (error) {
@@ -214,7 +218,11 @@ export class ReferenceRuntime implements AgentRuntime {
         type: "turn.done",
         turnId,
         stopReason,
-        ...(stopReason === "limit" && this.toolCallLimit ? { limit: "toolCalls" as const } : {}),
+        ...(stopReason === "limit" && this.toolCallLimit
+          ? { limit: "toolCalls" as const }
+          : stopReason === "limit" && this.outputLimit
+            ? { limit: "output" as const }
+            : {}),
       });
       this.controller = undefined;
     }
@@ -523,7 +531,7 @@ export class ReferenceRuntime implements AgentRuntime {
         if (signal.aborted) return "aborted";
         if (summarizing) return "limit";
         this.report("Model stream failed", error);
-        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
+        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: true });
         return "error";
       }
       if (signal.aborted) {
@@ -534,7 +542,7 @@ export class ReferenceRuntime implements AgentRuntime {
       if (!final) {
         retainPartial();
         if (summarizing) return "limit";
-        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
+        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: true });
         return "error";
       }
       this.transcript.push(structuredClone(final));
@@ -563,6 +571,7 @@ export class ReferenceRuntime implements AgentRuntime {
           this.transcript.push(
             toolResult(call, "Not executed: incomplete model response.", true, this.host.now()),
           );
+        if (final.stopReason === "length") this.outputLimit = true;
         return final.stopReason === "length" ? "limit" : final.stopReason;
       }
       if (!calls.length) {

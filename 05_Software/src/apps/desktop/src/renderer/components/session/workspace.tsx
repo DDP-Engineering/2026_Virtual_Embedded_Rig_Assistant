@@ -210,6 +210,20 @@ export function SessionWorkspace({
     setPending(true);
     setFailure(undefined);
     try {
+      // The agent is waiting on a question: what the user types in the message box is the answer to it,
+      // not a message queued behind a turn that cannot go on.
+      const question = view.state.questions.find((item) => item.outcome === null);
+      const reply = text.trim();
+      if (question && workbenchId && !images?.length && reply.length <= 2000) {
+        await api.invoke("session.question.answer", {
+          workbenchId,
+          sessionId: id,
+          questionId: question.questionId,
+          reply: { kind: "text", text: reply },
+        });
+        changed();
+        return true;
+      }
       await api.invoke("session.send", { sessionId: id, text, ...(images?.length && { images }) });
       changed();
       return true;

@@ -34,10 +34,12 @@ async function extract(bytes: Uint8Array): Promise<void> {
       for (const item of content.items) {
         if (!("str" in item)) continue;
         const y = item.transform[5] as number;
-        if (previousY !== undefined && Math.abs(y - previousY) > Math.max(previousHeight * 1.7, 18))
-          text += "\n\n";
-        else if (previousY !== undefined && y !== previousY && !text.endsWith("\n")) text += "\n";
-        else if (text && !text.endsWith("\n") && !text.endsWith(" ")) text += " ";
+        // A subscript, superscript or font change moves the baseline by a fraction of the line (V_DD, I²C)
+        // and stays on its line; only a move of more than half a line height starts a new one. pdf.js
+        // emits the spaces between words itself, so none is added between items of one line.
+        const moved = previousY === undefined ? 0 : Math.abs(y - previousY);
+        if (moved > Math.max(previousHeight * 1.7, 18)) text += "\n\n";
+        else if (moved > Math.max(previousHeight, item.height, 1) * 0.5 && !text.endsWith("\n")) text += "\n";
         text += item.str;
         if (item.hasEOL) text += "\n";
         previousY = y;

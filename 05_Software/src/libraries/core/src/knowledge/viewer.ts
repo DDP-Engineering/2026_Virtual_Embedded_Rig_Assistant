@@ -10,6 +10,9 @@ import { PathGuard } from "../workbench/path-guard.js";
 import { extractionSchema } from "./extraction.js";
 import { verifyDocumentSource } from "./processor.js";
 
+/** The largest PDF rendered without an index row; its base64 form stays inside the viewer content limit. */
+export const UNINDEXED_PDF_BYTES = 100 * 1024 * 1024;
+
 /** Read-only viewer over current guarded source and the full persisted extraction. */
 export class DocumentViewer {
   constructor(
@@ -75,7 +78,23 @@ export class DocumentViewer {
             : {}),
         };
       }
-      const checked = await this.indexedSource(path, signal);
+      let checked: Awaited<ReturnType<DocumentViewer["indexedSource"]>>;
+      try {
+        checked = await this.indexedSource(path, signal);
+      } catch (error) {
+        // A PDF opened from Files that is not indexed (yet, any more, or at all) still renders from its
+        // bytes. The single empty page tells the viewer to take the page count from the file itself.
+        if (!byPath || !/\.pdf$/i.test(path)) throw error;
+        const { bytes } = await readGuardedFile(guard, path, UNINDEXED_PDF_BYTES, signal);
+        return {
+          ...base,
+          kind: "pdf",
+          data: Buffer.from(bytes).toString("base64"),
+          pages: [""],
+          page: 1,
+          pageEnd: 1,
+        };
+      }
       const { bytes, extraction } = checked;
       if (extraction.kind === "pdf") {
         if (parsed && parsed.kind !== "page" && parsed.kind !== "page-range")

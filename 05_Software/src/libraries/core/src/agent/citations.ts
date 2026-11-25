@@ -19,6 +19,22 @@ function refs(value: unknown, out: Set<string>): void {
 export function withinIssued(ref: string, issued: ReadonlySet<string>): boolean {
   if (issued.has(ref)) return true;
   const cited = parseRef(ref);
+  if (cited?.kind === "page" || cited?.kind === "page-range") {
+    // The model read pages 45-47 and cites page 46: that page was issued too.
+    const start = cited.kind === "page" ? cited.page : cited.start;
+    const end = cited.kind === "page" ? cited.page : cited.end;
+    for (const candidate of issued) {
+      const window = parseRef(candidate);
+      if (
+        window?.kind === "page-range" &&
+        window.path === cited.path &&
+        window.start <= start &&
+        end <= window.end
+      )
+        return true;
+    }
+    return false;
+  }
   if (cited?.kind !== "lines") return false;
   for (const candidate of issued) {
     const window = parseRef(candidate);

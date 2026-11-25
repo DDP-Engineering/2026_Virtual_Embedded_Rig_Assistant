@@ -427,6 +427,7 @@
     "noModels": "Aucun modèle listé."
   },
   "provider": {
+    "noModel": "Aucun modèle sélectionné. Ajoutez un fournisseur dans Paramètres → Fournisseurs ou choisissez un modèle dans la zone de message.",
     "auth": "Échec de l’authentification. Vérifiez l’identifiant enregistré dans les paramètres Fournisseurs.",
     "openCodePlan": "Ce modèle ou cet espace de travail ne peut pas utiliser cette offre OpenCode. Vérifiez le modèle et les droits d’accès.",
     "openCodeCatalog": "OpenCode a refusé l’accès à la liste des modèles. Vérifiez le droit de lecture des modèles associé à la clé.",
@@ -452,6 +453,7 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Tour arrêté ou interrompu.",
+    "outputLimit": "Le modèle a atteint sa limite de sortie, la réponse est donc tronquée. Continuez pour que VERA poursuive.",
     "toolLimit": "Ce tour a atteint sa limite d’appels d’outils. Continuez pour que VERA reprenne là où il s’est arrêté.",
     "continue": "Continuer",
     "continueMessage": "Reprends là où tu t’es arrêté.",

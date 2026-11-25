@@ -319,7 +319,7 @@ it("hands swallowed turn-loop exceptions to the host log and survives a failing 
     type: "error",
     code: "PROVIDER",
     messageKey: "errors.PROVIDER",
-    retryable: false,
+    retryable: true,
   });
   let clockReads = 0;
   const internal = fixture(failing, [], {
@@ -355,7 +355,7 @@ it.each(["12", "invalid provider header"])(
       type: "error",
       code: "PROVIDER",
       messageKey: "provider.rateLimit",
-      retryable: false,
+      retryable: true,
       ...(hint === "12" ? { retryAfter: hint } : {}),
     });
   },

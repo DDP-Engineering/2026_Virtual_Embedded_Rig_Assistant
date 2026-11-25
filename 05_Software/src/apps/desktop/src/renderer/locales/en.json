@@ -427,6 +427,7 @@
     "noModels": "No models listed."
   },
   "provider": {
+    "noModel": "No model is selected. Add a provider in Settings → Providers, or pick a model in the message box.",
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
     "openCodePlan": "This model or workspace cannot use this OpenCode plan. Check the selected model and workspace access.",
     "openCodeCatalog": "OpenCode denied access to the model list. Check the key’s Models → Read permission.",
@@ -452,6 +453,7 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Stopped or interrupted turn.",
+    "outputLimit": "The model reached its output limit, so this answer is cut short. Continue to let VERA carry on.",
     "toolLimit": "This turn reached its tool-call limit. Continue to let VERA pick up where it stopped.",
     "continue": "Continue",
     "continueMessage": "Continue where you left off.",

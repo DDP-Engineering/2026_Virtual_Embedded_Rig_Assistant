@@ -189,8 +189,9 @@ it("validates all issued document kinds against current extraction bounds indepe
       ...valid.map((ref) => ({ ref, valid: true })),
       ...invalid.map((ref) => ({ ref, valid: false })),
     ]);
+    // A single page inside an issued page range (p=2-2) was read by the model and may be cited alone.
     expect(await check(["docs/a.pdf#p=2", "docs/a.md#h=reset"])).toEqual([
-      { ref: "docs/a.pdf#p=2", valid: false },
+      { ref: "docs/a.pdf#p=2", valid: true },
       { ref: "docs/a.md#h=reset", valid: false },
     ]);
     messages[0]!.isError = true;

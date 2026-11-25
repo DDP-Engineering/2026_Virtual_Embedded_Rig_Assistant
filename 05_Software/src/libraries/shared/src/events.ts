@@ -163,7 +163,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     turnId: z.string(),
     stopReason: stopReasonSchema,
     /** Present when a limit stop came from the turn's tool-call limit, not a context or output limit. */
-    limit: z.literal("toolCalls").optional(),
+    limit: z.enum(["toolCalls", "output"]).optional(),
   }),
   z.strictObject({
     type: z.literal("message.user"),

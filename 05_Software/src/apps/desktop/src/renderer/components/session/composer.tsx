@@ -25,6 +25,12 @@ import { DictationButton, DictationStatus } from "./dictation-button.js";
 import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
+/**
+ * Typed text per session, for the life of the window: the composer unmounts when the user opens another
+ * session, Settings, Help or Plugins, and a long prompt must still be there on the way back.
+ */
+const drafts = new Map<string, string>();
+
 export type ComposerState = Pick<SessionState, "mode" | "modelRef" | "status" | "activeTurnId" | "reasoning">;
 
 export function Composer({
@@ -57,13 +63,26 @@ export function Composer({
   setMode: (mode: SessionState["mode"]) => Promise<void>;
 }) {
   const { t } = useTranslation();
-  const [text, setText] = useState("");
-  const draft = useRef({ text: "", revision: 0 });
+  const draftKey = sessionId && workbenchId ? `${workbenchId}/${sessionId}` : undefined;
+  const [text, setText] = useState(() => (draftKey ? (drafts.get(draftKey) ?? "") : ""));
+  const draft = useRef({ text, revision: 0 });
+  const shownKey = useRef(draftKey);
   const updateDraft = useCallback((value: string) => {
     if (draft.current.text === value) return;
     draft.current = { text: value, revision: draft.current.revision + 1 };
     setText(value);
+    if (!shownKey.current) return;
+    if (value) drafts.set(shownKey.current, value);
+    else drafts.delete(shownKey.current);
   }, []);
+  // The same composer shown for another session takes up that session's draft.
+  useEffect(() => {
+    if (shownKey.current === draftKey) return;
+    shownKey.current = draftKey;
+    const kept = draftKey ? (drafts.get(draftKey) ?? "") : "";
+    draft.current = { text: kept, revision: draft.current.revision + 1 };
+    setText(kept);
+  }, [draftKey]);
   const [token, setToken] = useState<{ start: number; end: number; query: string }>();
   const [matches, setMatches] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);

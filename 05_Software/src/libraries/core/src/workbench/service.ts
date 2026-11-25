@@ -51,7 +51,7 @@ import { type DocumentIndexPhase, type DocumentProcessor, Ingester } from "../kn
 import { selectionDocs } from "../knowledge/kinds.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { readGitignores } from "../knowledge/selection.js";
-import { DocumentViewer } from "../knowledge/viewer.js";
+import { DocumentViewer, UNINDEXED_PDF_BYTES } from "../knowledge/viewer.js";
 import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
@@ -459,6 +459,15 @@ export class WorkbenchService {
           (doc.status === "indexed" || doc.status === "needs_ocr") &&
           (!!db.prepare("SELECT 1 FROM document_extractions WHERE doc_id=?").get(doc.id) ||
             (doc.kind === "pdf" && doc.status === "needs_ocr" && (doc.pages ?? 0) > 0));
+        // A PDF renders from its own bytes, so it needs no index row: pending, failed, changed or
+        // unselected datasheets open as pages, not as a hex dump.
+        if (
+          !rendered &&
+          extname(path).toLowerCase() === ".pdf" &&
+          !ignored(path) &&
+          (properties.size ?? 0) <= UNINDEXED_PDF_BYTES
+        )
+          rendered = true;
       }
       return { ...properties, rendered };
     });

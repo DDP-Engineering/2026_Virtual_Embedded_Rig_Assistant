@@ -19,6 +19,9 @@ export interface PathRootBinding {
 const sessionAttachmentLocation = (relative: string) =>
   relative === ".vera" || /^\.vera\/attachments(?:\/ses_[0-9A-HJKMNP-TV-Z]{26}(?:\/[^/]+)?)?$/.test(relative);
 
+// The full log of a command the agent ran: run_command returns only its tail and names this file.
+const runLogLocation = (relative: string) => /^\.vera\/runs\/[A-Za-z0-9_-]+\.log$/.test(relative);
+
 const pathIdentity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 
 async function canonicalPath(path: string) {
@@ -170,6 +173,7 @@ export class PathGuard {
 
   private allowed(path: string): void {
     if (this.allowSessionAttachments && sessionAttachmentLocation(path)) return;
+    if (runLogLocation(path)) return;
     if (path && (this.ignored(path) || this.ignored(`${path}/`)))
       throw Error("Path is ignored by the workbench.");
   }

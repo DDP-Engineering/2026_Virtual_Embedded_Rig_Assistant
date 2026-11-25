@@ -148,7 +148,21 @@ export async function prepareChange(
   if (before !== null && isBinary(before)) throw Error("Cannot change a binary file with text tools.");
   let replacements = 0;
   let output: string;
-  const original = before?.toString("utf8") ?? "";
+  // A file that is not valid UTF-8 (cp1252 vendor sources) is edited byte for byte as latin1; decoding it
+  // as UTF-8 would turn every such byte in the whole file into U+FFFD on save.
+  const encoding: BufferEncoding =
+    before !== null && !("content" in args) && !Buffer.from(before.toString("utf8"), "utf8").equals(before)
+      ? "latin1"
+      : "utf8";
+  const original = before?.toString(encoding) ?? "";
+  if (
+    encoding === "latin1" &&
+    "newString" in args &&
+    Array.from(args.newString).some((char) => char.charCodeAt(0) > 0xff)
+  )
+    throw Error(
+      "This file is not UTF-8. Use only Latin-1 characters in newString, or rewrite it with write.",
+    );
   if ("content" in args) output = args.content;
   else {
     if (before === null) throw Error("File not found. Read an existing file before editing it.");
@@ -165,7 +179,7 @@ export async function prepareChange(
       throw Error(`oldString has ${replacements} matches. Use unique text or replaceAll.`);
     output = bom + parts.join(newString);
   }
-  const after = Buffer.from(output, "utf8");
+  const after = Buffer.from(output, encoding);
   const afterSha256 = hash(after);
   const changePath = guard.scope === "filesystem" ? target.absolute.replaceAll("\\", "/") : target.relative;
   // An unbounded diff of two large, different texts blocks the process; the change stays possible without it.

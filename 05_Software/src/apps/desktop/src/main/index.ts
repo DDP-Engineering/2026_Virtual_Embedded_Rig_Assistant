@@ -1775,7 +1775,6 @@ ipcMain.handle(
       },
       "session.rename": ({ sessionId, title }) =>
         router.inSession(sessionId, (s, owner) => {
-          if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent(owner));
         }),
       "session.archive.set": ({ sessionId, archived }) =>
@@ -1821,7 +1820,6 @@ ipcMain.handle(
         router.inSession(
           sessionId,
           async (s, owner) => {
-            if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
             // Image identities resolve only while the session's workbench is shown (Display identities).
             const sent = images?.length
               ? await s.sendWithImages(
@@ -1941,9 +1939,7 @@ ipcMain.handle(
         return {};
       },
       "app.settings.get": () => {
-        const snapshot = settings.get();
-        if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-        return snapshot;
+        return settings.get();
       },
       "app.settings.update": async (patch) => {
         if (credentials.containsSecret(patch)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -2419,8 +2415,20 @@ if (!firstInstance) {
       updates.start();
       catalogChecks.start();
     })
-    .catch(async () => {
-      logger.log("error", "app.startup.failed");
+    .catch(async (error: unknown) => {
+      const known = veraErrorSchema.safeParse(error).data;
+      const detail = known
+        ? { code: known.code, ...known.params }
+        : { message: error instanceof Error ? `${error.name}: ${error.message}` : String(error) };
+      logger.log("error", "app.startup.failed", detail);
+      // Without this the application exits with no window and no reason.
+      if (!__VERA_TEST__)
+        dialog.showErrorBox(
+          "VERA could not start",
+          Object.entries(detail)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("\n"),
+        );
       try {
         await logger.flush();
       } catch {

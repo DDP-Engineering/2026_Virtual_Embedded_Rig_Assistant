@@ -130,6 +130,8 @@ describe("safe provider settings", () => {
     await h.settings.load();
     await h.service.save({ provider: "custom", config: custom });
     const id = "custom:local-model";
+    // The first connection's model becomes the default, so a first message has a model to use.
+    expect(h.settings.get().settings.defaultModel).toBe(`${id}/${custom.model}`);
     const defaultModel = `${id}/org/other-model`;
     await expect(h.service.enableModels({ providers: [], defaultModel })).rejects.toMatchObject({
       code: "INVALID",

@@ -9,6 +9,7 @@ import {
 import {
   type CuratedProviderPreset,
   curatedProviderPresets,
+  modelReferenceSchema,
   type ProviderList,
   type ProviderModelsEnable,
   type ProviderRemove,
@@ -52,7 +53,6 @@ export class ProviderSettings {
   async list(): Promise<ProviderList> {
     await this.credentials.load();
     const { settings } = this.settings.get();
-    if (this.credentials.containsSecret(settings.providers)) throw veraError("INVALID");
     const metadata = async (id: string, keyless = false) => {
       const credential = await this.credentials.read(id);
       const hint = credentialHint(credential?.type === "api_key" ? credential.key : undefined);
@@ -101,7 +101,10 @@ export class ProviderSettings {
       const state = this.settings.get();
       const providers = structuredClone(state.settings.providers);
       let id = "openai";
+      // The model this save names, as a reference: it becomes the default when none is set yet.
+      let reference: string | undefined;
       if (input.provider === "openai") {
+        if (input.model) reference = `openai/${input.model}`;
         if (input.model === "") delete providers.openai.model;
         else if (input.model !== undefined) {
           const first = providers.openai.model === undefined;
@@ -135,6 +138,7 @@ export class ProviderSettings {
         id = `custom:${slug}`;
         const changes = JSON.parse(JSON.stringify(input.config)) as typeof input.config;
         const config = { ...previous, ...changes, slug };
+        if (config.model) reference = `custom:${slug}/${config.model}`;
         // A new connection offers only its chosen model; an edit keeps its ticks (or their absence) and adds a
         // changed active model to an existing list (RULING-001 of TASK-ec18086f).
         const ticks = tickChosen(
@@ -182,7 +186,12 @@ export class ProviderSettings {
           } else await this.credentials.delete(id);
           changed = true;
         }
-        await this.settings.update({ providers });
+        // Without this a first key or local server leaves every send without a model.
+        const first =
+          !state.settings.defaultModel && modelReferenceSchema.safeParse(reference).success
+            ? { defaultModel: reference as string }
+            : {};
+        await this.settings.update({ providers, ...first });
       } catch {
         if (changed) await restore();
         throw veraError("INTERNAL");

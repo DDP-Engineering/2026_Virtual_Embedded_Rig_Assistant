@@ -427,6 +427,7 @@
     "noModels": "Niciun model listat."
   },
   "provider": {
+    "noModel": "Niciun model selectat. Adaugă un furnizor în Setări → Furnizori sau alege un model în caseta de mesaj.",
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
     "openCodePlan": "Modelul sau spațiul de lucru nu are acces la acest plan OpenCode. Verifică modelul și accesul spațiului de lucru.",
     "openCodeCatalog": "OpenCode a refuzat accesul la lista de modele. Verifică permisiunea de citire a modelelor pentru cheie.",
@@ -452,6 +453,7 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Execuție oprită sau întreruptă.",
+    "outputLimit": "Modelul a atins limita de ieșire, deci răspunsul este trunchiat. Continuă ca VERA să meargă mai departe.",
     "toolLimit": "Tura a atins limita de apeluri de instrumente. Continuă ca VERA să reia de unde s-a oprit.",
     "continue": "Continuă",
     "continueMessage": "Continuă de unde ai rămas.",

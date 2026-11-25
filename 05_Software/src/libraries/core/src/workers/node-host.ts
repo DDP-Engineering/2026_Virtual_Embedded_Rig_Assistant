@@ -102,6 +102,7 @@ export class NodeWorkerPool implements WorkerPool {
             type: string;
             match?: GrepMatch;
             truncated?: boolean;
+            skipped?: number;
             error?: string;
             value?: WorkerResult["value"];
             failure?: WorkerResult["failure"];
@@ -128,6 +129,7 @@ export class NodeWorkerPool implements WorkerPool {
             } else if (message.type === "done")
               this.finish(job, {
                 truncated: message.truncated ?? false,
+                ...(message.skipped ? { skipped: message.skipped } : {}),
                 ...(message.value ? { value: message.value } : {}),
               });
             else if (message.type === "error")
