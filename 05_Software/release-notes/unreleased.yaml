@@ -86,3 +86,10 @@ entries:
       ro: Operațiile finalizate pentru programe și comenzi sunt grupate și extensibile.
       de: Abgeschlossene Programm- und Shell-Aktionen sind gruppiert und aufklappbar.
       fr: Les opérations terminées des programmes et commandes sont groupées et dépliables.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
+    text:
+      en: Delegated tasks from Bypass start in Auto-edit unless Full Access is allowed; allowed children run like Bypass.
+      ro: Sarcinile delegate din Bypass pornesc în Editare automată dacă accesul complet nu e permis; altfel rulează ca Bypass.
+      de: Delegierte Aufgaben aus Bypass starten in Automatisch bearbeiten, außer Vollzugriff ist erlaubt; dann wie Bypass.
+      fr: Les tâches déléguées depuis Bypass démarrent en Modification auto sauf accès complet autorisé, alors comme Bypass.

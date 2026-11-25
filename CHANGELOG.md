@@ -24,6 +24,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Changed
 
 - Group completed program and shell operations in chat and clarify approval details.
+- Start a Bypass parent's delegated session in Auto-edit when Full Access for delegated tasks is off, instead of refusing the launch; with it on, the child follows the direct Bypass policy, including shell commands without saved prefixes (#405).
 
 ### Fixed
 

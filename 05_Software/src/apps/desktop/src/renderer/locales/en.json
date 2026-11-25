@@ -271,7 +271,7 @@
     "commands": "Commands",
     "permissions": "Permissions",
     "delegatedFullAccess": "Allow Full Access for delegated tasks",
-    "delegatedFullAccessWarning": "When a session in Bypass delegates a task, the new session can read and change files and run commands with your account’s permissions. This applies to future delegated launches across all workbenches.",
+    "delegatedFullAccessWarning": "When a session in Bypass delegates a task, the new session can read and change files and run commands with your account’s permissions, without asking. When this is off, the new session starts in Auto-edit. This applies to future delegated launches across all workbenches.",
     "enableDelegatedFullAccess": "Enable",
     "commandShell": "Command shell",
     "automaticShell": "Automatic (platform default)",

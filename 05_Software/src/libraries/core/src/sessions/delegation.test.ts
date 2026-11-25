@@ -124,6 +124,9 @@ async function setup(overrides: Partial<SessionHost> = {}) {
   };
 }
 
+/** Inspection reports the turn identity; the launch result also carries the mode. */
+const turnIdentity = <T extends { mode: unknown }>({ mode: _mode, ...identity }: T) => identity;
+
 it("publishes initial durable events in order during reentrant delivery", async () => {
   const h = await setup();
   const parent = h.service.create();
@@ -177,7 +180,7 @@ it("runs replay parent and child independently with the selected model and reaso
   expect(await h.service.waitIdle(child.sessionId)).toEqual({ stopReason: "end" });
   const childView = h.service.inspectDelegated(parent.id, child.sessionId);
   expect(childView).toMatchObject({
-    launch: child,
+    launch: turnIdentity(child),
     session: { mode: "read-only", modelRef: "replay/child" },
     snapshot: {
       reasoning: "high",
@@ -511,7 +514,7 @@ it("keeps archived history and prevents the parent from being deleted before the
   ).toThrow(failure("DENIED"));
   expect(h.service.delegationParent(child.sessionId)).toBe(parent.id);
   expect(h.service.inspectDelegated(parent.id, child.sessionId)).toMatchObject({
-    launch: child,
+    launch: turnIdentity(child),
     session: { archived: true },
     snapshot: { turns: [{ turnId: child.turnId, stopReason: "end" }] },
   });
@@ -556,7 +559,7 @@ it("reopens an interrupted replay child with the same request and recovered turn
   });
   const view = recovered.inspectDelegated(parent.id, child.sessionId);
   expect(view).toMatchObject({
-    launch: child,
+    launch: turnIdentity(child),
     session: { status: "idle", modelRef: "replay/child" },
     snapshot: { reasoning: "low", turns: [{ turnId: child.turnId, stopReason: "aborted" }] },
   });
@@ -695,7 +698,7 @@ it("configures next-turn model and reasoning atomically and detects a concurrent
   await expect(reopened.configureDelegated(parent.id, child.sessionId, request)).resolves.toEqual(settings);
 });
 
-it("copies permission modes and applies the live profile policy to Bypass launches", async () => {
+it("copies permission modes and starts Bypass children in Auto-edit unless the live profile policy allows Full Access", async () => {
   let allowed = false;
   const policy = { allowDelegatedFullAccess: () => allowed };
   const h = await setup(policy);
@@ -704,20 +707,29 @@ it("copies permission modes and applies the live profile policy to Bypass launch
   const unrelated = other.service.create(null, "bypass");
   const start = (requestId: string) => h.service.launchDelegated(parent.id, { ...launch, requestId });
   const first = await start("ask-child");
+  expect(first.mode).toBe("ask");
   await h.service.waitIdle(first.sessionId);
   expect(h.service.get(first.sessionId).snapshot.mode).toBe("ask");
   expect(() => h.service.setMode(first.sessionId, "bypass")).toThrow(failure("DENIED"));
   h.service.setMode(first.sessionId, "bypass", true);
   expect(h.service.get(parent.id).snapshot.mode).toBe("ask");
   h.service.setMode(parent.id, "bypass", true);
-  await expect(start("unauthorized")).rejects.toMatchObject(failure("DENIED"));
-  await expect(other.service.launchDelegated(unrelated.id, launch)).rejects.toMatchObject(failure("DENIED"));
+  // With the setting off a Bypass parent still delegates; its child starts in Auto-edit.
+  const limited = await start("unauthorized");
+  expect(limited.mode).toBe("auto-edit");
+  await h.service.waitIdle(limited.sessionId);
+  expect(h.service.get(limited.sessionId).snapshot.mode).toBe("auto-edit");
+  const limitedElsewhere = await other.service.launchDelegated(unrelated.id, launch);
+  expect(limitedElsewhere.mode).toBe("auto-edit");
+  await other.service.waitIdle(limitedElsewhere.sessionId);
   allowed = true;
-  const elsewhere = await other.service.launchDelegated(unrelated.id, launch);
+  const elsewhere = await other.service.launchDelegated(unrelated.id, { ...launch, requestId: "allowed" });
   await other.service.waitIdle(elsewhere.sessionId);
+  expect(elsewhere.mode).toBe("bypass");
   expect(other.service.get(elsewhere.sessionId).snapshot.mode).toBe("bypass");
 
   const second = await start("authorized");
+  expect(second.mode).toBe("bypass");
   await h.service.waitIdle(second.sessionId);
   expect(h.service.get(second.sessionId).snapshot.mode).toBe("bypass");
   h.service.setMode(parent.id, "auto-edit");
@@ -737,9 +749,16 @@ it("copies permission modes and applies the live profile policy to Bypass launch
   await vi.waitFor(() => expect(h.prepareModel.mock.calls).toHaveLength(attempts + 1));
   allowed = false;
   gate.resolve();
-  await expect(pending).rejects.toMatchObject(failure("DENIED"));
+  const raced = await pending;
+  expect(raced.mode).toBe("auto-edit");
+  await h.service.waitIdle(raced.sessionId);
+  // Revocation keeps existing children; a retry reports the child's current mode.
   await expect(start("authorized")).resolves.toEqual(second);
-  await expect(start("revoked")).rejects.toMatchObject(failure("DENIED"));
+  h.service.setMode(limited.sessionId, "bypass", true);
+  await expect(start("unauthorized")).resolves.toEqual({ ...limited, mode: "bypass" });
+  const revoked = await start("revoked");
+  expect(revoked.mode).toBe("auto-edit");
+  await h.service.waitIdle(revoked.sessionId);
   allowed = true;
   const fourth = await start("reauthorized");
   await h.service.waitIdle(fourth.sessionId);

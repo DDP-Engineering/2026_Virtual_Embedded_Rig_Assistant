@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { addAbortListener } from "node:events";
-import { modelReferenceSchema, reasoningOptionSchema, sessionIdSchema } from "@vera/shared";
+import {
+  modelReferenceSchema,
+  type PermissionMode,
+  reasoningOptionSchema,
+  sessionIdSchema,
+} from "@vera/shared";
 import { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
 
@@ -47,10 +52,15 @@ export type DelegatedConfiguration = z.infer<typeof delegatedConfigurationSchema
 export type DelegatedLaunchRequest = z.input<typeof delegatedLaunchRequestSchema>;
 
 /** Durable identifiers for the first turn of a delegated session. */
-export interface DelegatedLaunch {
+export interface DelegatedTurnIdentity {
   sessionId: string;
   turnId: string;
   messageId: string;
+}
+
+/** A launch result also reports the child's current mode, so the parent sees an Auto-edit start. */
+export interface DelegatedLaunch extends DelegatedTurnIdentity {
+  mode: PermissionMode;
 }
 
 /** Keep launch and child shutdown cancellable when provider metadata is still pending. */

@@ -271,7 +271,7 @@
     "commands": "Befehle",
     "permissions": "Berechtigungen",
     "delegatedFullAccess": "Vollzugriff für delegierte Aufgaben erlauben",
-    "delegatedFullAccessWarning": "Wenn eine Sitzung im Bypass-Modus eine Aufgabe delegiert, kann die neue Sitzung mit deinen Kontoberechtigungen Dateien lesen und ändern sowie Befehle ausführen. Das gilt für künftige delegierte Starts in allen Workbenches.",
+    "delegatedFullAccessWarning": "Wenn eine Sitzung im Bypass-Modus eine Aufgabe delegiert, kann die neue Sitzung mit deinen Kontoberechtigungen ohne Nachfrage Dateien lesen und ändern sowie Befehle ausführen. Ist die Option aus, startet die neue Sitzung in Automatisch bearbeiten. Das gilt für künftige delegierte Starts in allen Workbenches.",
     "enableDelegatedFullAccess": "Aktivieren",
     "commandShell": "Befehls-Shell",
     "automaticShell": "Automatisch (Plattformstandard)",

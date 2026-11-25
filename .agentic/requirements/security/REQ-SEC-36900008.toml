@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-SEC-36900008"
-title = "Authorize delegated shell commands separately"
+title = "Apply direct Bypass policy to delegated sessions"
 status = "active"
-requirement = "When a delegated shell command lacks a saved user grant in Bypass, the approval gate shall require a user decision for the exact command."
-verification = "Launch a child with Full Access, run a fixture check covered by a narrow saved prefix, then request a simulated publication outside that prefix and verify no second process starts while approval waits."
-affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+requirement = "While a delegated session is in Bypass, the approval gate shall decide its shell commands, declared programs and file changes with the direct Bypass policy."
+verification = "Launch a Full Access child and assert a shell command without a saved prefix, git push and a declared device-write program are approved by mode and a workbench edit is approved by mode in the desktop E2E; boundary: a blocked program is refused and a trial-plugin program still waits for a user decision."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/core/src/sessions/delegation-monitor.ts", "05_Software/help/en/permissions.md", "05_Software/help/ro/permissions.md", "05_Software/help/de/permissions.md", "05_Software/help/fr/permissions.md", "05_Software/help/en/chat-and-sessions.md", "05_Software/help/ro/chat-and-sessions.md", "05_Software/help/de/chat-and-sessions.md", "05_Software/help/fr/chat-and-sessions.md"]
 linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
 created = 2026-11-21
-updated = 2026-11-21
+updated = 2026-11-25

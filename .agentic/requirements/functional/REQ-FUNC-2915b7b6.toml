@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2915b7b6"
+
+title = "Report the delegated child's mode"
+
+status = "active"
+
+requirement = "When a delegated launch is admitted or retried, the launch result shall report the child's current permission mode."
+
+verification = "Launch from a Bypass parent with the setting off and on and assert the result mode is auto-edit and bypass; retry the same request after changing the child mode and assert the retry reports the current mode."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/delegation.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts", "05_Software/src/libraries/core/src/sessions/delegation-monitor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "The parent agent must know when its child was downgraded to Auto-edit and may wait for user approval."
+
+created = 2026-11-25
+updated = 2026-11-25

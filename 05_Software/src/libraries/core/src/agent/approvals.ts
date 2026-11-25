@@ -47,13 +47,12 @@ function policyOf(
   request: ChangeRequest,
   mode: PermissionMode,
   prefixes: readonly string[] = [],
-  requireCommandGrant = false,
 ): ProgramPolicy | undefined {
   if (request.tool === "run_command")
     return mode === "read-only"
       ? "refuse"
-      : (mode === "bypass" && !requireCommandGrant) ||
-          ((mode === "auto-edit" || mode === "bypass") &&
+      : mode === "bypass" ||
+          (mode === "auto-edit" &&
             prefixes.some((prefix) => commandPrefixMatches(request.args[0] ?? "", prefix)))
         ? "mode"
         : "user";
@@ -75,7 +74,6 @@ export interface ApprovalHost {
   active(sessionId: string, turnId: string): boolean;
   mode(sessionId: string): PermissionMode;
   commandPrefixes?(): readonly string[];
-  requireCommandGrant?(sessionId: string): boolean;
   assertWritable(): void;
   /** Called inside the gate's transaction. Returns publication after commit. */
   record(sessionId: string, event: SessionEvent): () => void;
@@ -182,12 +180,7 @@ export class ApprovalGate {
     return input.commandPrefix as string;
   }
   private policy(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
-    return policyOf(
-      request,
-      mode,
-      this.host.commandPrefixes?.(),
-      request.tool === "run_command" && this.host.requireCommandGrant?.(request.sessionId),
-    );
+    return policyOf(request, mode, this.host.commandPrefixes?.());
   }
   private byMode(request: ChangeRequest, mode: PermissionMode): boolean {
     if (request.tool === "plugin_install") return false;

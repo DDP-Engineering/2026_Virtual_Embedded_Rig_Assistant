@@ -271,7 +271,7 @@
     "commands": "Commandes",
     "permissions": "Autorisations",
     "delegatedFullAccess": "Autoriser l’accès complet pour les tâches déléguées",
-    "delegatedFullAccessWarning": "Quand une session en mode Bypass délègue une tâche, la nouvelle session peut lire et modifier des fichiers et exécuter des commandes avec les droits de votre compte. Cela concerne les prochains lancements délégués dans tous les bancs de travail.",
+    "delegatedFullAccessWarning": "Quand une session en mode Bypass délègue une tâche, la nouvelle session peut lire et modifier des fichiers et exécuter des commandes avec les droits de votre compte, sans demander. Si l’option est désactivée, la nouvelle session démarre en Modification auto. Cela concerne les prochains lancements délégués dans tous les bancs de travail.",
     "enableDelegatedFullAccess": "Activer",
     "commandShell": "Shell de commandes",
     "automaticShell": "Automatique (défaut de la plateforme)",

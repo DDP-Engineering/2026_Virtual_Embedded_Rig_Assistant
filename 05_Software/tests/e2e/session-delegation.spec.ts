@@ -301,7 +301,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
   }
 });
 
-test("native desktop authorizes two sequential Full Access children and reuses one across later turns", async () => {
+test("native desktop authorizes two sequential Full Access children, reuses one and starts unauthorized children in Auto-edit", async () => {
   test.setTimeout(120000);
   const root = await mkdtemp(join(tmpdir(), "vera-delegation-modes-"));
   const folder = join(root, "board");
@@ -319,7 +319,14 @@ test("native desktop authorizes two sequential Full Access children and reuses o
       await fixture(ticket, [
         { toolCalls: [tool("read", { path })] },
         { toolCalls: [tool("edit", { path, oldString: "before", newString: "checked" })] },
-        { toolCalls: [tool("run_command", { command: `git hash-object -- ${path}` })] },
+        // The second command has no saved prefix: a Full Access child runs it like direct Bypass.
+        {
+          toolCalls: [
+            tool("run_command", {
+              command: ticket === "first" ? `git hash-object -- ${path}` : `git status --short -- ${path}`,
+            }),
+          ],
+        },
         { text: `${ticket} ticket handover ready` },
       ]);
     }
@@ -347,8 +354,12 @@ test("native desktop authorizes two sequential Full Access children and reuses o
       call("session_wait", monitored),
       { text: "Coordinator received {{reply}}." },
     ]);
+    await fixture("limited", [
+      { toolCalls: [tool("run_command", { command: "git status --short" })] },
+      { text: "Limited child done." },
+    ]);
     await fixture("revoked", [
-      call("session_launch", { instruction: "Should not launch", modelRef: "replay/first" }),
+      call("session_launch", { instruction: "Starts in Auto-edit", modelRef: "replay/limited" }),
       { text: "Revocation checked." },
     ]);
     const env = Object.fromEntries(
@@ -527,7 +538,25 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     }, ids);
     expect(revoked.turnId).toBeTruthy();
     await expect(page.locator("[data-transcript]")).toContainText("Revocation checked.");
-    await expect(delegation(page).getByRole("button", { name: "Should not launch" })).toHaveCount(0);
+    await expect(delegation(page).getByRole("button", { name: "Starts in Auto-edit" })).toBeVisible();
+    // With the setting off the child starts in Auto-edit, and its unsaved command waits for the user.
+    const limited = await page.evaluate(async ({ sessionId, workbenchId }) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      const row = (await api.invoke("session.list", { workbenchId })).find(
+        (entry) => entry.delegation?.parentSessionId === sessionId && entry.title === "Starts in Auto-edit",
+      );
+      return row ? { mode: row.mode, id: row.id } : undefined;
+    }, ids);
+    expect(limited?.mode).toBe("auto-edit");
+    await expect
+      .poll(async () =>
+        page.evaluate(async (sessionId) => {
+          const api = (window as unknown as { vera: VeraBridge }).vera;
+          const { snapshot } = await api.invoke("session.get", { sessionId });
+          return snapshot.approvals.map(({ tool, decision }) => ({ tool, decision }));
+        }, limited?.id ?? ""),
+      )
+      .toEqual([{ tool: "run_command", decision: null }]);
     await openLaunchSettings();
     await allow.click();
     await page.getByRole("dialog").getByRole("button", { name: "Enable", exact: true }).click();

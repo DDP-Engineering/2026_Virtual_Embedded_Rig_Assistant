@@ -271,7 +271,7 @@
     "commands": "Comenzi",
     "permissions": "Permisiuni",
     "delegatedFullAccess": "Permite acces complet pentru sarcinile delegate",
-    "delegatedFullAccessWarning": "Când o sesiune în Bypass deleagă o sarcină, noua sesiune poate citi și modifica fișiere și executa comenzi cu permisiunile contului tău. Setarea se aplică lansărilor delegate viitoare din toate workbench-urile.",
+    "delegatedFullAccessWarning": "Când o sesiune în Bypass deleagă o sarcină, noua sesiune poate citi și modifica fișiere și executa comenzi cu permisiunile contului tău, fără să întrebe. Când setarea este oprită, noua sesiune pornește în Editare automată. Setarea se aplică lansărilor delegate viitoare din toate workbench-urile.",
     "enableDelegatedFullAccess": "Activează",
     "commandShell": "Shell pentru comenzi",
     "automaticShell": "Automat (implicit pe platformă)",

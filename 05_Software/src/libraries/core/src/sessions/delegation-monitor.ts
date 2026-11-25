@@ -1,10 +1,10 @@
 import { addAbortListener } from "node:events";
 import { type DelegatedTurnStatus, type SessionState, type StopReason, veraError } from "@vera/shared";
-import type { DelegatedLaunch } from "./delegation.js";
+import type { DelegatedTurnIdentity } from "./delegation.js";
 import type { SessionListener } from "./hub.js";
 
 interface DelegatedTurnView {
-  launch: DelegatedLaunch;
+  launch: DelegatedTurnIdentity;
   snapshot: SessionState;
   seq: number;
 }

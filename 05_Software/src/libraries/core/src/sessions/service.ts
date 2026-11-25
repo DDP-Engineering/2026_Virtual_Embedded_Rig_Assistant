@@ -203,7 +203,7 @@ export interface SessionHost {
   onActivity?: (sessionId: string) => void;
   /** Timeout in whole minutes, read when a desktop session asks its next question. */
   questionTimeoutMinutes?: () => number | null;
-  /** Live profile policy for launching new delegated sessions in Bypass. */
+  /** Live profile policy: a Bypass parent's new child starts in Bypass when true, else in Auto-edit. */
   allowDelegatedFullAccess?: () => boolean;
   /** Optional live-only observation of committed completion, approval and question activity. */
   onLiveActivity?: (sessionId: string, activity: LiveSessionActivity) => void;
@@ -327,7 +327,6 @@ export class SessionService {
       active: (id, turn) => this.active.get(id)?.turnId === turn && !this.active.get(id)?.failed,
       mode: (id) => this.row(id).permission_mode,
       commandPrefixes: () => host.commandPrefixes?.() ?? [],
-      requireCommandGrant: (id) => this.active.get(id)?.delegated === true,
       record: (id, event) => {
         const row = this.row(id);
         const status =
@@ -587,7 +586,12 @@ export class SessionService {
       const row = this.delegations.request(parentId, request.requestId);
       if (!row) return undefined;
       if (row.request_hash !== hash || !row.child_session_id) throw veraError("CONFLICT");
-      return { sessionId: row.child_session_id, turnId: row.turn_id, messageId: row.message_id };
+      return {
+        sessionId: row.child_session_id,
+        turnId: row.turn_id,
+        messageId: row.message_id,
+        mode: this.row(row.child_session_id).permission_mode,
+      };
     };
     const retry = existing();
     if (retry) return retry;
@@ -629,7 +633,12 @@ export class SessionService {
           const capabilities = this.host.gateway.capabilities(model);
           if (request.reasoning !== undefined && !capabilities.reasoningOptions?.includes(request.reasoning))
             throw veraError("INVALID");
-          const id = this.insertSession(model, current.permission_mode, request.reasoning);
+          // The live Full Access setting decides a Bypass parent's child mode once, at admission.
+          const mode =
+            current.permission_mode === "bypass" && this.host.allowDelegatedFullAccess?.() !== true
+              ? "auto-edit"
+              : current.permission_mode;
+          const id = this.insertSession(model, mode, request.reasoning);
           childId = id;
           const turn = this.startTurn(this.row(id), request.instruction, true, staged);
           this.delegations.create(request.requestId, {
@@ -639,7 +648,7 @@ export class SessionService {
             turn_id: turn.turnId,
             message_id: turn.messageId,
           });
-          return { sessionId: id, ...turn };
+          return { sessionId: id, ...turn, mode };
         })
         .immediate();
     } catch (error) {
@@ -660,8 +669,6 @@ export class SessionService {
   private checkDelegatedLaunch(parent: SessionRow): void {
     if (parent.archived) throw veraError("DENIED");
     if (this.closing || this.deleting.has(parent.id)) throw veraError("BUSY");
-    if (parent.permission_mode === "bypass" && this.host.allowDelegatedFullAccess?.() !== true)
-      throw { ...veraError("DENIED"), params: { reason: "bypass_launch" } };
   }
 
   private checkDelegatedMutation(parentId: string, childId: string): void {

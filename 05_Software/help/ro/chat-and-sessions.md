@@ -70,11 +70,11 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
 
-O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. În **Setări > Permisiuni**, activează **Permite acces complet pentru sarcinile delegate** și confirmă lansările Bypass viitoare din toate workbench-urile. Setarea este oprită implicit. Oprește-o pentru a bloca lansările viitoare în Bypass. Sesiunile existente își păstrează modul. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei. Publicarea la distanță necesită permisiune separată.
+O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. Copilul unei sesiuni părinte în Bypass pornește în Editare automată, cu excepția cazului în care activezi **Permite acces complet pentru sarcinile delegate** în **Setări > Permisiuni** și confirmi. Setarea este oprită implicit și se aplică lansărilor viitoare din toate workbench-urile; dacă o oprești, sesiunile existente își păstrează modul. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei.
 
 Într-o copie de lucru partajată, lasă o sesiune copil să termine implementarea și verifică predarea înainte de a porni următoarea.
 
-Într-o sesiune delegată în Bypass, comenzile shell rulează automat dacă se potrivesc unui prefix salvat de utilizator în workbench. Pentru celelalte comenzi, ți se cere aprobarea.
+O sesiune delegată în Bypass respectă aceleași reguli ca o sesiune Bypass directă: comenzile shell, programele pluginurilor și modificările de fișiere rulează fără să întrebe, inclusiv publicarea la distanță, de exemplu `git push`. Programele blocate, verificarea instalării pluginurilor și pluginurile de probă își păstrează propriile aprobări. În Editare automată, comenzile shell rulează automat doar dacă se potrivesc unui prefix salvat de utilizator în workbench; pentru celelalte, ți se cere aprobarea în chatul sesiunii copil.
 
 ## Niveluri de detaliu
 

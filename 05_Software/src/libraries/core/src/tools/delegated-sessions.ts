@@ -110,11 +110,7 @@ export type DelegatedSessionToolHost = ReturnType<typeof bindDelegatedSessionHos
 function delegationFailure(error: unknown) {
   const known = veraErrorSchema.safeParse(error);
   const code = known.success ? known.data.code : "INTERNAL";
-  const text =
-    known.success && code === "DENIED" && known.data.params?.reason === "bypass_launch"
-      ? "The user must allow delegated Full Access in VERA Settings or change the parent mode."
-      : failureText[code];
-  return { isError: true, code, error: text };
+  return { isError: true, code, error: failureText[code] };
 }
 
 async function withDelegation(
@@ -146,7 +142,7 @@ export const delegatedSessionTools: readonly ToolDefinition[] = [
     name: launchName,
     class: "session",
     description:
-      "Start a child in this workbench. Model defaults to yours. Mode is copied once; Full Access needs user consent. In a shared checkout, verify each child's handover before the next launch. Returns session, turn and message IDs.",
+      "Start a child in this workbench. Model defaults to yours. Mode is copied once; from Bypass the child starts in Auto-edit unless the user allowed delegated Full Access. Returns its mode, session, turn and message IDs. In a shared checkout, verify each child's handover before the next launch.",
     params: launchParams,
     execute: (ctx, args, signal, callId) =>
       withDelegation(ctx, (host) => host.launch(args as z.infer<typeof launchParams>, signal, callId)),

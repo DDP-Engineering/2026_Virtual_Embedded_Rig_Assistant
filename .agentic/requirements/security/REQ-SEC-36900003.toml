@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-SEC-36900003"
-title = "Deny unapproved Full Access launch"
+title = "Start unapproved Full Access children in Auto-edit"
 status = "active"
-requirement = "If the parent is in Bypass and the application setting is off, VERA shall deny a delegated launch before creating a child."
-verification = "Use the same policy for separate workbenches, deny by default, and revoke during model preparation to verify no child is created."
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts","05_Software/src/apps/desktop/src/main/sessions.ts","05_Software/src/apps/cli/src/run.ts"]
-linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts","05_Software/tests/e2e/session-delegation.spec.ts"]
+requirement = "If the parent is in Bypass and the application setting is off, VERA shall create the delegated child in Auto-edit."
+verification = "With the setting off, launch from a Bypass parent and assert the child row and launch result are Auto-edit and a no-prefix shell command waits for approval; revoke during model preparation and assert the child still starts in Auto-edit."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/core/src/sessions/delegation.ts", "05_Software/help/en/chat-and-sessions.md", "05_Software/help/ro/chat-and-sessions.md", "05_Software/help/de/chat-and-sessions.md", "05_Software/help/fr/chat-and-sessions.md"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
 created = 2026-11-21
-updated = 2026-11-24
+updated = 2026-11-25
