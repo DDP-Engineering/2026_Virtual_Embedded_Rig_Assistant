@@ -19,6 +19,8 @@ import { toolLimit } from "../tools/context.js";
 import { analyzeAutomotive, automotiveCapabilities, automotiveDecodeAs } from "./automotive.js";
 import { captureCitation } from "./citations.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
+import { analyzeNetworking } from "./network-evidence.js";
+import { networkingCapabilities } from "./network-profiles.js";
 import { publishCapture, snapshotCapture } from "./storage.js";
 import { analyzeTraffic, trafficCapabilities } from "./traffic-analysis.js";
 
@@ -46,7 +48,11 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     decodeAs,
     filter: "filter" in args ? (args.filter ?? null) : null,
     ...(args.operation === "automotive" ? { automotiveProfile: args.automotiveProfile } : {}),
-    ...(args.operation === "statistics" || args.operation === "follow" || args.operation === "automotive"
+    ...(args.operation === "network" ? { networkProfile: args.networkProfile } : {}),
+    ...(args.operation === "statistics" ||
+    args.operation === "follow" ||
+    args.operation === "automotive" ||
+    args.operation === "network"
       ? {
           trafficPreferences: {
             tcpSequenceAnalysis: true,
@@ -176,6 +182,17 @@ async function captureOperation(
       snapshot,
       scanLimit,
       toolLimit(ctx, "toolResultChars"),
+    );
+  if (args.operation === "network")
+    return analyzeNetworking(
+      args,
+      capture,
+      analysis,
+      native,
+      snapshot,
+      scanLimit,
+      toolLimit(ctx, "toolResultChars"),
+      signal,
     );
   const fields = "fields" in args ? selectedFields(args.fields) : selectedFields();
   if (analysis.filter || analysis.decodeAs.length) await native.validate(analysis);
@@ -329,6 +346,7 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
         limits: captureLimits,
         traffic: usable ? trafficCapabilities : { available: false },
         automotive: usable ? automotiveCapabilities : { available: false },
+        networking: usable ? networkingCapabilities : { available: false },
       };
     }
     if (!isolated)

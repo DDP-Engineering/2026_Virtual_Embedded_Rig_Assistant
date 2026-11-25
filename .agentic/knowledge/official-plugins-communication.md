@@ -54,7 +54,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.4.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.6.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -91,6 +91,16 @@ device commands follow their own program risk and approval rules.
   frame/field locators. The projection keeps directional transport conversations, VLAN order,
   capture observations, and verified contributor citations for upstream TCP and SOME/IP-TP.
   Capture gaps, unsupported or ambiguous input and incomplete reassembly remain visible in coverage.
+
+- The typed `network` operation applies finite Ethernet/VLAN, IPv4/IPv6, ARP/ND, DNS/DHCP,
+  TCP/UDP, multicast and visible TLS field profiles to saved captures. Exchange rows expose
+  message roles and corroborated native DNS frame links. Conversation rows count directions
+  by native stream within a capture section, interface and VLAN stack. TCP symptoms are
+  capture observations. Shared evidence reports scope, packet drops, truncation, reassembly
+  and opaque TLS. Cooked VLAN tags, tunneled transport ambiguity and fragments remain visible.
+  Reassembled rows can cite related same-context frames outside the filter and withhold
+  higher-layer fields when contributor context is unverified. Compact evidence masks network
+  identifiers. The native reader rejects captures containing embedded decryption secrets.
 
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
@@ -164,6 +174,7 @@ device commands follow their own program risk and approval rules.
 | Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
+| General networking profiles | `shared/src/wireshark-networking.ts`, `core/src/wireshark/network-*.ts` | Networking replay in `wireshark-tshark.test.ts` and native diagnostics in `traffic-native.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
@@ -186,6 +197,8 @@ device commands follow their own program risk and approval rules.
   cover traffic statistics, diagnostics, timing, follow, local payload and bounds.
 - `REQ-FUNC-1610ba78`, `REQ-FUNC-56598fdc`, `REQ-REL-dd6f4b62`, `REQ-REL-1835b16c` —
   offline Automotive Ethernet profiles, PDU evidence, coverage and native diagnostics.
+- `REQ-FUNC-3cdfc800`, `REQ-DATA-fe4b7a36`, `REQ-REL-fe778b38`, `REQ-REL-baf79e3d` and
+  `REQ-SEC-22b9e089` govern the general networking profiles, framed evidence and native limits.
 
 ## Files
 

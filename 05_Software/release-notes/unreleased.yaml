@@ -29,3 +29,10 @@ entries:
       ro: Analizează DoIP, SOME/IP și Service Discovery în capturi salvate, cu referințe la PDU-uri și cadre.
       de: DoIP, SOME/IP und Service Discovery in Mitschnitten mit PDU- und Paketverweisen prüfen.
       fr: Analysez DoIP, SOME/IP et Service Discovery avec des références aux PDU et aux trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze network protocols in saved captures and return redacted evidence with frame links.
+      ro: Analizează protocoale din capturi salvate și obține dovezi mascate cu legături la cadre.
+      de: Netzwerkprotokolle in Mitschnitten prüfen und maskierte Belege mit Paketverweisen erhalten.
+      fr: Analysez les protocoles réseau et obtenez des preuves masquées avec des liens vers les trames.

@@ -5,14 +5,17 @@ import {
   captureAutomotiveEvidenceSchema,
   captureCoverageSchema,
   captureLimits,
+  captureNetworkingResultSchema,
   capturePacketSchema,
   captureQueryCursorSchema,
   captureReferenceSchema,
   captureTrafficFrameSchema,
+  networkLimits,
   trafficPageCursorSchema,
 } from "@vera/shared";
 import { z } from "zod";
 import { capToolResult } from "../tools/registry.js";
+import { trimNetworkPage } from "./network-projection.js";
 
 const modelResult = z.looseObject({
   capture: captureReferenceSchema.optional(),
@@ -140,6 +143,54 @@ function maskPacket(packet: CapturePacket, scrub: (text: string) => string) {
   }
 }
 
+function maskNetworking(decoded: unknown, scrub: (text: string) => string, limit: number) {
+  const parsed = captureNetworkingResultSchema.safeParse(decoded);
+  if (!parsed.success) return JSON.stringify({ isError: true, reason: "network_projection_invalid" });
+  const result = parsed.data;
+  const view = result.networking;
+  const hideContext = view.evidenceMode === "compact";
+  if (result.capture.source.kind === "workbench") {
+    const masked = hideContext
+      ? "[redacted]"
+      : scrub(result.capture.source.path).slice(0, 1024) || "[redacted]";
+    if (masked !== result.capture.source.path && !view.redactedContext.includes("capture.source.path"))
+      view.redactedContext.push("capture.source.path");
+    result.capture.source.path = masked;
+  }
+  if (result.analysis.filter) {
+    const masked = hideContext ? "[redacted]" : scrub(result.analysis.filter).slice(0, 1024) || "[redacted]";
+    if (masked !== result.analysis.filter && !view.redactedContext.includes("analysis.filter"))
+      view.redactedContext.push("analysis.filter");
+    result.analysis.filter = masked;
+  }
+  for (const row of view.rows) {
+    for (const endpoint of row.kind === "conversation" ? [row.a, row.b] : [row.source, row.destination]) {
+      if (!endpoint?.address) continue;
+      const masked = scrub(endpoint.address);
+      if (masked !== endpoint.address) endpoint.redacted = true;
+      endpoint.address = masked.slice(0, networkLimits.valueChars) || null;
+    }
+    if (row.kind !== "observation") continue;
+    const transactionId = row.exchange?.transactionId;
+    if (row.exchange && transactionId && scrub(transactionId) !== transactionId)
+      row.exchange.transactionId = null;
+    for (const [field, originals] of Object.entries(row.fields)) {
+      const masked = originals.map(scrub);
+      if (masked.some((value, index) => value !== originals[index]) && !row.redactedFields.includes(field))
+        row.redactedFields.push(field);
+      if (masked.some((value) => value.length > networkLimits.valueChars)) row.valuesLimited = true;
+      row.fields[field] = masked.map((value) => value.slice(0, networkLimits.valueChars));
+    }
+  }
+  if (view.rows.some((row) => row.kind === "observation" && row.valuesLimited)) {
+    result.coverage.partial = true;
+    result.coverage.truncated = true;
+  }
+  let masked = JSON.stringify(result);
+  while (masked.length > limit && trimNetworkPage(view, result.coverage)) masked = JSON.stringify(result);
+  return masked.length <= limit ? masked : JSON.stringify({ isError: true, reason: "result_limit" });
+}
+
 /** Apply agent masking to capture data before enforcing the final model-facing result budget. */
 export function maskCaptureOutput(text: string, scrub: (text: string) => string, limit: number): string {
   let decoded: unknown;
@@ -151,6 +202,7 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
   const parsed = modelResult.safeParse(decoded);
   if (!parsed.success) return scrub(text);
   const result = parsed.data;
+  if (result.networking !== undefined && result.coverage) return maskNetworking(decoded, scrub, limit);
   if (result.capture?.source.kind === "workbench")
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);
   if (result.analysis?.filter) result.analysis.filter = scrub(result.analysis.filter).slice(0, 1024);

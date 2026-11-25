@@ -97,7 +97,7 @@ function measure(
   }
 }
 
-function tallyCoverage(scoped: TrafficFact[], scanned: TrafficFact[], window: TrafficArgs["window"]) {
+export function tallyCoverage(scoped: TrafficFact[], scanned: TrafficFact[], window?: TrafficArgs["window"]) {
   const totals = counts();
   const points = new Map<string, { section: number | null; interfaceId: number | null; packets: number }>();
   let truncatedFrames = 0;

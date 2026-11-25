@@ -1,7 +1,7 @@
 import type { Message } from "@earendil-works/pi-ai";
 import { decodeRegisterResultSchema, parseRef } from "@vera/shared";
 import { readWindow } from "../tools/read-window.js";
-import { issuedCaptureCitations } from "../wireshark/citations.js";
+import { type CaptureNavigationLookup, issuedCaptureCitations } from "../wireshark/citations.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
 function refs(value: unknown, out: Set<string>): void {
@@ -53,6 +53,7 @@ export async function validateCitations(
   messages: readonly Message[],
   artifactExists?: (name: string) => boolean,
   validDocumentRef?: (ref: string) => Promise<boolean>,
+  captureNavigation?: CaptureNavigationLookup,
 ) {
   const issued = new Set<string>();
   const logs = issuedLogRefs(messages);
@@ -86,7 +87,7 @@ export async function validateCitations(
     ...new Set(Array.from(text.matchAll(/\[\[([^\]]+)\]\]/g), (match) => match[0].slice(2, -2))),
   ];
   const captures = found.some((ref) => ref.startsWith("capture:"))
-    ? issuedCaptureCitations(messages)
+    ? issuedCaptureCitations(messages, captureNavigation)
     : undefined;
   let guard: PathGuard;
   try {

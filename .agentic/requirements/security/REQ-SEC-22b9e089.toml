@@ -1,0 +1,32 @@
+schema = 1
+
+id = "REQ-SEC-22b9e089"
+
+title = "Redact sensitive networking evidence fields"
+
+status = "active"
+
+requirement = """
+When VERA analyzes a saved capture with a networking query, VERA shall restrict evidence to selected metadata and redact sensitive values in compact evidence and according to the agent masking policy.
+"""
+
+verification = "Replay DNS and TLS with planted sensitive names and opaque bytes; check field-level compact redaction, agent masking, and rejection of a PCAPNG containing embedded secrets."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/network-evidence.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-capture.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-projection.ts",
+  "05_Software/src/libraries/core/src/wireshark/model-output.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

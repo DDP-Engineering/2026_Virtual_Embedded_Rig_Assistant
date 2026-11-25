@@ -52,6 +52,27 @@ it("reports unsupported native traffic features and output bounds without return
   });
 });
 
+it("reports the TShark version and selected networking fields on unsupported dissection", async () => {
+  const captureOutput = vi.fn<ProgramRunner["captureOutput"]>().mockResolvedValue({
+    exit: { code: 1, signal: null },
+    stdout: "",
+    stderr: "Some fields aren't valid: private text",
+    exceeded: false,
+  });
+  const native = new OfflineTshark(
+    { captureOutput } as unknown as ProgramRunner,
+    "tshark",
+    ".",
+    new AbortController().signal,
+  );
+  await expect(
+    native.validate({ ...analysis, networkProfile: "tls" } as CaptureAnalysis, ["tls.record.opaque_type"]),
+  ).rejects.toMatchObject({
+    reason: "network_unavailable",
+    message: expect.stringMatching(/^TShark 4\.6\.10 .*tls\.record\.opaque_type/),
+  });
+});
+
 it.each(["0.000000000", null])(
   "reports a TCP gap marker at source timestamp %s as ambiguous",
   (timestampEpoch) => {

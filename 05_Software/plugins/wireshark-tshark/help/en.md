@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+For general networking, ask about Ethernet and VLANs, IPv4 and IPv6, ARP and neighbor discovery, DNS and DHCP, TCP and UDP, multicast or visible TLS metadata. Request compact evidence to hide network addresses and names while keeping frame links and capture limits.
+
 For saved Automotive Ethernet traffic, ask the agent for DoIP, SOME/IP or Service Discovery. It can show the direction, VLAN, PDU fields and contributing frames. Supply the service port for SOME/IP when needed.
 
 The offline capture tool lists conversations and endpoints, measures traffic and DNS or HTTP response times, and shows Expert Info by frame. Open a cited frame in Wireshark Desktop to inspect stream payload locally.

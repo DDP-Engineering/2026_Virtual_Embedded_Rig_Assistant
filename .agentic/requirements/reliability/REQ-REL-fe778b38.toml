@@ -1,0 +1,34 @@
+schema = 1
+
+id = "REQ-REL-fe778b38"
+
+title = "Expose limits of networking observations"
+
+status = "active"
+
+requirement = """
+When VERA returns networking observations, VERA shall disclose observation context, capture and dissection limits, and checksum or transport symptoms without inferring their cause.
+"""
+
+verification = "Exercise a prefix scan, truncated packet, TCP retransmission and missing segment, unknown drop metadata, and opaque TLS records."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/network-evidence.ts",
+  "05_Software/src/libraries/shared/src/wireshark-networking.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-profiles.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-projection.ts",
+  "05_Software/src/libraries/core/src/wireshark/diagnostics.ts",
+  "05_Software/src/libraries/core/src/wireshark/traffic-analysis.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-reassembly.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

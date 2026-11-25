@@ -1,0 +1,29 @@
+schema = 1
+
+id = "REQ-REL-baf79e3d"
+
+title = "Diagnose unsupported native networking dissection"
+
+status = "active"
+
+requirement = """
+If the installed TShark lacks fields or preferences required by a networking query, then VERA shall return a typed diagnostic with the TShark version and requested profile fields.
+"""
+
+verification = "Exercise a native unsupported-field response and assert the typed diagnostic includes the version and requested field without raw process output."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/network-evidence.ts",
+  "05_Software/src/libraries/core/src/wireshark/native.ts",
+]
+
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/traffic-native.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

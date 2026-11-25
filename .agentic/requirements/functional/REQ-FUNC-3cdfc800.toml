@@ -1,0 +1,35 @@
+schema = 1
+
+id = "REQ-FUNC-3cdfc800"
+
+title = "Query saved networking protocol observations"
+
+status = "active"
+
+requirement = """
+When a caller selects a saved-capture networking profile or typed query, VERA shall return its structured native observations for the selected scope.
+"""
+
+verification = "Run the networking profile replay fixture against native TShark and compare profile frames, protocol fields, and directional TCP/UDP conversation rows."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/network-evidence.ts",
+  "05_Software/src/libraries/shared/src/wireshark.ts",
+  "05_Software/src/libraries/shared/src/wireshark-networking.ts",
+  "05_Software/src/libraries/core/src/wireshark/service.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-profiles.ts",
+  "05_Software/src/libraries/core/src/wireshark/network-projection.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark.ts",
+  "05_Software/src/libraries/shared/src/index.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

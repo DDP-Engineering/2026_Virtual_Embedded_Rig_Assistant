@@ -33,6 +33,402 @@ const automotiveMixedVlanSample = new URL(
   "../fixtures/wireshark-tshark/automotive-mixed-vlan.pcapng",
   import.meta.url,
 );
+const networkingSample = fileURLToPath(
+  new URL("../fixtures/wireshark-tshark/networking.pcapng", import.meta.url),
+);
+
+it("projects native offline networking profiles, source references, and redacted evidence", async (ctx) => {
+  const source = { path: "captures/networking.pcapng" };
+  const compactSource = { path: "captures/private-capture.pcapng" };
+  const nameFilter = 'dns.qry.name == "private.test"';
+  const network = (profile: string, options: Record<string, unknown> = {}) =>
+    typed("network", { source, networkProfile: profile, ...options });
+  const exchanges = { networkQuery: { kind: "exchanges" } };
+  const rig = await workbench({
+    networking: [
+      typed("capabilities"),
+      network("ethernet_vlan", { limit: 1 }),
+      network("ipv4_ipv6", { filter: "frame.number in {3, 5, 20}" }),
+      network("arp_nd", exchanges),
+      network("dns_dhcp", exchanges),
+      network("dns_dhcp", { ...exchanges, filter: "frame.number == 6" }),
+      network("dns_dhcp", { ...exchanges, scanFrames: 5 }),
+      network("tcp_udp", { networkQuery: { kind: "conversations", transport: "udp" }, filter: "dns" }),
+      network("tcp_udp", { networkQuery: { kind: "conversations", transport: "tcp" }, filter: "tls" }),
+      network("tcp_udp", {
+        source: { path: "captures/traffic.pcapng" },
+        networkQuery: { kind: "tcp_symptoms" },
+        validateChecksums: true,
+      }),
+      network("multicast", { networkQuery: { kind: "multicast" } }),
+      network("tls", { evidenceMode: "compact", filter: "frame.number in {14, 15, 19}" }),
+      network("dns_dhcp", {
+        ...exchanges,
+        source: compactSource,
+        evidenceMode: "compact",
+        filter: nameFilter,
+      }),
+      network("tls", { source: { path: "captures/secrets.pcapng" } }),
+      network("tcp_udp", {
+        networkQuery: { kind: "conversations", transport: "tcp" },
+        filter: "frame.number == 21",
+      }),
+      network("tcp_udp", {
+        networkQuery: { kind: "conversations", transport: "udp" },
+        filter: "frame.number == 20",
+      }),
+      network("tls", { filter: "frame.number == 23" }),
+      network("tls", { filter: "frame.number == 25" }),
+      network("ethernet_vlan", { source: { path: "captures/cooked.pcap" } }),
+      network("dns_dhcp", { ...exchanges, filter: "frame.number == 28" }),
+      network("dns_dhcp", { ...exchanges, filter: "frame.number == 30" }),
+      network("tcp_udp", {
+        networkQuery: { kind: "conversations", transport: "udp" },
+        filter: "frame.number == 30",
+      }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    const fixture = await readFile(networkingSample);
+    await writeFile(join(rig.bench, source.path), fixture);
+    await writeFile(join(rig.bench, compactSource.path), fixture);
+    await writeFile(join(rig.bench, "captures/traffic.pcapng"), await readFile(trafficSample));
+    await writeFile(
+      join(rig.bench, "captures/cooked.pcap"),
+      await readFile(new URL("../fixtures/wireshark-tshark/networking-cooked.pcap", import.meta.url)),
+    );
+    await writeFile(
+      join(rig.bench, "captures/secrets.pcapng"),
+      Buffer.concat([fixture, Buffer.from("0a000000140000004b534c540000000014000000", "hex")]),
+    );
+    rig.resultBudget(32_000, (text) =>
+      text
+        .replaceAll("private.test", "[masked]")
+        .replaceAll("0x4321", "[masked ID]")
+        .replaceAll("private-capture.pcapng", "[masked capture]"),
+    );
+    const service = await rig.start();
+    const session = rig.session(service, "networking", "ask");
+    service.send(session.id, "Analyze the controlled saved networking capture.");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const output = session.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(
+      session.outputs.map(({ ok }) => ok),
+      session.outputs
+        .filter(({ ok }) => !ok)
+        .map(({ summary }) => summary)
+        .join("\n"),
+    ).toEqual([...Array<boolean>(13).fill(true), false, ...Array<boolean>(8).fill(true)]);
+    const [
+      capabilities,
+      eth,
+      ip,
+      arp,
+      dns,
+      filtered,
+      prefix,
+      udp,
+      tcp,
+      symptoms,
+      multicast,
+      tls,
+      compact,
+      secret,
+      tunneled,
+      fragmented,
+      mixedTls,
+      sameTls,
+      cooked,
+      mixedDns,
+      mixedDhcp,
+      mixedUdp,
+    ] = output;
+    expect(capabilities.networking.profiles).toEqual([
+      "ethernet_vlan",
+      "ipv4_ipv6",
+      "arp_nd",
+      "dns_dhcp",
+      "tcp_udp",
+      "multicast",
+      "tls",
+    ]);
+    expect(eth.networking.rows[0]).toMatchObject({ frames: [1], fields: { "vlan.id": ["42"] } });
+    expect(eth.networking.scopeCoverage).toMatchObject({ knownDrops: "3", dropReports: 1 });
+    expect(ip.networking.rows).toMatchObject([
+      { frames: [3], source: { address: "2001:db8::1" }, destination: { address: "ff02::1:ff00:2" } },
+      { frames: [5], source: { address: "192.168.7.1" }, destination: { address: "192.168.7.10" } },
+      { frames: [20], fields: { "ip.flags.mf": ["True"] } },
+    ]);
+    expect(ip.networking.scopeCoverage.reassemblyLimits).toMatchObject({ pendingOrInvalidFrames: 1 });
+    expect(arp.networking.rows).toMatchObject([
+      {
+        frames: [1],
+        protocol: "arp",
+        exchange: { phase: "request" },
+        fields: { "arp.dst.proto_ipv4": ["192.168.7.10"] },
+      },
+      {
+        frames: [2],
+        protocol: "arp",
+        exchange: { phase: "response" },
+        fields: { "arp.src.proto_ipv4": ["192.168.7.10"] },
+      },
+      {
+        frames: [3],
+        protocol: "nd",
+        exchange: { phase: "neighbor_solicitation" },
+        fields: { "icmpv6.nd.ns.target_address": ["2001:db8::2"] },
+      },
+      {
+        frames: [4],
+        protocol: "nd",
+        exchange: { phase: "neighbor_advertisement" },
+        fields: { "icmpv6.nd.na.target_address": ["2001:db8::2"] },
+      },
+    ]);
+    expect(dns.analysis).toMatchObject({ tool: "tshark", networkProfile: "dns_dhcp" });
+    expect(dns.capture.sha256).toBe(createHash("sha256").update(fixture).digest("hex"));
+    expect(dns.networking.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          frames: [5, 6],
+          protocol: "dns",
+          fields: expect.objectContaining({ "dns.id": ["[masked ID]"] }),
+          exchange: expect.objectContaining({ transactionId: null }),
+        }),
+        expect.objectContaining({
+          frames: [8],
+          protocol: "dhcp",
+          exchange: { phase: "server_message", messageType: 2, transactionId: "0x12345678" },
+          fields: expect.objectContaining({ "dhcp.id": ["0x12345678"], "dhcp.ip.your": ["192.168.7.1"] }),
+        }),
+        expect.objectContaining({
+          frames: [10],
+          protocol: "dhcpv6",
+          exchange: { phase: "server_message", messageType: 2, transactionId: "0x123456" },
+          fields: expect.objectContaining({ "dhcpv6.xid": ["0x123456"] }),
+        }),
+        expect.objectContaining({
+          frames: [17],
+          vlans: [42],
+          dnsRelationship: { status: "ambiguous_context" },
+        }),
+        expect.objectContaining({
+          frames: [18],
+          vlans: [43],
+          dnsRelationship: { status: "ambiguous_context" },
+        }),
+      ]),
+    );
+    expect(filtered.networking.rows).toMatchObject([
+      {
+        frames: [5, 6],
+        observationFrame: 6,
+        dnsRelationship: { status: "native_link", counterpartInScope: false },
+      },
+    ]);
+    expect(
+      filtered.networking.evidence.map(({ frame }: { frame: { number: number } }) => frame.number),
+    ).toEqual([5, 6]);
+    expect(filtered.networking.evidence[0].ref).toMatch(/^capture:/);
+    expect(filtered.networking.scopeCoverage).toMatchObject({
+      truncatedFrames: 0,
+      scannedTruncatedFrames: 1,
+    });
+    expect(prefix.coverage).toMatchObject({ scanComplete: false, partial: true, scannedThrough: 5 });
+    expect(prefix.networking.rows).toMatchObject([
+      { frames: [5], dnsRelationship: { status: "counterpart_not_observed" } },
+    ]);
+    expect(udp.networking.rows[0]).toMatchObject({
+      frames: [5, 6],
+      protocol: "udp",
+      aToB: { packets: 1 },
+      bToA: { packets: 1 },
+    });
+    expect(tcp.networking.rows[0]).toMatchObject({
+      frames: [14, 15],
+      protocol: "tcp",
+      aToB: { packets: 1 },
+      bToA: { packets: 1 },
+    });
+    expect(symptoms.networking.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ frames: [5], symptoms: ["retransmission"] }),
+        expect.objectContaining({ frames: [7], symptoms: ["previousSegmentUnseen"] }),
+        expect.objectContaining({
+          frames: [10],
+          fields: expect.objectContaining({ "tcp.checksum.partial": ["1"] }),
+        }),
+      ]),
+    );
+    expect(symptoms.networking.scopeCoverage).toMatchObject({
+      interpretation: "observed_at_saved_capture_interfaces",
+      knownDrops: null,
+      truncatedFrames: 1,
+    });
+    expect(multicast.networking.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          frames: [11],
+          protocol: "igmp",
+          fields: expect.objectContaining({ "igmp.maddr": ["239.1.2.3"] }),
+        }),
+        expect.objectContaining({ frames: [12], protocol: "mld" }),
+        expect.objectContaining({ frames: [13], protocol: "multicast" }),
+      ]),
+    );
+    expect(multicast.networking.rows.some(({ frames }: { frames: number[] }) => frames.includes(7))).toBe(
+      false,
+    );
+    expect(tls.networking.rows).toMatchObject([
+      {
+        frames: [14],
+        redactedFields: ["tls.handshake.extensions_server_name"],
+        source: { address: null, redacted: true },
+      },
+      { frames: [15], fields: { "tls.record.content_type": ["23"] }, opaqueTls: true },
+      { frames: [19], protocol: "tls_candidate" },
+    ]);
+    expect(tls.networking.scopeCoverage.reassemblyLimits).toMatchObject({ tlsCandidateFrames: 1 });
+    expect(JSON.stringify(tls)).not.toMatch(/tls-private\.test|LOCAL_TLS_OPAQUE|192\.168\.7\./);
+    expect(JSON.stringify(compact.networking)).not.toMatch(/private\.test|192\.168\.7\./);
+    expect(compact.networking.rows[0].redactedFields).toContain("dns.qry.name");
+    expect(secret.reason).toBe("network_embedded_secrets");
+    for (const item of [tunneled, fragmented]) {
+      expect(item.coverage).toMatchObject({ matchedInScope: 1, returned: 0, partial: true });
+      expect(item.networking.scopeCoverage).toMatchObject({ unresolvedEndpointFrames: 1 });
+    }
+    expect(fragmented.networking.scopeCoverage.reassemblyLimits).toMatchObject({ pendingOrInvalidFrames: 1 });
+    expect(mixedTls.networking.rows).toMatchObject([
+      { frames: [23], reassembly: { unverifiedFrames: 1, pendingOrInvalid: true } },
+    ]);
+    expect(mixedTls.networking.rows[0].fields).not.toHaveProperty(["tls.handshake.extensions_server_name"]);
+    expect(mixedTls.coverage.partial).toBe(true);
+    expect(sameTls.networking.rows).toMatchObject([
+      {
+        frames: [24, 25],
+        reassembly: { outsideScopeFrames: 1, unverifiedFrames: 0, pendingOrInvalid: false },
+      },
+    ]);
+    expect(
+      sameTls.networking.evidence.map(({ frame }: { frame: { number: number } }) => frame.number),
+    ).toEqual([24, 25]);
+    expect(cooked.networking.rows).toMatchObject([
+      { frames: [1], protocol: "vlan", fields: { "vlan.id": ["42"] }, source: null, destination: null },
+    ]);
+    expect(mixedDns.networking.rows).toMatchObject([
+      { frames: [28], dnsRelationship: { status: "ambiguous_context" } },
+    ]);
+    expect(mixedDns.networking.scopeCoverage.unresolvedDnsFrames).toBe(1);
+    expect(mixedDhcp.networking.rows).toMatchObject([
+      {
+        frames: [30],
+        protocol: "dhcp",
+        exchange: null,
+        source: null,
+        destination: null,
+        reassembly: {
+          pendingOrInvalid: true,
+          transportContextUnverified: true,
+          withheldFields: expect.arrayContaining(["dhcp.ip.your"]),
+        },
+      },
+    ]);
+    expect(mixedDhcp.networking.rows[0].fields).not.toHaveProperty(["dhcp.ip.your"]);
+    expect(mixedUdp.coverage).toMatchObject({ matchedInScope: 1, returned: 0, partial: true });
+    expect(mixedUdp.networking.scopeCoverage.unresolvedEndpointFrames).toBe(1);
+    expect(rig.modelResults).toEqual(expect.arrayContaining([expect.stringContaining("[masked]")]));
+    expect(rig.modelResults.every((result) => !result.includes("private.test"))).toBe(true);
+    expect(rig.modelResults.every((result) => !result.includes("0x4321"))).toBe(true);
+    expect(rig.modelResults.every((result) => !result.includes("private-capture.pcapng"))).toBe(true);
+    const compactModel = rig.modelResults
+      .map((result) => JSON.parse(result))
+      .find(
+        (result) =>
+          result.analysis?.networkProfile === "dns_dhcp" && result.networking?.evidenceMode === "compact",
+      );
+    expect(compactModel).toMatchObject({
+      capture: { source: { path: "[redacted]" } },
+      analysis: { filter: "[redacted]" },
+      networking: { redactedContext: expect.arrayContaining(["capture.source.path", "analysis.filter"]) },
+    });
+
+    await rig.writeReplay("network-next", [
+      network("ethernet_vlan", { limit: 1, networkCursor: eth.networking.page.next }),
+      network("ethernet_vlan", { limit: 1, networkCursor: eth.networking.page.next, filter: "vlan" }),
+      { text: "Done." },
+    ]);
+    const next = rig.session(service, "network-next", "ask");
+    service.send(next.id, "Continue the original network page.");
+    await service.waitIdle(next.id);
+    expect(JSON.parse(next.outputs[0]?.summary ?? "{}").networking.rows[0].frames).toEqual([2]);
+    expect(JSON.parse(next.outputs[1]?.summary ?? "{}").reason).toBe("cursor_mismatch");
+
+    const reference = compact.networking.evidence[0].ref;
+    await rig.writeReplay("network-citation", [
+      network("dns_dhcp", {
+        ...exchanges,
+        source: compactSource,
+        filter: nameFilter,
+        evidenceMode: "compact",
+      }),
+      { text: `The request was captured earlier. [[${reference}]]` },
+    ]);
+    const citation = rig.session(service, "network-citation", "ask");
+    service.send(citation.id, "Cite the corresponding DNS request frame.");
+    await service.waitIdle(citation.id);
+    const assistant = service
+      .get(citation.id)
+      .snapshot.items.find(
+        (item) =>
+          item.kind === "assistant" && item.citations.some(({ ref, valid }) => ref === reference && valid),
+      );
+    expect(assistant).toBeDefined();
+    expect(service.openCaptureCitation(citation.id, assistant?.id ?? "", reference).evidence).toMatchObject({
+      capture: { sha256: dns.capture.sha256, source: { kind: "workbench", path: compactSource.path } },
+      analysis: { networkProfile: "dns_dhcp", filter: nameFilter },
+      frame: { number: 5, interfaceId: 0 },
+    });
+    const db = rig.database();
+    expect(
+      db
+        .prepare(
+          "SELECT count(*) FROM tool_calls WHERE session_id=? AND json_type(result_json,'$.networkCaptureContext')='object'",
+        )
+        .pluck()
+        .get(citation.id),
+    ).toBe(1);
+    expect(
+      db
+        .prepare("SELECT content_json FROM messages WHERE session_id=? AND role='toolResult'")
+        .pluck()
+        .all(citation.id),
+    ).toEqual([expect.not.stringMatching(/networkCaptureContext|private-capture\.pcapng|private\.test/)]);
+    if (evidence) {
+      await writeFile(
+        join(evidence, `${process.platform}-networking.json`),
+        JSON.stringify(
+          {
+            nativeVersion: rig.tshark.version,
+            output,
+            next: next.outputs.map(({ summary }) => JSON.parse(summary)),
+            citation: service.openCaptureCitation(citation.id, assistant?.id ?? "", reference).evidence,
+          },
+          null,
+          2,
+        ),
+      );
+    }
+  } finally {
+    await rig.close();
+  }
+}, 60_000);
 
 it("projects offline Automotive Ethernet PDUs, transport context, and coverage", async (ctx) => {
   const source = { path: "captures/automotive.pcapng" };
@@ -537,6 +933,14 @@ it("offers the typed capture contract in the model tool registry", () => {
   expect(spec?.params.safeParse({ operation: "capabilities" }).success).toBe(true);
   expect(spec?.params.safeParse({ operation: "capabilities", argv: ["-i", "1"] }).success).toBe(false);
   expect(spec?.params.safeParse({ operation: "inspect" }).success).toBe(false);
+  const scoped = { operation: "network", source: { path: classicPath }, networkProfile: "tcp_udp" };
+  expect(spec?.params.safeParse({ ...scoped, networkQuery: { kind: "tcp_symptoms" } }).success).toBe(true);
+  expect(spec?.params.safeParse({ ...scoped, networkQuery: { kind: "conversations" } }).success).toBe(false);
+  expect(
+    spec?.params.safeParse({ ...scoped, networkProfile: "tls", networkQuery: { kind: "tcp_symptoms" } })
+      .success,
+  ).toBe(false);
+  expect(spec?.params.safeParse({ ...scoped, fields: ["tcp.payload"] }).success).toBe(false);
   expect(
     spec?.params.safeParse({ operation: "inspect", source: { path: classicPath }, profile: "custom" })
       .success,
@@ -688,6 +1092,10 @@ async function workbench(
     close,
     writeReplay,
     modelResults,
+    database: () => {
+      if (!opened.database) throw Error("The workbench database is not open.");
+      return opened.database.db;
+    },
     resultBudget(limit: number, scrub: (text: string) => string) {
       resultChars = limit;
       redact = scrub;
@@ -1436,6 +1844,7 @@ it("answers questions about the sample capture without approvals and gates live 
       "`statistics`",
       "`conversations`",
       "`automotive`",
+      "`network`",
     ])
       expect(analyze).toContain(text);
     const capture = (await bench.skills.read("plugin", "wireshark-capture")).content;

@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Pour analyser le réseau, demandez des informations sur Ethernet et les VLAN, IPv4 et IPv6, ARP et la découverte de voisins, DNS et DHCP, TCP et UDP, le multicast ou les métadonnées TLS visibles. Les preuves compactes masquent les adresses et les noms tout en conservant les liens vers les trames et les limites de la capture.
+
 Pour le trafic Ethernet automobile enregistré, demandez à l’agent une analyse DoIP, SOME/IP ou Service Discovery. Il peut indiquer le sens, le VLAN, les champs PDU et les trames contributrices. Indiquez le port du service SOME/IP si nécessaire.
 
 L’outil hors ligne répertorie les conversations et les terminaux, mesure le trafic et les temps de réponse DNS ou HTTP et affiche les informations d’expert par trame. Ouvrez une trame citée dans Wireshark Desktop pour examiner localement le contenu du flux.

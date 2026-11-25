@@ -2,6 +2,13 @@ import { z } from "zod";
 import { parseRef } from "./refs.js";
 import { automotiveInputs, automotiveLimits, automotiveProfileSchema } from "./wireshark-automotive.js";
 import {
+  acceptsNetworkQuery,
+  networkingInputs,
+  networkLimits,
+  networkProfileSchema,
+  networkProjectionSchema,
+} from "./wireshark-networking.js";
+import {
   trafficPageCursorSchema,
   trafficPreferencesSchema,
   trafficStatisticSchema,
@@ -135,6 +142,18 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     ...profile,
     ...automotiveInputs,
   }),
+  z
+    .strictObject({
+      operation: z.literal("network"),
+      source,
+      filter: filter.optional(),
+      scanFrames: scanFrames.optional(),
+      limit: limit.optional(),
+      validateChecksums: z.boolean().optional(),
+      profile: profile.profile,
+      ...networkingInputs,
+    })
+    .refine(acceptsNetworkQuery, "Select a query supported by the networking profile."),
   z.strictObject({ operation: z.literal("import"), path }),
   z.strictObject({
     operation: z.literal("verify_reference"),
@@ -158,6 +177,7 @@ export const wiresharkCaptureToolSchema = z
       "statistics",
       "follow",
       "automotive",
+      "network",
       "verify_reference",
     ]),
     kind: kind.optional(),
@@ -179,6 +199,8 @@ export const wiresharkCaptureToolSchema = z
     ...profile,
     ...automotiveInputs,
     automotiveProfile: automotiveInputs.automotiveProfile.optional(),
+    ...networkingInputs,
+    networkProfile: networkProfileSchema.optional(),
   })
   .refine((args) => wiresharkCaptureArgsSchema.safeParse(args).success, {
     message: "Supply only the inputs for the selected capture operation.",
@@ -193,6 +215,7 @@ export const captureAnalysisSchema = z.strictObject({
   filter: filter.nullable(),
   trafficPreferences: trafficPreferencesSchema.optional(),
   automotiveProfile: automotiveProfileSchema.optional(),
+  networkProfile: networkProfileSchema.optional(),
 });
 export type CaptureAnalysis = z.infer<typeof captureAnalysisSchema>;
 
@@ -244,3 +267,18 @@ export const captureAutomotiveFrameSchema = captureTrafficFrameSchema.extend({
 export const captureAutomotiveEvidenceSchema = z
   .array(captureAutomotiveFrameSchema)
   .max(captureLimits.pageRows * automotiveLimits.framesPerPdu + automotiveLimits.issueFrameSamples);
+
+export const captureNetworkingFrameSchema = captureTrafficFrameSchema.extend({
+  wireBytes: z.number().int().nonnegative(),
+  capturedBytes: z.number().int().nonnegative(),
+});
+export const captureNetworkingEvidenceSchema = z
+  .array(captureNetworkingFrameSchema)
+  .max(networkLimits.pageRows * networkLimits.framesPerRow);
+
+/** Networking contract shared by offline evidence projection, citations, and comparison consumers. */
+export const captureNetworkingResultSchema = captureEvidenceSchema.extend({
+  networking: networkProjectionSchema.extend({ evidence: captureNetworkingEvidenceSchema }),
+  packetData: z.literal("untrusted_capture_data"),
+});
+export type CaptureNetworkingResult = z.infer<typeof captureNetworkingResultSchema>;

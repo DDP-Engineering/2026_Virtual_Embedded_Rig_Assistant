@@ -40,7 +40,8 @@ function nativeCodes(values: string[]) {
 }
 
 export function observedFlags(fact: TrafficFact) {
-  return Object.entries(observations).flatMap(([name, field]) => (fact.get(field).length ? [name] : []));
+  const names = Object.keys(observations) as Array<keyof typeof observations>;
+  return names.filter((name) => fact.get(observations[name]).length > 0);
 }
 
 export function diagnostics(facts: TrafficFact[]): TrafficProjection {

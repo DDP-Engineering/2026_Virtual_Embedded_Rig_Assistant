@@ -89,7 +89,13 @@ import type { TerminalReader } from "../tools/terminal-read.js";
 import { todoTool } from "../tools/todo.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
-import { issuedCaptureCitations } from "../wireshark/citations.js";
+import {
+  type CaptureNavigationContext,
+  issuedCaptureCitations,
+  networkingCitationContext,
+  publicToolResult,
+  storedNetworkingCitationContext,
+} from "../wireshark/citations.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { type TurnAdmission, type TurnSlot, turnLimitError } from "./admission.js";
 import { attachComposerImage } from "./composer-images.js";
@@ -912,7 +918,9 @@ export class SessionService {
   }
   /** Resolve a completed capture citation within its session and return its current file-access scope. */
   openCaptureCitation(id: string, messageId: string, ref: string) {
-    const evidence = issuedCaptureCitations(this.citationMessages(id, messageId, ref)).get(ref);
+    const evidence = issuedCaptureCitations(this.citationMessages(id, messageId, ref), (callId) =>
+      this.networkCaptureContext(id, callId),
+    ).get(ref);
     if (!evidence) throw veraError("NOT_FOUND");
     return {
       evidence,
@@ -923,6 +931,15 @@ export class SessionService {
       },
     };
   }
+  private networkCaptureContext(id: string, callId: string) {
+    const row = this.host.db
+      .prepare(
+        "SELECT result_json FROM tool_calls WHERE session_id=? AND id=? AND name='wireshark_capture' AND status='ok'",
+      )
+      .get(id, callId) as { result_json: string | null } | undefined;
+    return row?.result_json ? storedNetworkingCitationContext(row.result_json) : undefined;
+  }
+
   /** Revalidate a completed assistant citation; snippet comes only from successful issued results. */
   async openCitation(id: string, messageId: string, ref: string): Promise<ViewerContent> {
     if (parseRef(ref)?.kind === "capture") throw veraError("NOT_FOUND");
@@ -1345,13 +1362,13 @@ export class SessionService {
         .prepare("SELECT result_json FROM tool_calls WHERE id=? AND session_id=? AND status != 'pending'")
         .get(call.id, id) as { result_json: string | null } | undefined;
       if (!row?.result_json) break;
-      const result = JSON.parse(row.result_json) as ToolResultMessage;
+      const result = publicToolResult(row.result_json);
       if (result.role !== "toolResult") break;
       this.messages.create({
         session_id: id,
         seq: at + index + 2,
         role: "toolResult",
-        content_json: row.result_json,
+        content_json: JSON.stringify(result),
         created_at: this.now(),
       });
     }
@@ -1600,6 +1617,7 @@ export class SessionService {
   ) {
     const id = row.id;
     let processing = Promise.resolve();
+    const networkCaptureContexts = new Map<string, CaptureNavigationContext>();
     let failed = false;
     const durable = async () => {
       await this.ready;
@@ -1824,6 +1842,10 @@ export class SessionService {
             throw Error("Tool is unavailable.");
           try {
             const result = await tool.execute(args, signal, callId);
+            if (tool.name === "wireshark_capture" && callId) {
+              const context = networkingCitationContext(typeof result === "string" ? result : result.text);
+              if (context) networkCaptureContexts.set(callId, context);
+            }
             return result;
           } catch (error) {
             throw Error(
@@ -2139,11 +2161,14 @@ export class SessionService {
       const transcript = runtime.messages();
       const program = event.type === "tool.done" ? programPaths.get(event.callId) : undefined;
       if (event.type === "tool.done") programPaths.delete(event.callId);
+      const captureContext =
+        event.type === "tool.done" ? networkCaptureContexts.get(event.callId) : undefined;
+      if (event.type === "tool.done") networkCaptureContexts.delete(event.callId);
       const next =
         event.type === "message.user"
           ? this.process(id, event, transcript, turn)
           : processing.then(async () => {
-              await this.process(id, event, transcript, turn, program);
+              await this.process(id, event, transcript, turn, program, captureContext);
               if (!turn.failed && event.type === "usage.updated" && event.calibration?.modelRef === model)
                 await calibration?.save(event.calibration.ratio);
             });
@@ -2254,6 +2279,7 @@ export class SessionService {
     transcript: Message[],
     turn: ActiveTurn,
     program?: ProgramApproval,
+    captureContext?: CaptureNavigationContext,
   ): Promise<void> {
     this.writable();
     if (
@@ -2300,6 +2326,7 @@ export class SessionService {
           transcript,
           (name) => this.artifacts.exists(id, name),
           (ref) => this.knowledge.validDocumentRef(ref, verified),
+          (callId) => this.networkCaptureContext(id, callId),
         ),
       };
     } else if (event.type === "tool.started") {
@@ -2323,7 +2350,10 @@ export class SessionService {
       this.hub.emit(id, publicEvent);
       return;
     }
-    this.hub.publishBatch(id, this.recordRuntimeEvent(id, event, publicEvent, transcript, turn));
+    this.hub.publishBatch(
+      id,
+      this.recordRuntimeEvent(id, event, publicEvent, transcript, turn, captureContext),
+    );
     if (turn.delegated && (event.type === "turn.started" || event.type === "turn.done"))
       this.notifyDelegationsChanged();
   }
@@ -2334,6 +2364,7 @@ export class SessionService {
     publicEvent: SessionEvent,
     transcript: Message[],
     turn: ActiveTurn,
+    captureContext?: CaptureNavigationContext,
   ) {
     return this.host.db.transaction(() => {
       if (event.type === "message.delivered") this.sync(id, transcript);
@@ -2365,7 +2396,11 @@ export class SessionService {
         this.host.db
           .prepare("UPDATE tool_calls SET result_json=?,status=?,ended_at=? WHERE id=? AND session_id=?")
           .run(
-            JSON.stringify(event.message ?? { summary: event.summary }),
+            JSON.stringify(
+              captureContext && event.ok && event.message
+                ? { ...event.message, networkCaptureContext: captureContext }
+                : (event.message ?? { summary: event.summary }),
+            ),
             event.ok
               ? "ok"
               : event.aborted
@@ -2600,9 +2635,7 @@ export class SessionService {
                   const saved = this.host.db
                     .prepare("SELECT result_json FROM tool_calls WHERE session_id=? AND id=?")
                     .get(row.id, call.id) as { result_json: string | null } | undefined;
-                  let result = saved?.result_json
-                    ? (JSON.parse(saved.result_json) as ToolResultMessage)
-                    : undefined;
+                  let result = saved?.result_json ? publicToolResult(saved.result_json) : undefined;
                   if (result?.role !== "toolResult")
                     result = toolResult(
                       call,

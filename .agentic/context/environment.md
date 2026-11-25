@@ -99,8 +99,9 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 - Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. The native Git tab scenario uses bundled replay to check a scrollable Chat transcript alongside TXT/PDF, comparison and history tabs. See [Files Git status](../knowledge/files-git-status.md).
 - Typed Wireshark replay uses an externally discovered TShark and local fixtures. Set
   `VERA_REQUIRE_TSHARK=1` for acceptance to make a missing executable fail the focused check.
-- The Wireshark plugin's native offline traffic replay compares saved synthetic capture results
-  against field, statistics and follow output. The focused check uses no live capture interface.
+- Native Wireshark replay compares saved synthetic captures against field, statistics and follow
+  output. Networking profile replay uses `networking.pcapng` and reports frame references, observed
+  limits and compact redaction. The focused checks use saved capture files.
 - Automotive Ethernet replay covers the independent `automotive.pcapng` and optionally the
   published SOME/IP protocol samples in `VERA_WIRESHARK_AUTOMOTIVE_SAMPLES`. The native
   replay requires TShark on the host and uses saved captures only.

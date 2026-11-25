@@ -177,6 +177,7 @@ export function captureDissectionArgs(analysis: CaptureAnalysis) {
   const checksum = analysis.trafficPreferences.validateChecksums ? "TRUE" : "FALSE";
   return [
     ...decode,
+    ...(analysis.networkProfile ? ["--disable-protocol", "f5ethtrailer"] : []),
     "-o",
     "tcp.analyze_sequence_numbers:TRUE",
     "-o",
@@ -207,7 +208,12 @@ export class OfflineTshark {
     private readonly signal: AbortSignal,
   ) {}
 
-  private async run(args: string[], phase: "filter" | "capture" | "discovery" | "traffic", maxBytes: number) {
+  private async run(
+    args: string[],
+    phase: "filter" | "capture" | "discovery" | "traffic",
+    maxBytes: number,
+    analysis?: CaptureAnalysis,
+  ) {
     const { exit, stdout, stderr, exceeded } = await this.runner.captureOutput({
       executable: this.executable,
       args: phase === "discovery" ? args : ["-n", ...args],
@@ -231,6 +237,20 @@ export class OfflineTshark {
         "Native output exceeded its bound. Narrow the capture or the selection.",
       );
     if (exit.code === 0) return stdout;
+    if (
+      analysis?.networkProfile &&
+      /(?:not valid fields|fields aren't valid|isn't a valid field|unknown preference|invalid -o flag|unknown protocol|no such protocol)/i.test(
+        stderr,
+      )
+    ) {
+      const fields = args.flatMap((arg, index) => (index > 0 && args[index - 1] === "-e" ? [arg] : []));
+      const rejected = new Set(stderr.split(/\r?\n/).map((line) => line.trim()));
+      const unavailable = fields.filter((field) => rejected.has(field));
+      throw new CaptureError(
+        "network_unavailable",
+        `TShark ${analysis.version} cannot provide the ${analysis.networkProfile} profile. ${unavailable.length ? "Unavailable" : "Requested"} fields: ${(unavailable.length ? unavailable : fields).join(", ")}.`,
+      );
+    }
     if (
       (phase === "traffic" || args.includes("-o")) &&
       /(?:not valid fields|fields aren't valid|isn't a valid field|unknown preference|invalid -o flag|invalid follow|valid follow|invalid (?:output|display) mode)/i.test(
@@ -269,7 +289,7 @@ export class OfflineTshark {
 
   private read(path: string, analysis: CaptureAnalysis, maxFrames: number, filter?: string) {
     return [
-      ...(analysis.automotiveProfile ? ["-2"] : []),
+      ...(analysis.automotiveProfile || analysis.networkProfile ? ["-2"] : []),
       "-r",
       path,
       "-c",
@@ -290,6 +310,7 @@ export class OfflineTshark {
       ],
       "filter",
       1024,
+      analysis,
     );
   }
 
@@ -322,7 +343,12 @@ export class OfflineTshark {
     maxBytes: number,
     filter?: string,
   ) {
-    return this.run([...this.read(path, analysis, maxFrames, filter), ...output], "traffic", maxBytes);
+    return this.run(
+      [...this.read(path, analysis, maxFrames, filter), ...output],
+      "traffic",
+      maxBytes,
+      analysis,
+    );
   }
 
   async packets(path: string, analysis: CaptureAnalysis, frames: number[], fields: string[], sha256: string) {
@@ -337,6 +363,7 @@ export class OfflineTshark {
       ],
       "capture",
       2 * 1024 * 1024,
+      analysis,
     );
     const schema = z
       .array(

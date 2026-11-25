@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Pentru analiza rețelei, întreabă despre Ethernet și VLAN, IPv4 și IPv6, ARP și descoperirea vecinilor, DNS și DHCP, TCP și UDP, multicast sau metadatele TLS vizibile. Cere dovezi compacte pentru a ascunde adresele și numele, păstrând legăturile la cadre și limitele capturii.
+
 Pentru trafic Automotive Ethernet salvat, cere agentului o analiză DoIP, SOME/IP sau Service Discovery. Poate afișa direcția, VLAN-ul, câmpurile PDU și cadrele contributoare. Indică portul serviciului SOME/IP când este necesar.
 
 Instrumentul offline listează conversațiile și endpointurile, măsoară traficul și timpii de răspuns DNS sau HTTP și afișează diagnosticele pe cadre. Deschide un cadru citat în Wireshark Desktop pentru a examina local conținutul fluxului.

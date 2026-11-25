@@ -44,6 +44,44 @@ coverage before interpreting an empty interval, missing response, absent stream 
 observation. The capabilities list names the typed statistics and dissectors. A native tool that
 lacks their required fields or preferences returns an explicit capability diagnostic.
 
+## Networking profiles
+
+Use `network` with `networkProfile` set to `ethernet_vlan`, `ipv4_ipv6`, `arp_nd`,
+`dns_dhcp`, `tcp_udp`, `multicast` or `tls`. Check the installed version and profile
+list with `capabilities`. An optional offline display filter and scan bound select
+the scope. Continue with `networkCursor` and the original query.
+
+- `networkQuery.kind: exchanges` shows ARP/ND and DNS/DHCP message roles and
+  observed transaction attributes. Native DNS request and response links require a
+  corroborating frame in the scanned prefix with matching observation context.
+  The result identifies counterpart frames outside the filter and unresolved links.
+- `networkQuery.kind: conversations` requires `transport: tcp` or `udp` and groups
+  the scoped frames by stream, endpoints, VLAN stack and observation point.
+  Directional counts have representative frame links. Frames with both TCP and
+  UDP and fragments with unverified transport endpoints remain visible in coverage.
+- `networkQuery.kind: tcp_symptoms` shows native sequence symptoms, resets,
+  checksum markers and truncation. Checksum validation is opt-in. An offload
+  marker or unobserved segment identifies a limit of the capture.
+- `networkQuery.kind: multicast` shows observed group destinations and IGMP/MLD
+  messages. Broadcast addresses are excluded from multicast destination matching.
+- The TLS profile shows visible record and handshake metadata, opaque records
+  and port 443 candidates without decoded TLS metadata. Reassembled observations
+  link to verified same-context contributors, including those outside the filter.
+  Incomplete and mixed-context assembly can withhold decoded fields. Embedded
+  decryption secrets are rejected before dissection. Payload and key material stay local.
+
+The Ethernet and VLAN profile reports decoded VLAN tags on Linux cooked captures
+with Ethernet endpoints unavailable. An ordered VLAN stack that exceeds the
+result limit is marked as truncated.
+
+Use `evidenceMode: compact` to hide network addresses, MAC addresses and name
+values while retaining frame links, ports, transaction attributes and coverage.
+Compact results also hide the local path and display filter. The exact navigation
+context stays in the private workbench tool record. Use an exact returned
+frame reference to open a verified local packet. Check the per-field redaction
+list, missing values, drop metadata, truncated frames and reassembly markers
+before interpreting the evidence. Unknown drop counts are reported as unavailable.
+
 ## Automotive Ethernet
 
 Use `automotive` with `automotiveProfile` set to `doip`, `someip` or `someip_sd` in a saved
