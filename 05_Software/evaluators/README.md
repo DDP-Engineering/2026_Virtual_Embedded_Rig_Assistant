@@ -18,8 +18,9 @@ Run the commands from `05_Software` with the local Node.js: `python ../02_Tools/
 | performance | [performance/](performance/README.md) | `npm run eval:performance` | Loading of saved sessions in an instrumented build; `agent-load`: indexing throughput and VERA's time per model call | Measurements; session-loading calibration deferred, agent-load compared within its noise band. |
 | retrieval | [retrieval/](retrieval/README.md) | `npm run eval:retrieval` | The product's real document search, recall@5, per embedding model; `layout`: a hard-layout corpus through the CLI | Documented thresholds. |
 | smoke | [smoke/](smoke/README.md) | `npm run eval:smoke` | The shared agent runner end to end on two cases | Gate: every turn completes. |
+| wireshark | [wireshark/](wireshark/README.md) | `npm run eval:wireshark` | Typed tool use, filter recovery, exact frames, data volume and disclosure in synthetic capture workflows | Frozen-case checks and guarded model probes. |
 
-The agent families (compaction, grounding, models, routing, safety, smoke) run on the
+The agent families (compaction, grounding, models, routing, safety, smoke, wireshark) run on the
 [shared modules](shared/README.md).
 
 ## Commands and reports

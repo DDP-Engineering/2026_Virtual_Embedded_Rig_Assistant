@@ -43,6 +43,8 @@ Accepted reference results per platform are in `05_Software/evaluators/performan
 generated runs are in `05_Software/evaluation-outputs/performance/`.
 
 The target platforms are Windows x64 and Linux x64 (`00_Planning/System.md`).
+The Wireshark evaluator runs frozen synthetic offline workflows through the VERA CLI and gateway.
+It reports tool use, exact source frames, recovery, result volume and observed disclosure.
 
 The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
 The Chat tab strip supports per-session reopening, pinning and title/path search. Persistable open tabs retain their pins in the existing format-1 record.

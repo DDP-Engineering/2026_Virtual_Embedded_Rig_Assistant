@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-TEST-01594e57"
+title = "Measure synthetic Wireshark workflows through the VERA runner"
+status = "active"
+requirement = "When a frozen Wireshark case runs through the VERA agent loop, the evaluator shall report its typed tool use, recovery, supported facts, exact frame grounding, calls and UTF-8 tool result volume against the case oracle."
+verification = "Score a complete and an incorrect transcript against frozen facts and frame evidence, and replay the cases through the CLI using native Wireshark utilities."
+affected_paths = ["05_Software/package.json","05_Software/evaluators/wireshark/","05_Software/evaluators/shared/agent-runner.mjs","05_Software/evaluators/shared/agent-report.mjs"]
+linked_tests = ["05_Software/tests/tooling/eval-wireshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

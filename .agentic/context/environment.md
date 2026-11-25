@@ -128,6 +128,7 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 | `npm run verify:all` | `verify` plus `test:plugins`. The milestone gate also adds the complete e2e suite, the CLI regressions and strict AEGIS. |
 | `npm run test:e2e [-- <spec> <Playwright args>]` | Playwright acceptance: sandboxed native Electron and Chromium against the mock renderer. |
 | `npm run eval:retrieval` | Retrieval evaluation on the frozen corpus with the real local CPU worker, persisted search and the ADR 0015 floors. See [document search](../knowledge/document-search.md). |
+| `npm run eval:wireshark` | Frozen capture cases with native TShark, deterministic gateway replay and bounded model probes. See [Wireshark evaluation](../../05_Software/evaluators/wireshark/README.md). |
 | `npm run eval:performance -- run\|calibrate\|compare` | Saved-session performance on an isolated instrumented build. See [session performance](../../05_Software/evaluators/performance/README.md). |
 | `npm run smoke:package -- --artifact <built native release>` | Release smoke on an already built artifact. See [release smoke](../knowledge/release-smoke.md). |
 | `npm run smoke:live -- --provider <openai\|custom:slug> [--data <userData>]` | Manual. Builds release and runs the four-step real-provider test through the stored credentials. It may send real requests. It exits non-zero when a required step is incomplete. |

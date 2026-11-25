@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-TEST-0c9b8f38"
+title = "Reject changed Wireshark fixture bytes before evaluation"
+status = "active"
+requirement = "If a declared Wireshark source fixture does not match its frozen digest, then the evaluator shall reject the run before invoking a model."
+verification = "Prepare a case with matching fixture bytes and reject an altered source before staging it."
+affected_paths = ["05_Software/evaluators/wireshark/fixtures.mjs","05_Software/evaluators/wireshark/run.mjs","05_Software/evaluators/wireshark/cases/","05_Software/evaluators/shared/agent-runner.mjs"]
+linked_tests = ["05_Software/tests/tooling/eval-wireshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

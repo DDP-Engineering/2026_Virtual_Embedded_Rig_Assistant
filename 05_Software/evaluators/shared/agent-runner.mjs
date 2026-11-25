@@ -139,8 +139,8 @@ export function buildCli() {
   return join(software, "src/apps/cli/dist/index.js");
 }
 
-function providerArgs(options, item, proxy) {
-  if (options.provider === "replay") return ["--provider", "replay", "--script", item.replayPath];
+function providerArgs(options, item, proxy, replay) {
+  if (options.provider === "replay" && !proxy) return ["--provider", "replay", "--script", item.replayPath];
   if (options.provider === "openai")
     return [
       "--provider",
@@ -153,7 +153,7 @@ function providerArgs(options, item, proxy) {
     "--provider",
     "custom",
     "--model",
-    options.model,
+    replay?.model ?? options.model,
     "--base-url",
     proxy.url,
     ...(options.keyEnv ? ["--key-env", options.keyEnv] : []),
@@ -189,7 +189,7 @@ export async function runAgentFamily(spec, options) {
         return item;
       })
     : cases.cases;
-  if (options.provider === "replay") {
+  if (options.provider === "replay" && !options.replayServer) {
     const missing = selected.filter((item) => !item.replayPath).map((item) => item.id);
     if (missing.length) throw Error(`Cases without a replay script: ${missing.join(", ")}`);
   }
@@ -213,76 +213,86 @@ export async function runAgentFamily(spec, options) {
   );
   await mkdir(scratchParent, { recursive: true });
   const scratch = await mkdtemp(join(scratchParent, "run-"));
-  const proxy =
-    options.provider === "custom"
-      ? await startModelProxy({
-          target: options.baseUrl,
-          reasoning: options.reasoning,
-          record: !!options.record,
-        })
-      : undefined;
-  const providerOrigin =
-    options.provider === "replay"
-      ? "replay"
-      : options.provider === "openai"
-        ? "https://api.openai.com"
-        : proxy.origin;
-  const web = options.web ?? "off";
-  // Outside hosts stay unreachable unless a run asks for the real web; the attempts are recorded.
-  const guard = web === "on" ? undefined : await startEgressGuard();
-  const git = gitState();
   const startedAt = new Date();
-  const env = { ...process.env, ...(guard?.env ?? {}), ...(options.env ?? {}) };
-  if (guard && options.provider === "openai") {
-    env.NO_PROXY = `${env.NO_PROXY},api.openai.com`;
-    env.no_proxy = env.NO_PROXY;
-  }
-  delete env.VERA_REPLAY_DIR;
-  const run = {
-    kind: "vera-evaluation-run",
-    format: 1,
-    family: spec.family,
-    identity: {
-      family: spec.family,
-      harnessHash: await harnessHash([shared, spec.folder]),
-      cases: relative(software, cases.file).replaceAll("\\", "/"),
-      casesSha256: cases.sha256,
-      provider: options.provider,
-      model: options.provider === "replay" ? "script" : options.model,
-      providerOrigin,
-      server:
-        options.provider === "custom" ? await describeServerModel(options.baseUrl, options.model) : null,
-      reasoning: options.reasoning ?? "server default",
-      approve: options.approve,
-      webTools: web,
-      plugins: options.plugins ?? [],
-      repeats: options.repeats,
-      commit: git.commit,
-      dirty: git.dirty,
-      platform: `${process.platform}-${process.arch}`,
-      node: process.version,
-    },
-    startedAt: startedAt.toISOString(),
-    endedAt: null,
-    options: { caseIds: selected.map((c) => c.id) },
-    cases: [],
-    aggregate: null,
-    status: null,
-  };
-  run.compatibility = {
-    family: spec.family,
-    harnessHash: run.identity.harnessHash,
-    casesSha256: cases.sha256,
-    cases: run.options.caseIds,
-  };
+  let replay;
+  let proxy;
+  let guard;
+  let run;
   try {
+    replay = await options.replayServer?.(selected);
+    proxy =
+      options.provider === "custom" || replay
+        ? await startModelProxy({
+            target: replay?.url ?? options.baseUrl,
+            reasoning: options.reasoning,
+            record: !!options.record,
+            maxCompletions: options.maxCompletions,
+            observeModel: options.observeModel,
+          })
+        : undefined;
+    const providerOrigin =
+      options.provider === "replay"
+        ? "replay"
+        : options.provider === "openai"
+          ? "https://api.openai.com"
+          : proxy.origin;
+    const web = options.web ?? "off";
+    // Outside hosts stay unreachable unless a run asks for the real web; the attempts are recorded.
+    guard = web === "on" ? undefined : await startEgressGuard();
+    const git = gitState();
+    const env = { ...process.env, ...(guard?.env ?? {}), ...(options.env ?? {}) };
+    if (guard && options.provider === "openai") {
+      env.NO_PROXY = `${env.NO_PROXY},api.openai.com`;
+      env.no_proxy = env.NO_PROXY;
+    }
+    delete env.VERA_REPLAY_DIR;
+    run = {
+      kind: "vera-evaluation-run",
+      format: 1,
+      family: spec.family,
+      identity: {
+        family: spec.family,
+        harnessHash: await harnessHash([shared, spec.folder]),
+        cases: relative(software, cases.file).replaceAll("\\", "/"),
+        casesSha256: cases.sha256,
+        provider: options.provider,
+        model: options.provider === "replay" ? "script" : options.model,
+        providerOrigin,
+        server:
+          options.provider === "custom" ? await describeServerModel(options.baseUrl, options.model) : null,
+        reasoning: options.reasoning ?? "server default",
+        approve: options.approve,
+        webTools: web,
+        plugins: options.plugins ?? [],
+        repeats: options.repeats,
+        commit: git.commit,
+        dirty: git.dirty,
+        platform: `${process.platform}-${process.arch}`,
+        node: process.version,
+      },
+      startedAt: startedAt.toISOString(),
+      endedAt: null,
+      options: { caseIds: selected.map((c) => c.id) },
+      cases: [],
+      aggregate: null,
+      status: null,
+    };
+    run.compatibility = {
+      family: spec.family,
+      harnessHash: run.identity.harnessHash,
+      casesSha256: cases.sha256,
+      cases: run.options.caseIds,
+    };
     // Index each fixture once, and once more for each case with its own setup files, so planted
     // documents are searchable; every run starts from its own copy of the indexed workbench.
     const prepared = new Map();
-    // Plugins install once, behind the egress guard (their programs stay unprovisioned), into one
-    // data folder that every run shares; each prepared workbench enables them.
+    // Plugins install once into one data folder that every run shares.
     const sharedData = options.plugins?.length ? join(scratch, "shared-data") : undefined;
     for (const id of options.plugins ?? []) {
+      if (options.installFixturePlugin) {
+        await options.installFixturePlugin(id, sharedData);
+        continue;
+      }
       let installed;
       // The plugin store answers BUSY while a previous install still settles; wait and try again.
       for (let attempt = 1; attempt <= 6; attempt++) {
@@ -302,12 +312,15 @@ export async function runAgentFamily(spec, options) {
       }
     }
     const keyOf = (item) =>
-      item.setup?.length || item.plugins ? `${item.workbenchPath}#${item.id}` : item.workbenchPath;
+      item.setup?.length || item.plugins || options.prepareCase
+        ? `${item.workbenchPath}#${item.id}`
+        : item.workbenchPath;
     for (const item of selected) {
       const key = keyOf(item);
       if (prepared.has(key)) continue;
       const target = join(scratch, "prepared", String(prepared.size));
-      await cp(item.workbenchPath, target, { recursive: true });
+      if (options.prepareCase) await options.prepareCase(item, target);
+      else await cp(item.workbenchPath, target, { recursive: true });
       if (web === "off") await disableTools(target, NETWORK_TOOLS);
       const enabled = item.plugins ?? options.plugins ?? [];
       const missing = enabled.filter((id) => !(options.plugins ?? []).includes(id));
@@ -387,13 +400,14 @@ export async function runAgentFamily(spec, options) {
           "jsonl",
           "--approve",
           options.approve,
-          ...providerArgs(options, item, proxy),
+          ...providerArgs(options, item, proxy, replay),
+          ...(options.caseArgs?.(item) ?? []),
           ...(session ? ["--session", session] : []),
         ];
         const seconds = options.timeoutSeconds ?? item.timeoutSeconds;
         const outcome = await runCli(cli, args, { timeoutMs: seconds * 1000, env });
         outcome.egress = guard?.take() ?? [];
-        outcome.modelRequests = proxy?.requests.splice(0) ?? [];
+        outcome.modelRequests = proxy?.take() ?? [];
         outcome.workbench = workbench;
         const eventsPath = `events/${item.id}.${repeat}.jsonl`;
         const stderrPath = `events/${item.id}.${repeat}.stderr.txt`;
@@ -426,6 +440,7 @@ export async function runAgentFamily(spec, options) {
     }
   } finally {
     await proxy?.close();
+    await replay?.close();
     await guard?.close();
     await rm(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }

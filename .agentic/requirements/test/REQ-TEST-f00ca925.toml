@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-TEST-f00ca925"
+title = "Detect synthetic Wireshark evidence disclosure"
+status = "active"
+requirement = "When a synthetic Wireshark run returns an observation, the evaluator shall identify packet payload or credential canaries in the returned events and observable model requests."
+verification = "Plant synthetic canaries as text and encoded payload, assert distinct event and proxy observations, and keep missing model request observations visible."
+affected_paths = ["05_Software/evaluators/wireshark/score.mjs","05_Software/evaluators/wireshark/run.mjs","05_Software/evaluators/shared/model-proxy.mjs","05_Software/evaluators/shared/family-cli.mjs"]
+linked_tests = ["05_Software/tests/tooling/eval-wireshark.test.ts"]
+created = 2026-11-25
+updated = 2026-11-25

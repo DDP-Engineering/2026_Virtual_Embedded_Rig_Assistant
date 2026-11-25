@@ -46,5 +46,5 @@ enable a group of them (`plugins:` in the case file).
 
 `rescore --input <run.json>` recomputes every metric from the saved events with the current scoring
 code and writes `run-rescored.json` and its report beside the run; the model is not asked again.
-The case file must be unchanged. Model requests are not kept, so a check that needs them (the safety
-canary in requests) sees only the printed output.
+Model request bodies are held in memory only. A family can retain its original measurement of
+those requests for rescoring, as Wireshark does for its unchanged synthetic canaries.

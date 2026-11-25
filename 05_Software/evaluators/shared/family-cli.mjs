@@ -65,6 +65,7 @@ async function rescore(spec, values) {
   const byId = new Map(cases.cases.map((item) => [item.id, item]));
   for (const result of run.cases) {
     const item = byId.get(result.id);
+    result.expect = item.expect;
     for (const repeat of result.repeats) {
       const stdout = await readFile(join(folder, repeat.eventsPath), "utf8");
       const stderr = await readFile(join(folder, repeat.stderrPath), "utf8").catch(() => "");
@@ -77,6 +78,7 @@ async function rescore(spec, values) {
         timing: repeat.timing,
         egress: repeat.egress ?? [],
         modelRequests: [],
+        priorRepeat: repeat,
         workbench: null,
       });
       Object.assign(repeat, { summary, metrics: scored.metrics, pass: scored.pass });

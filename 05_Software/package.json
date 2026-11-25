@@ -54,7 +54,8 @@
     "eval:retrieval": "node evaluators/retrieval/run.mjs",
     "eval:safety": "node evaluators/safety/run.mjs",
     "eval:routing": "node evaluators/routing/run.mjs",
-    "eval:smoke": "node evaluators/smoke/run.mjs"
+    "eval:smoke": "node evaluators/smoke/run.mjs",
+    "eval:wireshark": "node evaluators/wireshark/run.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

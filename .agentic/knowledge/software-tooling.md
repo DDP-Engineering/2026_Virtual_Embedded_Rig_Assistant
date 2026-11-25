@@ -9,6 +9,9 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 
 Previous-session performance verification routes to `evaluators/performance/run.mjs`, `evaluators/performance/`,
 `tests/tooling/session-performance.test.ts` and [the command guide](../../05_Software/evaluators/performance/README.md).
+Synthetic Wireshark workflow verification routes to `evaluators/wireshark/` and
+`tests/tooling/eval-wireshark.test.ts`. [The command guide](../../05_Software/evaluators/wireshark/README.md)
+covers deterministic CLI replay, native utilities and bounded custom model runs.
 
 ## Purpose and boundaries
 
@@ -61,6 +64,7 @@ which owns verified assets, native staging and artifact measurements.
 | Test-build constant | desktop Vite config and `build-mode.ts` | `build-mode.test.ts` |
 | Acceptance execution/isolation | `tests/support/`, `tests/e2e/network-guard.ts` | Electron acceptance and guard self-test |
 | Saved-session latency/stalls | `evaluators/performance/`, main/API `session-performance.ts` | tooling report/fixture/watchdog tests and native quick/full runs |
+| Synthetic Wireshark agent workflows | `evaluators/wireshark/` | Frozen fixture, scorer and native gateway replay checks |
 
 Catalog audit scans renderer TypeScript AST for literal and finite registered translation keys, excluding tests; English defines required catalog keys.
 

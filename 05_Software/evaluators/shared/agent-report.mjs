@@ -93,8 +93,11 @@ export function agentReportModel(run, spec = {}, runPath = "run.json") {
             [
               "Server model",
               [
+                id.server.id,
                 id.server.arch,
                 id.server.quantization,
+                id.server.runtime,
+                id.server.format,
                 id.server.loadedContextLength && `context ${id.server.loadedContextLength}`,
               ]
                 .filter(Boolean)
