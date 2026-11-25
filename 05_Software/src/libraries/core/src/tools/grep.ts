@@ -3,12 +3,15 @@ import { z } from "zod";
 import { type ToolDefinition, toolExcludedRoots, toolLimit, toolPathGuard } from "./context.js";
 
 export const grepParams = z.strictObject({
-  pattern: z.string().min(1),
-  path: z.string().min(1).optional(),
-  glob: z.string().min(1).optional(),
+  pattern: z.string().min(1).describe("JavaScript regular expression, matched per line."),
+  path: z.string().min(1).optional().describe("Folder or single file to search; default is the workbench."),
+  glob: z.string().min(1).optional().describe("File name filter, for example *.log or src/**/*.c."),
   ignoreCase: z.boolean().optional(),
-  context: z.number().int().min(0).max(5).optional(),
-  output: z.enum(["content", "files", "count"]).optional(),
+  context: z.number().int().min(0).max(5).optional().describe("Lines shown before and after each match."),
+  output: z
+    .enum(["content", "files", "count"])
+    .optional()
+    .describe("content: matching lines (default); files: paths only; count: matches per file."),
   // Up to the setting's largest value; the session's Grep results caps it (REQ-FUNC-0df8e905).
   maxResults: z.number().int().min(1).max(advancedSettings.grepResults.max).optional(),
 });

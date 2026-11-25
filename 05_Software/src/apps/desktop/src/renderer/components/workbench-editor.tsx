@@ -112,6 +112,13 @@ export function WorkbenchEditor({
   const valid =
     workbenchDocsSchema.safeParse(config.docs).success &&
     questionTimeoutMinutesSchema.optional().safeParse(config.agent.question_timeout_minutes).success &&
+    // Chunk size against overlap, results per search and the model reference, as the save checks them.
+    workbenchPatchSchema.safeParse({
+      name: config.name,
+      embeddings: config.embeddings,
+      retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
+      agent: { model: config.agent.model },
+    }).success &&
     advancedDraftValid(advancedEditPatch(workbench.config.advanced, config.advanced, "workbench"));
   useEffect(() => {
     dirtyChanged?.(dirty);

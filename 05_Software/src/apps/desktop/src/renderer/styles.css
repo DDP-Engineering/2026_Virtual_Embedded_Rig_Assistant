@@ -2564,6 +2564,16 @@ legend {
   font-size: 3rem;
   letter-spacing: 0.12em;
 }
+.empty-workbench.with-setup {
+  min-height: calc(100dvh - 12rem);
+}
+.empty-workbench-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
 .empty-workbench svg {
   width: 3rem;
   height: 3rem;

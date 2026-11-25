@@ -14,9 +14,12 @@ import { toolPathGuard } from "./context.js";
 export const writeParams = z.strictObject({ path: z.string().min(1), content: z.string() });
 export const editParams = z.strictObject({
   path: z.string().min(1),
-  oldString: z.string().min(1),
-  newString: z.string(),
-  replaceAll: z.boolean().optional(),
+  oldString: z
+    .string()
+    .min(1)
+    .describe("Exact text to replace, copied from the file without the line-number prefix of read."),
+  newString: z.string().describe("Replacement text."),
+  replaceAll: z.boolean().optional().describe("Replace every match instead of requiring exactly one."),
 });
 export interface ChangeHost {
   db: Database.Database;
@@ -174,7 +177,10 @@ export async function prepareChange(
       newString = normalize(args.newString);
     const parts = text.split(oldString);
     replacements = parts.length - 1;
-    if (!replacements) throw Error("oldString was not found. Read the file and use exact text.");
+    if (!replacements)
+      throw Error(
+        "oldString was not found. Read the file and use its exact text, without the line-number prefix.",
+      );
     if (replacements > 1 && !args.replaceAll)
       throw Error(`oldString has ${replacements} matches. Use unique text or replaceAll.`);
     output = bom + parts.join(newString);

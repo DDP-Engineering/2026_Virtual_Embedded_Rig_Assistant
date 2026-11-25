@@ -301,7 +301,9 @@ describe("validated invoke router", () => {
       ok: false,
       error: { code: "INTERNAL" },
     });
-    expect(log).toHaveBeenCalledWith({ channel: "app.settings.update", reason: "response" });
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: "app.settings.update", reason: "response" }),
+    );
   });
   it.each(["missing", "__proto__", "constructor", "toString"])(
     "rejects unknown channel %s",
@@ -441,13 +443,13 @@ describe("validated invoke router", () => {
       ok: false,
       error: { code: "INTERNAL", messageKey: "errors.INTERNAL" },
     });
-    expect(log).toHaveBeenCalledWith({ channel: "app.info", reason: "response" });
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({ channel: "app.info", reason: "response" }));
     expect(await router()(event, "app.info", {})).toMatchObject({ ok: true });
   });
   it("rejects missing fields in a handler response", async () => {
     handler.mockResolvedValueOnce({ name: "VERA" } as never);
     expect(await router()(event, "app.info", {})).toMatchObject({ ok: false, error: { code: "INTERNAL" } });
-    expect(log).toHaveBeenCalledWith({ channel: "app.info", reason: "response" });
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({ channel: "app.info", reason: "response" }));
   });
   it("maps unknown throws safely, preserves declared VeraError and guards a failing logger", async () => {
     handler.mockRejectedValueOnce(new Error("secret-token"));
@@ -485,7 +487,7 @@ describe("validated invoke router", () => {
         ok: false,
         error: { code: "INTERNAL", messageKey: "errors.INTERNAL" },
       });
-      expect(log).toHaveBeenLastCalledWith({ channel: "session.get", reason });
+      expect(log).toHaveBeenLastCalledWith(expect.objectContaining({ channel: "session.get", reason }));
     }
   });
 });

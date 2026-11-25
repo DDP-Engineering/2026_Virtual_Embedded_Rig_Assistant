@@ -48,7 +48,9 @@ export class KeywordSearch {
     const words = select("chunks_fts", terms);
     const fragments = select(
       "chunks_tri",
-      terms.filter((t) => Array.from(t).length >= 3 && /[\d_]/.test(t)),
+      // Identifiers, and all-capital words: MODER or BRR must find GPIOx_MODER and USART_BRR, which
+      // the word index stores as one token.
+      terms.filter((t) => Array.from(t).length >= 3 && (/[\d_]/.test(t) || /^\p{Lu}+$/u.test(t))),
     );
     let ranked = words;
     if (fragments.length) {

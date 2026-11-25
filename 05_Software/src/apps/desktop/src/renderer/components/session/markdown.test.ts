@@ -16,7 +16,7 @@ HTMLDialogElement.prototype.showModal = function () {
 HTMLDialogElement.prototype.close = function () {
   this.removeAttribute("open");
 };
-it("opens source URLs only after confirmation and keeps non-web URLs inert", async () => {
+it("opens source URLs on click, shows the dialog only after a failure, and keeps non-web URLs inert", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -33,18 +33,18 @@ it("opens source URLs only after confirmation and keeps non-web URLs inert", asy
     expect(container.querySelectorAll("a")).toHaveLength(0);
     link!.focus();
     await act(async () => link!.click());
-    expect(document.querySelector("dialog[open]")?.textContent).toContain("https://example.com/doc");
-    expect(api.invoke).not.toHaveBeenCalled();
-    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-cancel]")!.click());
-    expect(api.invoke).not.toHaveBeenCalled();
-    expect(document.activeElement).toBe(link);
-    await act(async () => link!.click());
-    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-open]")!.click());
     expect(api.invoke).toHaveBeenCalledExactlyOnceWith("app.openExternal", {
       url: "https://example.com/doc",
       confirmed: true,
     });
     expect(document.querySelector("dialog[open]")).toBeNull();
+    // A link that could not be opened shows its address with a way to try again.
+    vi.mocked(api.invoke).mockRejectedValueOnce(new Error("no browser"));
+    await act(async () => link!.click());
+    expect(document.querySelector("dialog[open]")?.textContent).toContain("https://example.com/doc");
+    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-cancel]")!.click());
+    expect(document.querySelector("dialog[open]")).toBeNull();
+    expect(document.activeElement).toBe(link);
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -62,6 +62,7 @@ it("keeps an open link confirmation when the Markdown under its scope is re-crea
   try {
     await render("streaming");
     const link = container.querySelector<HTMLButtonElement>("[data-web-source]");
+    vi.mocked(api.invoke).mockRejectedValueOnce(new Error("no browser"));
     await act(async () => link?.click());
     await render("done");
     expect(link?.isConnected).toBe(false);

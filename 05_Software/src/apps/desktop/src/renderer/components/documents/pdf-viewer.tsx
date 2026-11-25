@@ -76,7 +76,9 @@ export function highlightText(layer: HTMLElement, snippet: string, search: strin
   });
 }
 
-const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4] as const;
+/** The most pixels one page canvas may hold. */
+const CANVAS_PIXELS = 16000000;
 /** A zoom step asked for by the document menu: in (1), out (-1) or back to 100% (0); `id` grows. */
 export type ZoomRequest = { step: -1 | 0 | 1; id: number };
 /** The page gap in CSS pixels; pages and gaps make up the scroll height. */
@@ -116,15 +118,23 @@ function PdfPage({
       const page = await pdf.getPage(number);
       if (!alive || !canvas.current || !text.current) return;
       const viewport = page.getViewport({ scale: zoom });
-      if (viewport.width <= 0 || viewport.height <= 0 || viewport.width * viewport.height > 16000000)
-        throw Error("Page exceeds canvas budget");
-      canvas.current.width = Math.ceil(viewport.width);
-      canvas.current.height = Math.ceil(viewport.height);
+      if (viewport.width <= 0 || viewport.height <= 0) throw Error("Page has no size");
+      // Draw at the display's pixel density so text is sharp at 125-150 % scaling, and below it when a
+      // large sheet at high zoom would pass the canvas budget: a softer page instead of a blank one.
+      const density = Math.min(
+        window.devicePixelRatio || 1,
+        Math.sqrt(CANVAS_PIXELS / (viewport.width * viewport.height)),
+      );
+      const drawn = page.getViewport({ scale: zoom * density });
+      canvas.current.width = Math.floor(drawn.width);
+      canvas.current.height = Math.floor(drawn.height);
+      canvas.current.style.width = `${viewport.width}px`;
+      canvas.current.style.height = `${viewport.height}px`;
       text.current.replaceChildren();
       text.current.style.setProperty("--total-scale-factor", String(zoom));
       const context = canvas.current.getContext("2d");
       if (!context) throw Error("Canvas unavailable");
-      render = page.render({ canvas: canvas.current, canvasContext: context, viewport });
+      render = page.render({ canvas: canvas.current, canvasContext: context, viewport: drawn });
       layer = new TextLayer({
         container: text.current,
         viewport,

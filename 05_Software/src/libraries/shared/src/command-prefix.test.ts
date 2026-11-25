@@ -192,3 +192,16 @@ describe("conservative command prefix policy", () => {
     expect(commandPrefixMatches(command, prefix)).toBe(true);
   });
 });
+
+it("saves everyday build commands, where -e, -C and a dotted tool name are not inline code", () => {
+  for (const command of [
+    "idf.py build",
+    "pio run -e esp32dev",
+    "make -C build",
+    "ninja -C out",
+    "git -C sub status",
+  ])
+    expect(commandPrefixes(command).at(-1)).toBe(command);
+  for (const command of ["python -c print", "node -e x", "git -c alias.x=bad x", "sed -e 1e", "npm.cmd test"])
+    expect(commandPrefixes(command)).toEqual([]);
+});

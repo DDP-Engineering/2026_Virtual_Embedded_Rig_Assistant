@@ -1157,7 +1157,10 @@ export class SessionService {
     this.hub.publishBatch(id, values);
   }
   rename(id: string, title: string): SessionSummary {
-    this.idle(id);
+    // A title is display data: renaming does not wait for the running turn.
+    this.row(id);
+    this.writable();
+    if (this.deleting.has(id)) throw veraError("BUSY");
     if (!title.trim() || title.length > 60) throw veraError("INVALID");
     this.update(id, { type: "session.updated", title });
     return this.summary(this.row(id));

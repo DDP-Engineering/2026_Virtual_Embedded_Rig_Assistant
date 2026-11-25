@@ -967,16 +967,11 @@ export class WorkbenchService {
         const saveConfig = async () => {
           if (changingModel || embeddingSwitch !== undefined) {
             const confirmation = embeddingSwitchApprovalSchema.safeParse(embeddingSwitch);
-            const indexed = this.getDatabase()
-              .prepare("SELECT count(*) FROM documents WHERE status='indexed'")
-              .pluck()
-              .get();
             if (
               !changingModel ||
               !expectedId ||
               !confirmation.success ||
-              confirmation.data.from !== current.embeddings.model ||
-              confirmation.data.count !== indexed
+              confirmation.data.from !== current.embeddings.model
             )
               throw veraError("CONFLICT");
           }

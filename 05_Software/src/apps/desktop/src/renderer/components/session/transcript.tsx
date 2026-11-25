@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../../api/index.js";
 import { appAdvancedValue } from "../../hooks/app-advanced.js";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
@@ -44,6 +45,8 @@ const windowRows = () => ({
   chunk: appAdvancedValue("transcriptChunkRows"),
 });
 const IDLE_TIMEOUT_MS = 250;
+/** Dispatched on the transcript element after the user sends a message. */
+export const TRANSCRIPT_FOLLOW = "vera:transcript-follow";
 /** Runs `callback` when the renderer is idle; returns the cancel function. */
 function whenIdle(callback: () => void): () => void {
   // Chromium has requestIdleCallback on every platform; the timer serves test environments without it.
@@ -145,6 +148,19 @@ export function Transcript({
     return whenIdle(() => startTransition(() => setStart(Math.max(0, first - chunk))));
   }, [search, start, first, hasRows, revealIndex]);
   const shownFirst = useRef(first);
+  // The reader scrolled up and then sent a message: the workspace asks for the end, so the message is
+  // not posted off screen. New content from the agent alone never moves a reader who scrolled up.
+  useEffect(() => {
+    const node = scroll.current;
+    if (!node) return;
+    const follow = () => {
+      suspended.current = null;
+      following.current = true;
+      node.scrollTop = node.scrollHeight;
+    };
+    node.addEventListener(TRANSCRIPT_FOLLOW, follow);
+    return () => node.removeEventListener(TRANSCRIPT_FOLLOW, follow);
+  }, []);
   // Runs only for commits that change the content (live events arrive at most once per frame), not
   // for highlight or search commits, so streaming forces no extra layout.
   useLayoutEffect(() => {
@@ -335,6 +351,9 @@ export function Transcript({
                     item={item}
                     canRetry={item.id === latestError && !state.activeTurnId && item.retryable}
                     retry={onRetry}
+                    compactSession={
+                      item.id === latestError && !state.activeTurnId && !disabled ? sessionId : undefined
+                    }
                   />
                 );
               return (
@@ -549,12 +568,30 @@ const ErrorRow = memo(function ErrorRow({
   item,
   canRetry,
   retry,
+  compactSession,
 }: {
   item: Extract<Item, { kind: "error" }>;
   canRetry: boolean;
   retry: () => void;
+  /** The session a context-limit error may compact: set only for the latest error of an idle session. */
+  compactSession?: string | undefined;
 }) {
   const { t } = useTranslation();
+  const [compacting, setCompacting] = useState(false);
+  const [compacted, setCompacted] = useState<"none" | "completed" | "unavailable" | "failed">();
+  const compact = async () => {
+    if (!compactSession || compacting) return;
+    setCompacting(true);
+    setCompacted(undefined);
+    try {
+      const { status } = await api.invoke("session.compact", { sessionId: compactSession });
+      setCompacted(status);
+    } catch {
+      setCompacted("failed");
+    } finally {
+      setCompacting(false);
+    }
+  };
   return (
     <article data-message-kind="error" className="transcript-item error">
       <ErrorMessage
@@ -565,6 +602,23 @@ const ErrorRow = memo(function ErrorRow({
         }}
       />
       {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}
+      {item.code === "CONTEXT_LIMIT" && compactSession && (
+        <>
+          <button
+            type="button"
+            data-action="compact-session"
+            disabled={compacting}
+            onClick={() => void compact()}
+          >
+            {t("advanced.compactNow")}
+          </button>
+          {compacting && <span role="status">{t("advanced.compacting")}</span>}
+          {compacted === "completed" && <span role="status">{t("advanced.compacted.completed")}</span>}
+          {compacted === "none" && <span role="status">{t("advanced.compacted.none")}</span>}
+          {compacted === "unavailable" && <span role="status">{t("advanced.compacted.unavailable")}</span>}
+          {compacted === "failed" && <span role="status">{t("advanced.compacted.failed")}</span>}
+        </>
+      )}
       {canRetry && (
         <button type="button" onClick={retry}>
           {t("settings.retry")}

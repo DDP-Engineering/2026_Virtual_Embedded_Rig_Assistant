@@ -42,7 +42,12 @@ export function ExternalSourceLink({ href, children }: { href: string; children:
         className="markdown-link"
         data-web-source={url}
         title={url}
-        onClick={() => (ask ? ask(url) : setOpen(true))}
+        onClick={() => {
+          // The address is validated above and shown in the tooltip; a second click to confirm adds nothing.
+          api
+            .invoke("app.openExternal", { url, confirmed: true })
+            .catch(() => (ask ? ask(url) : setOpen(true)));
+        }}
       >
         {children}
       </button>

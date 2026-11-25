@@ -265,7 +265,7 @@ it("offers only Copy for other documents and zooms a PDF from its menu like the 
     await h.rightClick(h.panel()?.querySelector(".pdf-scroll") ?? null);
     await h.choose("zoom-in");
   }
-  expect(zoom()).toBe("2");
+  expect(zoom()).toBe("4");
   await h.rightClick(h.panel()?.querySelector(".pdf-scroll") ?? null);
   await h.choose("zoom-reset");
   expect(zoom()).toBe("1");

@@ -210,7 +210,15 @@ export class ReferenceRuntime implements AgentRuntime {
         this.emit(
           providerError.success && providerError.data.messageKey.startsWith("provider.")
             ? providerErrorEvent(providerError.data)
-            : { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false },
+            : providerError.success && providerError.data.code === "NOT_FOUND"
+              ? // The session's provider or model was removed from Settings.
+                {
+                  type: "error",
+                  code: "NOT_FOUND",
+                  messageKey: "provider.modelUnavailable",
+                  retryable: false,
+                }
+              : { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false },
         );
       }
     } finally {

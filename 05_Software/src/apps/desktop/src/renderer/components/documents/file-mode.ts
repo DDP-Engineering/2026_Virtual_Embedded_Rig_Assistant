@@ -80,8 +80,11 @@ export async function readFileMode(
       ? `.${imageFormat}`
       : properties.extension;
   let binary = false;
-  // Sniff only recognized text sources, with a fixed prefix; unknown files need no content to choose Hex.
+  // A fixed prefix decides text or binary. Unknown names are sniffed too: Makefile, Kconfig, linker
+  // scripts, device trees and map files are text an engineer reads, not hex.
+  const unknown = viewerExtensionKind(extension) === "unknown";
   if (
+    unknown ||
     viewerExtensionKind(extension) === "text" ||
     [".md", ".markdown", ".html", ".htm"].includes(extension)
   ) {
@@ -103,10 +106,13 @@ export async function readFileMode(
     const text = new TextDecoder(detectTextEncoding(bytes)).decode(bytes, { stream: true });
     binary = Array.from(text).some((char) => {
       const code = char.charCodeAt(0);
-      return code < 9 || (code > 13 && code < 32);
+      // ESC is text: build and serial logs carry ANSI colour codes.
+      return code < 9 || (code > 13 && code < 32 && code !== 27);
     });
   }
   const modeInfo = resolveFileMode(localStorage, extension, deliberate, binary, properties.rendered === true);
+  if (unknown && !binary && deliberate === undefined && !preferences(localStorage)[extension])
+    modeInfo.mode = "text";
   // Binary Markdown/HTML has no meaningful automatic rendered view.
   if (binary && deliberate === undefined && !preferences(localStorage)[extension]) modeInfo.mode = "hex";
   onInfo?.(modeInfo);

@@ -9,7 +9,7 @@ import { DocsTab } from "./components/documents/docs-tab.js";
 import { DocumentTabs } from "./components/documents/document-tabs.js";
 import { WorkbenchIndexStatus } from "./components/documents/index-status.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
-import { ErrorMessage } from "./components/error-message.js";
+import { ErrorMessage, OPEN_PROVIDERS } from "./components/error-message.js";
 import { HelpContext, HelpView } from "./components/help.js";
 import {
   clearedLibraryFilters,
@@ -179,6 +179,14 @@ export function App() {
     queryFn: () => api.invoke("session.list", { workbenchId: benchId }),
     enabled: !!benchId,
     refetchInterval: 2000,
+  });
+  // Sidebar search over titles and message text of this workbench's sessions.
+  const [sessionSearch, setSessionSearch] = useState("");
+  const sessionQuery = sessionSearch.trim();
+  const found = useQuery({
+    queryKey: ["session.search", benchId, sessionQuery],
+    queryFn: () => api.invoke("session.search", { query: sessionQuery, workbenchId: benchId }),
+    enabled: !!benchId && !!sessionQuery,
   });
   const changed = useCallback(() => {
     void client.invalidateQueries({ queryKey: ["session.list"] });
@@ -445,7 +453,10 @@ export function App() {
     !snapshot.isPending &&
     !info.isError &&
     !snapshot.isError;
+  // First run, or every provider removed: the empty screen says what is missing.
+  const noModel = !!snapshot.data && !snapshot.data.settings.defaultModel;
   const sections = useSettingsSections();
+
   /** False when the engineer stays; opening Settings while it is shown leaves nothing, so it never asks. */
   const navigate = useCallback(
     (value: boolean) => {
@@ -460,6 +471,14 @@ export function App() {
     },
     [leaveEditor, settings],
   );
+  // An error about the model or its credential offers a button to the page that fixes it.
+  useEffect(() => {
+    const open = () => {
+      if (navigate(true)) setSection("providers");
+    };
+    window.addEventListener(OPEN_PROVIDERS, open);
+    return () => window.removeEventListener(OPEN_PROVIDERS, open);
+  }, [navigate, setSection]);
   const clearComposerFocus = useCallback(() => setComposerFocus(undefined), []);
   // Documents open as tabs of the chat area, so opening one shows it (TASK-79f6ffd3).
   const revealChat = useCallback(() => {
@@ -717,7 +736,11 @@ export function App() {
             key={benchId}
             workbenchId={benchId}
             openLinked={selectLinkedSession}
-            sessions={sessions.data ?? []}
+            sessions={sessionQuery ? (found.data ?? []) : (sessions.data ?? [])}
+            search={sessionSearch}
+            searchChanged={setSessionSearch}
+            searching={!!sessionQuery && found.isPending}
+            searchError={sessionQuery ? found.error : undefined}
             active={activeSession}
             select={select}
             create={create}
@@ -972,6 +995,20 @@ export function App() {
                         created={(value) => {
                           setCreatedCount((count) => count + 1);
                           benchChanged(value);
+                          // The next thing a user does with a new workbench is ask something.
+                          const workbenchId = value.config.id;
+                          void operation(async () => {
+                            const session = await api.invoke("session.create", {
+                              workbenchId,
+                              reuseEmpty: true,
+                            });
+                            client.setQueryData<SessionSummary[]>(["session.list", workbenchId], (old) => [
+                              session,
+                              ...(old ?? []).filter((row) => row.id !== session.id),
+                            ]);
+                            openSession(session.id, false, workbenchId);
+                            setComposerFocus({ id: session.id, request: ++composerFocusSequence.current });
+                          });
                         }}
                         busy={sessionPending}
                       />
@@ -1034,9 +1071,19 @@ export function App() {
                     )}
                   </div>
                   {emptyCanvas && (
-                    <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
+                    <div
+                      className={`empty-workbench${noModel ? " with-setup" : ""}`}
+                      data-empty-workbench
+                      role="img"
+                      aria-label="VERA"
+                    >
                       <Activity aria-hidden="true" />
                       <span>VERA</span>
+                    </div>
+                  )}
+                  {emptyCanvas && noModel && (
+                    <div className="empty-workbench-setup" data-empty-setup>
+                      <ErrorMessage error={{ code: "INVALID", messageKey: "provider.noModel" }} />
                     </div>
                   )}
                   {chat && !settings && !plugins && help === undefined && benchId && (

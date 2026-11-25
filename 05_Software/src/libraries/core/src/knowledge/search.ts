@@ -197,7 +197,9 @@ export class DocumentKnowledge {
       target = await guard.resolve(args.path);
     const doc = new DocumentsRepository(this.db).get(target.relative);
     if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other")
-      throw Error("Document not indexed. Use grep/read or index documents.");
+      throw Error(
+        "Document not indexed. For a text file use read or grep. A PDF or Office file must be indexed first: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
+      );
     const stored = this.db
       .prepare("SELECT extraction_json FROM document_extractions WHERE doc_id=?")
       .pluck()

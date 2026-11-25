@@ -42,6 +42,8 @@ export type ChannelHandlers = { [C in Channel]: (request: Request<C>) => Respons
 export interface IpcFailure {
   channel: Channel;
   reason: "handler" | "response";
+  /** Where it failed, for the log only: an error's type and stack frames, or the invalid response paths. */
+  detail?: string;
 }
 
 export function createInvokeRouter(options: {
@@ -60,10 +62,10 @@ export function createInvokeRouter(options: {
       return false;
     }
   }
-  function internal(channel: Channel, reason: IpcFailure["reason"]): InvokeResult<Channel> {
-    // Logging never carries untrusted values and cannot break the response path.
+  function internal(channel: Channel, reason: IpcFailure["reason"], detail?: string): InvokeResult<Channel> {
+    // The logger redacts stored secrets; logging cannot break the response path.
     try {
-      options.log({ channel, reason });
+      options.log({ channel, reason, ...(detail ? { detail: detail.slice(0, 4000) } : {}) });
     } catch {
       /* logger failure must not crash IPC */
     }
@@ -85,11 +87,29 @@ export function createInvokeRouter(options: {
     try {
       const value = await dispatch(name, request.data);
       const response = channel.response.safeParse(value);
-      if (!response.success) return internal(name, "response");
+      if (!response.success)
+        return internal(
+          name,
+          "response",
+          response.error.issues
+            .slice(0, 8)
+            .map((issue) => `${issue.path.join(".")}: ${issue.code}`)
+            .join("; "),
+        );
       return { ok: true, value: response.data };
     } catch (error: unknown) {
       const known = veraErrorSchema.safeParse(error);
-      if (!known.success) return internal(name, "handler");
+      if (!known.success)
+        return internal(
+          name,
+          "handler",
+          // The error's type and where it was thrown, never its message: that may quote a value.
+          error instanceof Error
+            ? [error.name, ...(error.stack ?? "").split("\n").filter((line) => /^\s+at /.test(line))].join(
+                "\n",
+              )
+            : typeof error,
+        );
       const messageKey = options.sanitize?.(known.data.messageKey) ?? known.data.messageKey;
       return {
         ok: false,

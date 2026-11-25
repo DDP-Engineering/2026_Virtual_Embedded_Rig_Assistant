@@ -124,7 +124,7 @@ export function Composer({
   }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
-  const locked = disabled || sendingLocked || state.status === "awaiting_approval";
+  const locked = disabled || sendingLocked || archived || state.status === "awaiting_approval";
   // The message box is disabled while a send is pending, which drops its focus; once it is enabled again
   // focus returns there (a refused send keeps the draft to edit or resend, REQ-UX-f20cb322), unless the
   // user has focused something else meanwhile.

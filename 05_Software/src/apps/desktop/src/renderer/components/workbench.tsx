@@ -145,7 +145,9 @@ export function Workbench({
                       ? t("approval.ask")
                       : active.config.agent.permission_mode === "read-only"
                         ? t("approval.readOnly")
-                        : t("approval.autoEdit")}
+                        : active.config.agent.permission_mode === "bypass"
+                          ? t("bypass.option")
+                          : t("approval.autoEdit")}
                   </dd>
                 </div>
               </dl>

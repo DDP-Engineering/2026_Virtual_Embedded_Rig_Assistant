@@ -69,7 +69,8 @@ it("compacts verified large indexed and line citations before transport and bind
     expect((await stat(join(root, path))).mtimeMs).toBe(before.mtimeMs);
     expect((await readBytes(root, path, 0, 4)).revision).not.toBe(baseline.byteSource.revision);
     await expect(viewer.open(`${path}#L2-L3`)).rejects.toMatchObject({ code: "NOT_FOUND" });
-    const log = `\0${"x".repeat(6 * 1024 * 1024)}control\n`;
+    // More than one NUL in a hundred bytes of the sample: binary to the file tools, a log to parse_log.
+    const log = `${"\0".repeat(200)}${"x".repeat(6 * 1024 * 1024)}control\n`;
     await writeFile(join(root, "control.log"), log);
     await expect(viewer.open("control.log#L1-L1")).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(await viewer.open("control.log#L1-L1", "", false, true)).toMatchObject({

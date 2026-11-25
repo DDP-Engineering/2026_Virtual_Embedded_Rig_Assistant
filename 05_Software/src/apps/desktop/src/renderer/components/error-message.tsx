@@ -2,6 +2,9 @@ import { browserFailureCodeSchema, veraErrorSchema } from "@vera/shared";
 import { useTranslation } from "react-i18next";
 import { browserFailureText } from "../lib/browser-failure.js";
 
+/** Asks the application to show Settings > Providers. */
+export const OPEN_PROVIDERS = "vera:open-providers";
+
 export function ErrorMessage({ error }: { error: unknown }) {
   const { t } = useTranslation();
   const parsed = veraErrorSchema.safeParse(error);
@@ -51,6 +54,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
     "provider.noModel": t("provider.noModel"),
+    "provider.modelUnavailable": t("provider.modelUnavailable"),
     "provider.auth": t("provider.auth", options),
     "provider.openCodePlan": t("provider.openCodePlan"),
     "provider.openCodeCatalog": t("provider.openCodeCatalog"),
@@ -85,9 +89,22 @@ export function ErrorMessage({ error }: { error: unknown }) {
     : parsed.success
       ? `errors.${parsed.data.code}`
       : "errors.INTERNAL";
+  // These errors are fixed on one page; the button takes the user there.
+  const providers = ["provider.noModel", "provider.auth", "provider.modelUnavailable"].includes(key);
   return (
-    <p role="alert" data-i18n={key}>
-      {messages[key]}
-    </p>
+    <>
+      <p role="alert" data-i18n={key}>
+        {messages[key]}
+      </p>
+      {providers && (
+        <button
+          type="button"
+          data-action="open-providers"
+          onClick={() => window.dispatchEvent(new Event(OPEN_PROVIDERS))}
+        >
+          {t("provider.openSettings")}
+        </button>
+      )}
+    </>
   );
 }

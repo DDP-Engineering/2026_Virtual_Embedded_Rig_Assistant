@@ -427,6 +427,8 @@
     "noModels": "No models listed."
   },
   "provider": {
+    "modelUnavailable": "This session's model or provider is no longer available. Choose another model.",
+    "openSettings": "Open Providers",
     "noModel": "No model is selected. Add a provider in Settings → Providers, or pick a model in the message box.",
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
     "openCodePlan": "This model or workspace cannot use this OpenCode plan. Check the selected model and workspace access.",
@@ -1296,7 +1298,7 @@
     "back": "Back to workbenches",
     "skills": "Skills",
     "indexing": "Indexing",
-    "discardChanges": "Discard your unsaved workbench changes?",
+    "discardChanges": "Discard your unsaved changes?",
     "unsavedChanges": "Unsaved changes"
   },
   "overview": {
@@ -1793,6 +1795,7 @@
     "input": "Terminal input"
   },
   "privacy": {
+    "maskTitle": "Mask stored secrets in",
     "display": "Display",
     "runs": "Program runs",
     "agent": "Agent and model",

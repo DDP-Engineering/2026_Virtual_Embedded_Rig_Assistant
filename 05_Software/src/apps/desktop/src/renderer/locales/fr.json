@@ -427,6 +427,8 @@
     "noModels": "Aucun modèle listé."
   },
   "provider": {
+    "modelUnavailable": "Le modèle ou le fournisseur de cette session n’est plus disponible. Choisissez un autre modèle.",
+    "openSettings": "Ouvrir Fournisseurs",
     "noModel": "Aucun modèle sélectionné. Ajoutez un fournisseur dans Paramètres → Fournisseurs ou choisissez un modèle dans la zone de message.",
     "auth": "Échec de l’authentification. Vérifiez l’identifiant enregistré dans les paramètres Fournisseurs.",
     "openCodePlan": "Ce modèle ou cet espace de travail ne peut pas utiliser cette offre OpenCode. Vérifiez le modèle et les droits d’accès.",
@@ -1296,7 +1298,7 @@
     "back": "Retour aux bancs de travail",
     "skills": "Compétences",
     "indexing": "Indexation",
-    "discardChanges": "Abandonner les modifications non enregistrées du banc de travail ?",
+    "discardChanges": "Abandonner les modifications non enregistrées ?",
     "unsavedChanges": "Modifications non enregistrées"
   },
   "overview": {
@@ -1793,6 +1795,7 @@
     "input": "Saisie du terminal"
   },
   "privacy": {
+    "maskTitle": "Masquer les secrets enregistrés dans",
     "display": "Affichage",
     "runs": "Exécutions de programmes",
     "agent": "Agent et modèle",

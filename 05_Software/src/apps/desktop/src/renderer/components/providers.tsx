@@ -362,7 +362,14 @@ export function Providers({
               close={close}
             />
           ) : editing.kind === "new" && editing.preset === "chatgpt" ? (
-            <Chatgpt disabled={disabled} />
+            <>
+              <Chatgpt disabled={disabled} />
+              <div className="workbench-actions">
+                <button type="button" data-action="cancel-provider" onClick={close}>
+                  {t("providers.cancel")}
+                </button>
+              </div>
+            </>
           ) : editing.kind === "openai" || (editing.kind === "new" && editing.preset === "openai") ? (
             <OpenAIEditor
               key="openai"

@@ -20,7 +20,7 @@ import { Composer, type ComposerState } from "./composer.js";
 import { DelegatedTurnOutcome } from "./delegation-links.js";
 import { confirmPendingQuestionFocus, pendingQuestionFocus } from "./question-focus.js";
 import { SessionInspector } from "./session-inspector.js";
-import { Transcript } from "./transcript.js";
+import { TRANSCRIPT_FOLLOW, Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
 import { ContextIndicator } from "./usage-meter.js";
 
@@ -85,6 +85,8 @@ export function SessionWorkspace({
     };
   }, [id, workbenchId]);
   const [search, setSearch] = useState("");
+  /** The match Enter last scrolled to; -1 before the first step of a query. */
+  const searchStep = useRef(-1);
   const [searching, setSearching] = useState(false);
   const [inspector, setInspector] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
@@ -195,6 +197,8 @@ export function SessionWorkspace({
   }
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
+  const showLatest = () =>
+    workspace.current?.querySelector("[data-transcript]")?.dispatchEvent(new Event(TRANSCRIPT_FOLLOW));
   async function send(text: string, images?: string[]) {
     if (
       !id ||
@@ -222,10 +226,12 @@ export function SessionWorkspace({
           reply: { kind: "text", text: reply },
         });
         changed();
+        showLatest();
         return true;
       }
       await api.invoke("session.send", { sessionId: id, text, ...(images?.length && { images }) });
       changed();
+      showLatest();
       return true;
     } catch (e) {
       // At the Concurrent turns limit the message stays unsent in the composer (REQ-UX-f20cb322).
@@ -318,7 +324,7 @@ export function SessionWorkspace({
         event.preventDefault();
         stopOrigin.current = document.activeElement as HTMLElement;
         stopDialog.current?.showModal();
-        stopDialog.current?.querySelector("button")?.focus();
+        stopDialog.current?.querySelector<HTMLElement>("[data-stop-confirm]")?.focus();
       }
     }
     window.addEventListener("keydown", key);
@@ -376,8 +382,22 @@ export function SessionWorkspace({
               type="search"
               aria-describedby="transcript-search-status"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                searchStep.current = -1;
+              }}
               onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  const matches = workspace.current?.querySelectorAll<HTMLElement>(
+                    '[data-search-match="true"]',
+                  );
+                  if (!matches?.length) return;
+                  searchStep.current =
+                    (searchStep.current + (e.shiftKey ? -1 : 1) + matches.length * 2) % matches.length;
+                  matches[searchStep.current]?.scrollIntoView({ block: "center" });
+                  return;
+                }
                 if (e.key === "Escape" && !e.nativeEvent.isComposing) {
                   e.preventDefault();
                   e.stopPropagation();
@@ -489,6 +509,7 @@ export function SessionWorkspace({
           </button>
           <button
             type="button"
+            data-stop-confirm
             onClick={() => {
               stopDialog.current?.close();
               void stop();

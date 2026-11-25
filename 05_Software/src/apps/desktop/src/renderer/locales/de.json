@@ -427,6 +427,8 @@
     "noModels": "Keine Modelle aufgeführt."
   },
   "provider": {
+    "modelUnavailable": "Das Modell oder der Anbieter dieser Sitzung ist nicht mehr verfügbar. Wählen Sie ein anderes Modell.",
+    "openSettings": "Anbieter öffnen",
     "noModel": "Kein Modell ausgewählt. Fügen Sie unter Einstellungen → Anbieter einen Anbieter hinzu oder wählen Sie im Nachrichtenfeld ein Modell.",
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
     "openCodePlan": "Dieses Modell oder dieser Workspace kann den OpenCode-Tarif nicht nutzen. Prüfe das Modell und den Workspace-Zugriff.",
@@ -1296,7 +1298,7 @@
     "back": "Zurück zu Workbenches",
     "skills": "Skills",
     "indexing": "Indizierung",
-    "discardChanges": "Nicht gespeicherte Workbench-Änderungen verwerfen?",
+    "discardChanges": "Nicht gespeicherte Änderungen verwerfen?",
     "unsavedChanges": "Ungespeicherte Änderungen"
   },
   "overview": {
@@ -1793,6 +1795,7 @@
     "input": "Terminaleingabe"
   },
   "privacy": {
+    "maskTitle": "Gespeicherte Geheimnisse maskieren in",
     "display": "Anzeige",
     "runs": "Programmläufe",
     "agent": "Agent und Modell",

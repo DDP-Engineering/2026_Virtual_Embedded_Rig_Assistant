@@ -160,10 +160,10 @@ test("each workbench heading shows its running and awaiting sessions, background
   expect(row.querySelector('[data-session-activity="running"]')).toBeTruthy();
   expect(row.textContent).toContain("Running");
   expect(container.querySelector(`[data-session="${quiet.id}"] [data-session-activity]`)).toBeNull();
-  // One turn of the default three runs.
+  // One turn of the default four runs.
   const capacity = container.querySelector<HTMLElement>("[data-turn-capacity]");
-  expect(capacity?.textContent).toContain("1/3");
-  expect(capacity?.textContent).toContain("Concurrent turns: 1 of 3 running");
+  expect(capacity?.textContent).toContain("1/4");
+  expect(capacity?.textContent).toContain("Concurrent turns: 1 of 4 running");
   expect(capacity?.dataset.limitReached).toBe("false");
   // The menu lists the session with its status, and works by keyboard.
   await act(async () => user.click(summary(alpha)));

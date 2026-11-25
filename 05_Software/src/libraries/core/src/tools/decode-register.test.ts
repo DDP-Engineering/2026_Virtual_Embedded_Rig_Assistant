@@ -260,11 +260,13 @@ it("denies outside, ignored and metadata paths outside Bypass; missing files sta
   for (const bypass of [false])
     for (const definitionPath of [
       "../outside.json",
-      join(root, "registers.json"),
+      // An absolute path outside the workbench; one inside it is that workbench file.
+      join(root, "../outside.json"),
       ".vera/workbench.yaml",
       "ignored.json",
       ".",
-      "file:stream",
+      // Stream syntax is a Windows hazard; elsewhere a colon is an ordinary file-name character.
+      ...(process.platform === "win32" ? ["file:stream"] : []),
       "bad\npath",
     ])
       failure(await call({ definitionPath }, [], bypass), "DENIED", "path_denied");

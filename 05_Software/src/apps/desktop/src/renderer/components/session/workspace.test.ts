@@ -1202,10 +1202,11 @@ test("composer completes paths with keyboard, preserves Shift+Enter and Stop res
   button("Stop").focus();
   await act(async () => user.keyboard("{Escape}"));
   expect(container.querySelector("dialog[open]")).toBeTruthy();
+  // The dialog opens on Stop, so Esc then Enter stops; Cancel is one Shift+Tab away.
+  await act(async () => user.tab({ shift: true }));
   await act(async () => user.keyboard("{Enter}")); // Cancel
   expect(button("Stop")).toBe(document.activeElement);
   await act(async () => user.keyboard("{Escape}"));
-  await act(async () => user.tab());
   await act(async () => user.keyboard("{Enter}")); // confirmed Stop
   await settle();
   expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(

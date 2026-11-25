@@ -10,7 +10,7 @@ const LISTED = 5000;
 export const listTool: ToolDefinition = {
   name: "list",
   class: "read",
-  description: "List allowed workbench entries, with directory depth1 to3.",
+  description: "List allowed workbench entries, with directory depth 1 to 3.",
   params: z.strictObject({
     path: z.string().min(1).optional(),
     depth: z.number().int().min(1).max(3).optional(),

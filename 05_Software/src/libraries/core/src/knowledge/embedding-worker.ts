@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { availableParallelism } from "node:os";
 import { join } from "node:path";
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { env, pipeline } from "@huggingface/transformers";
@@ -25,7 +26,12 @@ const loaded = (async () => {
     dtype: model.dtype,
     device: "cpu",
     local_files_only: true,
-    session_options: { intraOpNumThreads: 1, interOpNumThreads: 1, executionMode: "sequential" },
+    // Up to four threads: a large manual indexes about three times faster, and half the cores stay free.
+    session_options: {
+      intraOpNumThreads: Math.max(1, Math.min(4, Math.floor(availableParallelism() / 2))),
+      interOpNumThreads: 1,
+      executionMode: "sequential",
+    },
   });
 })();
 // Keep initialization failures handled until the first request consumes them.

@@ -16,7 +16,7 @@ const child = { sessionId: sessionIdSchema };
 const childParams = z.strictObject({ ...child, turnId: z.string().min(1).max(200).optional() });
 const sendParams = delegatedSendRequestSchema.omit({ requestId: true }).extend(child);
 const configureParams = delegatedConfigureRequestSchema.omit({ requestId: true }).extend(child);
-const maxWaitMs = 30_000;
+const maxWaitMs = 600_000;
 const defaultWaitMs = 10_000;
 const waitParams = childParams.extend({ waitMs: z.number().int().min(0).max(maxWaitMs).optional() });
 

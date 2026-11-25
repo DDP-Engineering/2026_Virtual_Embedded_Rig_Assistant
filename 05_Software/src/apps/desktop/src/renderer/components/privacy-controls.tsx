@@ -50,6 +50,7 @@ export function PrivacyControls({
   }
   return (
     <>
+      <h4>{t("privacy.maskTitle")}</h4>
       <div className="settings-columns" data-privacy-controls>
         {maskingAreaSchema.options.map((area) => (
           <label key={area} data-mask-area={area} htmlFor={`${id}-${area}`}>

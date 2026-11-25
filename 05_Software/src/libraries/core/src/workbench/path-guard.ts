@@ -51,11 +51,14 @@ export class ApplicationDataAccessError extends Error {
 
 export function validateRelativePath(path: string): string {
   const slash = path.replaceAll("\\", "/");
-  if (!path || slash.startsWith("/") || isAbsolute(path) || /[\0:]/.test(path))
+  // Colons, device names and trailing dots or spaces are Windows hazards; on Linux they are ordinary
+  // file names (capture_12:30.log, aux.c) the agent must be able to open.
+  const windows = process.platform === "win32";
+  if (!path || slash.startsWith("/") || isAbsolute(path) || (windows ? /[\0:]/ : /\0/).test(path))
     throw Error("Use a workbench-relative path.");
   for (const part of slash.split("/")) {
     if (part === "." || part === "..") continue;
-    if (/[ .]$/.test(part) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(part))
+    if (windows && (/[ .]$/.test(part) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(part)))
       throw Error("Device names and ambiguous Windows paths are unavailable.");
   }
   return slash;
@@ -183,8 +186,16 @@ export class PathGuard {
     this.authorize?.();
   }
 
-  async resolve(path: string): Promise<GuardedPath> {
+  async resolve(given: string): Promise<GuardedPath> {
     this.authorize?.();
+    // An absolute path inside the workbench, as compilers print it, is that workbench-relative path.
+    const path =
+      this.scope !== "filesystem" &&
+      !this.additionalRoots.length &&
+      isAbsolute(given) &&
+      this.contains(this.root, resolve(given))
+        ? relative(this.root, resolve(given)).split(sep).join("/") || "."
+        : given;
     if (this.scope === "filesystem" || this.additionalRoots.length) {
       if (!path || /[\0\r\n]/.test(path)) throw Error("Use an ordinary filesystem path.");
       if (process.platform === "win32") {

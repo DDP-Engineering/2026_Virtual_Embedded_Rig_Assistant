@@ -14,7 +14,10 @@ export const globTool: ToolDefinition = {
   class: "read",
   description:
     "Find allowed workbench files, newest first, up to the configured number of paths. A pattern without a slash, such as *.log, matches at any depth.",
-  params: z.strictObject({ pattern: z.string().min(1), path: z.string().min(1).optional() }),
+  params: z.strictObject({
+    pattern: z.string().min(1).describe("Glob such as *.log, src/**/*.c or docs/*.pdf."),
+    path: z.string().min(1).optional().describe("Folder to search in; default is the workbench."),
+  }),
   async execute(ctx, raw, signal) {
     const args = globTool.params.parse(raw) as { pattern: string; path?: string };
     const guard = await toolPathGuard(ctx, true);

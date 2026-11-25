@@ -427,6 +427,8 @@
     "noModels": "Niciun model listat."
   },
   "provider": {
+    "modelUnavailable": "Modelul sau furnizorul acestei sesiuni nu mai este disponibil. Alege alt model.",
+    "openSettings": "Deschide Furnizori",
     "noModel": "Niciun model selectat. Adaugă un furnizor în Setări → Furnizori sau alege un model în caseta de mesaj.",
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
     "openCodePlan": "Modelul sau spațiul de lucru nu are acces la acest plan OpenCode. Verifică modelul și accesul spațiului de lucru.",
@@ -1296,7 +1298,7 @@
     "back": "Înapoi la workbench-uri",
     "skills": "Skill-uri",
     "indexing": "Indexare",
-    "discardChanges": "Renunți la modificările nesalvate ale workbench-ului?",
+    "discardChanges": "Renunți la modificările nesalvate?",
     "unsavedChanges": "Modificări nesalvate"
   },
   "overview": {
@@ -1793,6 +1795,7 @@
     "input": "Intrare terminal"
   },
   "privacy": {
+    "maskTitle": "Maschează secretele stocate în",
     "display": "Afișare",
     "runs": "Rulări de programe",
     "agent": "Agent și model",

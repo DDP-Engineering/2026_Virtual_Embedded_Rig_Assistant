@@ -167,10 +167,11 @@ releases the corresponding browser resources. [Desktop browser runtime](../.agen
   always asked outside Bypass: shells and dispatchers (`bash`, `pwsh`, `sudo`, `env`, `xargs`, ...),
   delete, format and disk tools (`rm`, `del`, `Remove-Item`, `dd`, ...), force, recursive, hard and
   prune options, risky git forms (`clean`, hard reset, force push, branch deletion), inline code
-  (`-c`, `-e`), and any quoting, pipe, substitution or separator.
-- **Path guard** (`core/src/workbench/path-guard.ts`): outside Bypass, paths are workbench-relative;
-  absolute paths, `..` and symlink escapes, streams, device names and ignored paths (always `.vera/`,
-  `.git/`, `node_modules/`) are refused. Additional folders of the workbench are reachable by absolute
+  (`-c`, `-e` of interpreters, `sed`, `awk` and `git`; `--eval`, `--exec`), and any quoting, pipe, substitution or separator.
+- **Path guard** (`core/src/workbench/path-guard.ts`): outside Bypass, paths are workbench-relative,
+  and an absolute path inside the workbench is taken as its relative form; other absolute paths,
+  `..` and symlink escapes and ignored paths (always `.vera/`, `.git/`, `node_modules/`, except the
+  run logs in `.vera/runs/`) are refused, as are streams and device names on Windows. Additional folders of the workbench are reachable by absolute
   path for file tools and command working directories. Bypass accepts any ordinary file or directory.
   VERA's application data (settings, credentials, installed plugins, review records) is refused in
   every mode; `.vera/workbench.yaml` and `.vera/plugins/` are never agent-writable.

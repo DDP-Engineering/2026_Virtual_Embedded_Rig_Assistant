@@ -49,6 +49,32 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Keep text typed in the message box when another session, Settings, Help or Plugins is opened.
 - Send text typed in the message box as the answer when the agent waits on a question; Enter in the question's text field submits it.
 - Show a notice with Continue when the model stops at its output limit.
+- Open web links from answers directly; the dialog appears only when a link cannot be opened.
+- Focus Stop in the stop confirmation, so Esc then Enter stops the turn.
+- Allow renaming a session while its turn runs.
+- Allow saving command prefixes for `idf.py`, `pio run -e`, `make -C`, `ninja -C` and `git -C`.
+- Accept absolute paths inside the workbench in file tools, and apply Windows file-name rules only on Windows.
+- Stop refusing an embedding model change because a document finished indexing meanwhile.
+- Keep the message box locked in an archived session, and show Bypass by name in the workbench overview.
+- Open files without a known extension (Makefile, Kconfig, linker scripts, device trees, map files) and logs with ANSI colour codes as text instead of hex.
+- Treat a log with a few stray NUL bytes as text in `read`, `grep` and the viewer.
+- Find register names by an all-capital fragment, such as MODER in GPIOx_MODER.
+- Compute embeddings on up to four threads.
+- Describe the parameters of `read`, `grep`, `glob` and `edit` for the model.
+- Title the secret masking switches in Data & privacy.
+- Log the error type and code location when an internal request fails.
+- Search sessions by title and message text from the sidebar.
+- Scroll to the end of the conversation when a message is sent.
+- Draw PDF pages at the display's pixel density, zoom up to 400 %, and draw an oversized page at lower resolution instead of leaving it blank.
+- Add Cancel to the ChatGPT branch of the Add provider dialog.
+- Say what to do when a PDF is not indexed, instead of pointing `read` and `read_doc` at each other.
+- Add an Open Providers button to errors about a missing model, a refused credential or a removed model, and show the missing-model hint on the empty start screen.
+- Open a new session right after a workbench is created.
+- Say that a session's model or provider was removed, instead of reporting an internal error.
+- Let a parent session wait up to 10 minutes for a delegated session in one call.
+- Offer Compact now on a context-limit error in chat.
+- Step through transcript search matches with Enter and Shift+Enter.
+- Keep Save off in Edit workbench while chunk size, overlap, results per search or the default model is invalid.
 
 ## [0.3.0] - 2026-11-25
 

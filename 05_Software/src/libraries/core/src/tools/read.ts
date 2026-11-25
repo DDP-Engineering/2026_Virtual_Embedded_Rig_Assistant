@@ -11,16 +11,25 @@ export const readTool: ToolDefinition = {
   description:
     "Read numbered text lines from a workbench file, within the configured line and text limits; use read_doc for PDFs.",
   params: z.strictObject({
-    path: z.string().min(1),
-    offset: z.number().int().min(1).optional(),
+    path: z.string().min(1).describe("Workbench-relative file path."),
+    offset: z.number().int().min(1).optional().describe("First line to read, starting at 1."),
     // Up to the setting's largest value; the session's Read window lines caps it (REQ-FUNC-150dcb0b).
-    limit: z.number().int().min(1).max(advancedSettings.readLines.max).optional(),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(advancedSettings.readLines.max)
+      .optional()
+      .describe("Number of lines to read."),
   }),
   async execute(ctx, raw, signal) {
     const args = readTool.params.parse(raw) as { path: string; offset?: number; limit?: number };
     const guard = await toolPathGuard(ctx, true);
     const target = await guard.resolve(args.path);
-    if (/\.pdf$/i.test(target.relative)) throw Error("Use read_doc to read PDF documents.");
+    if (/\.pdf$/i.test(target.relative))
+      throw Error(
+        "Use read_doc to read PDF documents. A PDF that read_doc reports as not indexed cannot be read yet: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
+      );
     const offset = args.offset ?? 1;
     const lines = toolLimit(ctx, "readLines");
     const file = await readWindow(guard, args.path, offset, Math.min(args.limit ?? lines, lines), signal, {
