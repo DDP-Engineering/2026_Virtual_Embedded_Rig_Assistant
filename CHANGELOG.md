@@ -21,8 +21,13 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - wireshark-tshark 0.10.0: Profile saved Wi-Fi, BLE, USB and VoIP captures with RTP statistics and frame links.
 - wireshark-dumpcap 0.1.0: Capture bounded local traffic and retain verified PCAPNG segments.
 
+### Changed
+
+- Group completed program and shell operations in chat and clarify approval details.
+
 ### Fixed
 
+- Allow changing reasoning during delegated work without changing its admitted first request.
 - Verify update metadata against the installer files and blockmaps in each delivery.
 
 ## [0.3.0] - 2026-11-25

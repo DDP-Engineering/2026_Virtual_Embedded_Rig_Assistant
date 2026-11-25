@@ -37,7 +37,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   - Texts are in en/ro/de/fr. The help page is `advanced-settings`.
   - Tests: `advanced-settings.test.ts`, `workbench-advanced.test.ts`, `tests/e2e/advanced-settings.spec.ts`.
 
-- Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
+- Completed, decided program and shell approval cards have a closed, expandable summary; pending approvals and running calls stay expanded. Program and shell field labels and values are visually distinct. Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
 - Interactive Browser presents the selected chat's grants, operation activity and current authorized URL. Show, Stop, Revoke and Close act on that chat. Localized browser errors are rendered from typed codes. [Desktop browser runtime](browser-runtime.md) owns authority and lifecycle. Proof: `tests/e2e/browser-controls.spec.ts`.
 

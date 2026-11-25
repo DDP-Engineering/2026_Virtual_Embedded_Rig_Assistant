@@ -11,6 +11,7 @@ import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { BoundedText, PLAIN_TEXT_CHARS } from "./bounded-text.js";
 import { DiffViewer } from "./diff-viewer.js";
+import { Disclosure } from "./disclosure.js";
 
 function ProgramDetails({ program }: { program: ProgramApproval }) {
   const { t } = useTranslation();
@@ -33,7 +34,12 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
           </span>
         )}
       </p>
-      <p>{t("approval.plugin", { plugin: program.pluginId })}</p>
+      <dl className="approval-program">
+        <dt>{t("approval.pluginLabel")}</dt>
+        <dd>
+          <code>{program.pluginId}</code>
+        </dd>
+      </dl>
       <p className="sr-only">{t("approval.command")}</p>
       <code className="approval-command" data-approval-command>
         {programCommandLine(program.program, program.args)}
@@ -92,14 +98,54 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
   );
 }
 
+export function CompletedProgramDetails({ approval }: { approval: SessionState["approvals"][number] }) {
+  const { t } = useTranslation();
+  const program = approval.program;
+  return (
+    <div data-completed-approval-details>
+      {program &&
+        (approval.tool === "run_command" ? (
+          <>
+            <code className="approval-command" data-approval-command>
+              {program.args[0]}
+            </code>
+            <dl className="approval-program">
+              <dt>{t("approval.cwd")}</dt>
+              <dd>
+                <code>{program.cwd}</code>
+              </dd>
+              <dt>{t("settings.commandShell")}</dt>
+              <dd>
+                <code>{program.executable}</code>
+              </dd>
+            </dl>
+          </>
+        ) : (
+          <ProgramDetails program={program} />
+        ))}
+      <p role="status">
+        {approval.decision === "approved"
+          ? t("approval.approved")
+          : approval.decision === "denied"
+            ? t("approval.denied")
+            : t("approval.aborted")}
+        {" · "}
+        {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
+      </p>
+    </div>
+  );
+}
+
 export function ApprovalCard({
   approval,
   sessionId,
   disabled,
+  completed = false,
 }: {
   approval: SessionState["approvals"][number];
   sessionId?: string | undefined;
   disabled: boolean;
+  completed?: boolean;
 }) {
   const { t } = useTranslation();
   const [pending, setPending] = useState(false);
@@ -132,6 +178,26 @@ export function ApprovalCard({
     } finally {
       setPending(false);
     }
+  }
+  if (
+    completed &&
+    approval.decision &&
+    (approval.tool === "run_program" || approval.tool === "run_command")
+  ) {
+    const outcome =
+      approval.decision === "approved"
+        ? t("approval.approved")
+        : approval.decision === "denied"
+          ? t("approval.denied")
+          : t("approval.aborted");
+    return (
+      <Disclosure
+        className="completed-approval"
+        title={`${approval.tool} · ${program?.program ?? approval.path} · ${outcome}`}
+      >
+        <ApprovalCard approval={approval} sessionId={sessionId} disabled={disabled} />
+      </Disclosure>
+    );
   }
   if (approval.tool === "web_download" && approval.decision)
     return (

@@ -1,9 +1,10 @@
-import { browserFailureCodeSchema, todoItemsSchema } from "@vera/shared";
+import { browserFailureCodeSchema, type SessionState, todoItemsSchema } from "@vera/shared";
 import { Check, ChevronRight, CircleAlert, LoaderCircle } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { browserFailureText } from "../../lib/browser-failure.js";
 import { Pager, usePaged } from "../pager.js";
+import { CompletedProgramDetails } from "./approval-card.js";
 import { BoundedText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { PlanItems } from "./plan-tab.js";
@@ -118,10 +119,12 @@ export const ToolDetails = memo(function ToolDetails({
   item,
   update,
   sessionId,
+  approvals,
 }: {
   item: ToolItem;
   update: string | undefined;
   sessionId: string | undefined;
+  approvals?: SessionState["approvals"];
 }) {
   const { t } = useTranslation();
   const action = Object.hasOwn(actionIndex, item.name)
@@ -223,8 +226,15 @@ export const ToolDetails = memo(function ToolDetails({
     >
       <div className="tool-activity-body">
         {plan?.success && <PlanItems items={plan.data} />}
-        {typeof args.command === "string" && <pre className="tool-command">{args.command}</pre>}
-        {typeof args.cwd === "string" && <p>{t("toolActivity.folder", { path: args.cwd })}</p>}
+        {!approvals?.some((approval) => approval.program) && typeof args.command === "string" && (
+          <pre className="tool-command">{args.command}</pre>
+        )}
+        {!approvals?.some((approval) => approval.program) && typeof args.cwd === "string" && (
+          <p>{t("toolActivity.folder", { path: args.cwd })}</p>
+        )}
+        {approvals?.map((approval) => (
+          <CompletedProgramDetails key={approval.approvalId} approval={approval} />
+        ))}
         {rows.length > 0 && (
           <>
             <ol className="tool-result-list">

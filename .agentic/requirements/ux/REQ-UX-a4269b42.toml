@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a4269b42"
+
+title = "Distinguish external approval labels and values"
+
+status = "draft"
+
+requirement = "When external program and shell approval details are displayed, VERA shall visually distinguish field labels from their values."
+
+verification = "Renderer tests check semantic label and value pairs for plugin, working directory and executable; manual inspection checks visual distinction."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/approval-card.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

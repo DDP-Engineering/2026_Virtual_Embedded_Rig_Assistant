@@ -82,6 +82,14 @@
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.15rem 0.75rem;
 }
+.approval-program dt {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.approval-program dd {
+  margin: 0;
+  color: var(--foreground);
+}
 .approval-program dd,
 .approval-files li,
 .bypass-irreversible li {

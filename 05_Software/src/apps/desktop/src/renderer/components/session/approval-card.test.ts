@@ -153,6 +153,70 @@ it.each(["en", "ro", "de", "fr"])(
   },
 );
 
+it.each([
+  ["run_program", "approved"],
+  ["run_program", "denied"],
+  ["run_program", "aborted"],
+  ["run_command", "approved"],
+  ["run_command", "denied"],
+  ["run_command", "aborted"],
+])("collapses completed %s approvals with decision %s only", async (tool, decision) => {
+  const approval = {
+    approvalId: "completed",
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool,
+    path: "shell",
+    diff: "",
+    bytes: 0,
+    decision,
+    by: "user",
+    program: {
+      pluginId: "example",
+      trial: false,
+      program: "shell",
+      programVersion: null,
+      executable: "/bin/bash",
+      args: ["echo hello"],
+      cwd: "/repo",
+      risk: "safe",
+      confirm: null,
+      files: [],
+      notes: [],
+    },
+  } as SessionState["approvals"][number];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      createElement(ApprovalCard, { approval, sessionId: "s", disabled: false, completed: false }),
+    ),
+  );
+  expect(container.querySelector(".completed-approval")).toBeNull();
+  await act(async () =>
+    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false, completed: true })),
+  );
+  const disclosure = container.querySelector<HTMLButtonElement>(".completed-approval button");
+  expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
+  expect(disclosure?.textContent).toContain("shell");
+  await act(async () => disclosure?.click());
+  expect(disclosure?.getAttribute("aria-expanded")).toBe("true");
+  expect(container.textContent).toContain("/repo");
+  await act(async () =>
+    root?.render(
+      createElement(ApprovalCard, {
+        approval: { ...approval, decision: null },
+        sessionId: "s",
+        disabled: false,
+        completed: true,
+      }),
+    ),
+  );
+  expect(container.querySelector(".completed-approval")).toBeNull();
+  expect(container.querySelector("[data-approval-command]")).not.toBeNull();
+});
+
 it("lists the reserved bench resources with the registry and its SHA-256", async () => {
   await i18n.changeLanguage("en");
   const approval = {
@@ -186,6 +250,12 @@ it("lists the reserved bench resources with the registry and its SHA-256", async
   await act(async () =>
     root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
   );
+  const fields = [...container.querySelectorAll(".approval-program dt")];
+  expect(fields.map((field) => [field.textContent, field.nextElementSibling?.textContent])).toEqual([
+    [i18n.t("approval.pluginLabel"), "scpi-instruments"],
+    [i18n.t("approval.cwd"), "."],
+    [i18n.t("approval.executable"), "/opt/uv"],
+  ]);
   const list = container.querySelector("[data-approval-resources]");
   expect(list?.getAttribute("aria-label")).toBe("Reserved bench resources");
   expect(list?.textContent).toContain("psu");

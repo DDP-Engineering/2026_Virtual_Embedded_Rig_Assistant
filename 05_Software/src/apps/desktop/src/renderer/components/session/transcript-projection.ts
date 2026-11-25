@@ -30,7 +30,11 @@ type NoticeRow = {
   turnId: string | null;
   limitations: Set<RetrievalLimitation>;
 };
-type Row = { kind: "item"; item: Item } | { kind: "group"; id: string; tools: ToolItem[] } | NoticeRow;
+type Row =
+  | { kind: "item"; item: Item }
+  | { kind: "group"; id: string; tools: ToolItem[] }
+  | { kind: "external-group"; id: string; tools: ToolItem[] }
+  | NoticeRow;
 
 /** A presentation projection only. Essential interactions split groups and never disappear. */
 export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
@@ -47,6 +51,13 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
     a.program?.risk !== "irreversible";
   const approvals = new Set(state.approvals.filter((a) => !routineByMode(a)).map((a) => a.callId));
   const questions = new Set(state.questions.map(({ callId }) => callId));
+  const externalApprovals = new Map<string, SessionState["approvals"]>();
+  for (const approval of state.approvals) {
+    const entries = externalApprovals.get(approval.callId) ?? [];
+    entries.push(approval);
+    externalApprovals.set(approval.callId, entries);
+  }
+  let externalGroup: Extract<Row, { kind: "external-group" }> | undefined;
   let group: Extract<Row, { kind: "group" }> | undefined;
   let turnNotices: Map<string, NoticeRow> | undefined;
   for (const item of state.items) {
@@ -59,6 +70,24 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
       !item.citations.length
     )
       continue;
+    const external =
+      item.kind === "tool" &&
+      item.status === "ok" &&
+      (item.name === "run_program" || item.name === "run_command") &&
+      !questions.has(item.id) &&
+      (externalApprovals.get(item.id)?.length ?? 0) > 0 &&
+      externalApprovals.get(item.id)?.every((approval) => approval.decision !== null);
+    if (external && item.kind === "tool") {
+      group = undefined;
+      if (externalGroup && item.turnId !== null && externalGroup.tools[0]?.turnId === item.turnId)
+        externalGroup.tools.push(item);
+      else {
+        externalGroup = { kind: "external-group", id: item.id, tools: [item] };
+        rows.push(externalGroup);
+      }
+      continue;
+    }
+    externalGroup = undefined;
     const routine =
       item.kind === "tool" &&
       item.status !== "error" &&

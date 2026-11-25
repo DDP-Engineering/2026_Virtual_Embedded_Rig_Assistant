@@ -653,7 +653,7 @@
       "blocked": "Blocked"
     },
     "trial": "Trial plugin",
-    "plugin": "Plugin: {{plugin}}",
+    "pluginLabel": "Plugin",
     "command": "Command line",
     "cwd": "Working directory",
     "executable": "Executable",

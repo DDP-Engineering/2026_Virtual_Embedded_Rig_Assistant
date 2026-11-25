@@ -37,7 +37,7 @@ const fixture = (): SessionState => ({
   ],
 });
 async function render(state: SessionState, detail: "verbose" | "normal" | "minimal", retry = vi.fn()) {
-  await i18n.changeLanguage("en");
+  await act(async () => i18n.changeLanguage("en"));
   if (!container) {
     container = document.createElement("div");
     document.body.append(container);
@@ -102,6 +102,70 @@ it("normal groups consecutive same-turn tools without moving conversation, keybo
   expect(container.querySelector("[data-search-match=true]")).not.toBeNull();
   expect(container.querySelector(".reasoning")).toBeNull();
 });
+it("groups consecutive completed external calls without hiding pending approvals or errors", async () => {
+  const state = emptySessionState();
+  state.items = [
+    { ...tool("first"), name: "run_command", args: { command: "echo unique", cwd: "/repo" } },
+    { ...tool("second"), name: "run_program" },
+    { ...tool("pending", "turn1", "running"), name: "run_command" },
+    { ...tool("failed", "turn1", "error"), name: "run_command" },
+  ];
+  for (const [callId, decision] of [
+    ["first", "approved"],
+    ["second", "approved"],
+    ["pending", null],
+    ["failed", "denied"],
+  ] as const)
+    state.approvals.push({
+      approvalId: `approval-${callId}`,
+      callId,
+      requestSha256: "a".repeat(64),
+      tool: "run_command",
+      path: callId,
+      diff: "",
+      bytes: 0,
+      decision,
+      ...(callId === "first"
+        ? {
+            program: {
+              pluginId: "vera",
+              trial: false,
+              program: "shell",
+              programVersion: null,
+              executable: "/bin/bash",
+              args: ["echo unique"],
+              cwd: "/repo",
+              risk: "safe" as const,
+              confirm: null,
+              files: [],
+              notes: [],
+            },
+          }
+        : {}),
+    });
+  await render(state, "normal");
+  const toggle = container.querySelector<HTMLButtonElement>("[data-external-tool-group] .disclosure-toggle");
+  expect(toggle?.textContent).toContain("Operations: 2");
+  expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+  expect(container.querySelector('[data-approval-card="approval-pending"]')).not.toBeNull();
+  expect(container.querySelector('[data-tool-row="run_command"]')).not.toBeNull();
+  await act(async () => toggle?.click());
+  expect(container.querySelectorAll("[data-external-tool-group] [data-tool-row]")).toHaveLength(2);
+  expect(container.querySelector("[data-completed-approval-details]")).toBeNull();
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[data-external-tool-group] [data-tool-row="run_command"] button')
+      ?.click(),
+  );
+  const detail = container.querySelector("[data-completed-approval-details]");
+  expect(detail?.textContent).toContain("/bin/bash");
+  expect(detail?.textContent).toContain("/repo");
+  expect(
+    container.querySelectorAll("[data-completed-approval-details] [data-approval-command]"),
+  ).toHaveLength(1);
+  expect(container.querySelector("[data-external-tool-group] .tool-command")).toBeNull();
+});
+
 it("treats calls the mode approved automatically as routine, but keeps user decisions visible", async () => {
   const state = fixture();
   const approval = (callId: string, by: "mode" | "user") => ({
@@ -119,7 +183,7 @@ it("treats calls the mode approved automatically as routine, but keeps user deci
   await render(state, "minimal");
   // "one" was approved by auto mode: routine, hidden; "two" was approved by the user: still shown.
   expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(1);
-  expect(container.querySelectorAll("[data-approval-card]")).toHaveLength(1);
+  expect(container.querySelectorAll(".completed-approval .disclosure-toggle")).toHaveLength(1);
   await render(state, "normal");
   // The auto-approved call joins the routine group; the user-approved one stays on its own.
   expect(container.querySelectorAll("[data-tool-group]").length).toBeGreaterThan(0);
@@ -155,6 +219,9 @@ it("keeps an irreversible program approved by the mode visible at every detail l
   } as unknown as SessionState["approvals"][number]);
   for (const detail of ["minimal", "normal"] as const) {
     await render(state, detail);
+    const toggle = container.querySelector<HTMLButtonElement>(".completed-approval .disclosure-toggle");
+    expect(toggle).not.toBeNull();
+    if (toggle?.getAttribute("aria-expanded") === "false") await act(async () => toggle.click());
     expect(container.querySelectorAll('[data-approval-card][data-risk="irreversible"]')).toHaveLength(1);
   }
 });
@@ -204,7 +271,7 @@ it.each(["en", "ro"])("shows the send date and time to the minute at verbose in 
   expect(time("u2")?.textContent).toBe(format.format(sent + 60_000));
   expect(time("u3")).toBeNull();
   expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(3);
-  await i18n.changeLanguage("en");
+  await act(async () => i18n.changeLanguage("en"));
 });
 it("switches levels reversibly without mutating history", async () => {
   const state = fixture(),

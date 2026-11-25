@@ -653,7 +653,7 @@
       "blocked": "Bloqué"
     },
     "trial": "Plugin d’essai",
-    "plugin": "Plugin : {{plugin}}",
+    "pluginLabel": "Plugin",
     "command": "Ligne de commande",
     "cwd": "Répertoire de travail",
     "executable": "Exécutable",

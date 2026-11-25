@@ -71,3 +71,18 @@ entries:
       ro: Analizează capturi Wi-Fi, BLE, USB și VoIP cu legături la cadre și statistici RTP.
       de: WLAN-, BLE-, USB- und VoIP-Mitschnitte mit Paketverweisen und RTP-Statistik prüfen.
       fr: Analysez les captures Wi-Fi, BLE, USB et VoIP avec des liens de trame et des mesures RTP.
+
+  - category: fixed
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Change reasoning while a delegated session is working.
+      ro: Schimbă nivelul de reasoning în timpul unei sesiuni delegate.
+      de: Reasoning während einer delegierten Sitzung ändern.
+      fr: Modifier le raisonnement pendant une session déléguée.
+  - category: improved
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Completed program and shell operations are grouped and expandable.
+      ro: Operațiile finalizate pentru programe și comenzi sunt grupate și extensibile.
+      de: Abgeschlossene Programm- und Shell-Aktionen sind gruppiert und aufklappbar.
+      fr: Les opérations terminées des programmes et commandes sont groupées et dépliables.

@@ -653,7 +653,7 @@
       "blocked": "Blocat"
     },
     "trial": "Plugin de probă",
-    "plugin": "Plugin: {{plugin}}",
+    "pluginLabel": "Plugin",
     "command": "Linie de comandă",
     "cwd": "Director de lucru",
     "executable": "Executabil",

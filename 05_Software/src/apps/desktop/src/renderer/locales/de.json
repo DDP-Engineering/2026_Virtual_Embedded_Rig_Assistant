@@ -653,7 +653,7 @@
       "blocked": "Gesperrt"
     },
     "trial": "Test-Plugin",
-    "plugin": "Plugin: {{plugin}}",
+    "pluginLabel": "Plugin",
     "command": "Befehlszeile",
     "cwd": "Arbeitsverzeichnis",
     "executable": "Programmdatei",

@@ -277,6 +277,22 @@ export function Transcript({
                     limitations={row.limitations}
                   />
                 );
+              if (row.kind === "external-group")
+                return (
+                  <div className="transcript-item tool" data-external-tool-group key={`external/${row.id}`}>
+                    <Disclosure title={t("chatDetail.operations", { count: row.tools.length })}>
+                      {row.tools.map((item) => (
+                        <ToolDetails
+                          key={item.id}
+                          item={item}
+                          update={updates[item.id]}
+                          sessionId={sessionId}
+                          approvals={approvalsByCall.get(item.id) ?? NO_APPROVALS}
+                        />
+                      ))}
+                    </Disclosure>
+                  </div>
+                );
               if (row.kind === "group")
                 return (
                   <ToolGroupRow
@@ -494,6 +510,7 @@ const ToolRow = memo(function ToolRow({
         <ApprovalCard
           key={approval.approvalId}
           approval={approval}
+          completed={item.status !== "running"}
           sessionId={sessionId}
           disabled={disabled}
         />

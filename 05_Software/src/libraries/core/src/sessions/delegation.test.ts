@@ -915,17 +915,18 @@ it("keeps revision-bound reasoning stable while a child starts its model request
   });
   try {
     await vi.waitFor(() => expect(h.prepareModel.mock.calls).toHaveLength(preparation + 1));
-    await expect(h.service.setReasoning(child.sessionId, "low", "replay/child")).rejects.toMatchObject(
-      failure("BUSY"),
-    );
+    await expect(h.service.setReasoning(child.sessionId, "low", "replay/child")).resolves.toMatchObject({
+      selected: "low",
+    });
   } finally {
     gate.resolve();
   }
   await h.service.waitIdle(child.sessionId);
   expect(h.requests.at(-1)).toMatchObject({ sessionId: child.sessionId, reasoning: "high" });
-  await expect(h.service.setReasoning(child.sessionId, "low", "replay/child")).resolves.toMatchObject({
-    selected: "low",
-  });
+  expect((await h.service.reasoningOptions(child.sessionId)).selected).toBe("low");
+  h.service.send(child.sessionId, "Use the new setting.");
+  await h.service.waitIdle(child.sessionId);
+  expect(h.requests.at(-1)).toMatchObject({ sessionId: child.sessionId, reasoning: "low" });
 });
 
 it("validates the configured model with default reasoning even without an asynchronous gateway hook", async () => {

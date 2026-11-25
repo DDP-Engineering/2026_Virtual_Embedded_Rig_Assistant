@@ -30,6 +30,23 @@ test("approves a device-write run on the card and an irreversible run only with 
   const flash = page.locator('[data-approval-card][data-risk="device-write"]');
   await expect(flash).toBeVisible();
   await expect(flash.locator(".risk-badge")).toHaveText("Device write");
+  const fieldStyles = await flash
+    .locator(".approval-program")
+    .first()
+    .evaluate((list) => {
+      const label = list.querySelector("dt");
+      const value = list.querySelector("dd code");
+      if (!label || !value) throw new Error("Missing approval label or value");
+      return {
+        labelColor: getComputedStyle(label).color,
+        valueColor: getComputedStyle(value).color,
+        labelWeight: getComputedStyle(label).fontWeight,
+        valueWeight: getComputedStyle(value).fontWeight,
+      };
+    });
+  expect(
+    fieldStyles.labelColor !== fieldStyles.valueColor || fieldStyles.labelWeight !== fieldStyles.valueWeight,
+  ).toBe(true);
   await expect(flash.locator("h4")).toHaveText("run_program · esptool 5.1.0");
   await expect(flash.locator("[data-approval-command]")).toHaveText(
     "esptool --port COM3 write-flash 0x10000 build/app.bin",
@@ -38,8 +55,19 @@ test("approves a device-write run on the card and an irreversible run only with 
   await expect(flash.locator(".approval-files")).toContainText(`build/app.bin SHA-256 ${"c".repeat(64)}`);
   await expect(flash.locator("[data-approval-confirmation]")).toHaveCount(0);
   await flash.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(flash.getByRole("status")).toHaveText("Approved · user");
   await expect(input).toBeEnabled();
+  const flashSummary = page.locator("[data-external-tool-group] .disclosure-toggle").first();
+  await expect(flashSummary).toHaveAttribute("aria-expanded", "false");
+  await flashSummary.click();
+  const flashGroup = page.locator("[data-external-tool-group]").first();
+  await expect(flashGroup.locator("[data-approval-card]")).toHaveCount(0);
+  await flashGroup.locator('[data-tool-row="run_program"] > button').click();
+  await expect(flashGroup.locator('[data-completed-approval-details] [role="status"]')).toHaveText(
+    "Approved · user",
+  );
+  await expect(flashGroup.locator("[data-completed-approval-details] [data-approval-command]")).toHaveCount(
+    1,
+  );
 
   await input.fill("burn the key");
   await input.press("Enter");
@@ -60,13 +88,21 @@ test("approves a device-write run on the card and an irreversible run only with 
   await expect(input).toBeDisabled();
   await word.fill("burn-key");
   await approve.click();
-  await expect(burn.getByRole("status")).toHaveText("Approved · user");
-  // The normal transcript keeps successful operations compact; approved cards remain exact.
-  await expect(page.locator('[data-approval-card] [role="status"]')).toHaveText([
+  await expect(input).toBeEnabled();
+  const burnSummary = page.locator("[data-external-tool-group] .disclosure-toggle").last();
+  await expect(burnSummary).toHaveAttribute("aria-expanded", "false");
+  await burnSummary.click();
+  const burnGroup = page.locator("[data-external-tool-group]").last();
+  await burnGroup.locator('[data-tool-row="run_program"] > button').click();
+  await expect(burnGroup.locator('[data-completed-approval-details] [role="status"]')).toHaveText(
+    "Approved · user",
+  );
+  // Completed approval details remain available inside each expanded operation.
+  await expect(page.locator('[data-completed-approval-details] [role="status"]')).toHaveText([
     "Approved · user",
     "Approved · user",
   ]);
-  await expect(page.locator('[data-message-kind="tool"]')).toHaveCount(2);
+  await expect(page.locator("[data-external-tool-group]")).toHaveCount(2);
   await expect(input).toBeEnabled();
 });
 
@@ -94,8 +130,12 @@ test("lists irreversible plugin rules in the bypass warning, then runs the comma
   await expect(warning).toBeHidden();
   await input.fill("burn the key");
   await input.press("Enter");
-  const burn = page.locator('[data-approval-card][data-risk="irreversible"]');
-  await expect(burn.getByRole("status")).toHaveText("Approved · automatic mode");
-  await expect(burn.locator("[data-approval-confirmation]")).toHaveCount(0);
+  const group = page.locator("[data-external-tool-group]");
+  await group.locator(".disclosure-toggle").first().click();
+  await group.locator('[data-tool-row="run_program"] > button').click();
+  await expect(group.locator('[data-completed-approval-details] [role="status"]')).toHaveText(
+    "Approved · automatic mode",
+  );
+  await expect(group.locator("[data-approval-confirmation]")).toHaveCount(0);
   await expect(input).toBeEnabled();
 });

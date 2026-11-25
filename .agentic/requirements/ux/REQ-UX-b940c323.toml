@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-b940c323"
+
+title = "Collapse decided external operation approvals"
+
+status = "active"
+
+requirement = "When displaying a decided run_program or run_command approval for a completed tool call in chat, VERA shall initially collapse its details behind an expandable summary identifying the operation and decision."
+
+verification = "Renderer test: render approved, denied and aborted program and shell approvals, check their details are initially collapsed and become visible on expansion."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/approval-card.test.ts", "05_Software/tests/e2e/program-approvals.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

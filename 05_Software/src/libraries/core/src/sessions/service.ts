@@ -1203,10 +1203,10 @@ export class SessionService {
   async setReasoning(id: string, reasoning: string | null, expectedModel: string) {
     this.row(id);
     this.writable();
-    if (this.deleting.has(id) || this.active.get(id)?.delegated) throw veraError("BUSY");
+    if (this.deleting.has(id)) throw veraError("BUSY");
     const current = await this.reasoningOptions(id);
     this.writable();
-    if (this.deleting.has(id) || this.active.get(id)?.delegated) throw veraError("BUSY");
+    if (this.deleting.has(id)) throw veraError("BUSY");
     if (this.host.model(this.row(id).model_ref) !== expectedModel) throw veraError("CONFLICT");
     if (current.modelRef !== expectedModel) throw veraError("CONFLICT");
     if (reasoning !== null && !current.options.includes(reasoning)) throw veraError("INVALID");
@@ -1891,7 +1891,8 @@ export class SessionService {
       model,
       !history.some((message) => message.role === "user"),
     );
-    let initialReasoning = staged?.reasoning;
+    let initialReasoning =
+      staged?.reasoning !== undefined ? staged.reasoning : delegated ? this.savedReasoning(id) : undefined;
     const self = this;
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
