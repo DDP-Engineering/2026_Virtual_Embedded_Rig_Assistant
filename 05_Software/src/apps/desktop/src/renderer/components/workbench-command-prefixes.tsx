@@ -40,26 +40,32 @@ export function WorkbenchCommandPrefixes({
   const { rows, pager } = usePaged(prefixes.filter(({ id }) => !removed.includes(id)));
   if (!rows.length && error === undefined) return null;
   return (
-    <section data-command-prefixes aria-label={t("approval.allowedCommands")}>
+    <section
+      className="workbench-command-prefixes"
+      data-command-prefixes
+      aria-label={t("approval.allowedCommands")}
+    >
       <h4>{t("approval.allowedCommands")}</h4>
-      {error !== undefined && <ErrorMessage error={error} />}
-      <ul>
-        {rows.map(({ id, label }) => (
-          <li key={id}>
-            <button
-              type="button"
-              data-remove-command-prefix
-              disabled={disabled}
-              onClick={() => remove(id)}
-              aria-label={t("approval.removePrefix", { prefix: label })}
-            >
-              {t("approval.remove")}
-            </button>{" "}
-            <code>{label}</code>
-          </li>
-        ))}
-      </ul>
-      <Pager {...pager} />
+      <div className="workbench-command-prefix-list">
+        {error !== undefined && <ErrorMessage error={error} />}
+        <ul>
+          {rows.map(({ id, label }) => (
+            <li key={id}>
+              <button
+                type="button"
+                data-remove-command-prefix
+                disabled={disabled}
+                onClick={() => remove(id)}
+                aria-label={t("approval.removePrefix", { prefix: label })}
+              >
+                {t("approval.remove")}
+              </button>
+              <code>{label}</code>
+            </li>
+          ))}
+        </ul>
+        <Pager {...pager} />
+      </div>
     </section>
   );
 }

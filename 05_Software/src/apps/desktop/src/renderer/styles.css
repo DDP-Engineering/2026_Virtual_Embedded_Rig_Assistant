@@ -4509,9 +4509,49 @@ legend {
   inline-size: 6rem;
   min-inline-size: 0;
 }
+/* Allowed commands follow the form's label/control grid; each command wraps beside its Remove button. */
+.workbench-command-prefixes {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 0.35rem 1rem;
+  align-items: start;
+}
+.workbench-command-prefixes > h4 {
+  margin: 0;
+  padding-block: 0.4rem;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.workbench-command-prefix-list {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.workbench-command-prefix-list > ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workbench-command-prefix-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding-block: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+.workbench-command-prefix-list li:last-child {
+  border-bottom: none;
+}
+.workbench-command-prefix-list code {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 @container (inline-size < 27rem) {
   .workbench-agent-settings > label,
-  .workbench-question-setting {
+  .workbench-question-setting,
+  .workbench-command-prefixes {
     grid-template-columns: minmax(0, 1fr);
   }
 }
