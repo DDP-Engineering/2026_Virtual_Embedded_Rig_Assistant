@@ -33,11 +33,18 @@ stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds Workbenc
 The global library is projected by `renderer/components/plugin-library.ts` and rendered by
 `plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
 folder/ZIP imports, check-all, refresh and updates precede the library: filters and state buttons on the left, one list on the right.
-Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/maturity/state. Maturity is
+Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/maturity/requirements/state. Maturity is
 shared `pluginMaturity(version)` (`plugins.ts`): `0.x.y` or a semver pre-release tag is `pre-release`, every other
 valid version `stable`, a missing or invalid version `pre-release`; there is no manifest field. `MaturityBadge`
 (`plugin-library-controls.tsx`) shows Pre-release beside the version on catalog cards, the review facts and installed
-cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`). A catalog
+cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`).
+Requirements (REQ-UX-97df79a8) are shared `pluginRequirements(dependencies, configurable)`: skills without programs,
+python for a pip/script program, download for a `download` kind, install for a `find` kind, settings when
+`pluginConfigurable` (settings or program credentials). Catalog items use the entry's `dependencies` and
+`configurable` flag (REQ-DATA-d10bb593, set by `vera catalog build`), installed items their manifest, and an
+unloaded manifest has unknown requirements that match no checked box. The checked boxes are AND-combined in
+`LibraryState.requirements`; `PluginRequirementBadges` shows the same labels on catalog and installed cards
+(REQ-UX-8a9de6eb). A catalog
 card (`CatalogItem`) shows name, version and badge, tier badge, id, ecosystem and the manifest `summary` (1-160
 characters, required); the full description, programs, sources and rules stay in the install review. It adds a
 `data-catalog-warning="platform"` note when the host's plugin platform (from `app.info` via shared `pluginPlatform`)

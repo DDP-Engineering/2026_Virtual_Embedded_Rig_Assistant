@@ -1,9 +1,11 @@
 import { expect, it } from "vitest";
 import {
+  pluginConfigurable,
   pluginDependencies,
   pluginHighestRisk,
   pluginMaturity,
   pluginOperations,
+  pluginRequirements,
   pluginText,
   validatePluginManifest,
 } from "./plugins.js";
@@ -383,4 +385,44 @@ it("accepts an SPDX license identifier and refuses free text", () => {
   ).toEqual([]);
   expect(validatePluginManifest({ ...canonical, license: "MIT" }).issues).toEqual([]);
   expect(paths({ ...canonical, license: "All rights reserved" })).toContain("license");
+});
+
+// REQ-UX-97df79a8 REQ-DATA-d10bb593
+it("derives library requirements from program install kinds, settings and credentials", () => {
+  const manifest = (extra: Record<string, unknown>) =>
+    validatePluginManifest({ ...canonical, ...extra }).manifest;
+  const requirements = (extra: Record<string, unknown>) => {
+    const parsed = manifest(extra);
+    if (!parsed) throw Error("Invalid fixture");
+    return pluginRequirements(pluginDependencies(parsed), pluginConfigurable(parsed));
+  };
+  const find = { find: { windows: ["%PATH%"] }, hint: "Install the tool." };
+  const download = {
+    "windows-x64": { url: "https://example.com/tool.zip", sha256: "a".repeat(64), path: "tool.exe" },
+  };
+  expect(requirements({ programs: {}, rules: [] })).toEqual(["skills"]);
+  expect(requirements({})).toEqual(["python"]);
+  expect(
+    requirements({
+      programs: {
+        found: { ...program, install: find },
+        fetched: { ...program, install: { ...find, download } },
+      },
+      rules: [
+        { match: "found *", risk: "safe" },
+        { match: "fetched *", risk: "safe" },
+      ],
+    }),
+  ).toEqual(["download", "install"]);
+  const settings = {
+    settings: {
+      "lab-resources": { kind: "workbench-file", path: "lab/resources.json", description: "Bench." },
+    },
+  };
+  expect(requirements(settings)).toEqual(["python", "settings"]);
+  const credentials = {
+    programs: { esptool: { ...program, credentials: { option: "--credential", scope: "mqtt" } } },
+  };
+  expect(pluginConfigurable(manifest(credentials) as never)).toBe(true);
+  expect(pluginConfigurable(manifest({}) as never)).toBe(false);
 });

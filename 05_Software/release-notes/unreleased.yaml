@@ -100,3 +100,10 @@ entries:
       ro: Sesiunile delegate apar ca arbore extensibil sub sesiunea părinte în lista de sesiuni.
       de: Delegierte Sitzungen erscheinen als aufklappbarer Baum unter ihrer Sitzung in der Liste.
       fr: Les sessions déléguées apparaissent en arbre dépliable sous leur parent dans la liste.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Filter plugins by what they need, such as a Python script, an external program or settings.
+      ro: Filtrează pluginurile după ce necesită, de exemplu un script Python, un program extern sau setări.
+      de: Plugins nach Voraussetzungen filtern, etwa Python-Skript, externes Programm oder Einstellungen.
+      fr: Filtrez les plugins selon leurs prérequis, comme un script Python, un programme externe ou des réglages.

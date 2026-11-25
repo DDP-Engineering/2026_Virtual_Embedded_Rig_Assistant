@@ -4,12 +4,12 @@ Plugins let the agent drive the tools of your bench: flashing and debugging tool
 
 ## Find and install a plugin
 
-1. On the **Plugins** page, select **Browse available plugins**. Filter by **Ecosystem**, **Activity**, **Provenance**, **Maturity** or state, or search.
+1. On the **Plugins** page, select **Browse available plugins**. Filter by **Ecosystem**, **Activity**, **Provenance**, **Maturity**, **Requirements** or state, or search. **Requirements** keeps only plugins that have every requirement you check: **Skills only** (no programs), **Python script**, **Program VERA downloads**, **Program you install** and **Settings**.
 2. Open **Details** to see what the plugin needs, including required plugins and programs.
 3. Select **Install**, or **Install with dependencies** to also install the required plugins and the programs VERA can install itself.
 4. Check the review and confirm.
 
-A card warns when the plugin is not available for your platform or can write to a device or change it permanently. Versions below 1.0.0 are marked **Pre-release**.
+A card warns when the plugin is not available for your platform or can write to a device or change it permanently. Versions below 1.0.0 are marked **Pre-release**. Each card also shows the plugin's requirements with the same labels.
 
 ## Install a pack
 

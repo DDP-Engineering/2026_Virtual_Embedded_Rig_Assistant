@@ -44,6 +44,13 @@ const index = (plugins: unknown[], more: Record<string, unknown> = {}) => ({
 // REQ-DATA-b40d3f9b
 it("parses index format 1 and refuses other versions, unknown keys and out-of-limit values", () => {
   expect(catalogIndexSchema.safeParse(index([entry("serial-monitor")])).success).toBe(true);
+  // REQ-DATA-d10bb593: configurable is optional and only ever true.
+  expect(catalogIndexSchema.safeParse(index([entry("serial-monitor", { configurable: true })])).success).toBe(
+    true,
+  );
+  expect(
+    catalogIndexSchema.safeParse(index([entry("serial-monitor", { configurable: false })])).success,
+  ).toBe(false);
   expect(catalogIndexSchema.safeParse(index([entry("serial-monitor", { tier: "community" })])).success).toBe(
     true,
   );

@@ -3853,6 +3853,31 @@ legend {
   width: 100%;
   min-width: 0;
 }
+/* REQ-UX-97df79a8: compact Requirements rows, checkbox then text, titled like the select labels above.
+   The element selector outranks the side panel's `.library-side .plugin-library-controls label` grid. */
+.plugin-library-requirements {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.plugin-library-requirements > legend {
+  margin-bottom: 0.25rem;
+  padding: 0;
+}
+.plugin-library-controls fieldset.plugin-library-requirements label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 1.5rem;
+}
+.plugin-library-controls fieldset.plugin-library-requirements input {
+  flex: none;
+  width: auto;
+  margin: 0;
+}
 .plugin-library-statuses,
 .plugin-library-results,
 .plugin-library-pagination,
@@ -4695,6 +4720,13 @@ legend {
 .library-side .plugin-library-controls label {
   display: grid;
   gap: 0.25rem;
+}
+/* The side filters and Sort by put their label left of the select, one row each, with the selects aligned. */
+.library-side .plugin-library-filter-row > label,
+.library-side .plugin-library-search-row > label:has(> select) {
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
 }
 .library-side .plugin-library-results {
   display: flex;

@@ -1444,6 +1444,14 @@
     "maturity": {
       "preRelease": "Pre-lansare"
     },
+    "requirements": {
+      "title": "Cerințe",
+      "skills": "Doar skill-uri",
+      "python": "Script Python",
+      "download": "Program descărcat de VERA",
+      "install": "Program instalat de tine",
+      "settings": "Setări"
+    },
     "tier": {
       "official": "Oficial",
       "community": "Comunitate",

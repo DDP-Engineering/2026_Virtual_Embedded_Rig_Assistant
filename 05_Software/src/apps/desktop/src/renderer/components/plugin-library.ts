@@ -1,11 +1,15 @@
-// REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695 REQ-UX-3cf252d5
+// REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695 REQ-UX-3cf252d5 REQ-UX-97df79a8
 import {
   type CatalogActivity,
   type CatalogPlugin,
   type PluginMaturity,
   type PluginProgramStatus,
+  type PluginRequirement,
   type PluginSummary,
+  pluginConfigurable,
+  pluginDependencies,
   pluginMaturity,
+  pluginRequirements,
 } from "@vera/shared";
 
 export type LibraryStatus = "all" | "missing" | "installed" | "new" | "updates" | "needs" | "enabled";
@@ -15,6 +19,8 @@ export interface LibraryState {
   activity: string;
   tier: string;
   maturity: "" | PluginMaturity;
+  /** Checked requirements; a plugin must have every one of them. */
+  requirements: readonly PluginRequirement[];
   status: LibraryStatus;
   sort: "added" | "updated" | "name";
   page: number;
@@ -26,6 +32,7 @@ export const initialLibraryState: LibraryState = {
   activity: "",
   tier: "",
   maturity: "",
+  requirements: [],
   status: "all",
   sort: "added",
   page: 1,
@@ -38,6 +45,7 @@ export const clearedLibraryFilters = {
   activity: "",
   tier: "",
   maturity: "",
+  requirements: [],
   status: "all",
 } as const satisfies Partial<LibraryState>;
 export const libraryStateKey = ["ui", "plugin-library"] as const;
@@ -71,6 +79,8 @@ export interface LibraryItem {
   source: string;
   activities: readonly CatalogActivity[];
   keywords: readonly string[];
+  /** What the plugin needs to run; unknown for an installed package whose manifest did not load. */
+  requirements?: readonly PluginRequirement[] | undefined;
   addedAt?: string | undefined;
   updatedAt?: string | undefined;
   installed: boolean;
@@ -80,6 +90,14 @@ export interface LibraryItem {
   catalog?: CatalogPlugin | undefined;
   plugin?: PluginSummary | undefined;
 }
+/** A catalog entry's requirements, from its dependencies and configurable flag. */
+export const catalogRequirements = (entry: Pick<CatalogPlugin, "dependencies" | "configurable">) =>
+  pluginRequirements(entry.dependencies, entry.configurable === true);
+/** An installed package's requirements from its manifest; unknown when the manifest did not load. */
+export const installedRequirements = (plugin: PluginSummary) =>
+  plugin.manifest
+    ? pluginRequirements(pluginDependencies(plugin.manifest), pluginConfigurable(plugin.manifest))
+    : undefined;
 export function catalogLibraryItems(entries: readonly CatalogPlugin[]): LibraryItem[] {
   return entries.map((entry) => ({
     key: `catalog/${entry.id}`,
@@ -92,6 +110,7 @@ export function catalogLibraryItems(entries: readonly CatalogPlugin[]): LibraryI
     source: "catalog",
     activities: entry.activities,
     keywords: entry.keywords,
+    requirements: catalogRequirements(entry),
     addedAt: entry.addedAt,
     updatedAt: entry.updatedAt,
     installed: Boolean(entry.installed),
@@ -127,6 +146,7 @@ export function installedLibraryItems(
       source: plugin.source ?? "",
       activities: entry?.activities ?? [],
       keywords: entry?.keywords ?? [],
+      requirements: installedRequirements(plugin),
       addedAt: entry?.addedAt,
       updatedAt: entry?.updatedAt,
       installed: true,
@@ -185,7 +205,8 @@ export function matchesLibraryFilters(
     (!state.ecosystem || item.ecosystem === state.ecosystem) &&
     (!state.activity || item.activities.includes(state.activity as CatalogActivity)) &&
     (!state.tier || item.tier === state.tier) &&
-    (!state.maturity || pluginMaturity(item.version) === state.maturity)
+    (!state.maturity || pluginMaturity(item.version) === state.maturity) &&
+    state.requirements.every((requirement) => item.requirements?.includes(requirement))
   );
 }
 export function sortLibraryItems(

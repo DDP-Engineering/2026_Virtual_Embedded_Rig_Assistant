@@ -665,6 +665,34 @@ export const pluginDependencySchema = z.strictObject({
   guide: z.string().min(1).max(1024).optional(),
 });
 export type PluginDependency = z.infer<typeof pluginDependencySchema>;
+/** What a plugin needs to run, for the library filter and card badges (REQ-UX-97df79a8). */
+export const PLUGIN_REQUIREMENTS = ["skills", "python", "download", "install", "settings"] as const;
+export type PluginRequirement = (typeof PLUGIN_REQUIREMENTS)[number];
+/** A plugin that declares settings, or a program that receives credentials, needs configuration. */
+export function pluginConfigurable(manifest: PluginManifest): boolean {
+  return (
+    Object.keys(manifest.settings ?? {}).length > 0 ||
+    Object.values(manifest.programs).some((program) => program.credentials !== undefined)
+  );
+}
+/**
+ * Skills only without programs; Python for a pip or script program; download for a program VERA
+ * downloads; install for a program the user installs; settings when configurable. In list order.
+ */
+export function pluginRequirements(
+  dependencies: readonly Pick<PluginDependency, "kind">[],
+  configurable: boolean,
+): PluginRequirement[] {
+  const kinds = new Set(dependencies.map(({ kind }) => kind));
+  const has: Record<PluginRequirement, boolean> = {
+    skills: dependencies.length === 0,
+    python: kinds.has("pip") || kinds.has("script"),
+    download: kinds.has("download"),
+    install: kinds.has("find"),
+    settings: configurable,
+  };
+  return PLUGIN_REQUIREMENTS.filter((requirement) => has[requirement]);
+}
 /** The program dependencies of a manifest in name order (the catalog index's `dependencies`). */
 export function pluginDependencies(manifest: PluginManifest): PluginDependency[] {
   return Object.keys(manifest.programs)

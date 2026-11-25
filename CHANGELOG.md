@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Filter the plugin library by requirements (skills only, Python script, program VERA downloads, program you install, settings) and show them as badges on each plugin card.
 - Show delegated sessions as an expandable tree under their parent in the session list, with their outcome and attention state; Move up and Move down keep children with their parent (#407).
 - Open cited frames from verified saved captures in Wireshark Desktop.
 - Evaluate synthetic Wireshark workflows with deterministic replay, exact frame checks and guarded model probes.

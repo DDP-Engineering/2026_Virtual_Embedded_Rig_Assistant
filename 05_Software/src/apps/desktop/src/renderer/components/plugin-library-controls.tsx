@@ -1,5 +1,13 @@
 // REQ-UX-28a74094 REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-3cf252d5 REQ-UX-4ef3aa51
-import { CATALOG_ACTIVITIES, type CatalogActivity, type PluginMaturity, pluginMaturity } from "@vera/shared";
+// REQ-UX-97df79a8 REQ-UX-8a9de6eb
+import {
+  CATALOG_ACTIVITIES,
+  type CatalogActivity,
+  PLUGIN_REQUIREMENTS,
+  type PluginMaturity,
+  type PluginRequirement,
+  pluginMaturity,
+} from "@vera/shared";
 import type { TFunction } from "i18next";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,6 +32,30 @@ export function pluginActivityLabels(t: TFunction): Record<CatalogActivity, stri
     testing: t("plugins.library.activities.testing"),
     design: t("plugins.library.activities.design"),
   };
+}
+/** The labels shared by the Requirements filter and the card badges. */
+export function pluginRequirementLabels(t: TFunction): Record<PluginRequirement, string> {
+  return {
+    skills: t("plugins.requirements.skills"),
+    python: t("plugins.requirements.python"),
+    download: t("plugins.requirements.download"),
+    install: t("plugins.requirements.install"),
+    settings: t("plugins.requirements.settings"),
+  };
+}
+/** One badge per requirement of a plugin card, in the filter's order; nothing when they are unknown. */
+export function PluginRequirementBadges({
+  requirements,
+}: {
+  requirements: readonly PluginRequirement[] | undefined;
+}) {
+  const { t } = useTranslation();
+  const labels = pluginRequirementLabels(t);
+  return requirements?.map((requirement) => (
+    <span key={requirement} className="risk-badge plugin-requirement" data-plugin-requirement={requirement}>
+      {labels[requirement]}
+    </span>
+  ));
 }
 /** The Pre-release badge beside a plugin version; nothing for a stable version. */
 export function MaturityBadge({ version }: { version: string | undefined }) {
@@ -55,6 +87,7 @@ export function PluginLibraryControls({
   const { t } = useTranslation();
   const id = useId();
   const activities = pluginActivityLabels(t);
+  const requirementLabels = pluginRequirementLabels(t);
   const ecosystems = [...new Set(items.map((item) => item.ecosystem).filter(Boolean))].sort();
   const tiers = ["official", "community", "local", "trial"];
   const tierLabels: Record<string, string> = {
@@ -77,6 +110,7 @@ export function PluginLibraryControls({
     state.activity ||
     state.tier ||
     state.maturity ||
+    state.requirements.length > 0 ||
     state.status !== "all";
   return (
     <div className="plugin-library-controls">
@@ -166,6 +200,28 @@ export function PluginLibraryControls({
             <option value="stable">{t("plugins.library.stable")}</option>
           </select>
         </label>
+        <fieldset className="plugin-library-requirements">
+          <legend>{t("plugins.requirements.title")}</legend>
+          {PLUGIN_REQUIREMENTS.map((requirement) => (
+            <label key={requirement}>
+              <input
+                type="checkbox"
+                data-library-requirement={requirement}
+                checked={state.requirements.includes(requirement)}
+                onChange={(event) =>
+                  change({
+                    requirements: event.target.checked
+                      ? PLUGIN_REQUIREMENTS.filter(
+                          (value) => value === requirement || state.requirements.includes(value),
+                        )
+                      : state.requirements.filter((value) => value !== requirement),
+                  })
+                }
+              />
+              {requirementLabels[requirement]}
+            </label>
+          ))}
+        </fieldset>
       </div>
       <fieldset className="plugin-library-statuses">
         <legend className="sr-only">{t("plugins.library.filterState")}</legend>

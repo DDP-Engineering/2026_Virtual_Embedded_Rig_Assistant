@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-8a9de6eb"
+
+title = "Show requirement badges on plugin cards"
+
+status = "active"
+
+requirement = "Each plugin card in the library shall show a badge for every requirement the plugin has, labelled as in the requirements filter."
+
+verification = "Render a catalog card and an installed card whose plugins have a script program, a find program and settings, and assert the Python script, Program you install and Settings badges; boundary: a skills-only plugin shows only the Skills only badge."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

@@ -33,6 +33,7 @@ import {
   initialLibraryState,
   installedKey,
   installedLibraryItems,
+  installedRequirements,
   type LibraryState,
   libraryStateKey,
   matchesLibraryFilters,
@@ -45,6 +46,7 @@ import {
   MaturityBadge,
   PluginLibraryControls,
   PluginLibraryPagination,
+  PluginRequirementBadges,
   pluginActivityLabels,
 } from "./plugin-library-controls.js";
 import { PackChooser, type PackPlan, PackReview, packPlan } from "./plugin-packs.js";
@@ -476,6 +478,7 @@ function PluginCard({
               {labels.tier[plugin.tier]}
             </span>
           )}
+          <PluginRequirementBadges requirements={installedRequirements(plugin)} />
         </p>
         <div className="workbench-actions plugin-top-actions">
           {healthy && (

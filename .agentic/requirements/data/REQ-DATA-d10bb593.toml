@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-d10bb593"
+
+title = "Mark configurable plugins in the catalog index"
+
+status = "active"
+
+requirement = "When vera catalog build writes a catalog entry for a plugin that declares settings or program credentials, it shall set configurable to true, and otherwise omit configurable."
+
+verification = "Build a catalog from a plugin with settings, one with program credentials and one with neither, and assert configurable is true for the first two and absent for the third; boundary: an index without configurable still parses."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

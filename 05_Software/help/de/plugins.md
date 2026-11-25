@@ -4,12 +4,12 @@ Mit Plugins steuert der Agent die Werkzeuge an Ihrem Laborplatz: Flash- und Debu
 
 ## Ein Plugin finden und installieren
 
-1. Wählen Sie auf der Seite **Plugins** die Option **Verfügbare Plugins entdecken**. Filtern Sie nach **Ökosystem**, **Tätigkeit**, **Herkunft**, **Reife** oder Zustand, oder suchen Sie.
+1. Wählen Sie auf der Seite **Plugins** die Option **Verfügbare Plugins entdecken**. Filtern Sie nach **Ökosystem**, **Tätigkeit**, **Herkunft**, **Reife**, **Voraussetzungen** oder Zustand, oder suchen Sie. **Voraussetzungen** zeigt nur Plugins mit allen angehakten Voraussetzungen: **Nur Skills** (ohne Programme), **Python-Skript**, **Von VERA geladenes Programm**, **Selbst installiertes Programm** und **Einstellungen**.
 2. Öffnen Sie **Details**, um zu sehen, was das Plugin benötigt, einschließlich erforderlicher Plugins und Programme.
 3. Wählen Sie **Installieren** oder **Mit Abhängigkeiten installieren**, um auch die erforderlichen Plugins und die Programme zu installieren, die VERA selbst installieren kann.
 4. Prüfen Sie die Übersicht und bestätigen Sie.
 
-Eine Karte warnt, wenn das Plugin für Ihre Plattform nicht verfügbar ist oder auf ein Gerät schreiben bzw. es dauerhaft verändern kann. Versionen unter 1.0.0 sind als **Vorabversion** gekennzeichnet.
+Eine Karte warnt, wenn das Plugin für Ihre Plattform nicht verfügbar ist oder auf ein Gerät schreiben bzw. es dauerhaft verändern kann. Versionen unter 1.0.0 sind als **Vorabversion** gekennzeichnet. Jede Karte zeigt außerdem die Voraussetzungen des Plugins mit denselben Bezeichnungen.
 
 ## Ein Paket installieren
 

@@ -4,12 +4,12 @@ Pluginurile îi permit agentului să controleze instrumentele de pe bancul tău 
 
 ## Găsește și instalează un plugin
 
-1. Pe pagina **Pluginuri**, selectează **Explorează pluginurile disponibile**. Filtrează după **Ecosistem**, **Activitate**, **Proveniență**, **Maturitate** sau stare ori caută.
+1. Pe pagina **Pluginuri**, selectează **Explorează pluginurile disponibile**. Filtrează după **Ecosistem**, **Activitate**, **Proveniență**, **Maturitate**, **Cerințe** sau stare ori caută. **Cerințe** păstrează doar pluginurile care au toate cerințele bifate: **Doar skill-uri** (fără programe), **Script Python**, **Program descărcat de VERA**, **Program instalat de tine** și **Setări**.
 2. Deschide **Detalii** pentru a vedea de ce are nevoie pluginul, inclusiv pluginurile și programele necesare.
 3. Selectează **Instalează** sau **Instalează cu dependențe** pentru a instala și pluginurile necesare și programele pe care VERA le poate instala singur.
 4. Verifică revizuirea și confirmă.
 
-Un card te avertizează când pluginul nu este disponibil pentru platforma ta sau când poate scrie pe un dispozitiv ori îl poate modifica permanent. Versiunile sub 1.0.0 sunt marcate **Pre-lansare**.
+Un card te avertizează când pluginul nu este disponibil pentru platforma ta sau când poate scrie pe un dispozitiv ori îl poate modifica permanent. Versiunile sub 1.0.0 sunt marcate **Pre-lansare**. Fiecare card arată și cerințele pluginului, cu aceleași etichete.
 
 ## Instalează un pachet
 

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-97df79a8"
+
+title = "Filter the plugin library by requirements"
+
+status = "active"
+
+requirement = "When the user checks one or more requirements in the plugin library, the library shall list only plugins that have every checked requirement, where Skills only means no programs, Python script a pip or script program, Program VERA downloads a download program, Program you install a find program, and Settings declared settings or program credentials."
+
+verification = "Build library items from catalog entries and installed manifests covering each requirement; check single and combined requirements and assert only plugins with all of them remain; boundary: a plugin with an unloaded manifest matches no checked requirement, and Clear filters unchecks all."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/help/en/plugins.md", "05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

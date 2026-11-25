@@ -4,12 +4,12 @@ Les plugins permettent à l’agent de piloter les outils de votre poste de test
 
 ## Trouver et installer un plugin
 
-1. Sur la page **Plugins**, sélectionnez **Parcourir les plugins disponibles**. Filtrez par **Écosystème**, **Activité**, **Provenance**, **Maturité** ou état, ou lancez une recherche.
+1. Sur la page **Plugins**, sélectionnez **Parcourir les plugins disponibles**. Filtrez par **Écosystème**, **Activité**, **Provenance**, **Maturité**, **Prérequis** ou état, ou lancez une recherche. **Prérequis** ne garde que les plugins qui ont tous les prérequis cochés : **Compétences uniquement** (sans programme), **Script Python**, **Programme téléchargé par VERA**, **Programme à installer** et **Paramètres**.
 2. Ouvrez **Détails** pour voir ce dont le plugin a besoin, y compris les plugins et programmes requis.
 3. Sélectionnez **Installer**, ou **Installer avec les dépendances** pour installer aussi les plugins requis et les programmes que VERA peut installer lui-même.
 4. Vérifiez l’examen et confirmez.
 
-Une carte vous avertit lorsque le plugin n’est pas disponible pour votre plateforme ou qu’il peut écrire sur un appareil ou le modifier de façon permanente. Les versions inférieures à 1.0.0 sont marquées **Préversion**.
+Une carte vous avertit lorsque le plugin n’est pas disponible pour votre plateforme ou qu’il peut écrire sur un appareil ou le modifier de façon permanente. Les versions inférieures à 1.0.0 sont marquées **Préversion**. Chaque carte affiche aussi les prérequis du plugin avec les mêmes libellés.
 
 ## Installer un pack
 

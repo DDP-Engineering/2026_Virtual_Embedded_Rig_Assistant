@@ -442,6 +442,11 @@ it("summarises the official arduino-cli and KiCad dependencies in the release in
     },
     { name: "arduino-tool", kind: "script", automatic: true, script: "scripts/arduino_tool.py" },
   ]);
+  // REQ-DATA-d10bb593: settings or program credentials mark an entry configurable; others omit it.
+  const configurable = (id: string) => index?.plugins.find((entry) => entry.id === id)?.configurable;
+  expect(configurable("wokwi")).toBe(true);
+  expect(configurable("gdb-debug")).toBe(true);
+  expect(configurable("kicad")).toBeUndefined();
   const kicad = index?.plugins.find((entry) => entry.id === "kicad");
   expect(kicad?.dependencies.find((item) => item.name === "kicad-cli")).toEqual({
     name: "kicad-cli",

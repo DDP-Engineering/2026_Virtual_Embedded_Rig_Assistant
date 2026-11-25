@@ -2,7 +2,7 @@
 // REQ-UX-28a74094 REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695 REQ-UX-7c215eb1
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { CatalogPlugin, PluginCatalogView, PluginSummary } from "@vera/shared";
+import type { CatalogPlugin, PluginCatalogView, PluginDependency, PluginSummary } from "@vera/shared";
 import { veraError } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -369,6 +369,82 @@ it("filters by maturity derived from the version and clears it with the other fi
   await click('[data-action="library-clear"]');
   expect(text()).toContain("34 of 34");
   expect(($("[data-library-maturity]") as HTMLSelectElement).value).toBe("");
+});
+
+// REQ-UX-97df79a8 REQ-UX-8a9de6eb
+it("filters by every checked requirement, shows requirement badges and clears them", async () => {
+  const state = setup();
+  const script: PluginDependency = {
+    name: "tool",
+    kind: "script",
+    automatic: true,
+    script: "scripts/tool.py",
+  };
+  const found: PluginDependency = { name: "cli", kind: "find", automatic: false, find: ["windows"] };
+  const fetched: PluginDependency = {
+    name: "probe",
+    kind: "download",
+    automatic: true,
+    downloads: [{ platform: "windows-x64", sha256: "c".repeat(64) }],
+  };
+  state.entries[5]!.dependencies = [script];
+  state.entries[6]!.dependencies = [script, found];
+  state.entries[6]!.configurable = true;
+  state.entries[7]!.dependencies = [fetched];
+  // plugin-01 is installed with a loaded manifest that declares settings; plugin-00's manifest did not load.
+  state.installed[1] = {
+    ...state.installed[1]!,
+    manifest: {
+      programs: {},
+      settings: {
+        "lab-resources": { kind: "workbench-file", path: "lab/resources.json", description: "Bench." },
+      },
+    } as never,
+  };
+  await mount();
+  await vi.waitFor(() => expect(text()).toContain("34"));
+  await click('[data-library-requirement="python"]');
+  expect(text()).toContain("2 of 34");
+  expect([...ids()].sort()).toEqual(["plugin-05", "plugin-06"]);
+  await click('[data-library-requirement="install"]');
+  expect(text()).toContain("1 of 34");
+  expect(ids()).toEqual(["plugin-06"]);
+  const badges = [
+    ...host.querySelectorAll<HTMLElement>('[data-catalog-plugin="plugin-06"] [data-plugin-requirement]'),
+  ];
+  expect(badges.map((badge) => badge.dataset.pluginRequirement)).toEqual(["python", "install", "settings"]);
+  expect(badges.map((badge) => badge.textContent)).toEqual([
+    "Python script",
+    "Program you install",
+    "Settings",
+  ]);
+  await click('[data-action="library-clear"]');
+  expect(text()).toContain("34 of 34");
+  expect(($('[data-library-requirement="python"]') as HTMLInputElement).checked).toBe(false);
+  // An installed package shows its manifest's requirements; one whose manifest did not load matches nothing.
+  await click('[data-library-requirement="settings"]');
+  expect(text()).toContain("2 of 34");
+  expect([...ids()].sort()).toEqual(["plugin-01", "plugin-06"]);
+  expect(
+    [...host.querySelectorAll<HTMLElement>('[data-plugin="plugin-01"] [data-plugin-requirement]')].map(
+      (badge) => badge.dataset.pluginRequirement,
+    ),
+  ).toEqual(["skills", "settings"]);
+  await click('[data-library-requirement="settings"]');
+  await click('[data-library-requirement="download"]');
+  expect(ids()).toEqual(["plugin-07"]);
+  await click('[data-library-requirement="download"]');
+  await click('[data-library-requirement="skills"]');
+  // Catalog rows without programs are skills only, and so is plugin-01 (with settings); plugin-00 and the
+  // two other installed packages have no loaded manifest and match nothing.
+  expect(text()).toContain("28 of 34");
+  expect(ids()).not.toContain("plugin-00");
+  const skillsOnly = host.querySelector<HTMLElement>("[data-catalog-plugin]");
+  expect(
+    [...(skillsOnly?.querySelectorAll<HTMLElement>("[data-plugin-requirement]") ?? [])].map(
+      (badge) => badge.textContent,
+    ),
+  ).toEqual(["Skills only"]);
 });
 
 // REQ-UX-05e0ed17

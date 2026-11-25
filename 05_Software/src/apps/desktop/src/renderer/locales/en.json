@@ -1444,6 +1444,14 @@
     "maturity": {
       "preRelease": "Pre-release"
     },
+    "requirements": {
+      "title": "Requirements",
+      "skills": "Skills only",
+      "python": "Python script",
+      "download": "Program VERA downloads",
+      "install": "Program you install",
+      "settings": "Settings"
+    },
     "tier": {
       "official": "Official",
       "community": "Community",

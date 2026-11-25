@@ -14,8 +14,8 @@ import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { PluginDetails, reviewHelp } from "./plugin-contents.js";
 import { CatalogDependencies } from "./plugin-dependencies.js";
-import { isNewCatalogEntry } from "./plugin-library.js";
-import { MaturityBadge, pluginActivityLabels } from "./plugin-library-controls.js";
+import { catalogRequirements, isNewCatalogEntry } from "./plugin-library.js";
+import { MaturityBadge, PluginRequirementBadges, pluginActivityLabels } from "./plugin-library-controls.js";
 
 /** Under the `plugins` prefix, so every plugin change also reloads the catalog's installed states. */
 export const catalogKey = ["plugins", "catalog"] as const;
@@ -228,6 +228,7 @@ export function CatalogItem({
           <span className="risk-badge" data-tier={plugin.tier}>
             {plugin.tier === "official" ? t("plugins.tier.official") : t("plugins.tier.community")}
           </span>
+          <PluginRequirementBadges requirements={catalogRequirements(plugin)} />
         </p>
         <div className="workbench-actions plugin-top-actions">
           {!plugin.installed && (
