@@ -736,8 +736,70 @@ it("configured tool-call cap ends limit with valid retained call/result pairs", 
   const calls = messages.flatMap((m) =>
     m.role === "assistant" ? m.content.filter((c) => c.type === "toolCall") : [],
   );
-  expect(calls).toHaveLength(1);
-  expect(messages.filter((m) => m.role === "toolResult")).toHaveLength(1);
+  // The script's next step still calls a tool in the final no-tool request: it is paired, not executed.
+  expect(calls).toHaveLength(2);
+  const results = messages.filter((m) => m.role === "toolResult");
+  expect(results.map((m) => m.toolCallId)).toEqual(calls.map((c) => c.id));
+  expect(results.at(-1)).toMatchObject({ isError: true });
+  expect(JSON.stringify(results.at(-1))).toContain("tool-call limit for this turn was reached");
+  expect(service.get(s.id).snapshot.items.filter((i) => i.kind === "tool")).toHaveLength(1);
+});
+// REQ-FUNC-0a886b84
+it("summarizes without tools when a turn reaches its tool-call limit and marks the stop", async () => {
+  const { service, gateway, handle } = await setup({ maxToolCallsPerTurn: 1 });
+  const requests: { tools: number; system: string }[] = [];
+  const original = gateway.stream.bind(gateway);
+  gateway.stream = async function* (request) {
+    requests.push({ tools: request.tools?.length ?? 0, system: request.system });
+    for await (const event of original(request)) {
+      // The final request offers no tools: answer it with a summary instead of the script's next call.
+      if (!request.tools?.length && event.type === "tool") continue;
+      if (!request.tools?.length && event.type === "done")
+        event.message.content = [
+          { type: "text", text: "Listed the board files; reading board.txt remains." },
+        ];
+      yield event;
+    }
+  };
+  const s = service.create();
+  service.send(s.id, "Read the board");
+  expect(await service.waitIdle(s.id)).toEqual({ stopReason: "limit" });
+  expect(requests).toHaveLength(2);
+  expect(requests[0]?.tools).toBeGreaterThan(0);
+  expect(requests[1]?.tools).toBe(0);
+  expect(requests[1]?.system).toContain("tool-call limit");
+  const snapshot = service.get(s.id).snapshot;
+  expect(snapshot.items.filter((item) => item.kind === "tool")).toHaveLength(1);
+  expect(snapshot.items.findLast((item) => item.kind === "assistant")).toMatchObject({
+    text: "Listed the board files; reading board.txt remains.",
+  });
+  expect(snapshot.turns.at(-1)).toMatchObject({ stopReason: "limit", limit: "toolCalls" });
+  const done = handle.db
+    .prepare("SELECT payload_json FROM events WHERE session_id=? AND type='turn.done'")
+    .all(s.id) as { payload_json: string }[];
+  expect(JSON.parse(done.at(-1)?.payload_json ?? "{}")).toMatchObject({
+    stopReason: "limit",
+    limit: "toolCalls",
+  });
+});
+// REQ-FUNC-0a886b84: a failed summary request leaves the turn at its tool-call limit, not in error.
+it("ends at the tool-call limit without an error when the summary request fails", async () => {
+  const { service, gateway } = await setup({ maxToolCallsPerTurn: 1 });
+  const original = gateway.stream.bind(gateway);
+  gateway.stream = async function* (request) {
+    if (!request.tools?.length) {
+      yield { type: "error", error: { code: "PROVIDER", messageKey: "errors.PROVIDER" }, aborted: false };
+      return;
+    }
+    yield* original(request);
+  };
+  const s = service.create();
+  service.send(s.id, "Read the board");
+  expect(await service.waitIdle(s.id)).toEqual({ stopReason: "limit" });
+  const snapshot = service.get(s.id).snapshot;
+  expect(snapshot.items.filter((item) => item.kind === "error")).toEqual([]);
+  expect(snapshot.status).toBe("idle");
+  expect(snapshot.turns.at(-1)).toMatchObject({ stopReason: "limit", limit: "toolCalls" });
 });
 it("long mandatory first instruction makes no provider call; model switch recalculates budget", async () => {
   const { service, gateway, handle } = await setup();
@@ -751,6 +813,8 @@ it("long mandatory first instruction makes no provider call; model switch recalc
   service.send(s.id, "x".repeat(40000));
   expect(await service.waitIdle(s.id)).toEqual({ stopReason: "limit" });
   expect(calls).toBe(0);
+  // A context-budget stop is not a tool-call limit.
+  expect(service.get(s.id).snapshot.turns.at(-1)?.limit).toBeUndefined();
   expect(new core.MessagesRepository(handle.db).list(s.id)[0]?.content_json).toContain("x".repeat(40000));
   gateway.capabilities = () => ({
     contextWindow: 100000,
@@ -978,8 +1042,11 @@ it("excess calls in one response get source-order error results and only the per
   const messages = new core.MessagesRepository(handle.db)
     .list(s.id)
     .map((r) => JSON.parse(r.content_json) as Message);
-  expect(messages.filter((m) => m.role === "toolResult")).toHaveLength(2);
-  expect(messages.at(-1)).toMatchObject({ toolCallId: "excess", isError: true });
+  // list runs; the excess call and both calls of the final no-tool answer get error results in order.
+  const results = messages.filter((m) => m.role === "toolResult");
+  expect(results).toHaveLength(4);
+  expect(results[1]).toMatchObject({ toolCallId: "excess", isError: true });
+  expect(results.slice(1).every((m) => m.role === "toolResult" && m.isError)).toBe(true);
   expect(service.get(s.id).snapshot.items.filter((i) => i.kind === "tool")).toHaveLength(1);
 });
 it("persists a completed tool message before the next model response ends", async () => {

@@ -395,6 +395,7 @@ export function SessionWorkspace({
           reasoning={view.reasoning}
           updates={view.updates}
           retry={() => void retryRequest()}
+          continueTurn={() => void send(t("chatDetail.continueMessage"))}
           search={search}
           sessionId={id}
           disabled={readOnly || archived}

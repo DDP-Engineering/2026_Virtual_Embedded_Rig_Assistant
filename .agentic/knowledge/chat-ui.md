@@ -119,6 +119,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - Each sidebar session row has one ellipsis menu: Markdown/JSON export of that row,
   rename, confirmed delete, archive/restore. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
+- When the idle session's latest turn ended with `limit: "toolCalls"`, the transcript shows a neutral status and a Continue button that sends the localized `chatDetail.continueMessage` through the workspace send path (REQ-UX-a1584354); a context or output limit shows none. Test: transcript-detail.test.ts.
 - SessionList builds one tree per section (main list, Archived, or the given search results): a session nests
   under its `delegation.parentSessionId` when shared `visibleParent` finds that parent in the same section,
   else it is top-level; unreachable rows from inconsistent metadata become top-level (REQ-UX-a6ba4f23). A

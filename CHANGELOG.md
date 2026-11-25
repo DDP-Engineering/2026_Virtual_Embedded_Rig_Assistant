@@ -25,6 +25,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Raise the default Tool calls per turn to 200 and Concurrent turns to 4; a turn that reaches its tool-call limit now ends with the agent's summary of what is done and what remains, and Chat offers Continue instead of stopping silently (#406).
 - Group completed program and shell operations in chat and clarify approval details.
 - Remove the Delegated sessions list from the parent chat and the Parent session link from a child's chat; the sidebar tree replaces both, and the child chat keeps its delegated turn outcome (#407).
 - Start a Bypass parent's delegated session in Auto-edit when Full Access for delegated tasks is off, instead of refusing the launch; with it on, the child follows the direct Bypass policy, including shell commands without saved prefixes (#405).

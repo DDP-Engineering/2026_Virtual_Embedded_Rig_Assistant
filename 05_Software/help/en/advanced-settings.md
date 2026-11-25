@@ -12,7 +12,7 @@ On the application page, open a group to see its settings. **Only modified value
 
 ## Which value applies
 
-A session value wins over a workbench value, which wins over the application value, which wins over the built-in default. An empty field inherits; it shows the inherited value and where it comes from, for example "50 (default)". **Reset** clears the value at that level. A workbench or session value may be higher or lower than the application value.
+A session value wins over a workbench value, which wins over the application value, which wins over the built-in default. An empty field inherits; it shows the inherited value and where it comes from, for example "200 (default)". **Reset** clears the value at that level. A workbench or session value may be higher or lower than the application value.
 
 A value outside a setting's range is refused when you enter it. A value edited by hand in a file and out of range is ignored, and the next level applies.
 
@@ -26,7 +26,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 
 | Setting | Levels | Range | Default | Applies |
 |---|---|---|---|---|
-| Tool calls per turn | application, workbench, session | 10–500 | 50 | Right away |
+| Tool calls per turn | application, workbench, session | 10–500 | 200 | Right away |
 | Model no-output timeout (s) | application, session | 30–3600 | 300 | Right away |
 | Hosted header wait (s) | application | 10–300 | 30 | Right away |
 | Model discovery timeout (s) | application | 5–120 | 10 | For the next operation |
@@ -38,7 +38,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Calibration margin (%) | application | 100–150 | 110 | Right away |
 | Use provider token counts | application | On / Off | On | Right away |
 | Delegated sessions per workbench | application | 1–8 | 3 | Right away |
-| Concurrent turns | application | 1–16 | 3 | Right away |
+| Concurrent turns | application | 1–16 | 4 | Right away |
 | Automatic compaction | session | On / Off | On | Right away |
 | Tool result size (characters) | application | 8000–128000 | 32000 | Right away |
 | Read window (lines) | application | 500–10000 | 2000 | Right away |
@@ -77,7 +77,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Transcript rows per load | application | 50–500 | 100 | For the next terminal, worker, run or opened session |
 | Rows per page | application | 10, 20, 50 | 10 | Right away |
 
-**Tool calls per turn** is how many tool calls one agent turn may make. When the limit is reached, the turn stops and says so; send another message to continue.
+**Tool calls per turn** is how many tool calls one agent turn may make. When the limit is reached, VERA runs no more tools in that turn and asks the agent to summarize what it did and what remains; the chat then shows **Continue**, which sends a message so the agent picks up where it stopped.
 
 **Model no-output timeout** is how long a hosted model may send nothing before the request ends with a timeout; raise it for slow reasoning models. **Hosted header wait** is how long VERA waits for a hosted provider to start answering. A custom endpoint uses its own **Response timeout** for both.
 

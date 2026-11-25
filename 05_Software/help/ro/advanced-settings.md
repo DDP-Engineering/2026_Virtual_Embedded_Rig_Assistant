@@ -12,7 +12,7 @@ Setările avansate reglează limite pe care majoritatea utilizatorilor nu trebui
 
 ## Ce valoare se aplică
 
-Valoarea sesiunii are prioritate față de cea a workbench-ului, care are prioritate față de valoarea aplicației, iar aceasta față de valoarea implicită. Un câmp gol moștenește valoarea; arată valoarea moștenită și de unde vine, de exemplu „50 (implicit)”. **Resetează** șterge valoarea la acel nivel. O valoare de workbench sau de sesiune poate fi mai mare sau mai mică decât cea a aplicației.
+Valoarea sesiunii are prioritate față de cea a workbench-ului, care are prioritate față de valoarea aplicației, iar aceasta față de valoarea implicită. Un câmp gol moștenește valoarea; arată valoarea moștenită și de unde vine, de exemplu „200 (implicit)”. **Resetează** șterge valoarea la acel nivel. O valoare de workbench sau de sesiune poate fi mai mare sau mai mică decât cea a aplicației.
 
 O valoare în afara intervalului unei setări este refuzată când o introduci. O valoare editată manual într-un fișier și aflată în afara intervalului este ignorată și se aplică nivelul următor.
 
@@ -26,7 +26,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 
 | Setare | Niveluri | Interval | Implicit | Se aplică |
 |---|---|---|---|---|
-| Apeluri de instrumente pe tură | aplicație, workbench, sesiune | 10–500 | 50 | Imediat |
+| Apeluri de instrumente pe tură | aplicație, workbench, sesiune | 10–500 | 200 | Imediat |
 | Timp fără răspuns de la model (s) | aplicație, sesiune | 30–3600 | 300 | Imediat |
 | Așteptarea antetelor la furnizori găzduiți (s) | aplicație | 10–300 | 30 | Imediat |
 | Timp maxim de detectare a modelelor (s) | aplicație | 5–120 | 10 | La următoarea operație |
@@ -38,7 +38,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Marjă de calibrare (%) | aplicație | 100–150 | 110 | Imediat |
 | Folosește numărarea tokenilor de la furnizor | aplicație | Activat / Dezactivat | Activat | Imediat |
 | Sesiuni delegate per workbench | aplicație | 1–8 | 3 | Imediat |
-| Ture simultane | aplicație | 1–16 | 3 | Imediat |
+| Ture simultane | aplicație | 1–16 | 4 | Imediat |
 | Compactare automată | sesiune | Activat / Dezactivat | Activat | Imediat |
 | Mărimea rezultatului unui instrument (caractere) | aplicație | 8000–128000 | 32000 | Imediat |
 | Fereastra de citire (linii) | aplicație | 500–10000 | 2000 | Imediat |
@@ -77,7 +77,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Rânduri de conversație pe încărcare | aplicație | 50–500 | 100 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Rânduri pe pagină | aplicație | 10, 20, 50 | 10 | Imediat |
 
-**Apeluri de instrumente pe tură** este numărul de apeluri de instrumente pe care agentul le poate face într-o tură. Când limita este atinsă, tura se oprește și spune asta; trimite un alt mesaj ca să continui.
+**Apeluri de instrumente pe tură** este numărul de apeluri de instrumente pe care agentul le poate face într-o tură. Când limita este atinsă, VERA nu mai rulează instrumente în acea tură și îi cere agentului să rezume ce a făcut și ce mai rămâne; apoi chatul arată **Continuă**, care trimite un mesaj ca agentul să reia de unde s-a oprit.
 
 **Timp fără răspuns de la model** este cât poate un model găzduit să nu trimită nimic înainte ca cererea să se încheie cu timeout; mărește-l pentru modele de raționament lente. **Așteptarea antetelor la furnizori găzduiți** este cât așteaptă VERA ca un furnizor găzduit să înceapă să răspundă. Un endpoint personalizat folosește pentru ambele propriul **Timp de așteptare a răspunsului**.
 

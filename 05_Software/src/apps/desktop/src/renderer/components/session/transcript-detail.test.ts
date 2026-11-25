@@ -36,7 +36,12 @@ const fixture = (): SessionState => ({
     tool("three", "turn2"),
   ],
 });
-async function render(state: SessionState, detail: "verbose" | "normal" | "minimal", retry = vi.fn()) {
+async function render(
+  state: SessionState,
+  detail: "verbose" | "normal" | "minimal",
+  retry = vi.fn(),
+  continueTurn?: () => void,
+) {
   await act(async () => i18n.changeLanguage("en"));
   if (!container) {
     container = document.createElement("div");
@@ -55,6 +60,7 @@ async function render(state: SessionState, detail: "verbose" | "normal" | "minim
           reasoning: { turn1: "Live reasoning" },
           updates: { two: "Live update" },
           retry,
+          ...(continueTurn ? { continueTurn } : {}),
           search: "Answer",
           sessionId: "session",
         }),
@@ -462,3 +468,32 @@ it.each(["minimal", "normal", "verbose"] as const)(
     expect(notices[1]?.textContent).toMatch(/unavailable/i);
   },
 );
+
+// REQ-UX-a1584354
+it("offers Continue after a turn stopped at its tool-call limit, and only then", async () => {
+  const continueTurn = vi.fn();
+  const state = fixture();
+  const notice = () => container.querySelector("[data-turn-limit]");
+  state.turns = [{ turnId: "turn1", steps: 1, stopReason: "limit", limit: "toolCalls" }];
+  await render(state, "normal", vi.fn(), continueTurn);
+  expect(notice()?.textContent).toContain("tool-call limit");
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="continue-turn"]')?.click());
+  expect(continueTurn).toHaveBeenCalledTimes(1);
+  // A context-budget limit, a running turn and a later normal turn show no notice.
+  await render(
+    { ...state, turns: [{ turnId: "turn1", steps: 1, stopReason: "limit" }] },
+    "normal",
+    vi.fn(),
+    continueTurn,
+  );
+  expect(notice()).toBeNull();
+  await render({ ...state, activeTurnId: "turn2" }, "normal", vi.fn(), continueTurn);
+  expect(notice()).toBeNull();
+  await render(
+    { ...state, turns: [...state.turns, { turnId: "turn2", steps: 1, stopReason: "end" }] },
+    "normal",
+    vi.fn(),
+    continueTurn,
+  );
+  expect(notice()).toBeNull();
+});

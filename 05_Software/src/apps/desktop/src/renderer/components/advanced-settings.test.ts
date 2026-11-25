@@ -75,7 +75,7 @@ it("shows only the switch until Show advanced settings is on, and saves both wit
   expect(container.querySelector("[data-advanced-field]")).toBeNull();
   await act(async () => userEvent.setup().click(toggle));
   expect(update).not.toHaveBeenCalled();
-  expect(input().placeholder).toBe("50 (default)");
+  expect(input().placeholder).toBe("200 (default)");
   await act(async () => userEvent.setup().type(input(), "100"));
   await act(async () =>
     userEvent.setup().click(container.querySelector("[data-settings-save]") as HTMLButtonElement),

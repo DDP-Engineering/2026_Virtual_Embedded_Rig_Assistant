@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-0a886b84"
+
+title = "Summarize a turn that reaches its tool-call limit"
+
+status = "active"
+
+requirement = "When an agent turn reaches its tool-call limit, the runtime shall return the executed results to the model in one final request without tools that asks for a brief summary of what is done and what remains, and end the turn with stop reason limit marked as a tool-call limit."
+
+verification = "Script a model that calls a tool on every step with a limit of 2: assert two executions, a third request offered no tools whose answer is emitted as the last assistant message, and turn.done with stopReason limit and limit toolCalls; boundary: a model that still calls a tool in the final request gets it recorded as not executed, and a context-budget limit carries no toolCalls mark."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/agent/runtime-edge.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

@@ -452,6 +452,9 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
+    "toolLimit": "Dieser Durchlauf hat sein Limit für Werkzeugaufrufe erreicht. Mit Fortsetzen macht VERA dort weiter, wo er stehen blieb.",
+    "continue": "Fortsetzen",
+    "continueMessage": "Mach dort weiter, wo du aufgehört hast.",
     "operations": "Vorgänge: {{count}}"
   },
   "delegation": {

@@ -7,10 +7,10 @@ title = "Limit tool calls per turn by the resolved Advanced setting"
 status = "active"
 
 requirement = """
-When an agent turn runs, VERA shall cap its tool calls at the resolved Tool calls per turn value, an integer from 10 to 500 with default 50 that applies from the next turn.
+When an agent turn runs, VERA shall cap its tool calls at the resolved Tool calls per turn value, an integer from 10 to 500 with default 200 that applies from the next turn.
 """
 
-verification = "Resolve 12 for a session and replay a turn requesting 15 tool calls: the 13th call gets the limit result and the turn ends with limit; change the session value between turns and the next turn uses the new value; with nothing set the cap is 50."
+verification = "Resolve 12 for a session and replay a turn requesting 15 tool calls: the 13th call gets the limit result and the turn ends with limit; change the session value between turns and the next turn uses the new value; with nothing set the cap is 200."
 
 affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-25

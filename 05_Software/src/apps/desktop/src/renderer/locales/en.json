@@ -452,6 +452,9 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Stopped or interrupted turn.",
+    "toolLimit": "This turn reached its tool-call limit. Continue to let VERA pick up where it stopped.",
+    "continue": "Continue",
+    "continueMessage": "Continue where you left off.",
     "operations": "Operations: {{count}}"
   },
   "delegation": {

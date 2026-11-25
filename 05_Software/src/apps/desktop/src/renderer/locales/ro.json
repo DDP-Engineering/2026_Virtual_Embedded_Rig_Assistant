@@ -452,6 +452,9 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Execuție oprită sau întreruptă.",
+    "toolLimit": "Tura a atins limita de apeluri de instrumente. Continuă ca VERA să reia de unde s-a oprit.",
+    "continue": "Continuă",
+    "continueMessage": "Continuă de unde ai rămas.",
     "operations": "Operații: {{count}}"
   },
   "delegation": {

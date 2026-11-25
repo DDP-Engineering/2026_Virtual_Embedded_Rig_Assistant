@@ -107,3 +107,10 @@ entries:
       ro: Filtrează pluginurile după ce necesită, de exemplu un script Python, un program extern sau setări.
       de: Plugins nach Voraussetzungen filtern, etwa Python-Skript, externes Programm oder Einstellungen.
       fr: Filtrez les plugins selon leurs prérequis, comme un script Python, un programme externe ou des réglages.
+  - category: improved
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Long tasks stop less often, and a stopped turn now explains where it is and offers Continue.
+      ro: Sarcinile lungi se opresc mai rar, iar o tură oprită explică unde a ajuns și oferă Continuă.
+      de: Lange Aufgaben stoppen seltener; ein gestoppter Durchlauf erklärt den Stand und bietet Fortsetzen.
+      fr: Les longues tâches s’arrêtent moins souvent ; un tour arrêté explique où il en est et propose Continuer.

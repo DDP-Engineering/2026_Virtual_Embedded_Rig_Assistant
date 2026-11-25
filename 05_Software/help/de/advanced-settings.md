@@ -12,7 +12,7 @@ Erweiterte Einstellungen passen Grenzen an, die die meisten Benutzer nie ändern
 
 ## Welcher Wert gilt
 
-Ein Sitzungswert hat Vorrang vor einem Workbench-Wert, dieser vor dem Anwendungswert und dieser vor dem eingebauten Standard. Ein leeres Feld erbt; es zeigt den geerbten Wert und seine Herkunft, zum Beispiel „50 (Standard)“. **Zurücksetzen** löscht den Wert auf dieser Ebene. Ein Workbench- oder Sitzungswert darf höher oder niedriger als der Anwendungswert sein.
+Ein Sitzungswert hat Vorrang vor einem Workbench-Wert, dieser vor dem Anwendungswert und dieser vor dem eingebauten Standard. Ein leeres Feld erbt; es zeigt den geerbten Wert und seine Herkunft, zum Beispiel „200 (Standard)“. **Zurücksetzen** löscht den Wert auf dieser Ebene. Ein Workbench- oder Sitzungswert darf höher oder niedriger als der Anwendungswert sein.
 
 Ein Wert außerhalb des Bereichs einer Einstellung wird bei der Eingabe abgelehnt. Ein von Hand in einer Datei bearbeiteter Wert außerhalb des Bereichs wird ignoriert, und die nächste Ebene gilt.
 
@@ -26,7 +26,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 
 | Einstellung | Ebenen | Bereich | Standard | Gilt |
 |---|---|---|---|---|
-| Werkzeugaufrufe pro Durchlauf | Anwendung, Workbench, Sitzung | 10–500 | 50 | Sofort |
+| Werkzeugaufrufe pro Durchlauf | Anwendung, Workbench, Sitzung | 10–500 | 200 | Sofort |
 | Zeitlimit ohne Modellausgabe (s) | Anwendung, Sitzung | 30–3600 | 300 | Sofort |
 | Wartezeit auf Antwort-Header gehosteter Anbieter (s) | Anwendung | 10–300 | 30 | Sofort |
 | Zeitlimit für Modellsuche (s) | Anwendung | 5–120 | 10 | Ab dem nächsten Vorgang |
@@ -38,7 +38,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Kalibrierungsreserve (%) | Anwendung | 100–150 | 110 | Sofort |
 | Token-Zählung des Anbieters verwenden | Anwendung | Ein / Aus | Ein | Sofort |
 | Delegierte Sitzungen pro Workbench | Anwendung | 1–8 | 3 | Sofort |
-| Gleichzeitige Durchläufe | Anwendung | 1–16 | 3 | Sofort |
+| Gleichzeitige Durchläufe | Anwendung | 1–16 | 4 | Sofort |
 | Automatische Kompaktierung | Sitzung | Ein / Aus | Ein | Sofort |
 | Größe eines Werkzeugergebnisses (Zeichen) | Anwendung | 8000–128000 | 32000 | Sofort |
 | Lesefenster (Zeilen) | Anwendung | 500–10000 | 2000 | Sofort |
@@ -77,7 +77,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Verlaufszeilen pro Nachladen | Anwendung | 50–500 | 100 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Zeilen pro Seite | Anwendung | 10, 20, 50 | 10 | Sofort |
 
-**Werkzeugaufrufe pro Durchlauf** gibt an, wie viele Werkzeugaufrufe ein Agentendurchlauf ausführen darf. Ist die Grenze erreicht, endet der Durchlauf mit einem Hinweis; senden Sie eine weitere Nachricht, um fortzufahren.
+**Werkzeugaufrufe pro Durchlauf** gibt an, wie viele Werkzeugaufrufe ein Agentendurchlauf ausführen darf. Ist die Grenze erreicht, führt VERA in diesem Durchlauf keine Werkzeuge mehr aus und lässt den Agenten zusammenfassen, was erledigt ist und was noch fehlt; danach zeigt der Chat **Fortsetzen**, das eine Nachricht sendet, damit der Agent dort weitermacht.
 
 **Zeitlimit ohne Modellausgabe** gibt an, wie lange ein gehostetes Modell nichts senden darf, bevor die Anfrage mit einer Zeitüberschreitung endet; erhöhen Sie es für langsame Reasoning-Modelle. **Wartezeit auf Antwort-Header gehosteter Anbieter** gibt an, wie lange VERA wartet, bis ein gehosteter Anbieter zu antworten beginnt. Ein eigener Endpunkt verwendet für beides sein eigenes **Antwort-Timeout**.
 

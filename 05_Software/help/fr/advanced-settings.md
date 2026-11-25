@@ -12,7 +12,7 @@ Dans les paramètres de l’application, ouvrez un groupe pour afficher ses rég
 
 ## Quelle valeur s’applique
 
-Une valeur de session l’emporte sur une valeur de banc, qui l’emporte sur la valeur de l’application, qui l’emporte sur la valeur par défaut. Un champ vide hérite ; il affiche la valeur héritée et sa provenance, par exemple « 50 (par défaut) ». **Réinitialiser** efface la valeur à ce niveau. Une valeur de banc ou de session peut être plus haute ou plus basse que celle de l’application.
+Une valeur de session l’emporte sur une valeur de banc, qui l’emporte sur la valeur de l’application, qui l’emporte sur la valeur par défaut. Un champ vide hérite ; il affiche la valeur héritée et sa provenance, par exemple « 200 (par défaut) ». **Réinitialiser** efface la valeur à ce niveau. Une valeur de banc ou de session peut être plus haute ou plus basse que celle de l’application.
 
 Une valeur hors de la plage d’un paramètre est refusée à la saisie. Une valeur modifiée à la main dans un fichier et hors plage est ignorée, et le niveau suivant s’applique.
 
@@ -26,7 +26,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 
 | Paramètre | Niveaux | Plage | Par défaut | S’applique |
 |---|---|---|---|---|
-| Appels d’outils par tour | application, banc, session | 10–500 | 50 | Immédiatement |
+| Appels d’outils par tour | application, banc, session | 10–500 | 200 | Immédiatement |
 | Délai sans sortie du modèle (s) | application, session | 30–3600 | 300 | Immédiatement |
 | Attente des en-têtes des fournisseurs hébergés (s) | application | 10–300 | 30 | Immédiatement |
 | Délai de détection des modèles (s) | application | 5–120 | 10 | À la prochaine opération |
@@ -38,7 +38,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Marge de calibrage (%) | application | 100–150 | 110 | Immédiatement |
 | Utiliser le décompte de jetons du fournisseur | application | Activé / Désactivé | Activé | Immédiatement |
 | Sessions déléguées par banc de travail | application | 1–8 | 3 | Immédiatement |
-| Tours simultanés | application | 1–16 | 3 | Immédiatement |
+| Tours simultanés | application | 1–16 | 4 | Immédiatement |
 | Compactage automatique | session | Activé / Désactivé | Activé | Immédiatement |
 | Taille d’un résultat d’outil (caractères) | application | 8000–128000 | 32000 | Immédiatement |
 | Fenêtre de lecture (lignes) | application | 500–10000 | 2000 | Immédiatement |
@@ -77,7 +77,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Lignes de conversation par chargement | application | 50–500 | 100 | Au prochain terminal, worker, exécution ou session ouverte |
 | Lignes par page | application | 10, 20, 50 | 10 | Immédiatement |
 
-**Appels d’outils par tour** est le nombre d’appels d’outils qu’un tour de l’agent peut effectuer. Quand la limite est atteinte, le tour s’arrête et l’indique ; envoyez un autre message pour continuer.
+**Appels d’outils par tour** est le nombre d’appels d’outils qu’un tour de l’agent peut effectuer. Quand la limite est atteinte, VERA n’exécute plus d’outils dans ce tour et demande à l’agent de résumer ce qu’il a fait et ce qui reste ; le chat affiche ensuite **Continuer**, qui envoie un message pour que l’agent reprenne là où il s’est arrêté.
 
 **Délai sans sortie du modèle** est la durée pendant laquelle un modèle hébergé peut ne rien envoyer avant que la requête se termine par un dépassement de délai ; augmentez-le pour les modèles de raisonnement lents. **Attente des en-têtes des fournisseurs hébergés** est la durée pendant laquelle VERA attend qu’un fournisseur hébergé commence à répondre. Un point de terminaison personnalisé utilise pour les deux son propre **Délai de réponse**.
 

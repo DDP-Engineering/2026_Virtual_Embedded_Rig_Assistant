@@ -1,4 +1,5 @@
 import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
+import { advancedSettings } from "@vera/shared";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import type { LlmEvent, LlmGateway, LlmRequest } from "../llm/gateway.js";
@@ -279,22 +280,29 @@ it("empty terminal stream yields an error and tool cap closes all unexecuted pai
       return "ok";
     },
   };
-  const cap = fixture(
+  const cap = advancedSettings.toolCallsPerTurn.default;
+  const capped = fixture(
     async function* () {
       yield {
         type: "done",
         message: message(
-          Array.from({ length: 51 }, (_, i) => ({ ...call, id: `call${i}` })),
+          Array.from({ length: cap + 1 }, (_, i) => ({ ...call, id: `call${i}` })),
           "toolUse",
         ),
       };
     },
     [tool],
   );
-  cap.setBudget(32768, 1000);
-  expect((await cap.runtime.send("cap")).stopReason).toBe("limit");
-  expect(executions).toBe(50);
-  expect(cap.runtime.messages().filter((m) => m.role === "toolResult")).toHaveLength(51);
+  capped.setBudget(32768, 1000);
+  expect((await capped.runtime.send("cap")).stopReason).toBe("limit");
+  expect(executions).toBe(cap);
+  // Every call keeps its result; with this small budget the summary request does not fit and is skipped.
+  const messages = capped.runtime.messages();
+  const calls = messages.flatMap((m) =>
+    m.role === "assistant" ? m.content.filter((c) => c.type === "toolCall") : [],
+  );
+  expect(messages.filter((m) => m.role === "toolResult")).toHaveLength(calls.length);
+  expect(capped.events.filter((event) => event.type === "error")).toEqual([]);
 });
 it("hands swallowed turn-loop exceptions to the host log and survives a failing logger", async () => {
   const failing: LlmGateway["stream"] = async function* () {

@@ -452,6 +452,9 @@
     "normal": "Normal",
     "minimal": "Minimal",
     "stopped": "Tour arrêté ou interrompu.",
+    "toolLimit": "Ce tour a atteint sa limite d’appels d’outils. Continuez pour que VERA reprenne là où il s’est arrêté.",
+    "continue": "Continuer",
+    "continueMessage": "Reprends là où tu t’es arrêté.",
     "operations": "Opérations : {{count}}"
   },
   "delegation": {

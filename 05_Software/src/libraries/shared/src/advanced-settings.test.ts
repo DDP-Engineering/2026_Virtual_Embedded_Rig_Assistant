@@ -21,12 +21,12 @@ describe("Advanced settings registry", () => {
     expect(advancedPatchSchema("workbench").safeParse({ [key]: min }).success).toBe(false);
   });
 
-  it("registers Tool calls per turn for every scope, 10 to 500, default 50, applied live", () => {
+  it("registers Tool calls per turn for every scope, 10 to 500, default 200, applied live", () => {
     expect(advancedSettings.toolCallsPerTurn).toMatchObject({
       kind: "int",
       min: 10,
       max: 500,
-      default: 50,
+      default: 200,
       scopes: ["app", "workbench", "session"],
       applies: "live",
     });
@@ -34,7 +34,7 @@ describe("Advanced settings registry", () => {
 
   it("resolves session over workbench over app over the default, raising or lowering freely", () => {
     const key = "toolCallsPerTurn" as const;
-    expect(resolveAdvanced(key, {})).toEqual({ value: 50, source: "default" });
+    expect(resolveAdvanced(key, {})).toEqual({ value: 200, source: "default" });
     expect(resolveAdvanced(key, { app: { toolCallsPerTurn: 100 } })).toEqual({ value: 100, source: "app" });
     expect(
       resolveAdvanced(key, { app: { toolCallsPerTurn: 100 }, workbench: { toolCallsPerTurn: 200 } }),
@@ -357,12 +357,12 @@ describe("Agent and context settings", () => {
 
 // REQ-DATA-84718b36
 describe("Concurrent turns setting", () => {
-  it("registers concurrentTurns at application scope only, 1 to 16, default 3, applied live", () => {
+  it("registers concurrentTurns at application scope only, 1 to 16, default 4, applied live", () => {
     expect(advancedSettings.concurrentTurns).toMatchObject({
       kind: "int",
       min: 1,
       max: 16,
-      default: 3,
+      default: 4,
       scopes: ["app"],
       applies: "live",
     });
@@ -372,7 +372,7 @@ describe("Concurrent turns setting", () => {
       expect(app.safeParse({ concurrentTurns: value }).success).toBe(false);
     for (const scope of ["workbench", "session"] as const)
       expect(advancedPatchSchema(scope).safeParse({ concurrentTurns: 3 }).success).toBe(false);
-    expect(resolveAdvanced("concurrentTurns", {})).toEqual({ value: 3, source: "default" });
+    expect(resolveAdvanced("concurrentTurns", {})).toEqual({ value: 4, source: "default" });
     expect(resolveAdvanced("concurrentTurns", { app: { concurrentTurns: 5 } })).toEqual({
       value: 5,
       source: "app",

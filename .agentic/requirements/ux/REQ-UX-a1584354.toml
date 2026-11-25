@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a1584354"
+
+title = "Offer Continue after the tool-call limit"
+
+status = "active"
+
+requirement = "While the latest turn of an idle session ended at its tool-call limit, Chat shall show a notice that the turn reached the tool-call limit and a Continue button that sends a continuation message."
+
+verification = "Render a session whose latest turn ended with stopReason limit and limit toolCalls: assert the notice and that Continue sends one message; boundary: no notice while a turn runs, for a context-budget limit, or after a later turn ends normally."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/help/en/advanced-settings.md", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

@@ -2835,6 +2835,17 @@ legend {
 .transcript-frame > .transcript::-webkit-scrollbar {
   display: none;
 }
+/* REQ-UX-a1584354: a calm notice, not an error, after a turn reached its tool-call limit. */
+.turn-limit-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  color: var(--muted-foreground);
+}
+.turn-limit-notice > p {
+  margin: 0;
+}
 .transcript-content {
   display: flex;
   flex-direction: column;

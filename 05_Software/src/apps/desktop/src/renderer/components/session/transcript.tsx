@@ -59,6 +59,7 @@ export function Transcript({
   reasoning,
   updates,
   retry,
+  continueTurn,
   search,
   workbenchId,
   sessionId,
@@ -71,6 +72,8 @@ export function Transcript({
   reasoning: Record<string, string>;
   updates: Record<string, string>;
   retry: () => void;
+  /** Sends a continuation after a turn stopped at its tool-call limit (REQ-UX-a1584354). */
+  continueTurn?: (() => void) | undefined;
   search: string;
   workbenchId?: string | undefined;
   sessionId?: string | undefined;
@@ -216,6 +219,8 @@ export function Transcript({
     !state.activeTurnId &&
     latestTurn !== undefined &&
     (latestTurn.stopReason === "aborted" || state.interrupted.includes(latestTurn.turnId));
+  const toolLimit =
+    !state.activeTurnId && latestTurn?.stopReason === "limit" && latestTurn.limit === "toolCalls";
   return (
     <>
       {bookmarks.error !== undefined && <ErrorMessage error={bookmarks.error} />}
@@ -349,6 +354,21 @@ export function Transcript({
               <p className="muted" data-chat-stopped role="status">
                 {t("chatDetail.stopped")}
               </p>
+            )}
+            {toolLimit && (
+              <div className="turn-limit-notice" data-turn-limit>
+                <p role="status">{t("chatDetail.toolLimit")}</p>
+                {continueTurn && (
+                  <button
+                    type="button"
+                    data-action="continue-turn"
+                    disabled={disabled}
+                    onClick={continueTurn}
+                  >
+                    {t("chatDetail.continue")}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

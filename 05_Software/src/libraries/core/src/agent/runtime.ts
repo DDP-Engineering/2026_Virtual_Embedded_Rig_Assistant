@@ -8,6 +8,7 @@ import type {
 } from "@earendil-works/pi-ai";
 import {
   acceptsImages,
+  advancedSettings,
   MAX_MESSAGE_IMAGES,
   type ModelCapabilities,
   providerRetryAfterSchema,
@@ -54,6 +55,10 @@ export function zeroUsage(): AssistantMessage["usage"] {
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
   };
 }
+/** The instruction of the final request after a turn reaches its tool-call limit (REQ-FUNC-0a886b84). */
+const TOOL_LIMIT_SUMMARY =
+  "This turn reached its tool-call limit, so no tools are available now. Do not call tools. In two or three sentences, tell the user what you completed and what remains, so they can continue in their next message.";
+
 export function toolResult(
   call: ToolCall,
   text: string,
@@ -122,6 +127,8 @@ export class ReferenceRuntime implements AgentRuntime {
   private compactor = new ContextCompactor();
   /** Consumption reported during the latest turn, continued by a background compaction. */
   private lastTotals = { inputTokens: 0, outputTokens: 0 };
+  /** Set when the current turn stopped at its tool-call limit (REQ-FUNC-0a886b84). */
+  private toolCallLimit = false;
   private readonly listeners = new Set<(event: RuntimeEvent) => void>();
   constructor(private readonly host: RuntimeHost) {}
   start(init: RuntimeInit): void {
@@ -188,6 +195,7 @@ export class ReferenceRuntime implements AgentRuntime {
     });
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
+    this.toolCallLimit = false;
     try {
       stopReason = await this.run(init, controller.signal, currentStart, recovered, messageId);
     } catch (error) {
@@ -202,7 +210,12 @@ export class ReferenceRuntime implements AgentRuntime {
         );
       }
     } finally {
-      this.emit({ type: "turn.done", turnId, stopReason });
+      this.emit({
+        type: "turn.done",
+        turnId,
+        stopReason,
+        ...(stopReason === "limit" && this.toolCallLimit ? { limit: "toolCalls" as const } : {}),
+      });
       this.controller = undefined;
     }
     return { stopReason };
@@ -317,6 +330,10 @@ export class ReferenceRuntime implements AgentRuntime {
     initialPromptId: string,
   ): Promise<StopReason> {
     let callsUsed = 0;
+    const maxCalls = init.maxToolCallsPerTurn ?? advancedSettings.toolCallsPerTurn.default;
+    // After the tool-call limit, one last request without tools lets the model say what is done and what remains.
+    let summarizing = false;
+    const system = () => (summarizing ? `${init.systemPrompt}\n\n${TOOL_LIMIT_SUMMARY}` : init.systemPrompt);
     let inputTokens = 0;
     let outputTokens = 0;
     let promptIds = [initialPromptId];
@@ -335,7 +352,7 @@ export class ReferenceRuntime implements AgentRuntime {
       return image ? { ...message, content: [...message.content, image] } : message;
     };
     const toolsFor = (capabilities: ModelCapabilities) =>
-      init.tools.filter(
+      (summarizing ? [] : init.tools).filter(
         (tool) => (tool.available?.() ?? true) && (!tool.requiresImages || acceptsImages(capabilities)),
       );
     const delivered = new Set<string>();
@@ -347,7 +364,8 @@ export class ReferenceRuntime implements AgentRuntime {
       await this.host.gateway.prepareModel?.(init.model, signal);
       signal.throwIfAborted();
       const capabilities = this.host.gateway.capabilities(init.model);
-      let queued = pending();
+      // The summary request admits no queued messages; they start the next turn.
+      let queued = summarizing ? [] : pending();
       // Recovered queue precedes the new instruction in the provider view. The full
       // durable transcript retains its original event/message arrival records.
       const prior = queued.filter((message) => recovered.has(message.messageId));
@@ -362,7 +380,7 @@ export class ReferenceRuntime implements AgentRuntime {
       const scale = this.compactor.scale(init.model);
       const compacted = await this.compactor.prepare(
         {
-          system: init.systemPrompt,
+          system: system(),
           tools: toolSpecs(toolsFor(capabilities)),
           messages: buildContext(requestMessages.map(withResultImages), this.host.now(), currentStart),
         },
@@ -376,7 +394,7 @@ export class ReferenceRuntime implements AgentRuntime {
       // Messages admitted during an awaited historical summary join the next normal
       // request too. Recheck M1 once, without another compaction attempt.
       const included = new Set(queued.map((message) => message.messageId));
-      const arrivals = pending().filter((message) => !included.has(message.messageId));
+      const arrivals = summarizing ? [] : pending().filter((message) => !included.has(message.messageId));
       queued = [...queued, ...arrivals];
       // The summary is itself a model dispatch; resolve capabilities again for the normal call.
       const currentCapabilities = this.host.gateway.capabilities(init.model);
@@ -386,7 +404,7 @@ export class ReferenceRuntime implements AgentRuntime {
       const view = {
         ...init.contextPolicy.prepare(
           {
-            system: init.systemPrompt,
+            system: system(),
             tools,
             messages: [...compacted.messages, ...arrivals.map(userMessage)],
           },
@@ -403,6 +421,8 @@ export class ReferenceRuntime implements AgentRuntime {
       if (signal.aborted || !fits)
         this.emit({ type: "usage.updated", inputTokens, outputTokens, ...budget, promptIds });
       if (signal.aborted) return "aborted";
+      // A summary that no longer fits ends the turn at its tool-call limit, without a context error.
+      if (!fits && summarizing) return "limit";
       if (!fits) {
         this.emit({
           type: "error",
@@ -468,7 +488,7 @@ export class ReferenceRuntime implements AgentRuntime {
       try {
         for await (const event of this.host.gateway.stream({
           model: init.model,
-          system: init.systemPrompt,
+          system: system(),
           tools,
           ...(revocableTools.length > 0 && {
             toolAvailable: (name: string) =>
@@ -488,6 +508,8 @@ export class ReferenceRuntime implements AgentRuntime {
             retainPartial(event.partial);
             reportUsage(event.partial ?? final);
             if (signal.aborted || event.aborted) return "aborted";
+            // A failed summary leaves the turn at its tool-call limit, not in error.
+            if (summarizing) return "limit";
             const limit =
               event.error.code === "CONTEXT_LIMIT" ||
               (event.error.code === "PROVIDER" && event.error.params?.reason === "context");
@@ -499,6 +521,7 @@ export class ReferenceRuntime implements AgentRuntime {
         retainPartial();
         reportUsage(final);
         if (signal.aborted) return "aborted";
+        if (summarizing) return "limit";
         this.report("Model stream failed", error);
         this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
         return "error";
@@ -510,6 +533,7 @@ export class ReferenceRuntime implements AgentRuntime {
       }
       if (!final) {
         retainPartial();
+        if (summarizing) return "limit";
         this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
         return "error";
       }
@@ -522,6 +546,18 @@ export class ReferenceRuntime implements AgentRuntime {
       this.emit({ type: "message.done", messageId, text, message: final });
       reportUsage(final);
       const calls = final.content.filter((c): c is ToolCall => c.type === "toolCall");
+      if (summarizing) {
+        for (const call of calls)
+          this.transcript.push(
+            toolResult(
+              call,
+              "Not executed: the tool-call limit for this turn was reached.",
+              true,
+              this.host.now(),
+            ),
+          );
+        return "limit";
+      }
       if (final.stopReason === "length" || final.stopReason === "error" || final.stopReason === "aborted") {
         for (const call of calls)
           this.transcript.push(
@@ -605,7 +641,7 @@ export class ReferenceRuntime implements AgentRuntime {
         batch = [];
       };
       for (const call of calls) {
-        if (callsUsed >= (init.maxToolCallsPerTurn ?? 50) || signal.aborted) break;
+        if (callsUsed >= maxCalls || signal.aborted) break;
         callsUsed++;
         const tool = offered.find((candidate) => candidate.name === call.name);
         // A raster decode can expand a bounded input substantially.
@@ -627,7 +663,10 @@ export class ReferenceRuntime implements AgentRuntime {
             ),
         );
       if (signal.aborted) return "aborted";
-      if (callsUsed >= (init.maxToolCallsPerTurn ?? 50)) return "limit";
+      if (callsUsed >= maxCalls) {
+        summarizing = true;
+        this.toolCallLimit = true;
+      }
     }
   }
 }

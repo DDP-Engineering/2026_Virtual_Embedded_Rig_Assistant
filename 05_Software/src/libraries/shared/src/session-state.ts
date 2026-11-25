@@ -96,7 +96,12 @@ export const sessionStateSchema = z.strictObject({
     ]),
   ),
   turns: z.array(
-    z.strictObject({ turnId: z.string(), steps: z.number(), stopReason: stopReasonSchema.nullable() }),
+    z.strictObject({
+      turnId: z.string(),
+      steps: z.number(),
+      stopReason: stopReasonSchema.nullable(),
+      limit: z.literal("toolCalls").optional(),
+    }),
   ),
   questions: z.array(sessionQuestionSchema),
   approvals: z.array(
@@ -347,7 +352,10 @@ function reduce(d: Draft, event: SessionEvent): void {
       s.status = event.stopReason === "error" ? "error" : "idle";
       s.usage = settledUsage(s.usage);
       for (let i = 0; i < s.turns.length; i++)
-        if (s.turns[i]?.turnId === event.turnId) d.at("turns", i).stopReason = event.stopReason;
+        if (s.turns[i]?.turnId === event.turnId) {
+          d.at("turns", i).stopReason = event.stopReason;
+          if (event.limit) d.at("turns", i).limit = event.limit;
+        }
       for (let i = 0; i < s.planReviews.length; i++)
         if (s.planReviews[i]?.turnId === event.turnId) d.at("planReviews", i).stopReason = event.stopReason;
       // Unfinalized live text is dropped; every remaining assistant item is therefore finalized.

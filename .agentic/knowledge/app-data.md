@@ -64,7 +64,7 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   - **Saving:** the patch accepts only registered keys in range, or null to clear (REQ-DATA-96ef3dd6).
   - **Registry:** it gives key, kind (`int` with a range, `switch`, or `choice` with fixed options such as
     `pageSize` 10/20/50), default, scopes and apply timing. A choice value outside its options is refused and ignored
-    like an out-of-range one (REQ-DATA-96ef3dd6). The pilot is `toolCallsPerTurn` (10–500, default 50, live).
+    like an out-of-range one (REQ-DATA-96ef3dd6). The pilot is `toolCallsPerTurn` (10–500, default 200, live).
   - **Renderer store:** `renderer/hooks/app-advanced.ts` holds the saved application values, set by usePreferences from
     the settings snapshot; lists, the transcript and the terminal tab read it (defaults before it is set).
   - **Application editor:** six collapsible groups scroll below the page actions. The modified-values filter shows
@@ -72,7 +72,7 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
     REQ-UX-634d3ec2).
   - **Desktop deadlines:** model discovery, browser navigation and dictation transcription read app values for
     each new operation. The browser uses its built-in open and follow deadlines when the setting is inherited.
-  - **Concurrent turns:** `concurrentTurns` (app scope only, 1-16, default 3) bounds agent turns across every open workbench; main reads it at each admission and announces a saved change through `session.capacity` (see [Sessions](sessions.md)).
+  - **Concurrent turns:** `concurrentTurns` (app scope only, 1-16, default 4, so a parent and the default three delegated turns fit) bounds agent turns across every open workbench; main reads it at each admission and announces a saved change through `session.capacity` (see [Sessions](sessions.md)).
   - **Resolver:** `resolveAdvanced` picks session > workbench > app > default and skips invalid values, reporting each ignored key by name (REQ-DATA-33a90ef2).
   - **Removed key:** the former `limits.maxToolCallsPerTurn` no longer exists. A settings file that still has `limits` fails the strict schema, which applies the no-migration rule.
   VeraApi exposes getSettings/updateSettings; mockApi uses the same schemas and event behavior.

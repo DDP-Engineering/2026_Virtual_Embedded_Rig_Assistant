@@ -53,7 +53,7 @@ const choice = <const O extends readonly number[], const S extends readonly Adva
  */
 export const advancedSettings = {
   /** Tool calls one agent turn may make before it stops with `limit`. */
-  toolCallsPerTurn: int(10, 500, 50, ["app", "workbench", "session"]),
+  toolCallsPerTurn: int(10, 500, 200, ["app", "workbench", "session"]),
   /** Seconds a model stream may send nothing before the request ends with a timeout. */
   noOutputTimeout: int(30, 3600, 300, ["app", "session"]),
   /** Seconds to wait for hosted response headers; custom endpoints keep their own wait. */
@@ -73,7 +73,7 @@ export const advancedSettings = {
   /** Delegated sessions that may run at once. */
   delegations: int(1, 8, 3, ["app"]),
   /** Turns that may run at once across every open workbench, delegated ones included (REQ-DATA-84718b36). */
-  concurrentTurns: int(1, 16, 3, ["app"]),
+  concurrentTurns: int(1, 16, 4, ["app"]),
   /** Percent of the input budget above which history is compacted. */
   compactionTrigger: int(50, 95, 80, ["app", "workbench"]),
   /** Tokens of the most recent history kept verbatim (at most a fifth of the input budget). */
