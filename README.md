@@ -2,7 +2,7 @@
 
 **An AI agent workbench for electronics and embedded engineering, on your desktop.**
 
-![Version](https://img.shields.io/badge/version-0.2.0%20pre--release-orange)
+![Version](https://img.shields.io/badge/version-0.3.0%20pre--release-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20x64%20%7C%20Linux%20x64-blue)
 ![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)
 
@@ -50,9 +50,11 @@ instruments.
 
 ## Status
 
-VERA is **pre-release**. The current release is 0.2.0 (2026-11-15). Stored formats can still change
-between versions, and no migrations are provided yet. See the [changelog](CHANGELOG.md) for what
-changed and [00_Planning](00_Planning/Overview.md) for the product definition.
+VERA is **pre-release**. The current release is 0.3.0 (2026-11-25). Download the Windows and Linux
+packages from the [VERA 0.3.0 release](https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/tag/v0.3.0).
+Stored formats can still change between versions, and no migrations are provided yet. See the
+[changelog](CHANGELOG.md) for what changed and [00_Planning](00_Planning/Overview.md) for the product
+definition.
 
 ## Quick start
 
