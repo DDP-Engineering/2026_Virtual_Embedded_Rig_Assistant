@@ -3,6 +3,7 @@ import {
   type CapturePacket,
   captureAnalysisSchema,
   captureAutomotiveEvidenceSchema,
+  captureComparisonResultSchema,
   captureCoverageSchema,
   captureLimits,
   captureNetworkingResultSchema,
@@ -15,6 +16,7 @@ import {
 } from "@vera/shared";
 import { z } from "zod";
 import { capToolResult } from "../tools/registry.js";
+import { fitComparisonReport } from "./comparison-report.js";
 import { trimNetworkPage } from "./network-projection.js";
 
 const modelResult = z.looseObject({
@@ -209,6 +211,22 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
   const parsed = modelResult.safeParse(decoded);
   if (!parsed.success) return scrub(text);
   const result = parsed.data;
+  if (result.comparison !== undefined && result.analysis) {
+    const projection = captureComparisonResultSchema.safeParse(decoded).data;
+    if (!projection) return JSON.stringify({ isError: true, reason: "comparison_projection_invalid" });
+    const { baseline, candidate, rows } = projection.comparison;
+    for (const { capture } of [baseline, candidate]) {
+      if (capture.source.kind === "workbench")
+        capture.source.path = scrub(capture.source.path).slice(0, 1024) || "[redacted]";
+    }
+    for (const { endpoints } of rows) {
+      for (const endpoint of endpoints)
+        endpoint.address = scrub(endpoint.address).slice(0, 240) || "[redacted]";
+    }
+    return fitComparisonReport(projection, limit)
+      ? JSON.stringify(projection)
+      : JSON.stringify({ isError: true, reason: "result_limit" });
+  }
   if (result.networking !== undefined && result.coverage) return maskNetworking(decoded, scrub, limit);
   if (result.capture?.source.kind === "workbench")
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);

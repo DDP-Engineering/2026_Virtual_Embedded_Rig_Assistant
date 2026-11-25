@@ -50,3 +50,10 @@ entries:
       ro: Importă dumpuri hexazecimale firmware și UART ca capturi Wireshark cu proveniența sursei.
       de: Firmware- und UART-Hexdumps als Wireshark-Mitschnitte mit Herkunftsnachweis importieren.
       fr: Importez des dumps hexadécimaux firmware et UART dans Wireshark avec leur provenance.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Compare saved captures offline with traffic differences and links to original frames.
+      ro: Compară offline capturi salvate și vezi diferențele de trafic și cadrele originale.
+      de: Gespeicherte Mitschnitte offline vergleichen und Unterschiede mit Paketverweisen sehen.
+      fr: Comparez des captures hors ligne avec les écarts de trafic et les liens vers les trames.

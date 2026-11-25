@@ -39,6 +39,276 @@ const networkingSample = fileURLToPath(
   new URL("../fixtures/wireshark-tshark/networking.pcapng", import.meta.url),
 );
 
+it("compares independent saved capture pairs offline with exact report evidence", async (ctx) => {
+  const paths = [
+    "baseline",
+    "changed",
+    "equivalent",
+    "unmatched",
+    "cross-interface",
+    "cross-vlan",
+    "interface-drops",
+  ].map((name) => `captures/comparison-${name}.pcapng`);
+  const [baseline, changed, equivalent, unmatched, crossInterface, crossVlan, interfaceDrops] = paths as [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
+  const scope = {
+    window: { startMs: 0, endMs: 500 },
+    point: { section: 1, interfaceId: 0 },
+    timingUncertaintyUs: 100,
+  };
+  const compare = (
+    candidate: string,
+    overrides: Record<string, unknown> = {},
+    options: Record<string, unknown> = {},
+  ) =>
+    typed("compare", {
+      baseline: { ...scope, source: { path: baseline } },
+      candidate: { ...scope, source: { path: candidate }, ...overrides },
+      transports: ["tcp", "udp"],
+      ...options,
+    });
+  const planted = compare(changed);
+  const rig = await workbench({
+    comparison: [
+      planted,
+      compare(equivalent),
+      compare(changed, { window: { startMs: 0, endMs: 300 } }),
+      compare(changed, {}, { scanFrames: 7 }),
+      compare(unmatched),
+      compare(changed, { timingUncertaintyUs: null }),
+      compare(
+        changed,
+        { window: { startMs: 0, endMs: 155 } },
+        {
+          baseline: { ...scope, source: { path: baseline }, window: { startMs: 0, endMs: 155 } },
+        },
+      ),
+      compare(changed, { point: { section: 1, interfaceId: 1 } }),
+      compare(crossInterface),
+      compare(crossVlan),
+      compare(interfaceDrops),
+      compare(changed, {}, { limit: 1, reportLocale: "ro" }),
+      compare(changed, {}, { baseline: { ...scope, source: { path: "captures/absent.pcapng" } } }),
+      planted,
+      { text: "Compared offline captures." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    const fixtures = await Promise.all(
+      paths.map((path) =>
+        readFile(new URL(path.replace("captures/", "../fixtures/wireshark-tshark/"), import.meta.url)),
+      ),
+    );
+    await Promise.all(paths.map((path, index) => writeFile(join(rig.bench, path), fixtures[index]!)));
+    const hashes = fixtures.map((bytes) => createHash("sha256").update(bytes).digest("hex"));
+    expect(new Set(hashes).size).toBe(paths.length);
+    rig.resultBudget(32_000, (text) =>
+      text.replaceAll("192.168.7.10", "[masked]").replaceAll("captures/comparison-", "hidden-"),
+    );
+
+    const service = await rig.start();
+    const turn = rig.session(service, "comparison", "ask");
+    service.send(turn.id, "Compare the independent saved captures.");
+    expect(await service.waitIdle(turn.id)).toEqual({ stopReason: "end" });
+    const outputs = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    const [
+      different,
+      equal,
+      incompatible,
+      partial,
+      unresolved,
+      uncertain,
+      inadequate,
+      unbracketed,
+      sharedInterface,
+      sharedVlan,
+      dropped,
+      limited,
+      absent,
+      repeated,
+    ] = outputs;
+    expect(different, JSON.stringify(different)).toMatchObject({
+      comparison: {
+        status: "different",
+        totals: { changed: 3, added: 1, missing: 1, unmatched: 0 },
+        baseline: { capture: { sha256: hashes[0] }, coverage: { observedDurationMs: 500 } },
+        candidate: { capture: { sha256: hashes[1] }, coverage: { observedDurationMs: 500 } },
+      },
+    });
+    const view = different.comparison;
+    expect(different).toEqual(repeated);
+    expect(view.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "changed",
+          transport: "tcp",
+          metrics: ["volume", "retransmissions"],
+          baseline: expect.objectContaining({
+            aToB: { packets: 3, wireBytes: 166 },
+            bToA: { packets: 2, wireBytes: 108 },
+            retransmissions: 0,
+          }),
+          candidate: expect.objectContaining({
+            aToB: { packets: 4, wireBytes: 224 },
+            bToA: { packets: 2, wireBytes: 108 },
+            retransmissions: 1,
+            retransmissionFrame: expect.objectContaining({ frame: expect.objectContaining({ number: 6 }) }),
+          }),
+        }),
+        expect.objectContaining({
+          kind: "changed",
+          metrics: ["dns"],
+          baseline: expect.objectContaining({
+            dns: expect.objectContaining({ samples: 2, minMs: 10, medianMs: 15, p95Ms: 20, maxMs: 20 }),
+          }),
+          candidate: expect.objectContaining({
+            dns: expect.objectContaining({ samples: 2, minMs: 10, medianMs: 25, p95Ms: 40, maxMs: 40 }),
+          }),
+        }),
+        expect.objectContaining({
+          kind: "changed",
+          metrics: ["http"],
+          baseline: expect.objectContaining({ http: expect.objectContaining({ samples: 2, medianMs: 15 }) }),
+          candidate: expect.objectContaining({ http: expect.objectContaining({ samples: 2, medianMs: 45 }) }),
+        }),
+        expect.objectContaining({ kind: "added", baseline: null }),
+        expect.objectContaining({ kind: "missing", candidate: null }),
+      ]),
+    );
+    for (const hash of hashes.slice(0, 2)) expect(different.report).toContain(hash);
+    expect(different.report).toContain("500 ms");
+    expect(different.report).toContain("15");
+    expect(equal.comparison).toMatchObject({ status: "equivalent", rows: [] });
+    expect(incompatible.comparison).toMatchObject({
+      status: "incomparable",
+      diagnostics: expect.arrayContaining(["window_duration_mismatch"]),
+    });
+    expect(partial.comparison).toMatchObject({
+      status: "incomparable",
+      baseline: { coverage: { scanComplete: false, diagnostics: expect.arrayContaining(["scan_limit"]) } },
+      candidate: { coverage: { scanComplete: false } },
+    });
+    expect(partial.comparison.totals).toMatchObject({ added: 0, missing: 0, changed: 0 });
+    expect(unresolved.comparison).toMatchObject({
+      status: "partial",
+      candidate: { coverage: { unresolvedFrames: 1, unresolvedTransports: ["udp"] } },
+      totals: { added: 0, missing: 0, changed: 2, unmatched: 3 },
+    });
+    expect(uncertain.comparison).toMatchObject({
+      status: "partial",
+      diagnostics: expect.arrayContaining(["clock_uncertainty_unknown"]),
+    });
+    expect(uncertain.comparison.rows.flatMap((row: { metrics: string[] }) => row.metrics)).not.toContain(
+      "dns",
+    );
+    expect(inadequate.comparison).toMatchObject({
+      status: "partial",
+      diagnostics: expect.arrayContaining(["timing_insufficient"]),
+      rows: expect.arrayContaining([
+        expect.objectContaining({ kind: "timing_unavailable", withheldTiming: ["dns"] }),
+      ]),
+    });
+    expect(unbracketed.comparison).toMatchObject({
+      status: "incomparable",
+      candidate: { coverage: { diagnostics: ["window_not_bracketed"], observedDurationMs: null } },
+    });
+    for (const shared of [sharedInterface, sharedVlan]) {
+      expect(shared.comparison).toMatchObject({
+        status: "partial",
+        totals: { changed: 0, added: 0, missing: 0 },
+        candidate: { coverage: { diagnostics: ["shared_native_context"] } },
+        rows: expect.arrayContaining([
+          expect.objectContaining({
+            kind: "unmatched",
+            metrics: [],
+            candidate: expect.objectContaining({ retransmissions: null }),
+          }),
+        ]),
+      });
+    }
+    expect(dropped.comparison).toMatchObject({
+      status: "incomparable",
+      totals: { changed: 0, added: 0, missing: 0 },
+      candidate: {
+        coverage: {
+          knownDrops: null,
+          interfaceDropCounters: { interface: "9", operatingSystem: "2" },
+          diagnostics: ["reported_drops"],
+        },
+      },
+    });
+    expect(dropped.report).toContain("9 / 2");
+    expect(limited.comparison).toMatchObject({ omittedRows: 4, rows: [expect.anything()] });
+    expect(limited.report).toContain("Comparație");
+    expect(absent).toMatchObject({ isError: true });
+
+    const dns = view.rows.find((row: { metrics: string[] }) => row.metrics.includes("dns"));
+    const [before, after] = [dns.baseline.dns.frames, dns.candidate.dns.frames];
+    expect(before.map((item: { frame: { number: number } }) => item.frame.number)).toEqual([7, 8, 9, 10]);
+    expect(after.map((item: { frame: { number: number } }) => item.frame.number)).toEqual([8, 9, 10, 11]);
+    const refs = [before[3].ref, after[3].ref] as string[];
+    for (const ref of refs) expect(different.report).toContain(`[[${ref}]]`);
+    expect(different.report).not.toContain("192.168.7.10");
+    expect(different.report).toContain("[masked]");
+    expect(rig.modelResults.filter((result) => result.includes('"comparison"')).join("\n")).not.toContain(
+      "captures/comparison-",
+    );
+    await rig.writeReplay("comparison-cite", [
+      planted,
+      { toolCalls: [{ name: "artifact_save", args: { name: "comparison.md", content: different.report } }] },
+      { text: `Baseline [[${refs[0]}]] and candidate [[${refs[1]}]].` },
+    ]);
+    const citation = rig.session(service, "comparison-cite", "ask");
+    service.send(citation.id, "Cite a frame in each capture.");
+    expect(await service.waitIdle(citation.id)).toEqual({ stopReason: "end" });
+    const report = service.listArtifacts(citation.id).find(({ name }) => name === "comparison.md");
+    expect(report, JSON.stringify(citation.outputs.map(({ ok }) => ok))).toBeDefined();
+    expect((await service.openArtifact(report?.artifactId ?? "")).content).toBe(different.report);
+    const assistant = service
+      .get(citation.id)
+      .snapshot.items.find(
+        (item) =>
+          item.kind === "assistant" &&
+          refs.every((ref) => item.citations.some((entry) => entry.ref === ref && entry.valid)),
+      );
+    expect(assistant).toBeDefined();
+    for (const [index, ref] of refs.entries()) {
+      expect(service.openCaptureCitation(citation.id, assistant?.id ?? "", ref).evidence).toMatchObject({
+        capture: { sha256: hashes[index], source: { kind: "workbench", path: paths[index] } },
+        frame: { number: 10 + index, interfaceId: 0 },
+      });
+    }
+    for (const [index, path] of paths.entries()) {
+      const bytes = await readFile(join(rig.bench, path));
+      expect(createHash("sha256").update(bytes).digest("hex")).toBe(hashes[index]);
+    }
+    if (process.env.VERA_COMPARISON_EVIDENCE) {
+      await writeFile(
+        join(process.env.VERA_COMPARISON_EVIDENCE, `${process.platform}-comparison.json`),
+        JSON.stringify({ version: rig.tshark.version, hashes, outputs }, null, 2),
+      );
+      await writeFile(
+        join(process.env.VERA_COMPARISON_EVIDENCE, `${process.platform}-comparison.md`),
+        different.report,
+      );
+    }
+  } finally {
+    await rig.close();
+  }
+}, 60_000);
+
 it("validates native capture-file operations and reusable managed outputs", async (ctx) => {
   const source = { path: "captures/sample.pcapng" };
   const classic = { path: classicPath };

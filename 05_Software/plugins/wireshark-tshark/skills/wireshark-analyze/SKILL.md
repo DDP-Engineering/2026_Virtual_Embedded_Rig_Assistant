@@ -58,3 +58,10 @@ Start with `wireshark_capture` for offline evidence:
     supported offset and timestamp format documented in the plugin README.
     Report the manifest's source hash, timestamp origin and synthetic headers
     when presenting the verified PCAPNG.
+12. To compare saved traces, use `compare` with `baseline` and `candidate`,
+    each with its source, selected section/interface `point`, and half-open
+    relative `window`. Pick equal-length windows and declare `transports` and
+    each known `timingUncertaintyUs`. Report the differences alongside
+    coverage, missing timing and unmatched evidence. Cite the exact returned
+    frames from both traces. Use `reportLocale` for the user's language and
+    `artifact_save` to retain the returned Markdown locally when requested.

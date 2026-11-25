@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9e60f1c1"
+
+title = "Publish bounded capture comparison evidence and local report"
+
+status = "active"
+
+requirement = """
+When the offline comparison returns observations of two saved captures, VERA shall publish bounded structured evidence and a matching local report with immutable source hashes and exact representative frame citations.
+"""
+
+verification = "Exercise the typed tool through session replay with both sources, including agent masking. Check unchanged input hashes, deterministic repeated output, local report and structured evidence parity, citation navigation on both inputs, and explicit result limits."
+
+affected_paths = ["05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/shared/src/wireshark-comparison.ts","05_Software/src/libraries/shared/src/index.ts","05_Software/src/libraries/core/src/tools/wireshark.ts","05_Software/src/libraries/core/src/wireshark/comparison-report.ts","05_Software/src/libraries/core/src/wireshark/citations.ts","05_Software/src/libraries/core/src/wireshark/model-output.ts","05_Software/src/libraries/core/src/wireshark/service.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::compares independent saved capture pairs offline with exact report evidence"]
+
+
+spec = "specs/REQ-DATA-9e60f1c1.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

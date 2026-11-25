@@ -6,6 +6,7 @@ import {
   type CaptureReference,
   captureAnalysisSchema,
   captureAutomotiveEvidenceSchema,
+  captureComparisonResultSchema,
   captureFrameReferenceSchema,
   captureLimits,
   captureNetworkingEvidenceSchema,
@@ -16,9 +17,12 @@ import {
   formatRef,
 } from "@vera/shared";
 import { z } from "zod";
+import { comparisonEvidence } from "./comparison-report.js";
 
 const contextSchema = z.strictObject({ capture: captureReferenceSchema, analysis: captureAnalysisSchema });
-export type CaptureNavigationContext = z.infer<typeof contextSchema>;
+const comparisonContext = z.strictObject({ baseline: contextSchema, candidate: contextSchema });
+const privateContext = z.union([contextSchema, comparisonContext]);
+export type CaptureNavigationContext = z.infer<typeof privateContext>;
 export type CaptureNavigationLookup = (toolCallId: string) => CaptureNavigationContext | undefined;
 
 const resultSchema = z.object({
@@ -36,7 +40,15 @@ const resultSchema = z.object({
 /** Retain the exact local locator before publication applies the agent mask. */
 export function networkingCitationContext(text: string): CaptureNavigationContext | undefined {
   try {
-    const result = captureNetworkingResultSchema.safeParse(JSON.parse(text)).data;
+    const decoded: unknown = JSON.parse(text);
+    const comparison = captureComparisonResultSchema.safeParse(decoded).data;
+    if (comparison && comparisonEvidence(comparison.comparison).some(({ frames }) => frames.length)) {
+      return {
+        baseline: { capture: comparison.comparison.baseline.capture, analysis: comparison.analysis },
+        candidate: { capture: comparison.comparison.candidate.capture, analysis: comparison.analysis },
+      };
+    }
+    const result = captureNetworkingResultSchema.safeParse(decoded).data;
     if (result?.analysis.networkProfile && result.networking.evidence.length)
       return { capture: result.capture, analysis: result.analysis };
   } catch {
@@ -51,7 +63,7 @@ export function storedNetworkingCitationContext(text: string): CaptureNavigation
   try {
     const message = JSON.parse(text) as StoredToolResult;
     if (message.role === "toolResult" && message.toolName === "wireshark_capture" && !message.isError)
-      return contextSchema.safeParse(message.networkCaptureContext).data;
+      return privateContext.safeParse(message.networkCaptureContext).data;
   } catch {
     // Corrupted private context cannot resolve a reference.
   }
@@ -88,29 +100,46 @@ export function issuedCaptureCitations(messages: readonly Message[], lookup?: Ca
     string,
     { capture: CaptureReference; frame: CaptureFrameReference; analysis: CaptureAnalysis }
   >();
+  function add(
+    { ref, frame }: { ref?: string | undefined; frame: CaptureFrameReference },
+    { capture, analysis }: z.infer<typeof contextSchema>,
+  ) {
+    if (ref && frame.captureSha256 === capture.sha256 && ref === captureCitation(capture, frame, analysis))
+      evidence.set(ref, { capture, frame, analysis });
+  }
   for (const message of messages) {
     if (message.role !== "toolResult" || message.toolName !== "wireshark_capture" || message.isError)
       continue;
     for (const part of message.content) {
       if (part.type !== "text") continue;
       try {
-        const parsed = resultSchema.safeParse(JSON.parse(part.text));
+        const decoded: unknown = JSON.parse(part.text);
+        const projected = captureComparisonResultSchema.safeParse(decoded).data;
+        if (projected) {
+          const context = lookup?.(message.toolCallId);
+          for (const { side, frames } of comparisonEvidence(projected.comparison)) {
+            const source = projected.comparison[side].capture;
+            const locator =
+              context && "baseline" in context
+                ? context[side]
+                : { capture: source, analysis: projected.analysis };
+            if (locator.capture.sha256 !== source.sha256) continue;
+            for (const frame of frames) add(frame, locator);
+          }
+          continue;
+        }
+        const parsed = resultSchema.safeParse(decoded);
         if (!parsed.success) continue;
         const { packet, packets, traffic, automotive, networking } = parsed.data;
-        const { capture, analysis } = (networking && lookup?.(message.toolCallId)) || parsed.data;
+        const context = networking ? lookup?.(message.toolCallId) : undefined;
+        const { capture, analysis } = context && "capture" in context ? context : parsed.data;
         if (capture.sha256 !== parsed.data.capture.sha256) continue;
         for (const row of networking?.evidence ??
           automotive?.evidence ??
           traffic?.evidence ??
           packets ??
           (packet ? [packet] : [])) {
-          const { ref, frame } = row;
-          if (
-            ref &&
-            frame.captureSha256 === capture.sha256 &&
-            ref === captureCitation(capture, frame, analysis)
-          )
-            evidence.set(ref, { capture, frame, analysis });
+          add(row, { capture, analysis });
         }
       } catch {
         // Plain text is never frame evidence.

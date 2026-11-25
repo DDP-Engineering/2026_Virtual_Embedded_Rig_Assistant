@@ -23,6 +23,7 @@ import { captureFileOperation, isCaptureFileOperation } from "./capture-files.js
 import { CaptureFileNative, fileUtilityCapabilities, resolveFilePrograms } from "./capture-files-native.js";
 import { importHexdump } from "./capture-hexdump.js";
 import { captureCitation } from "./citations.js";
+import { compareCaptures } from "./comparison.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { analyzeNetworking } from "./network-evidence.js";
 import { networkingCapabilities } from "./network-profiles.js";
@@ -54,10 +55,12 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     filter: "filter" in args ? (args.filter ?? null) : null,
     ...(args.operation === "automotive" ? { automotiveProfile: args.automotiveProfile } : {}),
     ...(args.operation === "network" ? { networkProfile: args.networkProfile } : {}),
+    ...(args.operation === "compare" ? { networkProfile: "tcp_udp" as const } : {}),
     ...(args.operation === "statistics" ||
     args.operation === "follow" ||
     args.operation === "automotive" ||
-    args.operation === "network"
+    args.operation === "network" ||
+    args.operation === "compare"
       ? {
           trafficPreferences: {
             tcpSequenceAnalysis: true,
@@ -141,7 +144,8 @@ async function captureOperation(
         | "discover"
         | "verify_reference"
         | "file_metadata"
-        | "file_lineage";
+        | "file_lineage"
+        | "compare";
     }
   >,
   native: OfflineTshark,
@@ -385,6 +389,9 @@ export async function inspectWireshark(
         traffic: usable ? trafficCapabilities : { available: false },
         automotive: usable ? automotiveCapabilities : { available: false },
         networking: usable ? networkingCapabilities : { available: false },
+        comparison: usable
+          ? { available: true, transports: ["tcp", "udp"], timing: ["dns", "http"] }
+          : { available: false },
         ...fileUtilityCapabilities(
           filePrograms,
           features,
@@ -426,6 +433,8 @@ export async function inspectWireshark(
     } else if (args.operation === "validate_filter") {
       await native.validate(analysis);
       result = { valid: true, analysis };
+    } else if (args.operation === "compare") {
+      result = await compareCaptures(ctx, args, native, analysis, folder, bounded);
     } else {
       result = await captureOperation(ctx, args, native, analysis, folder, bounded, async () => {
         await authorize();

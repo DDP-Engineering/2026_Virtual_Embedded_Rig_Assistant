@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-74dcea2c"
+
+title = "Diagnose non-comparable saved capture evidence"
+
+status = "active"
+
+requirement = """
+If saved capture coverage, conversation identity or timing evidence cannot support a comparison, then VERA shall report the affected scope and withheld comparisons as explicit diagnostics.
+"""
+
+verification = "Compare incompatible and partial windows, unresolved or ambiguous traffic and inadequate timing. Assert diagnostic categories and verify the affected metrics do not become comparable differences."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/comparison.ts","05_Software/src/libraries/core/src/wireshark/comparison-observations.ts","05_Software/src/libraries/core/src/wireshark/network-capture.ts","05_Software/src/libraries/core/src/wireshark/network-evidence.ts","05_Software/tests/fixtures/wireshark-tshark/comparison-unmatched.pcapng","05_Software/tests/fixtures/wireshark-tshark/comparison-cross-interface.pcapng","05_Software/tests/fixtures/wireshark-tshark/comparison-cross-vlan.pcapng","05_Software/tests/fixtures/wireshark-tshark/comparison-interface-drops.pcapng"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::compares independent saved capture pairs offline with exact report evidence"]
+
+
+spec = "specs/REQ-DATA-9e60f1c1.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

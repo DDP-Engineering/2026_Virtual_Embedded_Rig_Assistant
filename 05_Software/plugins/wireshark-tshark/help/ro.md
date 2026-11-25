@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Pentru a compara offline două capturi salvate, indică o referință, un candidat, punctele de observare și ferestrele de timp. Raportul arată diferențele TCP și UDP, timpii DNS și HTTP disponibili, dovezile lipsă și legăturile la cadrele originale. Poți cere salvarea locală a raportului.
+
 Cere agentului să importe un dump hexazecimal firmware sau UART salvat ca PCAPNG. Precizează dacă ai cadre Ethernet complete, date opace sau ai nevoie de antete IPv4/UDP sintetice. Indică dacă dumpul conține ore UTC. Manifestul de proveniență identifică hashul sursei și metadatele sintetice. Importul necesită Text2pcap.
 
 Cere agentului să inspecteze metadatele unei capturi, să selecteze cadre sau să împartă, combine, reordoneze, deduplice, convertească ori curețe capturi salvate. Fișierele originale sunt păstrate. Capturile curățate pot conține în continuare date și identificatori ai pachetelor. Agentul poate exporta local câmpurile, PDU-urile și corpurile HTTP acceptate. Disponibilitatea depinde de utilitarele Wireshark instalate.

@@ -32,7 +32,7 @@ import { protocolStack, readTrafficFacts, readTrafficMatches, type TrafficFact }
 
 type NetworkArgs = Extract<WiresharkCaptureArgs, { operation: "network" }>;
 
-function dropCoverage(scanned: TrafficFact[]) {
+export function dropCoverage(scanned: TrafficFact[]) {
   let dropReports = 0;
   let drops = 0n;
   for (const fact of scanned) {

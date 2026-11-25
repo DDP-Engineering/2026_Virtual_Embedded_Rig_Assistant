@@ -145,6 +145,8 @@ Facts that span components:
   probed utilities for metadata, verified derivation, cleanup and local exports. Text2pcap also
   imports profiled firmware and UART hexdumps with a managed PCAPNG and source provenance. Networking
   observations retain native field and frame context, and the compact view redacts network identifiers.
+  Offline comparison returns bounded TCP/UDP differences, timing and coverage with both source hashes,
+  verified citations and Markdown for local saving.
   Desktop verifies a cited file and frame in its owning workbench
   and opens it at the matching packet in native Wireshark. See [communication plugins](../knowledge/official-plugins-communication.md).
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.

@@ -118,6 +118,27 @@ const trafficInputs = {
   ...profile,
 };
 
+export const captureComparisonSideSchema = z.strictObject({
+  source,
+  point: z.strictObject({
+    section: positive.nullable(),
+    interfaceId: z.number().int().min(0).max(4_294_967_295).nullable(),
+  }),
+  window: trafficWindowSchema,
+  timingUncertaintyUs: z.number().int().min(0).max(60_000_000).nullable().optional(),
+});
+export const captureComparisonLocaleSchema = z.enum(["en", "ro", "de", "fr"]);
+const comparisonInputs = {
+  baseline: captureComparisonSideSchema,
+  candidate: captureComparisonSideSchema,
+  transports: z
+    .array(trafficTransportSchema)
+    .min(1)
+    .max(2)
+    .refine((items) => new Set(items).size === items.length, "Choose each transport once."),
+  reportLocale: captureComparisonLocaleSchema.optional(),
+};
+
 export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
   z.strictObject({ operation: z.literal("capabilities") }),
   z.strictObject({
@@ -154,6 +175,12 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     ...profile,
   }),
   z.strictObject({ operation: z.literal("statistics"), statistic: trafficStatisticSchema, ...trafficInputs }),
+  z.strictObject({
+    operation: z.literal("compare"),
+    ...comparisonInputs,
+    scanFrames: scanFrames.optional(),
+    limit: limit.optional(),
+  }),
   z.strictObject({
     operation: z.literal("follow"),
     transport: trafficTransportSchema,
@@ -203,6 +230,7 @@ export const wiresharkCaptureToolSchema = z
       "query",
       "frame",
       "statistics",
+      "compare",
       "follow",
       "automotive",
       "network",
@@ -226,6 +254,10 @@ export const wiresharkCaptureToolSchema = z
     window: trafficWindowSchema.optional(),
     trafficCursor: trafficPageCursorSchema.optional(),
     validateChecksums: z.boolean().optional(),
+    baseline: comparisonInputs.baseline.optional(),
+    candidate: comparisonInputs.candidate.optional(),
+    transports: comparisonInputs.transports.optional(),
+    reportLocale: comparisonInputs.reportLocale,
     ...profile,
     ...automotiveInputs,
     automotiveProfile: automotiveInputs.automotiveProfile.optional(),

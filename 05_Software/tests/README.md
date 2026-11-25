@@ -22,7 +22,9 @@ infrastructure. Unit and component tests stay beside the implementation, in `src
 `plugins/wireshark-tshark.test.ts` checks protocol profiles, diagnostic markers, traffic
 statistics, DNS/HTTP timing and follow records against native TShark using independent synthetic
 captures. It validates cited frames, partial coverage and compact redaction. Set
-`VERA_REQUIRE_TSHARK=1` to require native execution.
+`VERA_REQUIRE_TSHARK=1` to require native execution. Select the saved capture comparison
+case to exercise planted differences, equivalent captures, limited coverage and both citation
+sources. `VERA_COMPARISON_EVIDENCE` can name an existing output folder for its JSON and Markdown.
 Native `e2e/workbench-runtimes.spec.ts` runs a slow replay turn in workbench A, opens B and runs a turn there, and checks that A's turn completes in A before A is released.
 Native `e2e/background-sessions.spec.ts` drives the sidebar over replay turns in workbenches A and B: live running and approval marks (collapsed rows included), returning to completed replies, Stop of one background session, opening a background approval by keyboard, and the Concurrent turns limit set by keyboard with the draft kept.
 

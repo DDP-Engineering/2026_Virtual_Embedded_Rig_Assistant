@@ -54,7 +54,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.8.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.9.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -117,6 +117,18 @@ device commands follow their own program risk and approval rules.
   Reassembled rows can cite related same-context frames outside the filter and withhold
   higher-layer fields when contributor context is unverified. Compact evidence masks network
   identifiers. The native reader rejects captures containing embedded decryption secrets.
+
+- The typed `compare` operation snapshots a baseline and candidate and matches one TCP or UDP
+  stream per exact pair of IP endpoints, ports, transport and ordered VLANs. The declared
+  section/interface and half-open relative window are local to each capture. The comparison
+  returns directional counts and wire bytes, observed TCP retransmissions and corroborated
+  DNS/HTTP distributions. Incompatible coverage and unmatched traffic carry diagnostics.
+  PCAPNG interface and operating system drop counters are separate from packet drops.
+  A native stream shared across selected observation contexts leaves its tuples unmatched.
+  Timing comparisons require two complete pairs per side and a declared clock uncertainty.
+  Structured format-1 evidence and localized Markdown share the same bounds and frame
+  representatives. The report can be saved through the local artifact store. Both original
+  citation locators stay private when the agent projection masks their paths.
 
 - `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
@@ -200,6 +212,7 @@ device commands follow their own program risk and approval rules.
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
 | General networking profiles | `shared/src/wireshark-networking.ts`, `core/src/wireshark/network-*.ts` | Networking replay in `wireshark-tshark.test.ts` and native diagnostics in `traffic-native.test.ts` |
+| Compare saved captures | `shared/src/wireshark-comparison.ts`, `core/src/wireshark/comparison*.ts` | Saved capture comparison replay in `wireshark-tshark.test.ts` with exact citation and report checks |
 | Firmware and UART hexdump import | `shared/src/wireshark-files.ts`, `core/src/wireshark/hexdump-parser.ts`, `capture-hexdump.ts`, `storage.ts` | Native Text2pcap and TShark replay in `wireshark-tshark.test.ts` and grouped storage in `storage.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 

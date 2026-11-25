@@ -21,6 +21,31 @@ and truncated fields. Use `wireshark_import` to retain a verified copy in manage
 workbench storage. The `verify_reference` operation checks file identity even
 when TShark is unavailable. Small text reports use the session artifact store.
 
+## Compare saved captures
+
+Use `wireshark_capture` with `operation: compare` and `baseline` and `candidate`
+objects. Each object supplies `source`, `point: { section, interfaceId }`,
+`window: { startMs, endMs }` and optional `timingUncertaintyUs`. Select `transports`
+from `tcp` and `udp`. Windows are relative to each file's first timestamped frame,
+include the start, exclude the end and need equal lengths with timestamps
+bracketing the window at each selected point. Find point IDs in capture evidence.
+
+The comparison matches exact IP/port pairs, transport and ordered VLAN tags.
+The native stream ID is local to its file. Multiple streams with the same tuple
+produce unmatched evidence. A native stream shared across observation points or VLAN stacks
+also produces unmatched evidence. The result reports directional packets and wire bytes,
+observed TCP retransmissions and corroborated DNS or HTTP timing distributions.
+Timing comparison requires two complete pairs per source and declared clock
+uncertainty. The sum of the uncertainties is the tolerance for duration statistics.
+Timing references include the request and response pairs used by the distribution
+statistics. Coverage lists unresolved transports and separates packet drop reports
+from saved interface and operating system drop counters.
+
+Save the returned Markdown `report` with `artifact_save` when a local copy is
+needed. It shares the result's SHA-256 identities, frame links and row limits.
+`reportLocale` selects English (`en`), Romanian (`ro`), German (`de`) or French
+(`fr`). The operation reads saved snapshots and preserves both source files.
+
 ## Saved capture files
 
 Use `capabilities` to check Capinfos, Editcap, Mergecap and TShark by operation.

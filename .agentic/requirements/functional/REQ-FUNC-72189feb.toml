@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-72189feb"
+
+title = "Compare normalized saved capture evidence"
+
+status = "active"
+
+requirement = """
+When an engineer compares two verified saved captures in comparable declared windows, VERA shall project deterministic TCP and UDP conversation differences in presence, direction volumes, TCP retransmission observations, and corroborated DNS or HTTP response-time distributions.
+"""
+
+verification = "Run the typed operation with independent baseline, changed and equivalent captures. Assert planted additions, removals, directional volume, retransmission and delay changes at exact source frames and no changes for the equivalent pair."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/comparison.ts","05_Software/src/libraries/core/src/wireshark/comparison-observations.ts","05_Software/src/libraries/core/src/wireshark/comparison-timing.ts","05_Software/tests/fixtures/wireshark-tshark/comparison-baseline.pcapng","05_Software/tests/fixtures/wireshark-tshark/comparison-changed.pcapng","05_Software/tests/fixtures/wireshark-tshark/comparison-equivalent.pcapng"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::compares independent saved capture pairs offline with exact report evidence"]
+
+
+spec = "specs/REQ-DATA-9e60f1c1.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25
