@@ -456,9 +456,7 @@
   },
   "delegation": {
     "instruction": "Instrucțiune de la agentul părinte",
-    "title": "Sesiuni delegate",
     "outcome": "Execuție delegată: {{status}}",
-    "parent": "Sesiune părinte: {{title}}",
     "status": {
       "running": "În curs",
       "awaiting_approval": "Așteaptă aprobarea",
@@ -507,6 +505,8 @@
     "sessions": "Sesiuni",
     "new": "Sesiune nouă",
     "untitled": "Sesiune fără titlu",
+    "childSessions": "Sesiuni delegate din {{title}}",
+    "childAttention": "Sesiune delegată: {{status}}",
     "idle": "Inactiv",
     "running": "În lucru",
     "awaiting": "Așteaptă aprobare",

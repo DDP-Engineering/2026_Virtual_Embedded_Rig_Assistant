@@ -50,8 +50,14 @@ async function createParent(page: Page, model: string, instruction: string) {
   return id;
 }
 
+/** A child chat's parent link and delegated turn outcome. */
 function delegation(page: Page) {
   return page.locator("[data-session-delegations]");
+}
+
+/** A parent's delegated sessions, nested under it in the sidebar with their outcomes. */
+function children(page: Page, parentId: string) {
+  return page.locator(`[data-session-children="${parentId}"]`);
 }
 
 /**
@@ -72,18 +78,21 @@ async function turnsEnded(page: Page) {
 }
 
 async function followChild(page: Page, name: string) {
-  await delegation(page).getByRole("button", { name, exact: true }).click();
+  const row = page.locator("[data-session-children] [data-session]", { hasText: name });
+  await row.click();
+  // A child row opens the child's Chat transcript, like the parent link, and becomes the current row.
   await expect(page.getByRole("heading", { name, exact: true })).toBeFocused();
+  await expect(row).toHaveAttribute("aria-current", "page");
   await expect(page.locator("[data-transcript]")).toContainText(name);
   return sessionId(page);
 }
 
+/** The parent is the sidebar row its children are nested under; the child chat has no parent link. */
 async function returnToParent(page: Page, id: string, name: string) {
-  await delegation(page)
-    .getByRole("button", { name: `Parent session: ${name}`, exact: true })
-    .click();
+  await expect(delegation(page).getByRole("button")).toHaveCount(0);
+  await page.locator(`[data-session="${id}"]`).click();
   await expect(currentSession(page)).toHaveAttribute("data-session", id);
-  await expect(page.getByRole("heading", { name, exact: true })).toBeFocused();
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 }
 
 test("native Desktop follows live delegated sessions, stops one and reopens durable outcomes", async () => {
@@ -188,7 +197,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     });
 
     const completedParent = await createParent(page, "parent-complete", "Coordinate jumper inspection");
-    await expect(delegation(page)).toContainText("Running");
+    await expect(children(page, completedParent)).toContainText("Running");
     const owner = await page.evaluate(async (parentSessionId) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;
       const { config, folder } = await api.invoke("workbench.config.get", {});
@@ -222,23 +231,23 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     expect(initial.snapshot).toMatchObject({ modelRef: "replay/child-complete", reasoning: "high" });
     await returnToParent(page, completedParent, "Coordinate jumper inspection");
     await expect(page.locator("[data-transcript]")).toContainText("Parent work is still progressing.");
-    await expect(delegation(page)).toContainText("Running");
+    await expect(children(page, completedParent)).toContainText("Running");
     if (process.env.VERA_DELEGATION_PROOF_DIR)
       await page.screenshot({ path: join(process.env.VERA_DELEGATION_PROOF_DIR, "running-parent.png") });
-    await expect(delegation(page)).toContainText("Completed", { timeout: 15000 });
+    await expect(children(page, completedParent)).toContainText("Completed", { timeout: 15000 });
     await expect(page.locator("[data-transcript]")).toContainText(`Parent used: ${completedReply}`, {
       timeout: 15000,
     });
 
     await turnsEnded(page);
     const stoppedParent = await createParent(page, "parent-stop", "Coordinate slow inspection");
-    await expect(delegation(page)).toContainText("Running");
+    await expect(children(page, stoppedParent)).toContainText("Running");
     const stoppedChild = await followChild(page, "Inspect the slow board");
     await page.locator('[data-action="stop-session"]').click();
     await expect(delegation(page)).toContainText("Stopped");
     await expect(page.locator('[data-action="stop-session"]')).toHaveCount(0);
     await returnToParent(page, stoppedParent, "Coordinate slow inspection");
-    await expect(delegation(page)).toContainText("Stopped");
+    await expect(children(page, stoppedParent)).toContainText("Stopped");
     await expect(page.locator('[data-action="stop-session"]')).toBeVisible();
     await expect(page.locator("[data-transcript]")).toContainText("Parent outcome: stopped.");
     await expect
@@ -259,17 +268,19 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     expect(delivered).toBe(4);
     await turnsEnded(page);
     const failedParent = await createParent(page, "parent-error", "Coordinate failing inspection");
-    await expect(delegation(page)).toContainText("Running", { timeout: 10000 });
+    await expect(children(page, failedParent)).toContainText("Running", { timeout: 10000 });
     await followChild(page, "Inspect the failing board");
     await expect(delegation(page)).toContainText("Failed", { timeout: 15000 });
     await returnToParent(page, failedParent, "Coordinate failing inspection");
-    await expect(delegation(page)).toContainText("Failed");
+    await expect(children(page, failedParent)).toContainText("Failed");
     expect(await instance.evaluate(() => Reflect.get(globalThis, "delegationProof").dropped)).toBe(2);
 
     await page.reload();
     await page.locator(`[data-session="${failedParent}"]`).click();
-    await expect(delegation(page)).toContainText("Failed");
-    await expect(delegation(page).getByRole("button", { name: "Inspect the failing board" })).toBeVisible();
+    await expect(children(page, failedParent)).toContainText("Failed");
+    await expect(
+      children(page, failedParent).locator("[data-session]", { hasText: "Inspect the failing board" }),
+    ).toBeVisible();
     expect(await outboundAttempts(instance)).toEqual([]);
     await instance.close();
     app = undefined;
@@ -279,9 +290,9 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     await page.locator(`[data-session="${stoppedChild}"]`).click();
     await expect(delegation(page).getByRole("status")).toHaveText("Delegated turn: Stopped");
     await returnToParent(page, stoppedParent, "Coordinate slow inspection");
-    await expect(delegation(page)).toContainText("Stopped");
+    await expect(children(page, stoppedParent)).toContainText("Stopped");
     await page.locator(`[data-session="${completedParent}"]`).click();
-    await expect(delegation(page)).toContainText("Completed");
+    await expect(children(page, completedParent)).toContainText("Completed");
     expect(await followChild(page, "Inspect the jumper")).toBe(childId);
     await expect(delegation(page)).toContainText("Completed");
     await expect(page.locator("[data-transcript]")).toContainText(completedReply);
@@ -538,7 +549,9 @@ test("native desktop authorizes two sequential Full Access children, reuses one 
     }, ids);
     expect(revoked.turnId).toBeTruthy();
     await expect(page.locator("[data-transcript]")).toContainText("Revocation checked.");
-    await expect(delegation(page).getByRole("button", { name: "Starts in Auto-edit" })).toBeVisible();
+    await expect(
+      children(page, ids.sessionId).locator("[data-session]", { hasText: "Starts in Auto-edit" }),
+    ).toBeVisible();
     // With the setting off the child starts in Auto-edit, and its unsaved command waits for the user.
     const limited = await page.evaluate(async ({ sessionId, workbenchId }) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;

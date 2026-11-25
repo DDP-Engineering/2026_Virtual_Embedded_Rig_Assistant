@@ -1,20 +1,74 @@
 // REQ-UX-4bea0001 REQ-UX-9a0489f1
 
-import type { SessionSummary } from "@vera/shared";
-import { Ellipsis } from "lucide-react";
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type SessionSummary, visibleParent } from "@vera/shared";
+import { ChevronRight, CircleAlert, Ellipsis } from "lucide-react";
+import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSettingsSnapshot } from "../../hooks/use-preferences.js";
 import { reorderOffset } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
 import { ActivityIcon } from "../workbench-activity.js";
+import { useDelegatedStatusLabels } from "./delegation-links.js";
 import { SessionAdvancedDialog } from "./session-advanced.js";
 
+type Tree = { roots: SessionSummary[]; children: Map<string, SessionSummary[]> };
+/**
+ * The rows of one sidebar section (REQ-UX-a6ba4f23): a session nests under its delegation parent when that
+ * parent is listed in the same section, in list order; any other session is a top-level row.
+ */
+function sessionTree(list: readonly SessionSummary[]): Tree {
+  const byId = new Map(list.map((s) => [s.id, s]));
+  const children = new Map<string, SessionSummary[]>();
+  const roots: SessionSummary[] = [];
+  for (const s of list) {
+    const parent = visibleParent(s, byId);
+    if (parent) children.set(parent, [...(children.get(parent) ?? []), s]);
+    else roots.push(s);
+  }
+  // Inconsistent relationship metadata (a cycle) must not hide a session: unreached rows become top-level.
+  const reached = new Set<string>();
+  const visit = (s: SessionSummary) => {
+    if (reached.has(s.id)) return;
+    reached.add(s.id);
+    for (const child of children.get(s.id) ?? []) visit(child);
+  };
+  roots.forEach(visit);
+  for (const s of list) {
+    if (reached.has(s.id)) continue;
+    const parent = visibleParent(s, byId);
+    if (parent)
+      children.set(
+        parent,
+        (children.get(parent) ?? []).filter((child) => child.id !== s.id),
+      );
+    roots.push(s);
+    visit(s);
+  }
+  return { roots, children };
+}
+const treeKey = (workbenchId: string) => `vera.sessionTree.${workbenchId}`;
+/** Collapsed parents of a workbench; parents start expanded (REQ-UX-f025500b). */
+function readCollapsed(workbenchId: string | undefined): Set<string> {
+  if (!workbenchId) return new Set();
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(treeKey(workbenchId)) ?? "[]");
+    return new Set(Array.isArray(saved) ? saved.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+type RowStatus = SessionSummary["status"] | "awaiting_question";
+const rowStatus = (s: SessionSummary): RowStatus => (s.pendingQuestionId ? "awaiting_question" : s.status);
+/** The child states a collapsed parent shows, most urgent first (REQ-UX-2feba215). */
+const urgency = ["awaiting_question", "awaiting_approval", "error", "running"] as const;
+
 export function SessionList({
+  workbenchId,
   sessions,
   active,
   select,
+  openLinked,
   create,
   rename,
   remove,
@@ -27,9 +81,13 @@ export function SessionList({
   searching = false,
   searchError,
 }: {
+  /** Keeps the collapsed parents of this workbench across restarts. */
+  workbenchId?: string | undefined;
   sessions: SessionSummary[];
   active?: string | undefined;
   select: (id: string) => void;
+  /** Opens a delegated child's Chat transcript, as the parent link in a child chat does. */
+  openLinked?: ((id: string) => void) | undefined;
   create: () => void;
   rename: (id: string, title: string) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
@@ -122,6 +180,38 @@ export function SessionList({
     else newButton.current?.focus();
   }
   const listed = sessions.filter((s) => !s.archived);
+  const archivedSessions = sessions.filter((s) => s.archived);
+  const listedTree = sessionTree(listed);
+  const archivedTree = sessionTree(archivedSessions);
+  const delegatedStatus = useDelegatedStatusLabels();
+  const [collapsed, setCollapsed] = useState(() => readCollapsed(workbenchId));
+  const saveCollapsed = (next: Set<string>) => {
+    setCollapsed(next);
+    if (!workbenchId) return;
+    // A full list drops the ids of deleted sessions; search results are partial and keep them.
+    const kept = search.trim() ? [...next] : [...next].filter((id) => sessions.some((s) => s.id === id));
+    try {
+      localStorage.setItem(treeKey(workbenchId), JSON.stringify(kept));
+    } catch {}
+  };
+  // Opening a child from activity, a notification, a link or search expands its parents once
+  // (REQ-UX-3ff00682); the user can collapse them again while it stays open.
+  const revealed = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const current = sessions.find((s) => s.id === active);
+    if (!current || revealed.current === current.id) return;
+    revealed.current = current.id;
+    const byId = new Map(sessions.filter((s) => s.archived === current.archived).map((s) => [s.id, s]));
+    const next = new Set(collapsed);
+    const seen = new Set<string>();
+    for (let parent = visibleParent(current, byId); parent && !seen.has(parent); ) {
+      seen.add(parent);
+      next.delete(parent);
+      const row = byId.get(parent);
+      parent = row && visibleParent(row, byId);
+    }
+    if (next.size !== collapsed.size) saveCollapsed(next);
+  });
   const section = useRef<HTMLElement>(null);
   // React may move the focused row's node while reordering, so focus is put back by id once the
   // list is current and enabled again.
@@ -134,27 +224,69 @@ export function SessionList({
     const row = section.current?.querySelector<HTMLElement>(`[data-session="${target.id}"]`);
     (target.menu ? row?.closest(".session-entry")?.querySelector<HTMLElement>("summary") : row)?.focus();
   }, [sessions, disabled]);
+  // A session moves among its siblings: the rows under the same parent, or the top-level rows.
+  const listedById = new Map(listed.map((row) => [row.id, row]));
+  const siblingsOf = (s: SessionSummary) => {
+    const parent = visibleParent(s, listedById);
+    return parent ? (listedTree.children.get(parent) ?? []) : listedTree.roots;
+  };
   const shift = (s: SessionSummary, offset: -1 | 1, menu: boolean) => {
-    const index = listed.indexOf(s);
+    const siblings = siblingsOf(s);
+    const index = siblings.indexOf(s);
     if (
       !move ||
       disabled ||
       moveDisabled ||
       index < 0 ||
       index + offset < 0 ||
-      index + offset >= listed.length
+      index + offset >= siblings.length
     )
       return;
     // Kept after a failed move too: the row then gets its focus back once it is enabled again.
     refocus.current = { id: s.id, menu };
     void move(s.id, offset);
   };
-  const renderSession = (s: SessionSummary) => {
+  const renderBranch = (s: SessionSummary, tree: Tree, nested = false): ReactNode => {
+    const kids = tree.children.get(s.id) ?? [];
+    const open = !collapsed.has(s.id);
+    const group = `session-children-${s.id}`;
+    return (
+      <Fragment key={s.id}>
+        {renderSession(s, kids, open, group, nested)}
+        {kids.length > 0 && open && (
+          // biome-ignore lint/a11y/useSemanticElements: A fieldset groups form controls; these are navigation rows named by their parent.
+          <div
+            role="group"
+            id={group}
+            className="session-children"
+            data-session-children={s.id}
+            aria-label={t("chat.childSessions", { title: s.title || t("chat.untitled") })}
+          >
+            {kids.map((kid) => renderBranch(kid, tree, true))}
+          </div>
+        )}
+      </Fragment>
+    );
+  };
+  const renderSession = (
+    s: SessionSummary,
+    kids: SessionSummary[],
+    open: boolean,
+    group: string,
+    nested: boolean,
+  ) => {
     const date = dateFormatter.format(new Date(s.updatedAt));
-    const sessionStatus = s.pendingQuestionId ? "awaiting_question" : s.status;
+    const sessionStatus = rowStatus(s);
     // Search results and archived sessions keep their order.
     const movable = !!move && !s.archived && !search.trim();
-    const index = listed.indexOf(s);
+    const siblings = movable ? siblingsOf(s) : [];
+    const index = siblings.indexOf(s);
+    const attention = !open
+      ? urgency.find((state) => kids.some((kid) => rowStatus(kid) === state))
+      : undefined;
+    const attentionText =
+      attention &&
+      t("chat.childAttention", { status: attention === "error" ? status.error : status[attention] });
     const rowKeys = (menu: boolean) => (event: KeyboardEvent<HTMLElement>) => {
       const offset = movable ? reorderOffset(event) : undefined;
       if (!offset) return;
@@ -162,16 +294,55 @@ export function SessionList({
       shift(s, offset, menu);
     };
     return (
-      <div key={s.id} className="session-entry">
+      <div
+        className={`session-entry${kids.length ? " session-parent" : ""}${nested ? " session-child" : ""}`}
+      >
+        {kids.length > 0 && (
+          <button
+            type="button"
+            className="session-toggle"
+            data-session-toggle={s.id}
+            aria-expanded={open}
+            aria-controls={group}
+            aria-label={t("chat.childSessions", { title: s.title || t("chat.untitled") })}
+            onClick={() => {
+              const next = new Set(collapsed);
+              if (open) next.add(s.id);
+              else next.delete(s.id);
+              saveCollapsed(next);
+            }}
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           data-session={s.id}
           aria-current={s.id === active ? "page" : undefined}
-          onClick={() => select(s.id)}
+          onClick={() => (nested && openLinked ? openLinked(s.id) : select(s.id))}
           onKeyDown={rowKeys(false)}
         >
           <strong>{s.title || t("chat.untitled")}</strong>
           <small>
+            {attention && (
+              <span
+                className="session-activity session-child-attention"
+                data-session-child-attention={attention}
+                title={attentionText}
+                aria-hidden="true"
+              >
+                {attention === "error" ? (
+                  <CircleAlert aria-hidden="true" />
+                ) : (
+                  <ActivityIcon status={attention} />
+                )}
+              </span>
+            )}
+            {s.delegation && (
+              <span className="session-delegated-status" data-delegated-status={s.delegation.status}>
+                {delegatedStatus[s.delegation.status]}
+              </span>
+            )}
             {(sessionStatus === "running" ||
               sessionStatus === "awaiting_approval" ||
               sessionStatus === "awaiting_question") && (
@@ -191,6 +362,7 @@ export function SessionList({
           <span className="sr-only" data-session-status={sessionStatus}>
             {status[sessionStatus]}
           </span>
+          {attentionText && <span className="sr-only">{attentionText}</span>}
         </button>
         <details
           className="session-options"
@@ -225,7 +397,7 @@ export function SessionList({
                 <button
                   type="button"
                   data-action="move-session-down"
-                  disabled={disabled || moveDisabled || index >= listed.length - 1}
+                  disabled={disabled || moveDisabled || index >= siblings.length - 1}
                   onClick={(event) => {
                     closeMenu(event.currentTarget);
                     shift(s, 1, true);
@@ -368,17 +540,17 @@ export function SessionList({
       {!!search.trim() && !searching && searchError == null && sessions.length === 0 && (
         <p role="status">{t("chat.noSessions")}</p>
       )}
-      {sessions.filter((s) => !s.archived).map(renderSession)}
-      {sessions.some((s) => s.archived) && (
+      {listedTree.roots.map((s) => renderBranch(s, listedTree))}
+      {archivedSessions.length > 0 && (
         <details
           className="archived-sessions"
           open={showArchived}
           onToggle={(event) => setShowArchived(event.currentTarget.open)}
         >
           <summary>
-            {t("chat.archived")} ({sessions.filter((s) => s.archived).length})
+            {t("chat.archived")} ({archivedSessions.length})
           </summary>
-          {sessions.filter((s) => s.archived).map(renderSession)}
+          {archivedTree.roots.map((s) => renderBranch(s, archivedTree))}
         </details>
       )}
       {exportResult !== undefined && (

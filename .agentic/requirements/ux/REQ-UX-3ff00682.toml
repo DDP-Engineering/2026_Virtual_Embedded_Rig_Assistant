@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3ff00682"
+
+title = "Reveal the active delegated session in the sidebar"
+
+status = "active"
+
+requirement = "When the active session is a child of a collapsed parent, the session sidebar shall expand that parent and mark the child row current."
+
+verification = "Collapse a parent, then make one of its children active as activity, notifications and links do, and assert the parent is expanded and the child row has aria-current; boundary: collapsing that parent again while the child stays open keeps it collapsed."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

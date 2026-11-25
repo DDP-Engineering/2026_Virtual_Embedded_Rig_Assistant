@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f025500b"
+
+title = "Expand and collapse a parent's delegated sessions"
+
+status = "active"
+
+requirement = "When the user activates a parent's expand control, the session sidebar shall show or hide that parent's child rows, report the expanded state, and keep the collapsed parents of the workbench across restarts, with parents expanded by default."
+
+verification = "Render a parent with children: it starts expanded; activate the control by click and keyboard and assert aria-expanded and the hidden child rows; remount with the same workbench and assert the parent stays collapsed."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

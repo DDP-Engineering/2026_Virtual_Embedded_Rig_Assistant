@@ -456,9 +456,7 @@
   },
   "delegation": {
     "instruction": "Instruction de l’agent parent",
-    "title": "Sessions déléguées",
     "outcome": "État de la délégation : {{status}}",
-    "parent": "Session parente : {{title}}",
     "status": {
       "running": "En cours",
       "awaiting_approval": "En attente d’approbation",
@@ -507,6 +505,8 @@
     "sessions": "Sessions",
     "new": "Nouvelle session",
     "untitled": "Session sans titre",
+    "childSessions": "Sessions déléguées de {{title}}",
+    "childAttention": "Session déléguée : {{status}}",
     "idle": "Inactive",
     "running": "En cours",
     "awaiting": "En attente d’approbation",

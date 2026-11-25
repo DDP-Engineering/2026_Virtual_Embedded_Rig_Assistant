@@ -7,14 +7,14 @@ title = "Display delegated turn progress"
 status = "active"
 
 requirement = """
-While an latest delegated turn is active, Desktop shall show its current state beside the linked session.
+While an latest delegated turn is active, Desktop shall show its current state on the child's sidebar row and in the child chat.
 """
 
-verification = "Launch a replay child and verify both session views show running while the parent independently proceeds."
+verification = "Launch a replay child and verify its sidebar row and its chat show running while the parent independently proceeds."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
 
-linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-21
+updated = 2026-11-25

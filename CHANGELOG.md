@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Show delegated sessions as an expandable tree under their parent in the session list, with their outcome and attention state; Move up and Move down keep children with their parent (#407).
 - Open cited frames from verified saved captures in Wireshark Desktop.
 - Evaluate synthetic Wireshark workflows with deterministic replay, exact frame checks and guarded model probes.
 
@@ -24,6 +25,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Changed
 
 - Group completed program and shell operations in chat and clarify approval details.
+- Remove the Delegated sessions list from the parent chat and the Parent session link from a child's chat; the sidebar tree replaces both, and the child chat keeps its delegated turn outcome (#407).
 - Start a Bypass parent's delegated session in Auto-edit when Full Access for delegated tasks is off, instead of refusing the launch; with it on, the child follows the direct Bypass policy, including shell commands without saved prefixes (#405).
 
 ### Fixed

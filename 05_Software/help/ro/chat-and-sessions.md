@@ -64,7 +64,7 @@ Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi 
 
 ## Urmărește sesiunile delegate
 
-Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișează fiecare sesiune copil și starea sa. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația. **Sesiune părinte** revine la sesiunea părinte.
+Când VERA deleagă o sarcină, sesiunea copil apare indentată sub sesiunea părinte în lista de sesiuni, cu rezultatul ultimei execuții delegate. Folosește săgeata din fața sesiunii părinte pentru a-i afișa sau ascunde sesiunile copil; VERA reține alegerea pentru workbench. Cât timp sesiunile copil sunt ascunse, rândul părinte arată dacă una dintre ele te așteaptă, a eșuat sau rulează. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația; dacă o deschizi din activitate sau dintr-o notificare, apare în listă. Pentru a reveni la sesiunea părinte, selectează rândul ei de deasupra sesiunilor copil. **Mută mai sus** și **Mută mai jos** mută o sesiune copil printre sesiunile surori, iar o sesiune părinte împreună cu sesiunile ei copil. O sesiune copil al cărei părinte este arhivat sau lipsește din rezultate apare separat.
 
 Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
 

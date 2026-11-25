@@ -42,6 +42,21 @@ it("moves a non-archived session past archived ones, keeps the order at the edge
   expect(numbers(moveSession(remaining, order, id(1), 1))).toEqual([4, 1]);
 });
 
+// REQ-FUNC-573f5873
+it("moves a session only among its siblings in the delegation tree", () => {
+  const child = (n: number, parent: number, archived = false) => ({
+    ...session(n, archived),
+    delegation: { parentSessionId: id(parent) },
+  });
+  // 5's parent is missing and 6's parent is archived: both are top-level rows.
+  const list = [session(1), child(2, 1), child(3, 1), session(4), child(5, 9), child(6, 7), session(7, true)];
+  expect(numbers(moveSession(list, undefined, id(1), 1))).toEqual([4, 2, 3, 1, 5, 6]);
+  expect(numbers(moveSession(list, undefined, id(2), 1))).toEqual([1, 3, 2, 4, 5, 6]);
+  expect(numbers(moveSession(list, undefined, id(3), 1))).toEqual([1, 2, 3, 4, 5, 6]);
+  expect(numbers(moveSession(list, undefined, id(4), 1))).toEqual([1, 2, 3, 5, 4, 6]);
+  expect(numbers(moveSession(list, undefined, id(6), -1))).toEqual([1, 2, 3, 4, 6, 5]);
+});
+
 it("swaps a recent workbench with its nearest neighbour of the same pinned state", () => {
   const entries = [
     { folder: "/c", pinned: false },

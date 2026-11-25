@@ -7,12 +7,12 @@ title = "Show delegated turn failure"
 status = "active"
 
 requirement = """
-When an latest delegated turn fails or reaches a limit, Desktop shall display the corresponding readable outcome on the linked session views.
+When an latest delegated turn fails or reaches a limit, Desktop shall display the corresponding readable outcome on the child's sidebar row and in the child chat.
 """
 
-verification = "Induce a replay request error, verify Failed in both views and check the status projection also distinguishes a limit."
+verification = "Induce a replay request error, verify Failed on the child's sidebar row and in its chat, and check the status projection also distinguishes a limit."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
 
 linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-21
+updated = 2026-11-25

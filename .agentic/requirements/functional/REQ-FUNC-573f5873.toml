@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-573f5873"
+
+title = "Move a session among its sidebar siblings"
+
+status = "active"
+
+requirement = "When the user moves a non-archived session up or down, VERA shall swap it with the nearest non-archived session that has the same visible delegation parent, or that is also top-level, leaving the order unchanged when none exists."
+
+verification = "Order a top-level parent with two children and a second top-level session: moving the parent down swaps it with the second session, moving the first child down swaps it with its sibling, and moving the last child down leaves the order unchanged; the sidebar disables Move at a sibling-group edge."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ordering.ts", "05_Software/src/apps/desktop/src/main/session-order.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/ordering.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

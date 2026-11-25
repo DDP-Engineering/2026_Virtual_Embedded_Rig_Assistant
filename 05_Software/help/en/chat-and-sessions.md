@@ -64,7 +64,7 @@ In the workbench’s **Agent and chat** settings, **Use recommended answers afte
 
 ## Follow delegated sessions
 
-When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
+When VERA delegates a task, the child appears indented under its parent in the session list, with the outcome of its latest delegated turn. Use the arrow before the parent to show or hide its children; VERA remembers this for the workbench. While the children are hidden, the parent row shows when one of them is waiting for you, failed or is running. Select a child to open its Chat tab and follow its transcript; opening a child from activity or a notification shows it in the list. To return to the parent, select its row above the children. **Move up** and **Move down** move a child among its siblings and a parent together with its children. A child whose parent is archived or not in the results is listed on its own.
 
 To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
 

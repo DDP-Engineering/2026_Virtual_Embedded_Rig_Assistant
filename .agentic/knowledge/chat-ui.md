@@ -56,7 +56,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - Image inspection activity shows a localized label and the path. The transcript and exports receive the text tool result.
 
-- App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. Session chat shows workbench-scoped delegation links with the latest turn ID and state from the session list. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. Parent instructions are marked in Chat and children use the ordinary Stop, approval and permission controls. App settings > Permissions owns the confirmed switch for future delegated Full Access launches. Proof: tests/e2e/session-delegation.spec.ts.
+- App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. A child chat shows only its latest delegated turn outcome from the session list; parent and children are navigated through the sidebar tree, so neither chat links the other. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. Parent instructions are marked in Chat and children use the ordinary Stop, approval and permission controls. App settings > Permissions owns the confirmed switch for future delegated Full Access launches. Proof: tests/e2e/session-delegation.spec.ts.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
 - A send refused with `TURN_LIMIT` returns false, so the composer keeps its text and attachments and, once the message box is enabled again, its focus; SessionWorkspace shows the localized limit alert (wait for a turn, or stop one in the sidebar) until `useTurnCapacity` (session.capacity query plus app event) reports `active < limit`, then the status `chat.turnSlotFree`. Nothing is sent automatically. Tests: components/session/turn-limit.test.ts, native background-sessions.spec.ts.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape cancels active dictation first or confirms Stop in a writable active turn. Global actions yield to modal/handled/composing/repeated keys.
@@ -119,6 +119,15 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - Each sidebar session row has one ellipsis menu: Markdown/JSON export of that row,
   rename, confirmed delete, archive/restore. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
+- SessionList builds one tree per section (main list, Archived, or the given search results): a session nests
+  under its `delegation.parentSessionId` when shared `visibleParent` finds that parent in the same section,
+  else it is top-level; unreachable rows from inconsistent metadata become top-level (REQ-UX-a6ba4f23). A
+  parent's chevron button (aria-expanded/controls) shows or hides its `role="group"` children; collapsed
+  parent IDs persist in localStorage `vera.sessionTree.<workbenchId>`, parents start expanded
+  (REQ-UX-f025500b), and the active child expands its parents (REQ-UX-3ff00682). A collapsed parent shows the
+  most urgent child state, question > approval > error > running (REQ-UX-2feba215); child rows show their
+  delegated outcome. Move up/down swaps with the nearest sibling in shared `moveSession` and is disabled at the
+  sibling-group edge (REQ-FUNC-573f5873). Tests: session-list.test.ts, shared ordering.test.ts.
 - REQ-UX-cb7b704e, REQ-UX-bdd845d0 and REQ-FUNC-f7ef5641
   attach to workspace/usage tests and tests/e2e/session-workspace.spec.ts.
 

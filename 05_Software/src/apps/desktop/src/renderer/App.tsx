@@ -192,10 +192,6 @@ export function App() {
     });
   }, [benchId, client]);
   const selected = sessions.data?.find(({ id }) => id === activeSession);
-  const delegationParent = sessions.data?.find(({ id }) => id === selected?.delegation?.parentSessionId);
-  const delegationChildren = sessions.data?.filter(
-    ({ delegation }) => delegation && delegation.parentSessionId === activeSession,
-  );
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
@@ -719,6 +715,8 @@ export function App() {
         {benchId && (
           <SessionList
             key={benchId}
+            workbenchId={benchId}
+            openLinked={selectLinkedSession}
             sessions={sessions.data ?? []}
             active={activeSession}
             select={select}
@@ -1058,9 +1056,6 @@ export function App() {
                           }
                           archived={selected?.archived ?? true}
                           delegation={selected?.delegation}
-                          delegationParent={delegationParent}
-                          delegationChildren={delegationChildren}
-                          selectLinkedSession={selectLinkedSession}
                           openPlan={openPlan}
                           focusTranscript={
                             !!linkedTranscript &&

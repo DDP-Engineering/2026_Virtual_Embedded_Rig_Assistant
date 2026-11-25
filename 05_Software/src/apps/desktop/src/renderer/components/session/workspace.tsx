@@ -17,7 +17,7 @@ import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { BrowserControls } from "./browser-controls.js";
 import { Composer, type ComposerState } from "./composer.js";
-import { DelegationLinks } from "./delegation-links.js";
+import { DelegatedTurnOutcome } from "./delegation-links.js";
 import { confirmPendingQuestionFocus, pendingQuestionFocus } from "./question-focus.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
@@ -34,9 +34,6 @@ export function SessionWorkspace({
   archived = false,
   detail = "normal",
   delegation,
-  delegationParent,
-  delegationChildren = [],
-  selectLinkedSession,
   openPlan,
   focusTranscript = false,
   questionFocusId,
@@ -53,9 +50,6 @@ export function SessionWorkspace({
   archived?: boolean;
   detail?: ChatDetail;
   delegation?: SessionSummary["delegation"];
-  delegationParent?: SessionSummary | undefined;
-  delegationChildren?: readonly SessionSummary[] | undefined;
-  selectLinkedSession?: (id: string) => void;
   openPlan?: () => void;
   focusTranscript?: boolean;
   questionFocusId?: string | undefined;
@@ -133,9 +127,11 @@ export function SessionWorkspace({
       questionId: questionFocusId,
       checking: false,
     };
-    if (!shown) selectTab?.(CHAT);
+    // An explicit Chat selection, even while Chat is shown, so stored document tabs restored
+    // afterwards for a session opened the first time do not replace it.
+    selectTab?.(CHAT);
     transcriptOpened?.(id);
-  }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened, shown]);
+  }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened]);
   useEffect(() => {
     void focusTranscript; // A new request can arrive in an already loaded conversation.
     const target = pendingTranscriptFocus.current;
@@ -347,14 +343,7 @@ export function SessionWorkspace({
           turnActive={!!view.state.activeTurnId}
         />
       )}
-      {selectLinkedSession && (
-        <DelegationLinks
-          parent={delegationParent}
-          child={delegation}
-          sessions={delegationChildren}
-          open={selectLinkedSession}
-        />
-      )}
+      <DelegatedTurnOutcome child={delegation} />
       {error !== undefined && (
         <>
           <ErrorMessage error={error} />

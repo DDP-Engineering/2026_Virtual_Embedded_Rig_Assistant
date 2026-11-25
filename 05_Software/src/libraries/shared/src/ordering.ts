@@ -31,21 +31,43 @@ export function orderSessions<T extends { id: string; archived?: boolean }>(
     .map(({ item }) => item);
 }
 
+type OrderedSession = { id: string; archived: boolean; delegation?: { parentSessionId: string } | undefined };
+
 /**
- * Moves a non-archived session one place among the non-archived ones and returns the id order to
- * store, which holds only non-archived sessions (deleted and archived ids are dropped). At an edge
- * the order is unchanged.
+ * The parent a session is shown under in the sidebar: its delegation parent when that parent is listed
+ * with the same archived state, else none (a top-level row).
+ */
+export function visibleParent(
+  session: OrderedSession,
+  byId: ReadonlyMap<string, OrderedSession>,
+): string | undefined {
+  const parent = session.delegation && byId.get(session.delegation.parentSessionId);
+  return parent && parent.id !== session.id && parent.archived === session.archived ? parent.id : undefined;
+}
+
+/**
+ * Moves a non-archived session one place among its non-archived siblings (the sessions shown under the
+ * same parent, or the top-level ones) and returns the id order to store, which holds only non-archived
+ * sessions (deleted and archived ids are dropped). At an edge the order is unchanged.
  */
 export function moveSession(
-  list: readonly { id: string; archived: boolean }[],
+  list: readonly OrderedSession[],
   order: readonly string[] | undefined,
   id: string,
   offset: -1 | 1,
 ): string[] {
   const ordered = orderSessions(list, order);
   const index = ordered.findIndex((session) => session.id === id);
-  if (index < 0 || ordered[index]?.archived) throw veraError("NOT_FOUND");
-  return swap(ordered, index, offset, (session) => !session.archived)
+  const moving = ordered[index];
+  if (!moving || moving.archived) throw veraError("NOT_FOUND");
+  const byId = new Map(ordered.map((session) => [session.id, session]));
+  const parent = visibleParent(moving, byId);
+  return swap(
+    ordered,
+    index,
+    offset,
+    (session) => !session.archived && visibleParent(session, byId) === parent,
+  )
     .filter((session) => !session.archived)
     .map((session) => session.id);
 }

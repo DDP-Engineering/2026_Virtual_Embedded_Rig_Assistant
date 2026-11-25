@@ -7,14 +7,14 @@ title = "Show delegated turn completion"
 status = "active"
 
 requirement = """
-When an latest delegated turn completes, Desktop shall display its completed outcome on the linked session views.
+When an latest delegated turn completes, Desktop shall display its completed outcome on the child's sidebar row and in the child chat.
 """
 
-verification = "Run an active replay child through completion and observe Completed on the parent and child views."
+verification = "Run an active replay child through completion and observe Completed on its sidebar row and in its chat."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
 
-linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-21
+updated = 2026-11-25

@@ -456,9 +456,7 @@
   },
   "delegation": {
     "instruction": "Parent agent instruction",
-    "title": "Delegated sessions",
     "outcome": "Delegated turn: {{status}}",
-    "parent": "Parent session: {{title}}",
     "status": {
       "running": "Running",
       "awaiting_approval": "Awaiting approval",
@@ -507,6 +505,8 @@
     "sessions": "Sessions",
     "new": "New session",
     "untitled": "Untitled session",
+    "childSessions": "Delegated sessions of {{title}}",
+    "childAttention": "Delegated session: {{status}}",
     "idle": "Idle",
     "running": "Running",
     "awaiting": "Awaiting approval",

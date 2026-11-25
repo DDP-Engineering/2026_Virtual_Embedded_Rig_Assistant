@@ -7,12 +7,12 @@ title = "Show delegated turn stop and interruption"
 status = "active"
 
 requirement = """
-When an latest delegated turn is stopped or interrupted, Desktop shall display the corresponding readable outcome on the linked session views.
+When an latest delegated turn is stopped or interrupted, Desktop shall display the corresponding readable outcome on the child's sidebar row and in the child chat.
 """
 
-verification = "Stop an active child, verify Stopped on the parent and explicitly attributed to the delegated turn on the child view, and check that storage projection distinguishes recovery interruption."
+verification = "Stop an active child, verify Stopped on its sidebar row and explicitly attributed to the delegated turn in its chat, and check that storage projection distinguishes recovery interruption."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx"]
 
 linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-21
+updated = 2026-11-25

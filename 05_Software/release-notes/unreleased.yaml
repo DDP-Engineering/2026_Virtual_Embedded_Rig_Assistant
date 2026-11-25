@@ -93,3 +93,10 @@ entries:
       ro: Sarcinile delegate din Bypass pornesc în Editare automată dacă accesul complet nu e permis; altfel rulează ca Bypass.
       de: Delegierte Aufgaben aus Bypass starten in Automatisch bearbeiten, außer Vollzugriff ist erlaubt; dann wie Bypass.
       fr: Les tâches déléguées depuis Bypass démarrent en Modification auto sauf accès complet autorisé, alors comme Bypass.
+  - category: new
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Delegated sessions appear as an expandable tree under their parent in the session list.
+      ro: Sesiunile delegate apar ca arbore extensibil sub sesiunea părinte în lista de sesiuni.
+      de: Delegierte Sitzungen erscheinen als aufklappbarer Baum unter ihrer Sitzung in der Liste.
+      fr: Les sessions déléguées apparaissent en arbre dépliable sous leur parent dans la liste.

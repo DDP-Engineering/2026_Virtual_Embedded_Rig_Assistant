@@ -64,7 +64,7 @@ Dans les réglages **Agent et chat** du banc de travail, l’option **Utiliser l
 
 ## Suivre les sessions déléguées
 
-Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent affiche chaque session enfant et son état. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation. **Session parente** permet de revenir au chat parent.
+Lorsque VERA délègue une tâche, la session enfant apparaît en retrait sous sa session parente dans la liste des sessions, avec le résultat de son dernier tour délégué. Utilisez la flèche devant la session parente pour afficher ou masquer ses sessions enfants ; VERA mémorise ce choix pour le banc de travail. Tant qu’elles sont masquées, la ligne parente indique si l’une d’elles vous attend, a échoué ou s’exécute. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation ; si vous l’ouvrez depuis l’activité ou une notification, elle apparaît dans la liste. Pour revenir à la session parente, sélectionnez sa ligne au-dessus des sessions enfants. **Monter** et **Descendre** déplacent une session enfant parmi ses sœurs et une session parente avec ses enfants. Une session enfant dont la session parente est archivée ou absente des résultats est listée seule.
 
 Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** près de la zone de saisie. La session parente peut continuer son travail. Si une approbation est demandée, utilisez la carte d’approbation de la session concernée. Quand vous rouvrez une session après avoir redémarré VERA, le lien et le résultat du tour délégué restent disponibles.
 

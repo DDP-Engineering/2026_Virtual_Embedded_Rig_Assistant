@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a6ba4f23"
+
+title = "Nest delegated sessions under their parent in the sidebar"
+
+status = "active"
+
+requirement = "Where a session's delegation parent is listed in the same sidebar section, the session sidebar shall show the session as an indented row under that parent, and otherwise as a top-level row."
+
+verification = "Render a workbench list with a parent, two children, an independent session, a child whose parent is archived and a child whose parent is absent; assert the two children are indented under the parent in list order and the other sessions are top-level rows."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/libraries/shared/src/ordering.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Delegated children belong visually to their parent; a filtered-out or archived parent must not hide a child."
+
+created = 2026-11-25
+updated = 2026-11-25

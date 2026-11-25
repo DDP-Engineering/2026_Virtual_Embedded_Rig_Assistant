@@ -456,9 +456,7 @@
   },
   "delegation": {
     "instruction": "Anweisung des übergeordneten Agenten",
-    "title": "Delegierte Sitzungen",
     "outcome": "Status der delegierten Aufgabe: {{status}}",
-    "parent": "Übergeordnete Sitzung: {{title}}",
     "status": {
       "running": "Läuft",
       "awaiting_approval": "Wartet auf Genehmigung",
@@ -507,6 +505,8 @@
     "sessions": "Sitzungen",
     "new": "Neue Sitzung",
     "untitled": "Unbenannte Sitzung",
+    "childSessions": "Delegierte Sitzungen von {{title}}",
+    "childAttention": "Delegierte Sitzung: {{status}}",
     "idle": "Bereit",
     "running": "Läuft",
     "awaiting": "Wartet auf Freigabe",
