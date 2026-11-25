@@ -1,2 +1,2 @@
-{"toolCalls":[{"name":"read","args":{"path":"logs/long-run.log","offset":1201,"limit":600}}]}
+{"toolCalls":[{"name":"read","args":{"path":"logs/long-run.log","offset":381,"limit":9}}]}
 {"text":"These lines are routine telemetry with no failure."}

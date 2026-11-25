@@ -170,6 +170,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Keep the long-history compaction evaluation within the replay budget and include the planted instruction.
 - Center the open-tab search dialog and keep its controls within the window.
 - Reuse a model's measured context estimate in new sessions that share the same application data folder.
 - Keep the conversation and composer visible when the update banner takes space in a compact window.

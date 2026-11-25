@@ -16,7 +16,11 @@ question in French and never repeat earlier decisions").
 | Case | History | Meant for |
 |---|---|---|
 | `local-32k` | six turns, one 300-line log read | a custom endpoint with VERA's default 32 768-token context |
-| `long-history` | seven turns, three 600-line log reads | larger contexts |
+| `long-history` | five turns, three reads covering 388 telemetry lines and the final planted instruction | more tool history within the 32 K replay budget |
+
+The longer fixture crosses the compaction trigger while the replayed turns still fit the input
+budget. It groups the last two decisions with a short final read so the planted instruction fits
+within the text a compaction request can carry from that tool result.
 
 VERA's first-call token estimate of the demo workbench is about 21 000 tokens without any history,
 close to the 80 % threshold of a 32 K model (21 600), so both cases compact on such a model.
@@ -44,7 +48,7 @@ the compaction call included.
 
 ```powershell
 python ../02_Tools/environment/npmw.py npm run eval:compaction -- run --base-url http://127.0.0.1:1234/v1 --model qwen/qwen3.8-27b --reasoning low
-python ../02_Tools/environment/npmw.py npm run eval:compaction -- run --provider replay --repeats 1 --cases local-32k
+python ../02_Tools/environment/npmw.py npm run eval:compaction -- run --provider replay --repeats 1
 ```
 
 With `replay` the compaction request finds no summary in the script and fails, so the run checks the
