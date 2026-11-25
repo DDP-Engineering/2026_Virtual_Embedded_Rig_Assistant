@@ -1,12 +1,17 @@
 import { unlink, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join } from "node:path";
-import { type CaptureReference, captureFileLimits, type DeriveCaptureArgs } from "@vera/shared";
+import {
+  type CaptureReference,
+  captureFileLimits,
+  type DeriveCaptureArgs,
+  hexdumpImportLimits,
+} from "@vera/shared";
 import { z } from "zod";
 import type { ProgramHost } from "../plugins/program-tools.js";
 import type { LoadedPlugin } from "../plugins/store.js";
 import { CaptureError, captureProfileEnvironment } from "./native.js";
 
-const tools = ["capinfos", "editcap", "mergecap", "tshark"] as const;
+const tools = ["capinfos", "editcap", "mergecap", "text2pcap", "tshark"] as const;
 export type FileProgram = (typeof tools)[number];
 type NativeProgram = { executable: string; version: string };
 type NativePrograms = Partial<Record<FileProgram, NativeProgram>>;
@@ -24,6 +29,7 @@ const programsByOperation = {
   export_fields: ["tshark"],
   export_pdus: ["tshark"],
   export_objects: ["tshark"],
+  import_hexdump: ["text2pcap"],
 } as const satisfies Record<Operation, readonly FileProgram[]>;
 
 type PduTap = Extract<DeriveCaptureArgs, { operation: "export_pdus" }>["tap"];
@@ -148,8 +154,10 @@ export function fileUtilityCapabilities(
         ...readiness(programsByOperation.export_objects, true, features.httpObjects),
         protocols: features.httpObjects ? ["http"] : [],
       },
+      importHexdump: readiness(programsByOperation.import_hexdump),
     },
     fileLimits: captureFileLimits,
+    hexdumpLimits: hexdumpImportLimits,
   };
 }
 
@@ -178,6 +186,7 @@ export class CaptureFileNative {
     private readonly programs: NativePrograms,
     readonly folder: string,
     readonly signal: AbortSignal,
+    private readonly outputBytes: number = captureFileLimits.outputBytes,
   ) {}
 
   require(name: FileProgram) {
@@ -282,13 +291,12 @@ export class CaptureFileNative {
 
   async capture(name: FileProgram, args: string[], intermediate = false) {
     const remaining = intermediate
-      ? 2 * captureFileLimits.outputBytes - this.intermediateBytes
-      : captureFileLimits.outputBytes - this.stagedBytes;
+      ? 2 * this.outputBytes - this.intermediateBytes
+      : this.outputBytes - this.stagedBytes;
     if (remaining <= 0) throw this.outputLimit();
-    const result = await this.runner.captureBytes(
-      this.request(name, args, Math.min(remaining, captureFileLimits.outputBytes)),
-    );
-    if (result.exceeded && result.stdout.length >= Math.min(remaining, captureFileLimits.outputBytes))
+    const limit = Math.min(remaining, this.outputBytes);
+    const result = await this.runner.captureBytes(this.request(name, args, limit));
+    if (result.stdout.length > limit || (result.exceeded && result.stdout.length === limit))
       throw this.outputLimit();
     if (result.exceeded || result.exit.code !== 0)
       throw new CaptureError(

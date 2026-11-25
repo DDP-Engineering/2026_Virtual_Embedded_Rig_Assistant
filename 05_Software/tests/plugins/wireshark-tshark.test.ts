@@ -13,6 +13,7 @@ import {
   captureLimits,
   captureReferenceSchema,
   classifyCommand,
+  deriveCaptureToolSchema,
   type PluginManifest,
   validatePluginManifest,
 } from "@vera/shared";
@@ -196,6 +197,347 @@ it("validates native capture-file operations and reusable managed outputs", asyn
 const deriveFile = (operation: string, args: Record<string, unknown>) => ({
   toolCalls: [{ name: "wireshark_derive", args: { operation, ...args } }],
 });
+
+const firmwareHex = "captures/firmware-ethernet.hex";
+const uartHex = "captures/uart-payload.hex";
+const hexdump = (path: string, encapsulation: object, timestamps = "synthetic") =>
+  deriveFile("import_hexdump", {
+    path,
+    hexdumpProfile: { parser: "ascii-offset-v1", encapsulation, timestamps },
+  });
+const opaqueHex = { kind: "user0" };
+const udpHex = { kind: "udp_ipv4", sourcePort: 32101, destinationPort: 32102 };
+const ethernetHex = { kind: "ethernet" };
+const hexFixture = (path: string) =>
+  readFile(new URL(path.replace("captures/", "../fixtures/wireshark-tshark/"), import.meta.url));
+const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+
+it("imports profiled hexdumps and verifies native packet readback and managed provenance", async (ctx) => {
+  const rig = await workbench({
+    hexdump: [
+      typed("capabilities"),
+      hexdump(firmwareHex, ethernetHex, "trace_utc"),
+      hexdump(uartHex, opaqueHex),
+      hexdump(uartHex, udpHex),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    const firmware = await hexFixture(firmwareHex);
+    const uart = Buffer.from((await hexFixture(uartHex)).toString("ascii").replaceAll("\n", "\r\n"));
+    await writeFile(join(rig.bench, firmwareHex), firmware);
+    await writeFile(join(rig.bench, uartHex), uart);
+    const service = await rig.start();
+    const turn = rig.session(service, "hexdump", "ask");
+    service.send(turn.id, "Import the independent firmware and UART fixtures.");
+    await service.waitIdle(turn.id);
+    const [capabilities, raw, opaque, udp] = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    if (!capabilities?.fileOperations?.importHexdump?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native Text2pcap is unavailable.");
+      return;
+    }
+    expect(capabilities, turn.outputs[0]?.summary).toMatchObject({
+      utilities: { text2pcap: { available: true, version: expect.stringMatching(/^\d+\.\d+\.\d+$/) } },
+      fileOperations: { importHexdump: { available: true } },
+    });
+    expect(
+      turn.outputs.every(({ ok }) => ok),
+      JSON.stringify(turn.outputs),
+    ).toBe(true);
+    const managed = join(rig.bench, ".vera", "captures");
+    const native = async (capture: CaptureReference, args: string[]) => {
+      if (!rig.tshark) throw Error("Native TShark is required.");
+      const { stdout } = await promisify(execFile)(
+        rig.tshark.executable,
+        ["-n", "-r", join(managed, `${capture.sha256}.pcapng`), ...args],
+        {
+          timeout: 10_000,
+          windowsHide: true,
+          env: { ...process.env, ...core.captureProfileEnvironment(rig.bench) },
+        },
+      );
+      return stdout.trim();
+    };
+    const nativeReadback = [];
+    for (const [result, input, encapsulation, origin, headers] of [
+      [raw, firmware, ethernetHex, "trace", []],
+      [opaque, uart, opaqueHex, "synthetic", []],
+      [udp, uart, udpHex, "synthetic", ["ethernet", "ipv4", "udp"]],
+    ] as const) {
+      const capture = captureReferenceSchema.parse(result.capture);
+      const body = await readFile(join(managed, `${capture.sha256}.pcapng`));
+      const manifest = await readFile(join(managed, `${result.manifest.sha256}.provenance.json`));
+      expect(capture).toMatchObject({
+        source: { kind: "managed" },
+        bytes: body.length,
+        sha256: sha256(body),
+        fileFormat: "pcapng",
+      });
+      expect(result.manifest).toEqual({ bytes: manifest.length, sha256: sha256(manifest) });
+      expect(JSON.parse(manifest.toString())).toEqual(result.provenance);
+      expect(result).toMatchObject({
+        complete: true,
+        provenance: {
+          format: 1,
+          source: { sha256: sha256(input), bytes: input.length },
+          profile: { parser: "ascii-offset-v1", encapsulation },
+          tool: { name: "text2pcap", version: capabilities.utilities.text2pcap.version },
+          timestamps: { origin, synthetic: origin === "synthetic" },
+          syntheticHeaders: headers,
+          capture,
+          packets: 2,
+        },
+      });
+      const fields = await native(capture, [
+        "-T",
+        "fields",
+        "-e",
+        "frame.number",
+        "-e",
+        "frame.time_epoch",
+        "-e",
+        "frame.len",
+        "-e",
+        "ip.src",
+        "-e",
+        "ip.dst",
+        "-e",
+        "udp.srcport",
+        "-e",
+        "udp.dstport",
+        "-e",
+        "udp.payload",
+      ]);
+      const frames = JSON.parse(await native(capture, ["-T", "jsonraw"])).map(
+        (row: { _source: { layers: { frame_raw: [string] } } }) => row._source.layers.frame_raw[0],
+      );
+      nativeReadback.push({ fields: fields.split(/\r?\n/).map((line) => line.trimEnd()), frames });
+    }
+    expect(nativeReadback[0]).toEqual({
+      fields: ["1\t1773500966.123456789\t20", "2\t1773500965.987654321\t19"],
+      frames: ["00112233445566778899aabb88b5cafe01020304", "0123456789ab020406080a0c88b5f00db00b1e"],
+    });
+    expect(nativeReadback[1]).toEqual({
+      fields: ["1\t946684800.000000000\t4", "2\t946684800.000001000\t5"],
+      frames: ["deadbeef", "13370055aa"],
+    });
+    expect(nativeReadback[2]?.fields).toEqual([
+      "1\t946684800.000000000\t60\t192.0.2.1\t192.0.2.2\t32101\t32102\tdeadbeef",
+      "2\t946684800.000001000\t60\t192.0.2.1\t192.0.2.2\t32101\t32102\t13370055aa",
+    ]);
+    await rig.writeReplay("verify-hexdump", [
+      typed("verify_reference", { source: { reference: raw.capture } }),
+      { text: "Done." },
+    ]);
+    const reopen = rig.session(service, "verify-hexdump", "ask");
+    service.send(reopen.id, "Reopen the managed import.");
+    await service.waitIdle(reopen.id);
+    expect(JSON.parse(reopen.outputs[0]?.summary ?? "{}")).toEqual({ capture: raw.capture, verified: true });
+    expect(await readFile(join(rig.bench, firmwareHex))).toEqual(firmware);
+    expect(await readFile(join(rig.bench, uartHex))).toEqual(uart);
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-hexdump-readback.json`),
+        JSON.stringify({ capabilities, raw, opaque, udp, nativeReadback, reopen: reopen.outputs }, null, 2),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("rejects unsafe, incomplete and cancelled hexdumps without publishing a capture or manifest", async (ctx) => {
+  const rejected = [
+    ["bad-byte", "000 00\n001 0G\n", opaqueHex, "synthetic", "hexdump_malformed", "line 2"],
+    ["bad-offset", "000 00\n002 01\n", opaqueHex, "synthetic", "hexdump_malformed", "line 2"],
+    ["non-ascii", Buffer.from("000 00\n000 ż\n"), opaqueHex, "synthetic", "hexdump_malformed", "line 2"],
+    ["bad-date", "@2026-02-30T00:00:00Z\n000 ff\n", opaqueHex, "trace_utc", "hexdump_malformed", "line 1"],
+    ["short-frame", "000 ab\n", ethernetHex, "synthetic", "hexdump_incompatible", "line 1"],
+    ["no-time", "000 ff\n", opaqueHex, "trace_utc", "hexdump_incompatible", "line 1"],
+    [
+      "extra-time",
+      "@2026-11-25T00:00:00Z\n000 ff\n",
+      opaqueHex,
+      "synthetic",
+      "hexdump_incompatible",
+      "line 1",
+    ],
+    [
+      "large-input",
+      Buffer.alloc(4 * 1024 * 1024 + 1, 32),
+      opaqueHex,
+      "synthetic",
+      "hexdump_input_limit",
+      "smaller",
+    ],
+    [
+      "large-packet",
+      Array.from({ length: 513 }, (_, i) => (i * 32).toString(16).padStart(3, "0") + " ff".repeat(32)).join(
+        "\n",
+      ),
+      opaqueHex,
+      "synthetic",
+      "hexdump_packet_limit",
+      "line 513",
+    ],
+    ["too-many", "000 ff\n".repeat(10_001), opaqueHex, "synthetic", "hexdump_packet_limit", "line 10001"],
+  ] as const;
+  const valid = hexdump(uartHex, opaqueHex);
+  const rig = await workbench({
+    readinessHex: [typed("capabilities"), { text: "Done." }],
+    rejectedHex: [
+      ...rejected.map(([name, , kind, time]) => hexdump(`captures/${name}.hex`, kind, time)),
+      hexdump("../outside.hex", opaqueHex),
+      { text: "Done." },
+    ],
+    partialHex: [valid, { text: "Done." }],
+    changedHex: [valid, { text: "Done." }],
+    badMetadataHex: [valid, { text: "Done." }],
+    largeHex: [valid, { text: "Done." }],
+    cancelHex: [valid, { text: "Done." }],
+    readonlyHex: [valid, { text: "Done." }],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    const uart = await hexFixture(uartHex);
+    await writeFile(join(rig.bench, uartHex), uart);
+    await writeFile(join(rig.bench, "../outside.hex"), uart);
+    for (const [name, bytes] of rejected) await writeFile(join(rig.bench, "captures", `${name}.hex`), bytes);
+    const service = await rig.start();
+    const readiness = rig.session(service, "readinessHex", "ask");
+    service.send(readiness.id, "Check the installed hexdump converter.");
+    await service.waitIdle(readiness.id);
+    const status = JSON.parse(readiness.outputs[0]?.summary ?? "{}");
+    if (!status?.fileOperations?.importHexdump?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native Text2pcap is unavailable.");
+      return;
+    }
+    expect(status.fileOperations.importHexdump).toEqual({ available: true });
+    const managed = join(rig.bench, ".vera", "captures");
+    const run = async (name: string, mode: "ask" | "read-only" = "ask") => {
+      const turn = rig.session(service, name, mode);
+      service.send(turn.id, "Check the failure boundary.");
+      await service.waitIdle(turn.id);
+      expect(turn.outputs.every(({ ok }) => !ok)).toBe(true);
+      await expect(readdir(managed)).rejects.toMatchObject({ code: "ENOENT" });
+      return turn.outputs.map(({ summary }) => JSON.parse(summary));
+    };
+    const failures = await run("rejectedHex");
+    rejected.forEach(([, , , , reason, phrase], i) => {
+      expect(failures[i]).toMatchObject({ reason, error: expect.stringContaining(phrase) });
+    });
+    expect(failures.at(-1)).toMatchObject({ reason: "hexdump_inaccessible" });
+    expect(await run("readonlyHex", "read-only")).toMatchObject([{ reason: "storage_read_only" }]);
+    const captureBytes = rig.runner.captureBytes.bind(rig.runner);
+    const conversions = [];
+    for (const [name, modify, reason] of [
+      ["partialHex", (bytes: Buffer) => bytes.subarray(0, -1), "hexdump_output_invalid"],
+      [
+        "changedHex",
+        (bytes: Buffer) => {
+          const at = bytes.indexOf(Buffer.from("deadbeef", "hex"));
+          expect(at).toBeGreaterThan(0);
+          const changed = Buffer.from(bytes);
+          changed[at] = 0;
+          return changed;
+        },
+        "hexdump_output_invalid",
+      ],
+      [
+        "badMetadataHex",
+        (bytes: Buffer) => Buffer.concat([bytes, pcapngBlock(4, Buffer.alloc(0))]),
+        "hexdump_output_invalid",
+      ],
+      ["largeHex", undefined, "capture_output_limit"],
+    ] as const) {
+      rig.runner.captureBytes = async (request) => {
+        const result = await captureBytes(request);
+        if (!request.args.includes("hex-input.txt")) return result;
+        expect(request.maxBytes).toBe(8 * 1024 * 1024);
+        return modify
+          ? { ...result, stdout: Buffer.from(modify(result.stdout)) }
+          : { ...result, exceeded: true, stdout: Buffer.alloc(request.maxBytes) };
+      };
+      const failure = await run(name);
+      expect(failure).toMatchObject([{ reason }]);
+      conversions.push(...failure);
+    }
+    rig.runner.captureBytes = captureBytes;
+    const cancelled = rig.session(service, "cancelHex", "ask");
+    let stopped = false;
+    rig.onNativeStart((argv) => {
+      if (argv.includes("hex-input.txt")) stopped = service.stop(cancelled.id);
+    });
+    service.send(cancelled.id, "Cancel the converter as it starts.");
+    const settlement = await service.waitIdle(cancelled.id);
+    expect(stopped).toBe(true);
+    expect(settlement).toEqual({ stopReason: "aborted" });
+    expect(cancelled.outputs).toEqual([{ ok: false, summary: "Aborted." }]);
+    await expect(readdir(managed)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readFile(join(rig.bench, uartHex))).toEqual(uart);
+    expect(await readFile(join(rig.bench, "../outside.hex"))).toEqual(uart);
+    for (const [name, bytes] of rejected)
+      expect(sha256(await readFile(join(rig.bench, "captures", `${name}.hex`)))).toBe(
+        sha256(Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes)),
+      );
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-hexdump-refusals.json`),
+        JSON.stringify({ failures, conversions, cancelled: cancelled.outputs, settlement, stopped }, null, 2),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("keeps saved captures ready when the hexdump converter is missing", async (ctx) => {
+  const rig = await workbench(
+    { missingHex: [typed("capabilities"), hexdump(uartHex, opaqueHex), { text: "Done." }] },
+    "no_text2pcap",
+  );
+  try {
+    expect(deriveCaptureToolSchema.safeParse({ operation: "import_hexdump", path: uartHex }).success).toBe(
+      false,
+    );
+    expect(
+      deriveCaptureToolSchema.safeParse(hexdump(uartHex, { ...udpHex, sourcePort: 0 }).toolCalls[0]?.args)
+        .success,
+    ).toBe(false);
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, uartHex), await hexFixture(uartHex));
+    const service = await rig.start();
+    const turn = rig.session(service, "missingHex", "ask");
+    service.send(turn.id, "Check readiness without the converter.");
+    await service.waitIdle(turn.id);
+    const [capabilities, failure] = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(capabilities).toMatchObject({
+      tshark: { available: true },
+      utilities: { text2pcap: { available: false } },
+      fileOperations: {
+        importHexdump: { available: false, missing: ["text2pcap"] },
+      },
+    });
+    expect(failure).toMatchObject({
+      reason: "utility_unavailable",
+      error: expect.stringContaining("text2pcap"),
+    });
+    await expect(readdir(join(rig.bench, ".vera", "captures"))).rejects.toMatchObject({ code: "ENOENT" });
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
 
 async function reopenDerived(
   rig: Awaited<ReturnType<typeof workbench>>,
@@ -1342,6 +1684,13 @@ it("publishes the official find-only tshark package, its pack and two skills", a
     match: "^TShark \\(Wireshark\\) (\\d+\\.\\d+\\.\\d+)",
   });
   expect(m.programs.tshark?.optionSyntax).toBe("tshark");
+  expect(m.programs.text2pcap?.install).toMatchObject({
+    find: {
+      windows: ["%PATH%", "%ProgramFiles%/Wireshark/text2pcap.exe"],
+      linux: ["$PATH", "/usr/bin/text2pcap"],
+    },
+  });
+  expect(classifyCommand(m.rules, "text2pcap", ["input.hex", "output.pcapng"]).risk).toBe("blocked");
   const catalog = parse(await readFile(new URL("catalog.yaml", plugins), "utf8"));
   expect(catalog.official).toContain("wireshark-tshark");
   const packs = parse(await readFile(new URL("packs.yaml", plugins), "utf8"));
@@ -1597,7 +1946,7 @@ it("offers the typed capture contract in the model tool registry", () => {
  */
 async function workbench(
   scripts: Record<string, unknown[]>,
-  state: "enabled" | "missing_binary" | "local" | "tshark_only" = "enabled",
+  state: "enabled" | "missing_binary" | "local" | "tshark_only" | "no_text2pcap" = "enabled",
   permissions?: core.PermissionEngine,
 ) {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-tshark-replay-")));
@@ -1708,10 +2057,10 @@ async function workbench(
         resolver:
           state === "missing_binary"
             ? core.unresolvedPrograms
-            : state === "tshark_only"
+            : state === "tshark_only" || state === "no_text2pcap"
               ? {
                   resolve: (plugin, program, signal) =>
-                    program === "tshark"
+                    (state === "tshark_only" ? program === "tshark" : program !== "text2pcap")
                       ? provisioner.resolve(plugin, program, signal)
                       : Promise.resolve(undefined),
                 }

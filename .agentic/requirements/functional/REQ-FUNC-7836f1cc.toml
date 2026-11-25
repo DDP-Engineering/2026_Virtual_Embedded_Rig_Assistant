@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-7836f1cc"
+title = "Discover the hexdump converter"
+status = "active"
+requirement = "When the Wireshark plugin reports capabilities, VERA shall report the installed version or unavailability of text2pcap and the readiness of hexdump import independently of saved-capture tools."
+verification = "Query capability with an installed version and with the converter missing, then verify the import readiness and unchanged saved-capture readiness."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files-native.ts", "05_Software/src/libraries/core/src/wireshark/service.ts", "05_Software/plugins/wireshark-tshark/plugin.yaml"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::keeps saved captures ready when the hexdump converter is missing", "05_Software/tests/plugins/wireshark-tshark.test.ts::publishes the official find-only tshark package, its pack and two skills"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -65,7 +65,15 @@ export function epochText(time: bigint | null) {
   return `${time < 0n ? "-" : ""}${magnitude / second}.${String(magnitude % second).padStart(9, "0")}`;
 }
 
-export function indexCapture(bytes: Buffer, format: CaptureReference["fileFormat"], signal: AbortSignal) {
+export function indexCapture(
+  bytes: Buffer,
+  format: CaptureReference["fileFormat"],
+  signal: AbortSignal,
+  inspection?: {
+    allowedPcapngBlocks: ReadonlySet<number>;
+    visitPacket(number: number, data: Buffer, wire: number, time: bigint | null): void;
+  },
+) {
   const packets: IndexedPacket[] = [];
   const interfaces: CaptureInterface[] = [];
   const metadata = { capture_comments: 0, packet_comments: 0, secrets: 0 };
@@ -125,6 +133,7 @@ export function indexCapture(bytes: Buffer, format: CaptureReference["fileFormat
     let time = ticks === null ? null : numerator / clock.ticksPerSecond;
     const remainder = numerator % clock.ticksPerSecond;
     if (time !== null && remainder < 0n) time -= 1n;
+    inspection?.visitPacket(packets.length + 1, data, wire, time);
     let exactTime = String(time);
     if (remainder !== 0n) {
       // Normalize as a rational number so conversions cannot silently lose subnanosecond information.
@@ -201,6 +210,7 @@ export function indexCapture(bytes: Buffer, format: CaptureReference["fileFormat
       }
       if (section < 0) throw malformed();
       const type = u32(at);
+      if (inspection && !inspection.allowedPcapngBlocks.has(type)) throw malformed();
       const length = u32(at + 4);
       const end = at + length - 4;
       if (length < 12 || length % 4 || end + 4 > bytes.length || u32(end) !== length) throw malformed();

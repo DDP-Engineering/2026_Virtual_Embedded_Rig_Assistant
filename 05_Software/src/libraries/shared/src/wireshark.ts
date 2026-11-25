@@ -39,7 +39,8 @@ const positive = z.number().int().positive().max(4_294_967_295);
 const sha256 = z.string().regex(/^[a-f0-9]{64}$/);
 // biome-ignore lint/suspicious/noControlCharactersInRegex: keep paths and native argument text on one line.
 const singleLine = /^[^\u0000-\u001f\u007f]+$/;
-const path = z.string().min(1).max(1024).regex(singleLine);
+export const capturePathSchema = z.string().min(1).max(1024).regex(singleLine);
+const path = capturePathSchema;
 export const captureFormatSchema = z.enum(["pcap", "pcapng"]);
 
 /** Stable source and content identity within the owning workbench. */

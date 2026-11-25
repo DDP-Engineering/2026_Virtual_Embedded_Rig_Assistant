@@ -1,6 +1,6 @@
 format: 1
 id: wireshark-tshark
-version: 0.7.0
+version: 0.8.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wireshark (TShark)
 summary: Analyse network capture files and capture live traffic with TShark.
@@ -49,11 +49,18 @@ programs:
         linux: ["$PATH", "/usr/bin/mergecap"]
       hint: "Install the Wireshark capture-file utilities from Wireshark or your distribution."
     version: { args: [--version], match: '^Mergecap \(Wireshark\) (\d+\.\d+\.\d+)' }
+  text2pcap:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/Wireshark/text2pcap.exe"]
+        linux: ["$PATH", "/usr/bin/text2pcap"]
+      hint: "Install text2pcap from Wireshark or your distribution's Wireshark command-line tools."
+    version: { args: [--version], match: '^Text2pcap \(Wireshark\) (\d+\.\d+\.\d+)' }
 # tshark syntax projects option roles: <info> exits before capturing, <file> reads -r, <write> names an output
 # file or folder (-w, --export-objects, --export-tls-session-keys, --log-file), <capture> opens an interface (or
 # the default one when no capture file is read), <unknown> is an unrecognised option.
 rules:
-  - { match: "{capinfos,editcap,mergecap} *", risk: blocked, note: "Use the typed Wireshark tools for saved capture files." }
+  - { match: "{capinfos,editcap,mergecap,text2pcap} *", risk: blocked, note: "Use the typed Wireshark tools for saved capture files and hexdumps." }
   - { match: "tshark * <info> *", risk: safe }
   - { match: "tshark * <file> *", risk: safe, note: Reads a saved capture file. }
   - { match: "tshark * <write> *", risk: device-read, note: "Writes the file or folder that -w, --export-objects, --export-tls-session-keys or --log-file names; it may lie outside the workbench." }

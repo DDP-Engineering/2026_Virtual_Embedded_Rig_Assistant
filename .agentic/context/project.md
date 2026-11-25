@@ -142,7 +142,8 @@ Facts that span components:
 - The official Wireshark plugin enables offline capture inspection, traffic statistics, diagnostics,
   response timing, bounded TCP/UDP follow evidence, general networking profiles, Automotive Ethernet
   PDU evidence and managed binary capture storage. Saved capture operations use independently
-  probed utilities for metadata, verified derivation, cleanup and local exports. Networking
+  probed utilities for metadata, verified derivation, cleanup and local exports. Text2pcap also
+  imports profiled firmware and UART hexdumps with a managed PCAPNG and source provenance. Networking
   observations retain native field and frame context, and the compact view redacts network identifiers.
   Desktop verifies a cited file and frame in its owning workbench
   and opens it at the matching packet in native Wireshark. See [communication plugins](../knowledge/official-plugins-communication.md).

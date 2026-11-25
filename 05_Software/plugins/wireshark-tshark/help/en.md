@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Ask the agent to import a saved firmware or UART hexdump as PCAPNG. Specify complete Ethernet frames, opaque payloads or synthetic IPv4/UDP headers, and tell the agent whether the dump records UTC times. The provenance manifest identifies the source hash and any synthetic metadata. The import requires Text2pcap.
+
 Ask the agent to inspect capture metadata, select frames, split, merge, reorder, deduplicate, convert or clean saved captures. The original files are preserved. Cleaned captures can still contain packet data and identifiers. The agent can export supported fields, PDUs and HTTP bodies locally. Availability depends on the installed Wireshark utilities.
 
 For general networking, ask about Ethernet and VLANs, IPv4 and IPv6, ARP and neighbor discovery, DNS and DHCP, TCP and UDP, multicast or visible TLS metadata. Request compact evidence to hide network addresses and names while keeping frame links and capture limits.

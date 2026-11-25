@@ -21,6 +21,7 @@ import { analyzeAutomotive, automotiveCapabilities, automotiveDecodeAs } from ".
 import { readCaptureLineage } from "./capture-file-lineage.js";
 import { captureFileOperation, isCaptureFileOperation } from "./capture-files.js";
 import { CaptureFileNative, fileUtilityCapabilities, resolveFilePrograms } from "./capture-files-native.js";
+import { importHexdump } from "./capture-hexdump.js";
 import { captureCitation } from "./citations.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { analyzeNetworking } from "./network-evidence.js";
@@ -340,6 +341,10 @@ export async function inspectWireshark(
         ? requireResultBudget(result, toolLimit(ctx, "toolResultChars"))
         : result;
     }
+    if (args.operation === "import_hexdump") {
+      folder = await mkdtemp(join(tmpdir(), "vera-offline-"));
+      return await importHexdump(ctx, args, host, plugin, folder, bounded, authorize);
+    }
     if (args.operation === "verify_reference") {
       const capture = await snapshotCapture(ctx, args.source, undefined, bounded);
       await authorize();
@@ -350,7 +355,7 @@ export async function inspectWireshark(
       const filePrograms = await resolveFilePrograms(
         host,
         plugin,
-        ["capinfos", "editcap", "mergecap", "tshark"],
+        ["capinfos", "editcap", "mergecap", "text2pcap", "tshark"],
         bounded,
       );
       const usable = filePrograms.tshark;
@@ -431,11 +436,18 @@ export async function inspectWireshark(
   } catch (error) {
     signal.throwIfAborted();
     if (deadline.aborted)
-      throw new CaptureError("capture_deadline", "Offline analysis timed out. Narrow the capture or filter.");
+      throw new CaptureError(
+        "capture_deadline",
+        args.operation === "import_hexdump"
+          ? "Hexdump import timed out. Split the dump and retry."
+          : "Offline analysis timed out. Narrow the capture or filter.",
+      );
     if (error instanceof CaptureError) throw error;
     throw new CaptureError(
       "capture_failed",
-      "Offline analysis failed. Check the workbench and TShark installation.",
+      args.operation === "import_hexdump"
+        ? "Hexdump import failed. Check workbench access and the Text2pcap installation."
+        : "Offline analysis failed. Check the workbench and TShark installation.",
     );
   } finally {
     if (folder) await rm(folder, { recursive: true, force: true }).catch(() => {});

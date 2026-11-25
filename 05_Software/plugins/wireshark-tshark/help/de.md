@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Bitte den Agenten, einen gespeicherten Firmware- oder UART-Hexdump als PCAPNG zu importieren. Gib an, ob vollständige Ethernet-Frames, undurchsichtige Nutzdaten oder synthetische IPv4/UDP-Header verwendet werden sollen und ob der Dump UTC-Zeiten enthält. Das Herkunftsmanifest nennt den Quellhash und die synthetischen Metadaten. Der Import benötigt Text2pcap.
+
 Bitte den Agenten, Mitschnittmetadaten zu prüfen, Frames auszuwählen oder gespeicherte Mitschnitte zu teilen, zusammenzuführen, umzusortieren, zu deduplizieren, zu konvertieren oder zu bereinigen. Die Originaldateien bleiben erhalten. Bereinigte Mitschnitte können weiterhin Paketdaten und Kennungen enthalten. Der Agent kann unterstützte Felder, PDUs und HTTP-Nachrichtenkörper lokal exportieren. Die Verfügbarkeit hängt von den installierten Wireshark-Werkzeugen ab.
 
 Frage zur Netzwerkanalyse nach Ethernet und VLANs, IPv4 und IPv6, ARP und Nachbarerkennung, DNS und DHCP, TCP und UDP, Multicast oder sichtbaren TLS-Metadaten. Kompakte Belege blenden Netzwerkadressen und Namen aus und behalten Paketverweise sowie Erfassungsgrenzen bei.

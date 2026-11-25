@@ -102,6 +102,8 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 - Capture-file replay also needs Capinfos, Editcap and Mergecap. It compares verified output
   packets and lineage against independent fixtures, including synthetic comments and secrets,
   and exercises both successful publication and cancellation.
+- Hexdump replay needs Text2pcap and TShark. Independent firmware and UART fixtures verify native
+  readback, exact bytes, timestamp origin, source hashes and grouped provenance publication.
 - Native Wireshark replay compares saved synthetic captures against field, statistics and follow
   output. Networking profile replay uses `networking.pcapng` and reports frame references, observed
   limits and compact redaction. The focused checks use saved capture files.

@@ -54,7 +54,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.7.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.8.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -68,7 +68,7 @@ device commands follow their own program risk and approval rules.
   generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captures self-sent loopback datagrams after
   approval on Windows/Npcap. Native Linux live capture remains unverified. `-o extcap.*` credential values are not refused.
 
-- Capinfos, Editcap and Mergecap are find-only dependencies with independent version probes.
+- Capinfos, Editcap, Mergecap and Text2pcap are find-only dependencies with independent version probes.
   `capabilities` reports their per-operation readiness and measured local export support. Raw
   program calls to these utilities are blocked. `file_metadata` verifies format, packet count
   and hash with Capinfos and reports interface clocks, link types and available timestamps.
@@ -79,6 +79,10 @@ device commands follow their own program risk and approval rules.
   verified mappings and has a SHA-256 reference and paged read operation. Field and HTTP data
   stay in session artifacts and require an export mask that preserves their structured bytes. Fixed
   native PDU taps produce a PCAPNG and an emitting-frame mapping when their tags support it.
+  `import_hexdump` converts bounded ASCII offset records in a user-selected profile to PCAPNG.
+  It verifies output encapsulation, packet bytes and times before publishing with a content-addressed
+  provenance manifest. The manifest records the original bytes' digest and size, exact profile,
+  Text2pcap version and which timestamps and headers were generated.
 
 - The verified enabled official package enables `wireshark_capture` (read) and `wireshark_import`
   (session) in ordinary Desktop and CLI sessions. The typed read tool offers discovery, validation,
@@ -196,6 +200,7 @@ device commands follow their own program risk and approval rules.
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
 | General networking profiles | `shared/src/wireshark-networking.ts`, `core/src/wireshark/network-*.ts` | Networking replay in `wireshark-tshark.test.ts` and native diagnostics in `traffic-native.test.ts` |
+| Firmware and UART hexdump import | `shared/src/wireshark-files.ts`, `core/src/wireshark/hexdump-parser.ts`, `capture-hexdump.ts`, `storage.ts` | Native Text2pcap and TShark replay in `wireshark-tshark.test.ts` and grouped storage in `storage.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 
 ## Key behaviors
@@ -222,6 +227,9 @@ device commands follow their own program risk and approval rules.
   `REQ-SEC-22b9e089` govern the general networking profiles, framed evidence and native limits.
 - `REQ-FUNC-51a33001`–`REQ-FUNC-51a33009`, `REQ-DATA-51a33010`, `REQ-FUNC-51a33011`,
   `REQ-REL-51a33012` and `REQ-SEC-51a33013` govern capture-file operations and publication.
+- `REQ-FUNC-7836f1cc`, `REQ-FUNC-b6277db6`, `REQ-DATA-80c2e7e1`, `REQ-REL-25df8c0c`,
+  `REQ-REL-52df4686`, `REQ-REL-84e4d071`, `REQ-REL-4973eae0` and `REQ-SEC-5cccb37c` govern hexdump
+  readiness, conversion, provenance, bounds and failure handling.
 
 ## Files
 

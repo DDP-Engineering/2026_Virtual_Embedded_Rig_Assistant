@@ -43,3 +43,10 @@ entries:
       ro: Împarte, combină și curăță capturi Wireshark salvate, păstrând originalele.
       de: Wireshark-Mitschnitte teilen, zusammenführen und bereinigen. Originale bleiben erhalten.
       fr: Divisez, fusionnez et nettoyez des captures Wireshark en conservant les originaux.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Import firmware and UART hexdumps as Wireshark captures with source provenance.
+      ro: Importă dumpuri hexazecimale firmware și UART ca capturi Wireshark cu proveniența sursei.
+      de: Firmware- und UART-Hexdumps als Wireshark-Mitschnitte mit Herkunftsnachweis importieren.
+      fr: Importez des dumps hexadécimaux firmware et UART dans Wireshark avec leur provenance.

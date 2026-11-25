@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-25df8c0c"
+title = "Reject malformed hexdumps"
+status = "active"
+requirement = "If a source violates the hexdump grammar, VERA shall reject it with a diagnostic identifying the offending line or the empty input and leave no complete result."
+verification = "Submit invalid payload tokens, offsets and trace timestamps and check line diagnostics and absence of managed files."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/hexdump-parser.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::rejects unsafe, incomplete and cancelled hexdumps without publishing a capture or manifest"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

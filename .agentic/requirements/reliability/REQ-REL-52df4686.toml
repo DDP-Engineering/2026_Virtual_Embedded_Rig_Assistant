@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-52df4686"
+title = "Reject incompatible hexdump profiles"
+status = "active"
+requirement = "If the hexdump data and selected timestamp or encapsulation profile are incompatible, VERA shall reject the import with a diagnostic that identifies the mismatch and leave no complete result."
+verification = "Submit a short raw Ethernet frame and a missing or forbidden timestamp, then verify the error and absence of complete output."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/hexdump-parser.ts", "05_Software/src/libraries/shared/src/wireshark-files.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::rejects unsafe, incomplete and cancelled hexdumps without publishing a capture or manifest"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

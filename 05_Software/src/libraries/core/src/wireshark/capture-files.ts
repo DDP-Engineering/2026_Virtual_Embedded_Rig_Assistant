@@ -20,7 +20,9 @@ import { CaptureFileNative, fileProgramsFor, resolveFilePrograms } from "./captu
 import { CaptureError, OfflineTshark } from "./native.js";
 import { publishCaptures, snapshotCapture } from "./storage.js";
 
-type FileArgs = DeriveCaptureArgs | Extract<WiresharkCaptureArgs, { operation: "file_metadata" }>;
+type FileArgs =
+  | Exclude<DeriveCaptureArgs, { operation: "import_hexdump" }>
+  | Extract<WiresharkCaptureArgs, { operation: "file_metadata" }>;
 const activeOperations = new Set<string>([
   "file_metadata",
   "select",

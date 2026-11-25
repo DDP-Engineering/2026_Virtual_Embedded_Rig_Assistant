@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-4973eae0"
+title = "Reject incomplete hexdump conversion"
+status = "active"
+requirement = "If conversion is cancelled or native output cannot be verified, VERA shall leave no complete capture or manifest and surface the cancellation or output error."
+verification = "Stop an in-flight conversion and inject partial or corrupted output, then verify that no managed files survive and all source bytes remain unchanged."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-hexdump.ts", "05_Software/src/libraries/core/src/wireshark/capture-file-index.ts", "05_Software/src/libraries/core/src/wireshark/service.ts", "05_Software/src/libraries/core/src/wireshark/storage.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::rejects unsafe, incomplete and cancelled hexdumps without publishing a capture or manifest", "05_Software/src/libraries/core/src/wireshark/storage.test.ts::publishes neither file when a staged provenance manifest changes before admission"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

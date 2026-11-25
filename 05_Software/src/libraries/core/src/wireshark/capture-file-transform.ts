@@ -15,7 +15,7 @@ import { CaptureError, type OfflineTshark } from "./native.js";
 export type CaptureFileInput = { path: string; reference: CaptureReference; index: CaptureFileIndex };
 type Transform = Exclude<
   DeriveCaptureArgs,
-  { operation: "export_fields" | "export_objects" | "export_pdus" }
+  { operation: "export_fields" | "export_objects" | "export_pdus" | "import_hexdump" }
 >;
 type Format = CaptureReference["fileFormat"];
 type Ancestry = { source: number; packet: IndexedPacket };

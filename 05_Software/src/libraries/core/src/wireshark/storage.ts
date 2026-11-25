@@ -9,6 +9,7 @@ import {
   captureLimits,
   captureLineageLimits,
   captureReferenceSchema,
+  hexdumpImportLimits,
 } from "@vera/shared";
 import type { ToolContext } from "../tools/context.js";
 import { toolExcludedRoots } from "../tools/context.js";
@@ -20,6 +21,12 @@ export interface CaptureWriteAccess {
   queue: WriteQueue;
   assertWritable(): void;
 }
+
+const provenanceLimits = {
+  bytes: hexdumpImportLimits.manifestBytes,
+  managedBytes: 1024 * 1024,
+  managedFiles: 64,
+};
 
 export const managedCaptureDirectory = (workbench: string) => join(workbench, ".vera", "captures");
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
@@ -164,6 +171,38 @@ function sameCapture(reference: CaptureReference, actual: Omit<CaptureReference,
   );
 }
 
+function workbenchSourceGuard(ctx: ToolContext) {
+  return PathGuard.create(ctx.root, ctx.root, "workbench", undefined, toolExcludedRoots(ctx), [], {
+    refuseLinks: true,
+  });
+}
+
+/** Snapshot and hash an exact hexdump file without giving the native converter its original path. */
+export async function snapshotHexdump(ctx: ToolContext, path: string, target: string, signal: AbortSignal) {
+  try {
+    const guard = await workbenchSourceGuard(ctx);
+    const bound = await guard.resolve(path);
+    const { bytes, sha256 } = await streamFile(
+      bound.absolute,
+      target,
+      signal,
+      hexdumpImportLimits.inputBytes,
+      false,
+    );
+    if ((await guard.resolve(path)).absolute !== bound.absolute) throw changed();
+    return { bytes, sha256 };
+  } catch (error) {
+    signal.throwIfAborted();
+    if (error instanceof CaptureError) {
+      if (error.reason === "capture_byte_limit")
+        throw new CaptureError("hexdump_input_limit", "Select a smaller hexdump, at most 4 MiB.");
+      if (error.reason === "capture_changed")
+        throw new CaptureError("hexdump_changed", "The hexdump changed during import. Select it again.");
+    }
+    throw new CaptureError("hexdump_inaccessible", "Use an accessible hexdump file inside the workbench.");
+  }
+}
+
 /** Open only an authorized source and snapshot the exact bytes that the native tool will receive. */
 export async function snapshotCapture(
   ctx: ToolContext,
@@ -182,15 +221,7 @@ export async function snapshotCapture(
       if (!sameCapture(input, actual)) throw changed();
       return input;
     }
-    const guard = await PathGuard.create(
-      ctx.root,
-      ctx.root,
-      "workbench",
-      undefined,
-      toolExcludedRoots(ctx),
-      [],
-      { refuseLinks: true },
-    );
+    const guard = await workbenchSourceGuard(ctx);
     const bound = await guard.resolve(identity.path);
     const actual = await streamCapture(bound.absolute, target, signal, maxBytes);
     const rechecked = await guard.resolve(identity.path);
@@ -223,11 +254,10 @@ export async function publishCapture(
   return managed;
 }
 
-type ManagedEntry = { input: string; reference: CaptureReference | CaptureLineageReference };
-
-function isCapture(reference: ManagedEntry["reference"]): reference is CaptureReference {
-  return "fileFormat" in reference;
-}
+type CompanionFile = { input: string; reference: { bytes: number; sha256: string } };
+type ManagedEntry =
+  | { input: string; reference: CaptureReference }
+  | (CompanionFile & { kind: "lineage" | "provenance" });
 
 async function checkManaged(
   entry: ManagedEntry,
@@ -236,13 +266,17 @@ async function checkManaged(
   signal: AbortSignal,
 ) {
   const { reference } = entry;
-  const capture = isCapture(reference);
-  const limit = capture ? captureLimits.captureBytes : captureLineageLimits.bytes;
-  const actual = await streamFile(path, target, signal, limit, capture);
+  const limit =
+    "kind" in entry
+      ? entry.kind === "lineage"
+        ? captureLineageLimits.bytes
+        : provenanceLimits.bytes
+      : captureLimits.captureBytes;
+  const actual = await streamFile(path, target, signal, limit, !("kind" in entry));
   if (
     actual.bytes !== reference.bytes ||
     actual.sha256 !== reference.sha256 ||
-    (capture && actual.fileFormat !== reference.fileFormat)
+    ("fileFormat" in reference && actual.fileFormat !== reference.fileFormat)
   )
     throw changed();
 }
@@ -257,6 +291,7 @@ export async function publishCaptures(
   options: {
     preserveImportRename?: boolean;
     lineage?: { input: string; reference: CaptureLineageReference };
+    provenance?: CompanionFile;
   } = {},
 ): Promise<CaptureReference[]> {
   return access.queue.run(async () => {
@@ -274,10 +309,17 @@ export async function publishCaptures(
       );
       const missing = new Map<string, ManagedEntry>();
       const existing = new Map<string, Stats>();
-      const candidates: ManagedEntry[] = [...files, ...(options.lineage ? [options.lineage] : [])];
+      const candidates: ManagedEntry[] = [...files];
+      if (options.lineage) candidates.push({ ...options.lineage, kind: "lineage" });
+      if (options.provenance) candidates.push({ ...options.provenance, kind: "provenance" });
       for (const entry of candidates) {
-        const { reference } = entry;
-        const target = join(folder, isCapture(reference) ? fileName(reference) : lineageName(reference));
+        const name =
+          "kind" in entry
+            ? entry.kind === "lineage"
+              ? lineageName(entry.reference)
+              : `${entry.reference.sha256}.provenance.json`
+            : fileName(entry.reference);
+        const target = join(folder, name);
         try {
           const before = await regularFile(target);
           await checkManaged(entry, target, undefined, signal);
@@ -293,6 +335,7 @@ export async function publishCaptures(
         const batches = [
           { limits: captureLimits, pattern: /^[a-f0-9]{64}\.(pcap|pcapng)$/ },
           { limits: captureLineageLimits, pattern: /^[a-f0-9]{64}\.lineage\.json$/ },
+          { limits: provenanceLimits, pattern: /^[a-f0-9]{64}\.provenance\.json$/ },
         ];
         for (const { limits, pattern } of batches) {
           const added = [...missing].filter(([path]) => pattern.test(path.slice(folder.length + 1)));

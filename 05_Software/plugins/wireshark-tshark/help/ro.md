@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Cere agentului să importe un dump hexazecimal firmware sau UART salvat ca PCAPNG. Precizează dacă ai cadre Ethernet complete, date opace sau ai nevoie de antete IPv4/UDP sintetice. Indică dacă dumpul conține ore UTC. Manifestul de proveniență identifică hashul sursei și metadatele sintetice. Importul necesită Text2pcap.
+
 Cere agentului să inspecteze metadatele unei capturi, să selecteze cadre sau să împartă, combine, reordoneze, deduplice, convertească ori curețe capturi salvate. Fișierele originale sunt păstrate. Capturile curățate pot conține în continuare date și identificatori ai pachetelor. Agentul poate exporta local câmpurile, PDU-urile și corpurile HTTP acceptate. Disponibilitatea depinde de utilitarele Wireshark instalate.
 
 Pentru analiza rețelei, întreabă despre Ethernet și VLAN, IPv4 și IPv6, ARP și descoperirea vecinilor, DNS și DHCP, TCP și UDP, multicast sau metadatele TLS vizibile. Cere dovezi compacte pentru a ascunde adresele și numele, păstrând legăturile la cadre și limitele capturii.

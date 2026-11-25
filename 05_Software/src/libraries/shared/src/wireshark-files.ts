@@ -4,6 +4,7 @@ import {
   captureFieldsSchema,
   captureFormatSchema,
   captureLimits,
+  capturePathSchema,
   captureSourceSchema,
 } from "./wireshark.js";
 
@@ -20,6 +21,28 @@ export const captureFileLimits = {
   objectBytes: 256 * 1024,
   lineageRanges: 128,
 } as const;
+
+export const hexdumpImportLimits = {
+  inputBytes: 4 * 1024 * 1024,
+  lineBytes: 256,
+  lineDataBytes: 32,
+  packetBytes: 16 * 1024,
+  packets: 10_000,
+  outputBytes: 8 * 1024 * 1024,
+  manifestBytes: 4096,
+} as const;
+
+const port = z.number().int().min(1).max(65535);
+const hexdumpProfile = z.strictObject({
+  parser: z.literal("ascii-offset-v1"),
+  timestamps: z.enum(["trace_utc", "synthetic"]),
+  encapsulation: z.discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("ethernet") }),
+    z.strictObject({ kind: z.literal("user0") }),
+    z.strictObject({ kind: z.literal("udp_ipv4"), sourcePort: port, destinationPort: port }),
+  ]),
+});
+export type HexdumpProfile = z.infer<typeof hexdumpProfile>;
 
 const frame = z.number().int().min(1).max(captureLimits.scanFrames);
 const epoch = z.string().regex(/^-?\d{1,12}(?:\.\d{1,9})?$/);
@@ -64,6 +87,7 @@ export const deriveCaptureSchema = z.discriminatedUnion("operation", [
   z.strictObject({ operation: z.literal("export_fields"), source, fields: captureFieldsSchema, filter }),
   z.strictObject({ operation: z.literal("export_pdus"), source, tap, filter }),
   z.strictObject({ operation: z.literal("export_objects"), source, protocol }),
+  z.strictObject({ operation: z.literal("import_hexdump"), path: capturePathSchema, hexdumpProfile }),
 ]);
 export type DeriveCaptureArgs = z.infer<typeof deriveCaptureSchema>;
 
@@ -80,6 +104,7 @@ export const deriveCaptureToolSchema = z
       "export_fields",
       "export_pdus",
       "export_objects",
+      "import_hexdump",
     ]),
     source: source.optional(),
     sources: sources.optional(),
@@ -92,6 +117,8 @@ export const deriveCaptureToolSchema = z
     filter,
     tap: tap.optional(),
     protocol: protocol.optional(),
+    path: capturePathSchema.optional(),
+    hexdumpProfile: hexdumpProfile.optional(),
   })
   .refine((args) => deriveCaptureSchema.safeParse(args).success, {
     message: "Supply only the inputs for the selected capture-file operation.",

@@ -15,6 +15,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - wireshark-tshark 0.5.0: Analyze saved DoIP, SOME/IP and Service Discovery traffic with PDU and frame evidence.
 - wireshark-tshark 0.6.0: Query saved networking observations and export compact, redacted frame evidence.
 - wireshark-tshark 0.7.0: Inspect, select, split, merge, convert, reorder, deduplicate and clean saved captures.
+- wireshark-tshark 0.8.0: Import firmware and UART hexdumps as verified PCAPNG with provenance.
 
 ### Fixed
 

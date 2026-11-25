@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b6277db6"
+title = "Convert profiled hexdumps offline"
+status = "active"
+requirement = "When a valid ASCII hexdump and an explicit import profile are supplied, VERA shall use text2pcap to derive a PCAPNG with the selected encapsulation and exact packet boundaries, source bytes and trace or deterministic synthetic timestamps."
+verification = "Read independently authored firmware and UART conversions with native TShark and compare counts, bytes, encapsulation and timestamps."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-hexdump.ts", "05_Software/src/libraries/core/src/wireshark/hexdump-parser.ts", "05_Software/src/libraries/core/src/wireshark/capture-file-index.ts", "05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts", "05_Software/src/libraries/core/src/wireshark/capture-files.ts", "05_Software/src/libraries/core/src/wireshark/service.ts", "05_Software/src/libraries/core/src/tools/wireshark.ts", "05_Software/src/libraries/shared/src/wireshark-files.ts", "05_Software/src/libraries/shared/src/wireshark.ts", "05_Software/plugins/wireshark-tshark/README.md", "05_Software/plugins/wireshark-tshark/skills/wireshark-analyze/SKILL.md", "05_Software/plugins/wireshark-tshark/help/en.md", "05_Software/plugins/wireshark-tshark/help/de.md", "05_Software/plugins/wireshark-tshark/help/fr.md", "05_Software/plugins/wireshark-tshark/help/ro.md"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::imports profiled hexdumps and verifies native packet readback and managed provenance"]
+spec = "specs/REQ-FUNC-b6277db6.md"
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

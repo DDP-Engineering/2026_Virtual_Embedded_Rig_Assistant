@@ -62,6 +62,46 @@ complete group after checking the output bytes and packet evidence. Derived
 captures and lineage reports use exclusive publication on filesystems that
 support hard links. VERA reports unsupported PCAPNG records explicitly.
 
+## Import a firmware or UART hexdump
+
+Check `capabilities.fileOperations.importHexdump` for Text2pcap readiness. Call
+`wireshark_derive` with `operation: "import_hexdump"`, the saved workbench
+`path`, and an explicit `hexdumpProfile` with these entries.
+
+| Field | Values |
+| --- | --- |
+| `parser` | `"ascii-offset-v1"` |
+| `timestamps` | `"trace_utc"` uses a UTC timestamp before every packet. `"synthetic"` assigns one microsecond per packet starting at 2000-01-01T00:00:00Z. |
+| `encapsulation` | `{ kind: "ethernet" }` for complete Ethernet frames of at least 14 bytes. `{ kind: "user0" }` for opaque bytes. `{ kind: "udp_ipv4", sourcePort, destinationPort }` to add Ethernet, IPv4 and UDP headers, plus Ethernet padding when needed. |
+
+Use one to 32 two-digit hex bytes per line, preceded by a 3–8 digit hex
+offset. Separate tokens with space or tab. Reset the offset to zero for
+each packet and give subsequent lines the offset in bytes. Use LF or CRLF.
+Blank lines are allowed. Keep timestamps on their own lines as
+`@YYYY-MM-DDTHH:mm:ss[.fraction]Z` (1970–2099, up to nine fractional
+digits). Leave out timestamps in synthetic mode. Comments, omitted bytes
+and printable text columns are outside this profile.
+
+~~~
+@2026-03-14T15:09:26.123456789Z
+000 DE AD
+002 BE EF
+@2026-03-14T15:09:27Z
+000 13 37 00 55 AA
+~~~
+
+The converter accepts up to 4 MiB of input, 256 bytes per line, 16 KiB per
+packet and 10,000 packets. The PCAPNG limit is 8 MiB. Synthetic UDP uses
+192.0.2.1 and 192.0.2.2 and the supplied ports (1–65535). The packet bytes,
+boundaries, lengths and timestamps are checked before publication. Reuse the
+managed capture reference with `wireshark_capture`. The returned provenance
+and its managed JSON manifest identify the original size and SHA-256, the
+selected profile, Text2pcap's version, synthetic metadata and the output hash.
+The original stays in place. Failed or cancelled conversions leave no complete
+import. The workbench stores the JSON manifest at
+`.vera/captures/<manifest.sha256>.provenance.json`. The [Text2pcap manual](https://www.wireshark.org/docs/man-pages/text2pcap.html)
+describes the underlying converter.
+
 ## Traffic statistics and streams
 
 Use `statistics` for protocol stack prefixes, directional endpoint and conversation counts
@@ -161,7 +201,7 @@ installer places it. On Linux it searches PATH, then `/usr/bin/tshark`
 (`sudo apt install tshark` on Debian and Ubuntu). When none is found, the
 Plugins page shows the program as missing with an install hint. The rules
 were measured against the options of TShark 4.6.8.
-Capinfos, Editcap and Mergecap use the corresponding executable names and
+Capinfos, Editcap, Mergecap and Text2pcap use the corresponding executable names and
 locations. Typed readiness is independent of TShark analysis.
 
 ## Risk levels

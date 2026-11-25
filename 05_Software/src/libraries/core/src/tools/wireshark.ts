@@ -40,7 +40,7 @@ export const wiresharkDeriveTool: ToolDefinition = {
   name: "wireshark_derive",
   class: "session",
   description:
-    "Derive verified managed capture files from saved captures without changing their sources. Use select (frames, display filter or epoch time), split (packet count or seconds), merge, convert, reorder, deduplicate or clean (capture_comments, packet_comments, secrets). PCAPNG is the default. Lineage ranges are [first output frame, zero-based input index, first input frame, length]. Read every verified mapping with wireshark_capture file_lineage using the returned lineageReport and 1-based part. Use export_fields, export_pdus or export_objects for bounded local exports. Check wireshark_capture capabilities and reuse returned capture references in wireshark_capture.",
+    "Derive verified managed captures without changing their sources. Use import_hexdump with a saved path and explicit hexdumpProfile for ASCII firmware or UART data. Keep trace and synthetic metadata distinct using the returned provenance. For saved captures use select (frames, display filter or epoch time), split (packet count or seconds), merge, convert, reorder, deduplicate or clean (capture_comments, packet_comments, secrets). PCAPNG is the default. Lineage ranges are [first output frame, zero-based input index, first input frame, length]. Read every verified mapping with wireshark_capture file_lineage using the returned lineageReport and 1-based part. Use export_fields, export_pdus or export_objects for bounded local exports. Check wireshark_capture capabilities and reuse returned capture references in wireshark_capture.",
   params: deriveCaptureToolSchema,
   available,
   execute: (ctx, raw, signal) => execute(ctx, deriveCaptureSchema.parse(raw), signal),

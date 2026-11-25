@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-5cccb37c"
+title = "Confine hexdump import to the source workbench"
+status = "active"
+requirement = "If input is outside the workbench or its session cannot write managed storage, VERA shall reject the import with an access diagnostic and leave no complete result."
+verification = "Request an outside path and repeat an import in a read-only turn; verify access errors, unchanged input and no managed entries."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-hexdump.ts", "05_Software/src/libraries/core/src/wireshark/storage.ts", "05_Software/plugins/wireshark-tshark/plugin.yaml"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::rejects unsafe, incomplete and cancelled hexdumps without publishing a capture or manifest", "05_Software/tests/plugins/wireshark-tshark.test.ts::publishes the official find-only tshark package, its pack and two skills"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

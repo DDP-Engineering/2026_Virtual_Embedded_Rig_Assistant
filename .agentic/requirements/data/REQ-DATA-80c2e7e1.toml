@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-80c2e7e1"
+title = "Bind hexdump provenance to a managed capture"
+status = "active"
+requirement = "When hexdump conversion passes verification, VERA shall publish the managed PCAPNG with a content-identified provenance manifest recording source hash and size, profile, converter version, timestamp and header origins, and output identity."
+verification = "Compare the exact saved manifest and hashes with the returned reference and independent native readback, and confirm the source bytes are unchanged."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-hexdump.ts", "05_Software/src/libraries/core/src/wireshark/storage.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts::imports profiled hexdumps and verifies native packet readback and managed provenance", "05_Software/src/libraries/core/src/wireshark/storage.test.ts::publishes neither file when a staged provenance manifest changes before admission"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25
