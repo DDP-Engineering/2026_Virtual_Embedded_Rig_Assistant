@@ -84,8 +84,11 @@ for (const platform of platforms) {
   expectOne(part, files, first, `${first.source} installer`);
   expectOne(part, files, second, `${second.source} package`);
   if (!files.includes(releaseNotesName)) problem(part, `${releaseNotesName}: missing`);
-  const updateFiles = files.filter(isUpdateFile);
-  for (const text of await checkUpdateFiles(join(folder, part), updateFiles, desktop, platform))
+  const updateCandidates = files.filter(
+    (name) => isUpdateFile(name) || first.test(name) || second.test(name),
+  );
+  const updateFiles = updateCandidates.filter(isUpdateFile);
+  for (const text of await checkUpdateFiles(join(folder, part), updateCandidates, desktop, platform))
     problem(part, text);
   const feed = manifest?.parts?.[part]?.updateFeed ?? "";
   const channels = updateFiles.filter((name) => name.endsWith(".yml"));

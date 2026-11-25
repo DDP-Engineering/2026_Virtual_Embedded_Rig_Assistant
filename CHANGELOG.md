@@ -6,6 +6,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Verify update metadata against the installer files and blockmaps in each delivery.
+
 ## [0.3.0] - 2026-11-25
 
 ### Added
