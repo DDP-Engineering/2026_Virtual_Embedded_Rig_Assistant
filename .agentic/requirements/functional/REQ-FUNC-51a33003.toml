@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-51a33003"
+title = "Select capture packets"
+status = "active"
+requirement = "When selecting capture frames, VERA shall derive PCAPNG by default with exactly the selected frame numbers, display-filter matches or half-open timestamp range in source order."
+verification = "Exercise each selection form and compare output data and original frame identities including empty selection."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts","05_Software/src/libraries/core/src/wireshark/capture-files.ts","05_Software/src/libraries/shared/src/wireshark-files.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

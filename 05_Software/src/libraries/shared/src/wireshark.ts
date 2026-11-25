@@ -28,6 +28,12 @@ export const captureLimits = {
   valueChars: 240,
   deadlineMs: 30_000,
 } as const;
+export const captureLineageLimits = {
+  bytes: 2 * 1024 * 1024,
+  managedBytes: 32 * 1024 * 1024,
+  managedFiles: 64,
+  pageRows: 100,
+} as const;
 
 const positive = z.number().int().positive().max(4_294_967_295);
 const sha256 = z.string().regex(/^[a-f0-9]{64}$/);
@@ -48,6 +54,13 @@ export const captureReferenceSchema = z.strictObject({
   sha256,
 });
 export type CaptureReference = z.infer<typeof captureReferenceSchema>;
+export const captureLineageReferenceSchema = z.strictObject({
+  sha256,
+  bytes: positive.max(captureLineageLimits.bytes),
+});
+export type CaptureLineageReference = z.infer<typeof captureLineageReferenceSchema>;
+const lineagePart = z.number().int().min(1).max(captureLimits.managedFiles);
+const lineageOffset = z.number().int().min(0).max(captureLimits.scanFrames);
 
 /** A frame in the exact file, with the original decimal epoch timestamp when present. */
 export const captureFrameReferenceSchema = z.strictObject({
@@ -77,8 +90,13 @@ export const captureCitationRefSchema = z
   .max(85)
   .refine((ref) => parseRef(ref)?.kind === "capture");
 const field = z.string().regex(/^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,79}$/);
-const fields = z.array(field).min(1).max(10);
-const source = z.union([z.strictObject({ path }), z.strictObject({ reference: captureReferenceSchema })]);
+export const captureFieldsSchema = z.array(field).min(1).max(10);
+export const captureSourceSchema = z.union([
+  z.strictObject({ path }),
+  z.strictObject({ reference: captureReferenceSchema }),
+]);
+const fields = captureFieldsSchema;
+const source = captureSourceSchema;
 const scanFrames = z.number().int().min(1).max(captureLimits.scanFrames);
 const kind = z.enum(["fields", "protocols", "decoders"]);
 const search = z
@@ -110,6 +128,13 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
   }),
   z.strictObject({ operation: z.literal("validate_filter"), filter, ...profile }),
   z.strictObject({ operation: z.literal("inspect"), source, scanFrames: scanFrames.optional(), ...profile }),
+  z.strictObject({ operation: z.literal("file_metadata"), source }),
+  z.strictObject({
+    operation: z.literal("file_lineage"),
+    report: captureLineageReferenceSchema,
+    part: lineagePart,
+    offset: lineageOffset.optional(),
+  }),
   z.strictObject({
     operation: z.literal("query"),
     source,
@@ -172,6 +197,8 @@ export const wiresharkCaptureToolSchema = z
       "discover",
       "validate_filter",
       "inspect",
+      "file_metadata",
+      "file_lineage",
       "query",
       "frame",
       "statistics",
@@ -181,6 +208,8 @@ export const wiresharkCaptureToolSchema = z
       "verify_reference",
     ]),
     kind: kind.optional(),
+    report: captureLineageReferenceSchema.optional(),
+    part: lineagePart.optional(),
     search: search.optional(),
     offset: offset.optional(),
     limit: limit.optional(),

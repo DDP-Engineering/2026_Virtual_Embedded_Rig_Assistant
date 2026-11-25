@@ -99,6 +99,9 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 - Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. The native Git tab scenario uses bundled replay to check a scrollable Chat transcript alongside TXT/PDF, comparison and history tabs. See [Files Git status](../knowledge/files-git-status.md).
 - Typed Wireshark replay uses an externally discovered TShark and local fixtures. Set
   `VERA_REQUIRE_TSHARK=1` for acceptance to make a missing executable fail the focused check.
+- Capture-file replay also needs Capinfos, Editcap and Mergecap. It compares verified output
+  packets and lineage against independent fixtures, including synthetic comments and secrets,
+  and exercises both successful publication and cancellation.
 - Native Wireshark replay compares saved synthetic captures against field, statistics and follow
   output. Networking profile replay uses `networking.pcapng` and reports frame references, observed
   limits and compact redaction. The focused checks use saved capture files.

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-51a33009"
+title = "Clear selected capture metadata"
+status = "active"
+requirement = "When cleaning a saved capture, VERA shall verify removal of selected capture comments, packet comments and embedded secrets and report possible remaining packet data and identifiers."
+verification = "Use independently written synthetic blocks and verify selected removal, retained packet identity and source integrity."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts","05_Software/src/libraries/core/src/wireshark/capture-file-index.ts","05_Software/src/libraries/shared/src/wireshark-files.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

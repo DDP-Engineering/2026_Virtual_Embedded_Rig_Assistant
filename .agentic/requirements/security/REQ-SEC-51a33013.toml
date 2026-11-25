@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-51a33013"
+title = "Confine offline capture file processing"
+status = "active"
+requirement = "When VERA runs an offline capture file operation, VERA shall restrict source reads and output writes to verified host-managed paths, bounded processes and inert export data."
+verification = "Use read-only, tampered output and path refusals, and check that derived files are generated from private snapshots without execution of exported content."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files.ts","05_Software/src/libraries/core/src/wireshark/capture-file-export.ts","05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/core/src/plugins/runner.ts","05_Software/plugins/wireshark-tshark/plugin.yaml","05_Software/src/libraries/shared/src/wireshark-files.ts","05_Software/src/libraries/core/src/artifacts/store.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts","05_Software/src/libraries/core/src/tools/registry.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-51a33012"
+title = "Diagnose refused capture derivations"
+status = "active"
+requirement = "If an offline capture-file operation is malformed, incompatible, missing a required tool, cancelled or exceeds a host bound, then VERA shall report the reason without completing its outputs."
+verification = "Exercise missing tools, malformed or incompatible captures, unsupported frame records, byte and part limits, and cancellation with no falsely completed managed output."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files.ts","05_Software/src/libraries/core/src/wireshark/capture-files-native.ts","05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/core/src/plugins/runner.ts","05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Demandez à l’agent d’inspecter les métadonnées, de sélectionner des trames, ou de scinder, fusionner, réordonner, dédupliquer, convertir ou nettoyer des captures enregistrées. Les fichiers d’origine sont conservés. Les captures nettoyées peuvent encore contenir des données de paquets et des identifiants. L’agent peut exporter localement les champs, PDU et corps HTTP pris en charge. La disponibilité dépend des utilitaires Wireshark installés.
+
 Pour analyser le réseau, demandez des informations sur Ethernet et les VLAN, IPv4 et IPv6, ARP et la découverte de voisins, DNS et DHCP, TCP et UDP, le multicast ou les métadonnées TLS visibles. Les preuves compactes masquent les adresses et les noms tout en conservant les liens vers les trames et les limites de la capture.
 
 Pour le trafic Ethernet automobile enregistré, demandez à l’agent une analyse DoIP, SOME/IP ou Service Discovery. Il peut indiquer le sens, le VLAN, les champs PDU et les trames contributrices. Indiquez le port du service SOME/IP si nécessaire.

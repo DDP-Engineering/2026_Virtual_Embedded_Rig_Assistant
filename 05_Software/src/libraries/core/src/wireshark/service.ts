@@ -1,13 +1,14 @@
 import { createHash } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { isAbsolute, join } from "node:path";
+import { join } from "node:path";
 import {
   type CaptureAnalysis,
   type CaptureCoverage,
   type CapturePacket,
   type CaptureReference,
   captureLimits,
+  type DeriveCaptureArgs,
   type WiresharkCaptureArgs,
   wiresharkPluginId,
   wiresharkProfile,
@@ -17,6 +18,9 @@ import type { LoadedPlugin } from "../plugins/store.js";
 import type { ToolContext } from "../tools/context.js";
 import { toolLimit } from "../tools/context.js";
 import { analyzeAutomotive, automotiveCapabilities, automotiveDecodeAs } from "./automotive.js";
+import { readCaptureLineage } from "./capture-file-lineage.js";
+import { captureFileOperation, isCaptureFileOperation } from "./capture-files.js";
+import { CaptureFileNative, fileUtilityCapabilities, resolveFilePrograms } from "./capture-files-native.js";
 import { captureCitation } from "./citations.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { analyzeNetworking } from "./network-evidence.js";
@@ -129,7 +133,15 @@ async function captureOperation(
   ctx: ToolContext,
   args: Exclude<
     WiresharkCaptureArgs,
-    { operation: "capabilities" | "validate_filter" | "discover" | "verify_reference" }
+    {
+      operation:
+        | "capabilities"
+        | "validate_filter"
+        | "discover"
+        | "verify_reference"
+        | "file_metadata"
+        | "file_lineage";
+    }
   >,
   native: OfflineTshark,
   analysis: CaptureAnalysis,
@@ -287,7 +299,11 @@ async function captureOperation(
 }
 
 /** Run one model operation with bounded scratch, native output and result projection. */
-export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureArgs, signal: AbortSignal) {
+export async function inspectWireshark(
+  ctx: ToolContext,
+  args: WiresharkCaptureArgs | DeriveCaptureArgs,
+  signal: AbortSignal,
+) {
   const host = ctx.programs?.host;
   if (!host) throw unauthorized();
   const deadline = AbortSignal.timeout(captureLimits.deadlineMs);
@@ -310,27 +326,44 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
   let folder: string | undefined;
   try {
     const plugin = await authorize();
+    if (args.operation === "file_lineage") {
+      folder = await mkdtemp(join(tmpdir(), "vera-offline-"));
+      const result = await readCaptureLineage(ctx.root, folder, args, bounded);
+      await authorize();
+      return requireResultBudget(result, toolLimit(ctx, "toolResultChars"));
+    }
+    if (isCaptureFileOperation(args)) {
+      folder = await mkdtemp(join(tmpdir(), "vera-offline-"));
+      await writeFile(join(folder, "empty.pcap"), emptyPcap, { mode: 0o600, flag: "wx" });
+      const result = await captureFileOperation(ctx, args, host, plugin, folder, bounded, authorize);
+      return args.operation === "file_metadata"
+        ? requireResultBudget(result, toolLimit(ctx, "toolResultChars"))
+        : result;
+    }
     if (args.operation === "verify_reference") {
       const capture = await snapshotCapture(ctx, args.source, undefined, bounded);
       await authorize();
       return requireResultBudget({ capture, verified: true }, toolLimit(ctx, "toolResultChars"));
     }
-    const resolved = await host.resolver.resolve(plugin, "tshark", bounded);
     const isolated = process.getuid?.() !== 0;
-    const usable =
-      isolated &&
-      resolved &&
-      isAbsolute(resolved.executable) &&
-      !resolved.launcher &&
-      !resolved.prefix?.length &&
-      !Object.keys(resolved.env ?? {}).length &&
-      resolved.version &&
-      /^\d+\.\d+\.\d+$/.test(resolved.version);
     if (args.operation === "capabilities") {
+      const filePrograms = await resolveFilePrograms(
+        host,
+        plugin,
+        ["capinfos", "editcap", "mergecap", "tshark"],
+        bounded,
+      );
+      const usable = filePrograms.tshark;
+      let features = { clean: false, taps: [] as string[], httpObjects: false };
+      if (filePrograms.editcap || usable) {
+        folder = await mkdtemp(join(tmpdir(), "vera-offline-"));
+        await writeFile(join(folder, "empty.pcap"), emptyPcap, { mode: 0o600, flag: "wx" });
+        features = await new CaptureFileNative(host.runner, filePrograms, folder, bounded).features();
+      }
       await authorize();
       return {
         tshark: usable
-          ? { available: true, version: resolved.version }
+          ? { available: true, version: usable.version }
           : {
               available: false,
               reason: isolated
@@ -347,6 +380,11 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
         traffic: usable ? trafficCapabilities : { available: false },
         automotive: usable ? automotiveCapabilities : { available: false },
         networking: usable ? networkingCapabilities : { available: false },
+        ...fileUtilityCapabilities(
+          filePrograms,
+          features,
+          !!ctx.artifacts && ctx.permissionMode?.() !== "read-only",
+        ),
       };
     }
     if (!isolated)
@@ -354,7 +392,8 @@ export async function inspectWireshark(ctx: ToolContext, args: WiresharkCaptureA
         "profile_unavailable",
         "Run VERA without elevated Linux privileges to isolate the Wireshark profile.",
       );
-    if (!usable)
+    const { tshark: resolved } = await resolveFilePrograms(host, plugin, ["tshark"], bounded);
+    if (!resolved)
       throw new CaptureError(
         "tshark_unavailable",
         "Install the external TShark CLI, then check the Wireshark plugin dependencies.",

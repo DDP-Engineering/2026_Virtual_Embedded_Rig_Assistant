@@ -36,3 +36,10 @@ entries:
       ro: Analizează protocoale din capturi salvate și obține dovezi mascate cu legături la cadre.
       de: Netzwerkprotokolle in Mitschnitten prüfen und maskierte Belege mit Paketverweisen erhalten.
       fr: Analysez les protocoles réseau et obtenez des preuves masquées avec des liens vers les trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Split, merge and clean saved Wireshark captures while keeping the originals.
+      ro: Împarte, combină și curăță capturi Wireshark salvate, păstrând originalele.
+      de: Wireshark-Mitschnitte teilen, zusammenführen und bereinigen. Originale bleiben erhalten.
+      fr: Divisez, fusionnez et nettoyez des captures Wireshark en conservant les originaux.

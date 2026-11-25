@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-51a33002"
+title = "Inspect saved capture metadata"
+status = "active"
+requirement = "When metadata is requested for a confined saved capture, VERA shall report its measured format, encapsulation, interfaces, packet count, available timestamps and verified SHA-256."
+verification = "Inspect independent PCAP and PCAPNG fixtures with capinfos and compare counts, hash, interface and timestamp values, including missing timestamps."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files-native.ts","05_Software/src/libraries/core/src/wireshark/capture-file-index.ts","05_Software/src/libraries/core/src/wireshark/capture-files.ts","05_Software/src/libraries/shared/src/wireshark.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -6,7 +6,7 @@ import type { CaptureReference } from "@vera/shared";
 import { expect, it } from "vitest";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
-import { publishCapture } from "./storage.js";
+import { publishCapture, publishCaptures } from "./storage.js";
 
 it("reserves managed capture paths without following a workspace-owned redirect", async () => {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-capture-path-")));
@@ -25,6 +25,47 @@ it("reserves managed capture paths without following a workspace-owned redirect"
     await rm(join(ordinary, "notes.txt"));
     await rm(ordinary, { recursive: true });
     await expect(PathGuard.create(root, root, "filesystem")).resolves.toBeInstanceOf(PathGuard);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("fails a capture batch before publication when any staged member is changed", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "vera-capture-batch-")));
+  try {
+    await mkdir(join(root, ".vera"));
+    const folder = join(root, ".vera", "captures");
+    const first = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
+    const second = Buffer.from(first);
+    second.writeUInt32LE(64, 16);
+    const files = [];
+    for (const [index, data] of [first, second].entries()) {
+      const input = join(root, `valid-${index}.pcap`);
+      const reference: CaptureReference = {
+        format: 1,
+        source: { kind: "managed" },
+        fileFormat: "pcap",
+        bytes: data.length,
+        sha256: createHash("sha256").update(data).digest("hex"),
+      };
+      await writeFile(input, data);
+      files.push({ input, reference });
+    }
+    await expect(
+      publishCaptures(
+        root,
+        { queue: new WriteQueue(), assertWritable() {} },
+        files,
+        new AbortController().signal,
+        async () => {
+          const entries = await readdir(folder);
+          expect(entries).toHaveLength(2);
+          expect(entries.every((path) => path.endsWith(".tmp"))).toBe(true);
+          await writeFile(join(folder, entries[1] ?? ""), Buffer.alloc(24));
+        },
+      ),
+    ).rejects.toMatchObject({ reason: "invalid_capture" });
+    expect(await readdir(folder)).toEqual([]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -54,7 +54,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.6.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.7.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -67,6 +67,18 @@ device commands follow their own program risk and approval rules.
   capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
   generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captures self-sent loopback datagrams after
   approval on Windows/Npcap. Native Linux live capture remains unverified. `-o extcap.*` credential values are not refused.
+
+- Capinfos, Editcap and Mergecap are find-only dependencies with independent version probes.
+  `capabilities` reports their per-operation readiness and measured local export support. Raw
+  program calls to these utilities are blocked. `file_metadata` verifies format, packet count
+  and hash with Capinfos and reports interface clocks, link types and available timestamps.
+  `wireshark_derive` is a session tool for packet selection, splits, merge, conversion, reordering,
+  deduplication, cleanup and local exports. Published managed references use ordinary analysis
+  and citation navigation. Verified results include source identity, effective parameters, tool
+  versions and a bounded preview of frame lineage. The managed lineage companion holds all
+  verified mappings and has a SHA-256 reference and paged read operation. Field and HTTP data
+  stay in session artifacts and require an export mask that preserves their structured bytes. Fixed
+  native PDU taps produce a PCAPNG and an emitting-frame mapping when their tags support it.
 
 - The verified enabled official package enables `wireshark_capture` (read) and `wireshark_import`
   (session) in ordinary Desktop and CLI sessions. The typed read tool offers discovery, validation,
@@ -152,6 +164,14 @@ device commands follow their own program risk and approval rules.
   matching range after the cursor. Limits are 64 MiB per capture, 50,000 scan frames, 50 rows per
   page and a 30-second deadline. Import requires full validation and verified same-directory
   staging, with 32 files and 256 MiB per workbench.
+- Capture-file derivation preserves source bytes. The host checks packet hashes, link types,
+  lengths, required timestamps and lineage before group publication. Split and merge outputs
+  use bounded private staging and the existing workbench write queue. Cleanup verifies the
+  selected standard metadata is absent and compares the retained comments and secret
+  blocks byte for byte. HTTP export represents bounded unencoded message bodies as
+  inert data and reports partial protocol coverage.
+  PCAPNG block kinds that may add unindexed native-visible frames produce a diagnostic
+  before publication.
 - Traffic cursors bind the selection, filter, window, dissection preferences, capture and page size.
   The host bounds aggregate groups, intervals, native field and follow text, and returned evidence.
   TShark follows the scanned prefix and VERA selects records by source frame. TCP loss and checksum
@@ -172,6 +192,7 @@ device commands follow their own program risk and approval rules.
 | DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
 | tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
 | Typed capture evidence and managed files | `shared/src/wireshark.ts`, `core/src/wireshark/` | Typed replay in `wireshark-tshark.test.ts`, storage boundary tests in `core/src/wireshark/storage.test.ts` |
+| Capture metadata, derivation, cleanup and exports | `shared/src/wireshark-files.ts`, `core/src/wireshark/capture-file*.ts` | Focused native capture-file replay, including boundary refusals, in `wireshark-tshark.test.ts` |
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
 | General networking profiles | `shared/src/wireshark-networking.ts`, `core/src/wireshark/network-*.ts` | Networking replay in `wireshark-tshark.test.ts` and native diagnostics in `traffic-native.test.ts` |
@@ -199,6 +220,8 @@ device commands follow their own program risk and approval rules.
   offline Automotive Ethernet profiles, PDU evidence, coverage and native diagnostics.
 - `REQ-FUNC-3cdfc800`, `REQ-DATA-fe4b7a36`, `REQ-REL-fe778b38`, `REQ-REL-baf79e3d` and
   `REQ-SEC-22b9e089` govern the general networking profiles, framed evidence and native limits.
+- `REQ-FUNC-51a33001`–`REQ-FUNC-51a33009`, `REQ-DATA-51a33010`, `REQ-FUNC-51a33011`,
+  `REQ-REL-51a33012` and `REQ-SEC-51a33013` govern capture-file operations and publication.
 
 ## Files
 

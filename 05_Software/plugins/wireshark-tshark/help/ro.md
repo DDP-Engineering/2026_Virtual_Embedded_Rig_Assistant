@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Cere agentului să inspecteze metadatele unei capturi, să selecteze cadre sau să împartă, combine, reordoneze, deduplice, convertească ori curețe capturi salvate. Fișierele originale sunt păstrate. Capturile curățate pot conține în continuare date și identificatori ai pachetelor. Agentul poate exporta local câmpurile, PDU-urile și corpurile HTTP acceptate. Disponibilitatea depinde de utilitarele Wireshark instalate.
+
 Pentru analiza rețelei, întreabă despre Ethernet și VLAN, IPv4 și IPv6, ARP și descoperirea vecinilor, DNS și DHCP, TCP și UDP, multicast sau metadatele TLS vizibile. Cere dovezi compacte pentru a ascunde adresele și numele, păstrând legăturile la cadre și limitele capturii.
 
 Pentru trafic Automotive Ethernet salvat, cere agentului o analiză DoIP, SOME/IP sau Service Discovery. Poate afișa direcția, VLAN-ul, câmpurile PDU și cadrele contributoare. Indică portul serviciului SOME/IP când este necesar.

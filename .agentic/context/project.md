@@ -141,8 +141,9 @@ Facts that span components:
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
 - The official Wireshark plugin enables offline capture inspection, traffic statistics, diagnostics,
   response timing, bounded TCP/UDP follow evidence, general networking profiles, Automotive Ethernet
-  PDU evidence and managed binary capture storage. Networking observations retain native field and
-  frame context, and the compact view redacts network identifiers.
+  PDU evidence and managed binary capture storage. Saved capture operations use independently
+  probed utilities for metadata, verified derivation, cleanup and local exports. Networking
+  observations retain native field and frame context, and the compact view redacts network identifiers.
   Desktop verifies a cited file and frame in its owning workbench
   and opens it at the matching packet in native Wireshark. See [communication plugins](../knowledge/official-plugins-communication.md).
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.

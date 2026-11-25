@@ -36,6 +36,7 @@ export const builtinToolNames = [
   "power_quality",
   "lighting_design",
   "wireshark_capture",
+  "wireshark_derive",
   "wireshark_import",
   "help",
 ] as const;
@@ -69,6 +70,7 @@ export const pluginToolProviders = {
   apply_candidate: "kicad-layout",
   parts_search: "parts-search",
   wireshark_capture: "wireshark-tshark",
+  wireshark_derive: "wireshark-tshark",
   wireshark_import: "wireshark-tshark",
 } as const;
 export type PluginToolName = keyof typeof pluginToolProviders;
@@ -77,6 +79,7 @@ export const officialPluginToolNames: readonly PluginToolName[] = [
   "apply_candidate",
   "parts_search",
   "wireshark_capture",
+  "wireshark_derive",
   "wireshark_import",
 ];
 export const coreToolNames = builtinToolNames.filter(

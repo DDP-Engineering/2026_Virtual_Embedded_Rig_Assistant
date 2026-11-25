@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Bitte den Agenten, Mitschnittmetadaten zu prüfen, Frames auszuwählen oder gespeicherte Mitschnitte zu teilen, zusammenzuführen, umzusortieren, zu deduplizieren, zu konvertieren oder zu bereinigen. Die Originaldateien bleiben erhalten. Bereinigte Mitschnitte können weiterhin Paketdaten und Kennungen enthalten. Der Agent kann unterstützte Felder, PDUs und HTTP-Nachrichtenkörper lokal exportieren. Die Verfügbarkeit hängt von den installierten Wireshark-Werkzeugen ab.
+
 Frage zur Netzwerkanalyse nach Ethernet und VLANs, IPv4 und IPv6, ARP und Nachbarerkennung, DNS und DHCP, TCP und UDP, Multicast oder sichtbaren TLS-Metadaten. Kompakte Belege blenden Netzwerkadressen und Namen aus und behalten Paketverweise sowie Erfassungsgrenzen bei.
 
 Für gespeicherten Automotive-Ethernet-Verkehr kann der Agent DoIP, SOME/IP oder Service Discovery auswerten. Er zeigt Richtung, VLAN, PDU-Felder und beteiligte Pakete. Gib bei Bedarf den SOME/IP-Dienstport an.

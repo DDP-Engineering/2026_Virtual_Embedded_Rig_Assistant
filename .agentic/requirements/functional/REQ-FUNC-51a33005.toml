@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-51a33005"
+title = "Merge saved capture packets"
+status = "active"
+requirement = "When merging saved captures, VERA shall derive a capture containing all input packets in timestamp order."
+verification = "Merge overlapping independent files and compare chronological packet identities including a tied timestamp."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts","05_Software/src/libraries/shared/src/wireshark-files.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -173,6 +173,14 @@ const LISTED = 50;
 const RECORD_BYTES = 512 * 1024;
 /** Default tail of a run log read for the Runs tab. */
 export const RUN_LOG_BYTES = 1024 * 1024;
+interface PrivateCaptureRequest {
+  executable: string;
+  args: readonly string[];
+  cwd: string;
+  env: Readonly<Record<string, string>>;
+  maxBytes: number;
+  signal: AbortSignal;
+}
 /** Opening a log never follows a link (where the system supports it) and never blocks on a FIFO. */
 const READ_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
 const COM_PORT = /^(?:\\\\\.\\)?(com\d+)$/i;
@@ -971,14 +979,13 @@ export class ProgramRunner {
   }
 
   /** Private bounded stdout for host-owned analysis. The process and its text never enter Runs. */
-  async captureOutput(request: {
-    executable: string;
-    args: readonly string[];
-    cwd: string;
-    env: Readonly<Record<string, string>>;
-    maxBytes: number;
-    signal: AbortSignal;
-  }) {
+  async captureOutput(request: PrivateCaptureRequest) {
+    const { stdout, ...result } = await this.captureBytes(request);
+    return { ...result, stdout: stdout.toString("utf8") };
+  }
+
+  /** Private bounded binary stdout from a host-owned command. */
+  async captureBytes(request: PrivateCaptureRequest) {
     const { host, clock, killGraceMs } = this.settings;
     const { executable, args, cwd, env, maxBytes, signal } = request;
     signal.throwIfAborted();
@@ -1018,7 +1025,7 @@ export class ProgramRunner {
       return {
         exit,
         exceeded,
-        stdout: Buffer.concat(stdout).toString("utf8"),
+        stdout: Buffer.concat(stdout),
         stderr: Buffer.concat(stderr).toString("utf8"),
       };
     } finally {

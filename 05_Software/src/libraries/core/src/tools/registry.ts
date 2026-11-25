@@ -35,7 +35,7 @@ import { todoTool } from "./todo.js";
 import { viewImageTool } from "./view-image.js";
 import { webReadTool, webSearchTool } from "./web.js";
 import { webDownloadTool } from "./web-download.js";
-import { wiresharkCaptureTool, wiresharkImportTool } from "./wireshark.js";
+import { wiresharkCaptureTool, wiresharkDeriveTool, wiresharkImportTool } from "./wireshark.js";
 import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
@@ -75,6 +75,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   power_quality: powerQualityTool,
   lighting_design: lightingDesignTool,
   wireshark_capture: wiresharkCaptureTool,
+  wireshark_derive: wiresharkDeriveTool,
   wireshark_import: wiresharkImportTool,
   help: helpTool,
 };

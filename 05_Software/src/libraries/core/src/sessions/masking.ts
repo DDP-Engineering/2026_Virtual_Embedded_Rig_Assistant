@@ -43,7 +43,7 @@ export function maskToolOutput(
   scrub: (text: string) => string,
   limit = 32_000,
 ): string {
-  if (name === "wireshark_capture" || name === "wireshark_import")
+  if (name === "wireshark_capture" || name === "wireshark_import" || name === "wireshark_derive")
     return maskCaptureOutput(text, scrub, limit);
   const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
   if (!result) return scrub(text);

@@ -40,6 +40,9 @@ export interface ArtifactHost {
   scrub?(text: string): string;
   scrubContent?(text: string): string;
 }
+
+/** An exact structured artifact cannot survive the active export mask. */
+export class ArtifactMaskingConflict extends Error {}
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 function missing(error: unknown) {
@@ -174,6 +177,7 @@ export class ArtifactStore {
     host: ArtifactHost,
     args: { name: string; content: string; description?: string; overwrite?: boolean },
     signal: AbortSignal,
+    options: { authorize?: () => Promise<unknown>; exactContent?: boolean } = {},
   ) {
     if (!validArtifactName(args.name))
       throw Error(
@@ -186,11 +190,18 @@ export class ArtifactStore {
     return host.queue.run(async () => {
       signal.throwIfAborted();
       host.assertWritable();
+      if (options.authorize) {
+        await options.authorize();
+        signal.throwIfAborted();
+        host.assertWritable();
+      }
       if (host.scrub && host.scrub(args.name) !== args.name)
         throw Error("Artifact name contains protected credential data.");
+      const content = host.scrubContent?.(args.content) ?? host.scrub?.(args.content) ?? args.content;
+      if (options.exactContent && content !== args.content) throw new ArtifactMaskingConflict();
       args = {
         ...args,
-        content: host.scrubContent?.(args.content) ?? host.scrub?.(args.content) ?? args.content,
+        content,
         ...(args.description === undefined
           ? {}
           : {

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-51a33010"
+title = "Publish verified capture lineage"
+status = "active"
+requirement = "When capture derivation succeeds, VERA shall publish verified managed references with source identities, tool versions, operation parameters and verified or explicitly unavailable lineage."
+verification = "Reopen returned files through normal analysis, compare their input hashes and frame lineage including ambiguous ancestry, then page beyond the preview and reject a modified managed lineage report."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files.ts","05_Software/src/libraries/core/src/wireshark/capture-file-lineage.ts","05_Software/src/libraries/shared/src/wireshark.ts","05_Software/src/libraries/core/src/wireshark/capture-file-transform.ts","05_Software/src/libraries/core/src/wireshark/storage.ts","05_Software/src/libraries/core/src/wireshark/model-output.ts","05_Software/src/libraries/core/src/tools/wireshark.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/shared/src/tools.ts","05_Software/src/libraries/shared/src/index.ts","05_Software/src/libraries/core/src/sessions/masking.ts","05_Software/plugins/wireshark-tshark/README.md","05_Software/plugins/wireshark-tshark/help/en.md","05_Software/plugins/wireshark-tshark/help/ro.md","05_Software/plugins/wireshark-tshark/help/de.md","05_Software/plugins/wireshark-tshark/help/fr.md","05_Software/plugins/wireshark-tshark/skills/wireshark-analyze/SKILL.md","05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx","05_Software/src/apps/desktop/src/renderer/locales/en.json","05_Software/src/apps/desktop/src/renderer/locales/ro.json","05_Software/src/apps/desktop/src/renderer/locales/de.json","05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/wireshark/storage.test.ts","05_Software/src/libraries/core/src/tools/registry.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import * as core from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
 import {
+  type CaptureReference,
   captureLimits,
   captureReferenceSchema,
   classifyCommand,
@@ -36,6 +37,628 @@ const automotiveMixedVlanSample = new URL(
 const networkingSample = fileURLToPath(
   new URL("../fixtures/wireshark-tshark/networking.pcapng", import.meta.url),
 );
+
+it("validates native capture-file operations and reusable managed outputs", async (ctx) => {
+  const source = { path: "captures/sample.pcapng" };
+  const classic = { path: classicPath };
+  const untimed = { path: "captures/untimed.pcapng" };
+  const derive = deriveFile;
+  const rig = await workbench({
+    files: [
+      typed("capabilities"),
+      typed("file_metadata", { source }),
+      typed("file_metadata", { source: classic }),
+      derive("select", { source, selection: { kind: "frames", ranges: [{ first: 2, last: 3 }] } }),
+      derive("select", { source, selection: { kind: "filter", filter: "coap" } }),
+      derive("select", { source, selection: { kind: "time", from: "1767225600.2", until: "1767225600.4" } }),
+      derive("split", { source, by: { kind: "count", packets: 3 } }),
+      derive("split", { source, by: { kind: "time", seconds: "0.3" } }),
+      derive("merge", { sources: [source, classic] }),
+      derive("convert", { source, outputFormat: "pcap" }),
+      derive("deduplicate", { source, window: 5 }),
+      derive("export_fields", { source, fields: ["udp.dstport"] }),
+      typed("file_metadata", { source: untimed }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native Wireshark utilities are required.");
+      ctx.skip("Native Wireshark utilities are unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, classicPath), classicPcap);
+    await writeFile(join(rig.bench, untimed.path), await readFile(untimedSample));
+    const service = await rig.start();
+    const turn = rig.session(service, "files", "ask");
+    service.send(turn.id, "Derive verified saved captures and retain local evidence.");
+    expect(await service.waitIdle(turn.id)).toEqual({ stopReason: "end" });
+    const result = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    if (!result[0]?.fileOperations?.select?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native capture-file utilities are unavailable.");
+      return;
+    }
+    expect(result[0], turn.outputs[0]?.summary).toMatchObject({
+      fileOperations: { select: { available: true } },
+    });
+    expect(
+      turn.outputs.filter(({ ok }) => !ok),
+      JSON.stringify(result),
+    ).toEqual([]);
+    expect(result[1]).toMatchObject({
+      metadata: { packets: 8, encapsulation: "ether", interfaces: [{ linkType: 1 }] },
+    });
+    expect(await readFile(sample).then((bytes) => createHash("sha256").update(bytes).digest("hex"))).toBe(
+      result[1].capture.sha256,
+    );
+    expect(result[2]).toMatchObject({ metadata: { packets: 1, earliestEpoch: "1.500000000" } });
+    expect(result[3].outputs[0]).toMatchObject({ packets: 2, lineage: { ranges: [[1, 0, 2, 2]] } });
+    expect(result[4].outputs[0].packets).toBe(4);
+    expect(result[5].outputs[0].lineage.ranges).toEqual([[1, 0, 3, 2]]);
+    expect(result[6].outputs.map((out: { packets: number }) => out.packets)).toEqual([3, 3, 2]);
+    expect(result[7].outputs.map((out: { packets: number }) => out.packets)).toEqual([3, 3, 2]);
+    expect(result[8].outputs[0]).toMatchObject({
+      packets: 9,
+      lineage: {
+        ranges: [
+          [1, 1, 1, 1],
+          [2, 0, 1, 8],
+        ],
+      },
+    });
+    expect(result[9].outputs[0].capture.fileFormat).toBe("pcap");
+    expect(result[10].outputs[0].packets).toBe(8);
+    expect(result[11]).toMatchObject({ export: { records: 8, partial: false } });
+    expect(result[12]).toMatchObject({
+      metadata: { framesWithoutTimestamp: 1, chronological: null, packets: 3 },
+    });
+    const [fields] = service.listArtifacts(turn.id);
+    const fieldReport = JSON.parse(
+      await readFile(join(rig.bench, ".vera", "artifacts", turn.id, fields?.name ?? ""), "utf8"),
+    );
+    expect(fieldReport).toMatchObject({
+      source: result[1].capture,
+      coverage: { partial: false, records: 8 },
+      rows: expect.arrayContaining([
+        {
+          frame: expect.objectContaining({ number: 3 }),
+          fields: { "udp.dstport": ["5683"] },
+          truncated: false,
+          wireBytes: expect.any(Number),
+          capturedBytes: expect.any(Number),
+        },
+      ]),
+    });
+    const reopened = await reopenDerived(rig, service, result);
+    const capture = result[3].outputs[0].capture;
+    await rig.writeReplay("reused", [
+      typed("frame", { source: { reference: capture }, frame: 2 }),
+      { text: "Done." },
+    ]);
+    const reused = rig.session(service, "reused", "ask");
+    service.send(reused.id, "Read a derived frame through its managed identity.");
+    await service.waitIdle(reused.id);
+    const frame = JSON.parse(reused.outputs[0]?.summary ?? "{}");
+    expect(frame).toMatchObject({
+      capture,
+      packet: { frame: { number: 2, captureSha256: capture.sha256 }, ref: expect.any(String) },
+    });
+    await rig.writeReplay("reused-citation", [
+      typed("frame", { source: { reference: capture }, frame: 2 }),
+      { text: `The derived frame. [[${frame.packet.ref}]]` },
+    ]);
+    const citation = rig.session(service, "reused-citation", "ask");
+    service.send(citation.id, "Cite the exact derived frame.");
+    await service.waitIdle(citation.id);
+    const assistant = service
+      .get(citation.id)
+      .snapshot.items.find(
+        (item) =>
+          item.kind === "assistant" &&
+          item.citations.some(({ ref, valid }) => ref === frame.packet.ref && valid),
+      );
+    expect(assistant).toBeDefined();
+    const located = service.openCaptureCitation(citation.id, assistant?.id ?? "", frame.packet.ref);
+    const viewer = await mkdtemp(join(rig.bench, "viewer-"));
+    const viewerCopy = join(viewer, "derived.pcapng");
+    const open = await core.prepareWiresharkFrame(
+      located.context,
+      located.evidence,
+      undefined,
+      rig.runner,
+      rig.tshark.executable,
+      viewer,
+      viewerCopy,
+      AbortSignal.timeout(captureLimits.deadlineMs),
+    );
+    expect(open.args).toEqual(["-n", "-r", viewerCopy, "-g", "2"]);
+    expect(
+      createHash("sha256")
+        .update(await readFile(viewerCopy))
+        .digest("hex"),
+    ).toBe(capture.sha256);
+    expect(await readFile(join(rig.bench, source.path))).toEqual(await readFile(sample));
+    expect(await readFile(join(rig.bench, classicPath))).toEqual(classicPcap);
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-capture-operations.json`),
+        JSON.stringify(
+          { result, fieldReport, reopened, reused: reused.outputs, navigation: located.evidence },
+          null,
+          2,
+        ),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+const deriveFile = (operation: string, args: Record<string, unknown>) => ({
+  toolCalls: [{ name: "wireshark_derive", args: { operation, ...args } }],
+});
+
+async function reopenDerived(
+  rig: Awaited<ReturnType<typeof workbench>>,
+  service: core.SessionService,
+  results: { outputs?: { capture: CaptureReference; packets: number }[] }[],
+) {
+  const outputs = new Map(
+    results.flatMap((result) => result.outputs ?? []).map((item) => [item.capture.sha256, item] as const),
+  );
+  await rig.writeReplay("reopen-batch", [
+    ...[...outputs.values()].map(({ capture }) => typed("inspect", { source: { reference: capture } })),
+    { text: "Done." },
+  ]);
+  const session = rig.session(service, "reopen-batch", "ask");
+  service.send(session.id, "Reopen every derived capture using the ordinary analysis tool.");
+  await service.waitIdle(session.id);
+  expect(session.outputs).toHaveLength(outputs.size);
+  for (const [i, expected] of [...outputs.values()].entries()) {
+    expect(JSON.parse(session.outputs[i]?.summary ?? "{}")).toMatchObject({
+      capture: expected.capture,
+      coverage: { scannedThrough: expected.packets, scanComplete: true },
+    });
+  }
+  return session.outputs;
+}
+
+function pcapngBlock(type: number, content: Buffer) {
+  const block = Buffer.alloc(12 + Math.ceil(content.length / 4) * 4);
+  block.writeUInt32LE(type);
+  block.writeUInt32LE(block.length, 4);
+  block.writeUInt32LE(block.length, block.length - 4);
+  content.copy(block, 8);
+  return block;
+}
+
+function pcapngComment(text: string) {
+  const comment = Buffer.from(text);
+  const option = Buffer.alloc(8 + Math.ceil(comment.length / 4) * 4);
+  option.writeUInt16LE(1);
+  option.writeUInt16LE(comment.length, 2);
+  comment.copy(option, 4);
+  return option;
+}
+
+function fileFixture(frames: { time: number; data: Buffer; link?: number }[], secret = false) {
+  const packetBytes = (data: Buffer) => Buffer.concat([data, Buffer.alloc((4 - (data.length % 4)) % 4)]);
+  const header = Buffer.from("4d3c2b1a01000000ffffffffffffffff", "hex");
+  const iface = (link: number) => Buffer.from([link, 0, 0, 0, 255, 255, 0, 0]);
+  const blocks = [
+    pcapngBlock(
+      0x0a0d0d0a,
+      secret ? Buffer.concat([header, pcapngComment("synthetic capture note")]) : header,
+    ),
+    pcapngBlock(1, iface(1)),
+  ];
+  if (frames.some(({ link }) => link === 101)) blocks.push(pcapngBlock(1, iface(101)));
+  if (secret) {
+    const data = Buffer.from(`CLIENT_RANDOM ${"0".repeat(64)} ${"1".repeat(96)}\n`);
+    const prefix = Buffer.from("4b534c5400000000", "hex");
+    prefix.writeUInt32LE(data.length, 4);
+    blocks.push(pcapngBlock(10, Buffer.concat([prefix, data])));
+  }
+  for (const [i, { time, data, link }] of frames.entries()) {
+    const prefix = Buffer.alloc(20);
+    prefix.writeUInt32LE(link === 101 ? 1 : 0);
+    prefix.writeUInt32LE(time, 8);
+    prefix.writeUInt32LE(data.length, 12);
+    prefix.writeUInt32LE(data.length, 16);
+    const comment = secret && i === 0 ? pcapngComment("synthetic packet note") : Buffer.alloc(0);
+    blocks.push(pcapngBlock(6, Buffer.concat([prefix, packetBytes(data), comment])));
+  }
+  return Buffer.concat(blocks);
+}
+
+function httpFrame() {
+  const message = Buffer.from(
+    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nVERA!!",
+  );
+  const prefix = Buffer.from(
+    "0200000000020200000000010800450000000001000040060000c0000201c00002020050bf3f00000001000000015018ffff00000000",
+    "hex",
+  );
+  prefix.writeUInt16BE(prefix.length - 14 + message.length, 16);
+  return Buffer.concat([prefix, message]);
+}
+
+it("verifies native capture cleanup, reordering, deduplication and local exports", async (ctx) => {
+  const unordered = { path: "captures/unordered.pcapng" };
+  const source = { path: "captures/cleanup.pcapng" };
+  const classic = { path: classicPath };
+  const http = { path: "captures/http.pcapng" };
+  const sampleSource = { path: "captures/sample.pcapng" };
+  const a = classicPcap.subarray(40);
+  const b = Buffer.from(a);
+  b[b.length - 1] = 2;
+  const httpFixture = fileFixture([{ time: 2_000_000, data: httpFrame() }]);
+  const fixture = fileFixture([
+    { time: 3_000_000, data: a },
+    { time: 1_000_000, data: b },
+    { time: 2_000_000, data: a },
+  ]);
+  const cleanup = fileFixture([{ time: 3_000_000, data: a }], true);
+  const rig = await workbench({
+    files: [
+      typed("capabilities"),
+      typed("file_metadata", { source }),
+      deriveFile("clean", { source, remove: ["packet_comments"] }),
+      deriveFile("clean", { source, remove: ["capture_comments", "packet_comments", "secrets"] }),
+      deriveFile("reorder", { source: unordered }),
+      deriveFile("deduplicate", { source: unordered, window: 3 }),
+      deriveFile("merge", { sources: [classic, classic] }),
+      deriveFile("export_pdus", { source: sampleSource, tap: "ethernet", filter: "coap" }),
+      deriveFile("export_objects", { source: http, protocol: "http" }),
+      deriveFile("select", {
+        source: sampleSource,
+        selection: { kind: "filter", filter: "frame.number == 99" },
+      }),
+      { text: "Done." },
+    ],
+    masked: [
+      deriveFile("export_objects", { source: http, protocol: "http" }),
+      deriveFile("export_fields", { source: sampleSource, fields: ["udp.dstport"] }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native Wireshark utilities are required.");
+      ctx.skip("Native Wireshark utilities are unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, classicPath), classicPcap);
+    await writeFile(join(rig.bench, unordered.path), fixture);
+    await writeFile(join(rig.bench, source.path), cleanup);
+    await writeFile(join(rig.bench, http.path), httpFixture);
+    const service = await rig.start();
+    const turn = rig.session(service, "files", "ask");
+    service.send(turn.id, "Transform the independent captures and save supported exports.");
+    await service.waitIdle(turn.id);
+    const out = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    if (!out[0]?.fileOperations?.select?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native capture-file utilities are unavailable.");
+      return;
+    }
+    expect(
+      turn.outputs.filter(({ ok }) => !ok),
+      JSON.stringify(out),
+    ).toEqual([]);
+    expect(out[1].metadata.metadataCounts).toEqual({ capture_comments: 1, packet_comments: 1, secrets: 1 });
+    expect(out[2].outputs[0].metadataCounts).toEqual({ capture_comments: 1, packet_comments: 0, secrets: 1 });
+    expect(out[3]).toMatchObject({
+      packetDataAndIdentifiersMayRemain: true,
+      removed: { capture_comments: 1, packet_comments: 1, secrets: 1 },
+      outputs: [{ metadataCounts: { capture_comments: 0, packet_comments: 0, secrets: 0 } }],
+    });
+    expect(out[4].outputs[0]).toMatchObject({
+      chronological: true,
+      lineage: {
+        ranges: [
+          [1, 0, 2, 2],
+          [3, 0, 1, 1],
+        ],
+      },
+    });
+    expect(out[5].outputs[0]).toMatchObject({ packets: 2, lineage: { ranges: [[1, 0, 1, 2]] } });
+    expect(out[6].outputs[0].lineage).toMatchObject({ ambiguous: 2, ranges: [] });
+    expect(out[7]).toMatchObject({
+      sources: [{ source: { path: sampleSource.path } }],
+      outputs: [{ packets: 4, lineage: { mapped: 4, unavailable: 0 } }],
+    });
+    expect(out[8]).toMatchObject({ export: { records: 1, partial: true } });
+    expect(out[9].outputs[0]).toMatchObject({ packets: 0, lineage: { ranges: [], ambiguous: 0 } });
+    const reports = service.listArtifacts(turn.id);
+    expect(reports).toHaveLength(1);
+    const artifact = JSON.parse(
+      await readFile(join(rig.bench, ".vera", "artifacts", turn.id, reports[0]?.name ?? ""), "utf8"),
+    );
+    expect(artifact).toMatchObject({
+      source: { sha256: createHash("sha256").update(httpFixture).digest("hex") },
+      rows: [
+        {
+          frame: 1,
+          bytes: 6,
+          sha256: createHash("sha256").update("VERA!!").digest("hex"),
+          contentBase64: Buffer.from("VERA!!").toString("base64"),
+        },
+      ],
+    });
+    const cleaned = out[3].outputs[0].capture;
+    const bytes = await readFile(join(rig.bench, ".vera", "captures", `${cleaned.sha256}.pcapng`));
+    expect(bytes.includes(a)).toBe(true);
+    expect(bytes.includes(Buffer.from("synthetic"))).toBe(false);
+    expect(bytes.includes(Buffer.from("CLIENT_RANDOM"))).toBe(false);
+    expect(await readFile(join(rig.bench, source.path))).toEqual(cleanup);
+    expect(await readFile(join(rig.bench, unordered.path))).toEqual(fixture);
+    const reopened = await reopenDerived(rig, service, out);
+    const pdu = out[7].outputs[0].capture;
+    const pduBytes = await readFile(join(rig.bench, ".vera", "captures", `${pdu.sha256}.pcapng`));
+    expect(pduBytes.length).toBe(pdu.bytes);
+    expect(createHash("sha256").update(pduBytes).digest("hex")).toBe(pdu.sha256);
+    rig.resultBudget(32_000, (text) =>
+      text
+        .replaceAll(Buffer.from("VERA!!").toString("base64"), "[masked]")
+        .replaceAll("5683", "[masked port]"),
+    );
+    const masked = rig.session(service, "masked", "ask");
+    service.send(masked.id, "Apply the active export mask to the structured reports.");
+    await service.waitIdle(masked.id);
+    expect(masked.outputs.map(({ summary }) => JSON.parse(summary).reason)).toEqual([
+      "capture_export_masked",
+      "capture_export_masked",
+    ]);
+    expect(service.listArtifacts(masked.id)).toEqual([]);
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-capture-cleanup-exports.json`),
+        JSON.stringify({ out, artifact, reopened, masked: masked.outputs }, null, 2),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("refuses unsafe or incomplete capture-file operations without publishing output", async (ctx) => {
+  const source = { path: "captures/sample.pcapng" };
+  const corrupted = { path: "captures/corrupted.pcapng" };
+  const tooLarge = { path: "captures/large.pcapng" };
+  const heterogeneous = { path: "captures/mixed.pcapng" };
+  const journal = { path: "captures/journal.pcapng" };
+  const many = { path: "captures/many.pcapng" };
+  const bytes = classicPcap.subarray(40);
+  const rig = await workbench({
+    rejected: [
+      typed("capabilities"),
+      deriveFile("convert", { source: corrupted, outputFormat: "pcap" }),
+      deriveFile("convert", { source: tooLarge, outputFormat: "pcap" }),
+      deriveFile("convert", { source: heterogeneous, outputFormat: "pcap" }),
+      deriveFile("split", { source: many, by: { kind: "count", packets: 1 } }),
+      deriveFile("select", { source, selection: { kind: "filter", filter: "udp.port ==" } }),
+      deriveFile("convert", { source: { path: "../foreign.pcap" }, outputFormat: "pcap" }),
+      deriveFile("convert", { source: journal, outputFormat: "pcapng" }),
+      { text: "Done." },
+    ],
+    cancelled: [deriveFile("convert", { source, outputFormat: "pcap" }), { text: "Done." }],
+    readonly: [
+      typed("capabilities"),
+      deriveFile("convert", { source, outputFormat: "pcap" }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native Wireshark utilities are required.");
+      ctx.skip("Native Wireshark utilities are unavailable.");
+      return;
+    }
+    const valid = await readFile(sample);
+    const small = fileFixture([{ time: 1_000_000, data: bytes }]);
+    const journalRecord = pcapngBlock(
+      9,
+      Buffer.from("__REALTIME_TIMESTAMP=1767225600000000\nMESSAGE=Synthetic fixture\n\n"),
+    );
+    const journalPath = join(rig.bench, journal.path);
+    await writeFile(journalPath, Buffer.concat([small.subarray(0, 48), journalRecord, small.subarray(48)]));
+    const nativeCounts = await promisify(execFile)(
+      rig.tshark.executable,
+      ["-n", "-r", journalPath, "-T", "fields", "-e", "frame.number"],
+      {
+        timeout: 10_000,
+        windowsHide: true,
+        env: { ...process.env, ...core.captureProfileEnvironment(rig.bench) },
+      },
+    );
+    expect(nativeCounts.stdout.trim().split(/\s+/)).toEqual(["1", "2"]);
+    await writeFile(join(rig.bench, corrupted.path), valid.subarray(0, valid.length - 1));
+    await writeFile(join(rig.bench, tooLarge.path), valid);
+    await truncate(join(rig.bench, tooLarge.path), captureLimits.captureBytes + 1);
+    await writeFile(
+      join(rig.bench, heterogeneous.path),
+      fileFixture([
+        { time: 1_000_000, data: bytes },
+        { time: 2_000_000, data: bytes.subarray(14), link: 101 },
+      ]),
+    );
+    await writeFile(
+      join(rig.bench, many.path),
+      fileFixture(Array.from({ length: 25 }, (_, i) => ({ time: i * 100_000, data: bytes }))),
+    );
+    const service = await rig.start();
+    const turn = rig.session(service, "rejected", "ask");
+    service.send(turn.id, "Check failure boundaries of the saved captures.");
+    await service.waitIdle(turn.id);
+    const out = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    if (!out[0]?.fileOperations?.select?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native capture-file utilities are unavailable.");
+      return;
+    }
+    expect(out.slice(1).map(({ reason }) => reason)).toEqual([
+      "invalid_capture",
+      "capture_byte_limit",
+      "capture_incompatible",
+      "capture_part_limit",
+      "invalid_filter",
+      "capture_inaccessible",
+      "capture_records_unsupported",
+    ]);
+    expect(turn.outputs.slice(1).every(({ ok }) => !ok)).toBe(true);
+    const managed = join(rig.bench, ".vera", "captures");
+    const pending = rig.session(service, "cancelled", "ask");
+    let stoppedAtNativeStart = false;
+    rig.onNativeStart((argv) => {
+      if (argv.includes("nsecpcap")) stoppedAtNativeStart = service.stop(pending.id);
+    });
+    service.send(pending.id, "Cancel the managed conversion.");
+    const settlement = await service.waitIdle(pending.id);
+    expect(stoppedAtNativeStart).toBe(true);
+    expect(pending.outputs.every(({ ok }) => !ok)).toBe(true);
+    const readonly = rig.session(service, "readonly", "read-only");
+    service.send(readonly.id, "Check the managed write gate.");
+    await service.waitIdle(readonly.id);
+    expect(JSON.parse(readonly.outputs[0]?.summary ?? "{}").fileOperations.convert).toMatchObject({
+      available: false,
+      reason: "storage_read_only",
+    });
+    expect(readonly.outputs[1]?.ok).toBe(false);
+    await expect(readdir(managed)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readFile(join(rig.bench, source.path))).toEqual(valid);
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-capture-refusals.json`),
+        JSON.stringify(
+          { out, settlement, stoppedAtNativeStart, cancelled: pending.outputs, readonly: readonly.outputs },
+          null,
+          2,
+        ),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("keeps every verified sparse lineage row in the managed report", async (ctx) => {
+  const source = { path: "captures/sparse.pcapng" };
+  const ranges = Array.from({ length: 135 }, (_, i) => ({ first: 2 * i + 1, last: 2 * i + 1 }));
+  const rig = await workbench({
+    sparse: [
+      typed("capabilities"),
+      deriveFile("select", { source, selection: { kind: "frames", ranges } }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native Wireshark utilities are required.");
+      ctx.skip("Native Wireshark utilities are unavailable.");
+      return;
+    }
+    const fixture = fileFixture(
+      Array.from({ length: 270 }, (_, i) => ({ time: i * 1000, data: classicPcap.subarray(40) })),
+    );
+    await writeFile(join(rig.bench, source.path), fixture);
+    const service = await rig.start();
+    const run = async (name: string) => {
+      const turn = rig.session(service, name, "ask");
+      service.send(turn.id, "Read or retain the exact capture ancestry.");
+      await service.waitIdle(turn.id);
+      return turn.outputs.map(({ summary }) => JSON.parse(summary));
+    };
+    const [capability, derivation] = await run("sparse");
+    if (!capability?.fileOperations?.select?.available && process.env.VERA_REQUIRE_TSHARK !== "1") {
+      ctx.skip("Native capture-file utilities are unavailable.");
+      return;
+    }
+    expect(derivation).toMatchObject({
+      complete: true,
+      outputs: [{ packets: 135, lineage: { rangeCount: 135 } }],
+    });
+    expect(derivation.outputs[0].lineage.ranges).toHaveLength(128);
+    const report = derivation.lineageReport;
+    await rig.writeReplay("full-lineage", [
+      typed("file_lineage", { report, part: 1 }),
+      typed("file_lineage", { report, part: 1, offset: 100 }),
+      { text: "Done." },
+    ]);
+    const [page1, page2] = await run("full-lineage");
+    expect(page1).toMatchObject({
+      nextOffset: 100,
+      offset: 0,
+      total: 135,
+      kind: "packet_ranges",
+      unavailable: 0,
+      capture: derivation.outputs[0].capture,
+      sourceSha256: [createHash("sha256").update(fixture).digest("hex")],
+    });
+    expect(page2).toMatchObject({ nextOffset: null, offset: 100, total: 135 });
+    expect([...page1.rows, ...page2.rows]).toEqual(ranges.map(({ first }, i) => [i + 1, 0, first, 1]));
+    const savedPath = join(rig.bench, ".vera", "captures", `${report.sha256}.lineage.json`);
+    const saved = await readFile(savedPath);
+    expect(createHash("sha256").update(saved).digest("hex")).toBe(report.sha256);
+    saved[1] = (saved[1] ?? 0) ^ 1;
+    await writeFile(savedPath, saved);
+    await rig.writeReplay("tampered-lineage", [
+      typed("file_lineage", { report, part: 1 }),
+      { text: "Done." },
+    ]);
+    const [altered] = await run("tampered-lineage");
+    expect(altered).toMatchObject({ isError: true, reason: "capture_changed" });
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-capture-lineage.json`),
+        JSON.stringify({ derivation, pages: [page1, page2], altered }, null, 2),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
+
+it("keeps TShark analysis ready when the capture-file utilities are unavailable", async (ctx) => {
+  const source = { path: "captures/sample.pcapng" };
+  const rig = await workbench(
+    {
+      partial: [
+        typed("capabilities"),
+        typed("inspect", { source }),
+        typed("file_metadata", { source }),
+        deriveFile("convert", { source, outputFormat: "pcap" }),
+        { text: "Done." },
+      ],
+    },
+    "tshark_only",
+  );
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    const service = await rig.start();
+    const turn = rig.session(service, "partial", "ask");
+    service.send(turn.id, "Check which saved capture operations are ready.");
+    await service.waitIdle(turn.id);
+    const out = turn.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(out[0]).toMatchObject({
+      tshark: { available: true },
+      fileOperations: {
+        metadata: { available: false, missing: ["capinfos"] },
+        convert: { available: false, missing: ["editcap"] },
+        exportFields: { available: true },
+      },
+    });
+    expect(out[1]).toMatchObject({ coverage: { scannedThrough: 8 } });
+    expect(out[2]).toMatchObject({
+      reason: "utility_unavailable",
+      error: expect.stringContaining("capinfos"),
+    });
+    expect(out[3]).toMatchObject({
+      reason: "utility_unavailable",
+      error: expect.stringContaining("editcap"),
+    });
+  } finally {
+    await rig.close();
+  }
+}, 90_000);
 
 it("projects native offline networking profiles, source references, and redacted evidence", async (ctx) => {
   const source = { path: "captures/networking.pcapng" };
@@ -929,7 +1552,22 @@ const typed = (operation: string, args: Record<string, unknown> = {}) => ({
 const importCapture = (path: string) => ({ toolCalls: [{ name: "wireshark_import", args: { path } }] });
 
 it("offers the typed capture contract in the model tool registry", () => {
-  const spec = new core.ToolRegistry().available().find(({ name }) => name === "wireshark_capture");
+  const registry = new core.ToolRegistry();
+  const spec = registry.available().find(({ name }) => name === "wireshark_capture");
+  const derive = registry.available().find(({ name }) => name === "wireshark_derive");
+  const usesSource = { source: { path: classicPath } };
+  expect(derive?.params.safeParse({ operation: "clean", ...usesSource, remove: ["secrets"] }).success).toBe(
+    true,
+  );
+  expect(
+    derive?.params.safeParse({ operation: "clean", ...usesSource, remove: ["secrets"], argv: ["-w"] })
+      .success,
+  ).toBe(false);
+  expect(
+    derive?.params.safeParse({ operation: "split", ...usesSource, by: { kind: "time", seconds: "0" } })
+      .success,
+  ).toBe(false);
+  expect(derive?.params.safeParse({ operation: "merge", ...usesSource }).success).toBe(false);
   expect(spec?.params.safeParse({ operation: "capabilities" }).success).toBe(true);
   expect(spec?.params.safeParse({ operation: "capabilities", argv: ["-i", "1"] }).success).toBe(false);
   expect(spec?.params.safeParse({ operation: "inspect" }).success).toBe(false);
@@ -959,7 +1597,7 @@ it("offers the typed capture contract in the model tool registry", () => {
  */
 async function workbench(
   scripts: Record<string, unknown[]>,
-  state: "enabled" | "missing_binary" | "local" = "enabled",
+  state: "enabled" | "missing_binary" | "local" | "tshark_only" = "enabled",
   permissions?: core.PermissionEngine,
 ) {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-tshark-replay-")));
@@ -968,6 +1606,7 @@ async function workbench(
   const personal = windows ? join(home, "AppData", "Wireshark") : join(home, ".config", "wireshark");
   const native = new core.NodeProcessHost(spawn);
   const starts: (readonly string[])[] = [];
+  let onNativeStart: ((args: readonly string[]) => void) | undefined;
   const configurations: string[] = [];
   const host: core.ProcessHost = {
     platform: native.platform,
@@ -975,7 +1614,9 @@ async function workbench(
     spawn(executable, args, options) {
       starts.push([...args]);
       configurations.push(options.env.WIRESHARK_CONFIG_DIR ?? "");
-      return native.spawn(executable, args, options);
+      const child = native.spawn(executable, args, options);
+      onNativeStart?.(args);
+      return child;
     },
     signal: native.signal.bind(native),
   };
@@ -1064,14 +1705,24 @@ async function workbench(
         runner,
         clock: { sleep },
         plugins: async () => [plugin],
-        resolver: state === "missing_binary" ? core.unresolvedPrograms : provisioner,
+        resolver:
+          state === "missing_binary"
+            ? core.unresolvedPrograms
+            : state === "tshark_only"
+              ? {
+                  resolve: (plugin, program, signal) =>
+                    program === "tshark"
+                      ? provisioner.resolve(plugin, program, signal)
+                      : Promise.resolve(undefined),
+                }
+              : provisioner,
       },
       wiresharkPackage: state === "local" ? undefined : plugin.record.sha256,
     });
     await opened.service.waitReady();
     return opened.service;
   };
-  const session = (service: core.SessionService, name: string, mode: "ask" | "bypass") => {
+  const session = (service: core.SessionService, name: string, mode: "ask" | "bypass" | "read-only") => {
     model = `replay/${name}`;
     const created = service.create(null, mode);
     const outputs: { ok: boolean; summary: string }[] = [];
@@ -1083,6 +1734,7 @@ async function workbench(
   };
   return {
     bench,
+    runner,
     skills,
     tshark,
     starts,
@@ -1092,6 +1744,9 @@ async function workbench(
     close,
     writeReplay,
     modelResults,
+    onNativeStart: (callback: (args: readonly string[]) => void) => {
+      onNativeStart = callback;
+    },
     database: () => {
       if (!opened.database) throw Error("The workbench database is not open.");
       return opened.database.db;
@@ -1293,14 +1948,17 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     expect(await readdir(stored)).toEqual([`${hash}.pcap`]);
     expect(await readFile(join(stored, `${hash}.pcap`))).toEqual(classicPcap);
     expect(service.get(session.id).snapshot.approvals).toEqual([]);
+    const isolatedStarts = rig.starts
+      .slice(firstStart)
+      .flatMap((args, index) =>
+        args[0] !== "--version" ? [{ args, config: rig.configurations[firstStart + index] }] : [],
+      );
     expect(
-      rig.starts
-        .slice(firstStart)
-        .every((args) => args[0] === "-G" || (args[0] === "-n" && args.includes("-r"))),
+      isolatedStarts.every(
+        ({ args }) => args[0] === "-G" || args[0] === "--help" || (args[0] === "-n" && args.includes("-r")),
+      ),
     ).toBe(true);
-    expect(rig.configurations.slice(firstStart).every((folder) => folder.includes("vera-offline-"))).toBe(
-      true,
-    );
+    expect(isolatedStarts.every(({ config }) => config?.includes("vera-offline-"))).toBe(true);
 
     const cursor = outputs[7].page.next;
     const changed = Buffer.from(classicPcap);

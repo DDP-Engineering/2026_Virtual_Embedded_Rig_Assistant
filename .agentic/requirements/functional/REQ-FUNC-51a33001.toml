@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-51a33001"
+title = "Measure utility readiness"
+status = "active"
+requirement = "When offline capture-file readiness is requested, VERA shall report independently version-probed availability for each operation."
+verification = "Resolve subsets of the external commands and check the readiness matrix and independence of TShark."
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/capture-files-native.ts","05_Software/src/libraries/core/src/wireshark/service.ts","05_Software/plugins/wireshark-tshark/plugin.yaml","05_Software/src/libraries/shared/src/wireshark-files.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/tools/registry.test.ts"]
+priority = "high"
+created = 2026-11-25
+updated = 2026-11-25

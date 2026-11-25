@@ -19,6 +19,13 @@ import { trimNetworkPage } from "./network-projection.js";
 
 const modelResult = z.looseObject({
   capture: captureReferenceSchema.optional(),
+  sources: z.array(captureReferenceSchema).optional(),
+  parameters: z
+    .looseObject({
+      filter: z.string().nullable().optional(),
+      selection: z.looseObject({ filter: z.string().optional() }).optional(),
+    })
+    .optional(),
   analysis: captureAnalysisSchema.optional(),
   coverage: captureCoverageSchema.optional(),
   packet: capturePacketSchema.optional(),
@@ -205,6 +212,13 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
   if (result.networking !== undefined && result.coverage) return maskNetworking(decoded, scrub, limit);
   if (result.capture?.source.kind === "workbench")
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);
+  for (const reference of result.sources ?? []) {
+    if (reference.source.kind === "workbench")
+      reference.source.path = scrub(reference.source.path).slice(0, 1024);
+  }
+  if (result.parameters?.filter) result.parameters.filter = scrub(result.parameters.filter).slice(0, 1024);
+  if (result.parameters?.selection?.filter)
+    result.parameters.selection.filter = scrub(result.parameters.selection.filter).slice(0, 1024);
   if (result.analysis?.filter) result.analysis.filter = scrub(result.analysis.filter).slice(0, 1024);
   if (typeof result.error === "string") result.error = scrub(result.error);
   if (result.automotive !== undefined && result.coverage)

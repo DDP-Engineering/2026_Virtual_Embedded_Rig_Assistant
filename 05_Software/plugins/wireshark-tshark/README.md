@@ -21,6 +21,49 @@ and truncated fields. Use `wireshark_import` to retain a verified copy in manage
 workbench storage. The `verify_reference` operation checks file identity even
 when TShark is unavailable. Small text reports use the session artifact store.
 
+## Saved capture files
+
+Use `capabilities` to check Capinfos, Editcap, Mergecap and TShark by operation.
+`file_metadata` reports the encapsulation, interface IDs, link types, timestamp
+resolution, snapshot lengths, packet counts, available epoch times and SHA-256.
+
+Use `wireshark_derive` to select frame ranges, display-filter matches or a
+half-open epoch range. You can split by packet count or elapsed seconds from
+the first packet in each part, merge in timestamp order, reorder without
+changing timestamps, deduplicate using a preceding-packet window, or convert
+to PCAPNG or nanosecond PCAP. Time splitting requires a chronological source.
+Chronological operations require timestamps. PCAPNG is the default. PCAP may
+drop metadata and requires compatible encapsulation.
+
+Each completed result lists verified managed capture references, input
+references, versions and parameters. Lineage ranges contain the first output
+frame, zero-based input index, first source frame and length. The result gives
+a bounded preview and a managed `lineageReport`. Use `file_lineage` with that
+reference, a 1-based output `part` and the returned `nextOffset` to read
+every verified row. Indistinguishable packets
+at a tied timestamp can have ambiguous ancestry. Reuse the returned capture
+reference with `wireshark_capture` to inspect and cite a derived frame.
+
+Cleanup can clear capture comments, packet comments and embedded decryption
+secrets. It reports the affected blocks and comments. Packet data and
+identifiers can remain. Field, PDU and HTTP object records stay local. Field
+and object exports are retained as JSON session artifacts. Object export
+includes complete, unencoded HTTP bodies with matching Content-Length and
+keeps their bytes as inert base64 with frame numbers and SHA-256. PDU exports
+use fixed native taps and retain a managed PCAPNG. Native origin tags can
+identify the emitting frame and have no contributor list. Structured reports
+are refused when the active export mask would alter their data.
+
+The operation limits include 64 MiB and 50,000 packets across the inputs,
+64 MiB total derived output, 16 split parts, 24 chronological runs, and 200
+rows per report. The combined object body budget is 256 KiB. Operations
+work on verified snapshots, preserve the original files, and publish a
+complete group after checking the output bytes and packet evidence. Derived
+captures and lineage reports use exclusive publication on filesystems that
+support hard links. VERA reports unsupported PCAPNG records explicitly.
+
+## Traffic statistics and streams
+
 Use `statistics` for protocol stack prefixes, directional endpoint and conversation counts
 (Ethernet, IPv4, IPv6, TCP or UDP), interval traffic, Expert Info and capture diagnostics,
 or DNS and HTTP response timing. Traffic intervals cover a half-open window in milliseconds
@@ -118,6 +161,8 @@ installer places it. On Linux it searches PATH, then `/usr/bin/tshark`
 (`sudo apt install tshark` on Debian and Ubuntu). When none is found, the
 Plugins page shows the program as missing with an install hint. The rules
 were measured against the options of TShark 4.6.8.
+Capinfos, Editcap and Mergecap use the corresponding executable names and
+locations. Typed readiness is independent of TShark analysis.
 
 ## Risk levels
 
