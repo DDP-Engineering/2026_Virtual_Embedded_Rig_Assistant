@@ -86,6 +86,13 @@ it("converts every tool schema and validates samples while filtering disabled na
       catalog: "cat-lighting",
     },
     wireshark_capture: { operation: "capabilities" },
+    wireshark_dumpcap: { operation: "discover" },
+    wireshark_dumpcap_start: {
+      interfaceId: "1",
+      filter: "tcp port 502",
+      durationSeconds: 10,
+      totalBytes: 1_048_576,
+    },
     wireshark_derive: { operation: "clean", source: { path: "captures/input.pcapng" }, remove: ["secrets"] },
     wireshark_import: { path: "captures/input.pcapng" },
     help: { page: "permissions" },
