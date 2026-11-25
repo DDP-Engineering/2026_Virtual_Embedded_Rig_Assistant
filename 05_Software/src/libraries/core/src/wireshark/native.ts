@@ -237,8 +237,10 @@ export class OfflineTshark {
         "Native output exceeded its bound. Narrow the capture or the selection.",
       );
     if (exit.code === 0) return stdout;
+    const profile = analysis?.networkProfile ?? analysis?.mediaProfile;
     if (
-      analysis?.networkProfile &&
+      analysis &&
+      profile &&
       /(?:not valid fields|fields aren't valid|isn't a valid field|unknown preference|invalid -o flag|unknown protocol|no such protocol)/i.test(
         stderr,
       )
@@ -246,9 +248,10 @@ export class OfflineTshark {
       const fields = args.flatMap((arg, index) => (index > 0 && args[index - 1] === "-e" ? [arg] : []));
       const rejected = new Set(stderr.split(/\r?\n/).map((line) => line.trim()));
       const unavailable = fields.filter((field) => rejected.has(field));
+      const media = analysis.mediaProfile !== undefined;
       throw new CaptureError(
-        "network_unavailable",
-        `TShark ${analysis.version} cannot provide the ${analysis.networkProfile} profile. ${unavailable.length ? "Unavailable" : "Requested"} fields: ${(unavailable.length ? unavailable : fields).join(", ")}.`,
+        media ? "media_unavailable" : "network_unavailable",
+        `TShark ${analysis.version} cannot provide the ${profile}${media ? " media" : ""} profile. ${unavailable.length ? "Unavailable" : "Requested"} fields: ${(unavailable.length ? unavailable : fields).join(", ")}.`,
       );
     }
     if (

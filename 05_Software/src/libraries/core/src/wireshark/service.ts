@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   type CaptureAnalysis,
   type CaptureCoverage,
+  type CaptureDecodeAs,
   type CapturePacket,
   type CaptureReference,
   captureLimits,
@@ -24,6 +25,7 @@ import { CaptureFileNative, fileUtilityCapabilities, resolveFilePrograms } from 
 import { importHexdump } from "./capture-hexdump.js";
 import { captureCitation } from "./citations.js";
 import { compareCaptures } from "./comparison.js";
+import { analyzeMedia, mediaCapabilities } from "./media.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { analyzeNetworking } from "./network-evidence.js";
 import { networkingCapabilities } from "./network-profiles.js";
@@ -38,12 +40,14 @@ export function officialCapturePlugin({ manifest, record }: Pick<LoadedPlugin, "
 }
 
 function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalysis {
-  const decodeAs =
+  const decodeAs: CaptureDecodeAs[] =
     args.operation === "automotive"
       ? automotiveDecodeAs(args)
-      : "decodeAs" in args
-        ? (args.decodeAs ?? [])
-        : [];
+      : args.operation === "media" && args.rtpPort !== undefined
+        ? [{ transport: "udp", port: args.rtpPort, protocol: "rtp" }]
+        : "decodeAs" in args
+          ? (args.decodeAs ?? [])
+          : [];
   const selectors = decodeAs.map(({ transport, port }) => `${transport}:${port}`);
   if (new Set(selectors).size !== selectors.length)
     throw new CaptureError("invalid_decode_as", "Use one Decode As protocol per transport and port.");
@@ -55,6 +59,7 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     filter: "filter" in args ? (args.filter ?? null) : null,
     ...(args.operation === "automotive" ? { automotiveProfile: args.automotiveProfile } : {}),
     ...(args.operation === "network" ? { networkProfile: args.networkProfile } : {}),
+    ...(args.operation === "media" ? { mediaProfile: args.mediaProfile } : {}),
     ...(args.operation === "compare" ? { networkProfile: "tcp_udp" as const } : {}),
     ...(args.operation === "statistics" ||
     args.operation === "follow" ||
@@ -202,6 +207,17 @@ async function captureOperation(
     );
   if (args.operation === "network")
     return analyzeNetworking(
+      args,
+      capture,
+      analysis,
+      native,
+      snapshot,
+      scanLimit,
+      toolLimit(ctx, "toolResultChars"),
+      signal,
+    );
+  if (args.operation === "media")
+    return analyzeMedia(
       args,
       capture,
       analysis,
@@ -389,6 +405,7 @@ export async function inspectWireshark(
         traffic: usable ? trafficCapabilities : { available: false },
         automotive: usable ? automotiveCapabilities : { available: false },
         networking: usable ? networkingCapabilities : { available: false },
+        media: usable ? mediaCapabilities : { available: false },
         comparison: usable
           ? { available: true, transports: ["tcp", "udp"], timing: ["dns", "http"] }
           : { available: false },

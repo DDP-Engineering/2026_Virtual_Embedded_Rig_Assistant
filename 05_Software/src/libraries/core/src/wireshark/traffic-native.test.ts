@@ -73,6 +73,28 @@ it("reports the TShark version and selected networking fields on unsupported dis
   });
 });
 
+it("reports missing media fields without leaking native diagnostics", async () => {
+  const captureOutput = vi.fn<ProgramRunner["captureOutput"]>().mockResolvedValue({
+    exit: { code: 1, signal: null },
+    stdout: "",
+    stderr: "Some fields aren't valid:\n\tradiotap.channel.freq\nprivate native detail",
+    exceeded: false,
+  });
+  const native = new OfflineTshark(
+    { captureOutput } as unknown as ProgramRunner,
+    "tshark",
+    ".",
+    new AbortController().signal,
+  );
+  await expect(
+    native.validate({ ...analysis, mediaProfile: "wifi" } as CaptureAnalysis, ["radiotap.channel.freq"]),
+  ).rejects.toMatchObject({
+    reason: "media_unavailable",
+    message:
+      "TShark 4.6.10 cannot provide the wifi media profile. Unavailable fields: radiotap.channel.freq.",
+  });
+});
+
 it.each(["0.000000000", null])(
   "reports a TCP gap marker at source timestamp %s as ambiguous",
   (timestampEpoch) => {

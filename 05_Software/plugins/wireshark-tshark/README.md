@@ -21,6 +21,30 @@ and truncated fields. Use `wireshark_import` to retain a verified copy in manage
 workbench storage. The `verify_reference` operation checks file identity even
 when TShark is unavailable. Small text reports use the session artifact store.
 
+## Saved Wi-Fi, BLE, USB and VoIP
+
+Call `wireshark_capture` with `operation: media`, a saved `source` and a
+`mediaProfile` of `wifi`, `ble`, `usb` or `voip`. For RTP without signaling,
+pass `rtpPort` only if the capture's RTP UDP port is known. `filter` accepts
+the offline display filter syntax. `limit` controls the compact packet preview
+(default 8, maximum 12). Narrow a subsequent query to examine a different set
+of frames. The result reports the number of matches, omitted packets, native
+protocols observed, truncated frames and the scanned prefix. Use an exact
+returned frame ref for the local handoff.
+
+VoIP also reports up to six directional RTP stream representatives and their
+observed packet counts. On a complete unfiltered scan with unambiguous RTP
+frames, sequence gaps and maximum arrival delta are available when their inputs
+are valid. VERA counts truncated frames in the selected scope even when their
+media headers are absent. For explicit Decode As on an unsignaled stream with
+constant payload type 0 or 8, the result can include final jitter under a
+labeled 8 kHz RTP/AVP default assumption. Signaling can remap those payload
+types. Open the representative frame in Wireshark Desktop for RTP Stream
+Analysis or playback.
+Media results hide the capture path and display filter, omit payload and
+address fields, and reject PCAPNG captures containing embedded decryption
+secrets. The exact local navigation context stays with the workbench tool record.
+
 ## Compare saved captures
 
 Use `wireshark_capture` with `operation: compare` and `baseline` and `candidate`

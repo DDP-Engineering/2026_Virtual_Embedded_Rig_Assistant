@@ -40,6 +40,7 @@ export async function requireSecretsFreeCapture(
   capture: CaptureReference,
   signal: AbortSignal,
   statisticsPoint?: { section: number | null; interfaceId: number | null },
+  profile: "network" | "media" = "network",
 ) {
   if (capture.fileFormat !== "pcapng") return { interface: null, operatingSystem: null };
   const bytes = await readFile(snapshot, { signal });
@@ -67,8 +68,8 @@ export async function requireSecretsFreeCapture(
     if (u32(end) !== size) throw invalid();
     if (type === 0x0a)
       throw new CaptureError(
-        "network_embedded_secrets",
-        "Networking profiles require a saved capture without embedded decryption secrets.",
+        `${profile}_embedded_secrets`,
+        `${profile === "media" ? "Media" : "Networking"} profiles require a saved capture without embedded decryption secrets.`,
       );
     if (type === 5 && statisticsPoint?.section === section) {
       if (size < 24) throw invalid();

@@ -62,7 +62,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.9.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.10.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -125,6 +125,18 @@ device commands follow their own program risk and approval rules.
   Reassembled rows can cite related same-context frames outside the filter and withhold
   higher-layer fields when contributor context is unverified. Compact evidence masks network
   identifiers. The native reader rejects captures containing embedded decryption secrets.
+
+- The typed `media` operation applies Wi-Fi, BLE, USB and VoIP profiles to saved
+  captures and reports a bounded field projection with exact frame evidence.
+  VoIP uses native signaling or a known UDP port for RTP Decode As. It counts
+  unambiguous directional RTP observations and reports applicable sequence gaps,
+  capture-arrival deltas and jitter under a labeled default 8 kHz RTP/AVP
+  clock assumption for eligible unsignaled Decode As streams. Filtered,
+  truncated and incomplete scopes retain observed packet counts. The public result hides the source path and
+  filter and omits payload and endpoints. PCAPNG decryption secrets blocks are
+  rejected before dissection. The existing private tool record preserves the
+  locator for Desktop. The [coverage matrix](../../06_SoftwareDocu/Wireshark-coverage.md)
+  describes the Windows terminal basis and pending platform and Desktop checks.
 
 - The typed `compare` operation snapshots a baseline and candidate and matches one TCP or UDP
   stream per exact pair of IP endpoints, ports, transport and ordered VLANs. The declared
@@ -229,6 +241,7 @@ device commands follow their own program risk and approval rules.
 | Traffic statistics, Expert Info and followed streams | `shared/src/wireshark-traffic.ts`, `core/src/wireshark/traffic-analysis.ts` | Native statistics and tap reconciliation in `wireshark-tshark.test.ts`, native output rejection in `traffic-native.test.ts` |
 | Automotive Ethernet profiles | `shared/src/wireshark-automotive.ts`, `core/src/wireshark/automotive*.ts` | Windows or Linux offline replay in `wireshark-tshark.test.ts`, native output boundary in `automotive-native.test.ts` |
 | General networking profiles | `shared/src/wireshark-networking.ts`, `core/src/wireshark/network-*.ts` | Networking replay in `wireshark-tshark.test.ts` and native diagnostics in `traffic-native.test.ts` |
+| Saved media profiles and RTP | `shared/src/wireshark-media.ts`, `core/src/wireshark/media*.ts` | Native media replay, Desktop preparation and missing-field diagnostics |
 | Compare saved captures | `shared/src/wireshark-comparison.ts`, `core/src/wireshark/comparison*.ts` | Saved capture comparison replay in `wireshark-tshark.test.ts` with exact citation and report checks |
 | Firmware and UART hexdump import | `shared/src/wireshark-files.ts`, `core/src/wireshark/hexdump-parser.ts`, `capture-hexdump.ts`, `storage.ts` | Native Text2pcap and TShark replay in `wireshark-tshark.test.ts` and grouped storage in `storage.test.ts` |
 | A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
@@ -259,6 +272,9 @@ device commands follow their own program risk and approval rules.
   offline Automotive Ethernet profiles, PDU evidence, coverage and native diagnostics.
 - `REQ-FUNC-3cdfc800`, `REQ-DATA-fe4b7a36`, `REQ-REL-fe778b38`, `REQ-REL-baf79e3d` and
   `REQ-SEC-22b9e089` govern the general networking profiles, framed evidence and native limits.
+- `REQ-FUNC-78062da1`, `REQ-FUNC-3bd95cb0`, `REQ-FUNC-143f7173`, `REQ-SEC-4c92a247`,
+  `REQ-SEC-9f2b4752` and `REQ-REL-57b13fde` govern media observations, RTP metrics,
+  exact frame references, private projection, secrets rejection and native diagnostics.
 - `REQ-FUNC-51a33001`–`REQ-FUNC-51a33009`, `REQ-DATA-51a33010`, `REQ-FUNC-51a33011`,
   `REQ-REL-51a33012` and `REQ-SEC-51a33013` govern capture-file operations and publication.
 - `REQ-FUNC-7836f1cc`, `REQ-FUNC-b6277db6`, `REQ-DATA-80c2e7e1`, `REQ-REL-25df8c0c`,

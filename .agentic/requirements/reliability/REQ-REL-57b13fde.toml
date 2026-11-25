@@ -1,0 +1,29 @@
+schema = 1
+
+id = "REQ-REL-57b13fde"
+
+title = "Report unavailable media fields as a typed diagnostic"
+
+status = "active"
+
+requirement = """
+If the installed TShark rejects a required media dissector field or decode setup, VERA shall return a typed diagnostic for the unsupported profile or Decode As rule.
+"""
+
+verification = "Inject a native invalid-field result and assert the typed reason and omission of raw native error text."
+
+affected_paths = [
+  "05_Software/src/libraries/core/src/wireshark/native.ts",
+  "05_Software/src/libraries/core/src/wireshark/media.ts",
+]
+
+linked_tests = ["05_Software/src/libraries/core/src/wireshark/traffic-native.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

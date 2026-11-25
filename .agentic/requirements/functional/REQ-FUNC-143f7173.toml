@@ -1,0 +1,30 @@
+schema = 1
+
+id = "REQ-FUNC-143f7173"
+
+title = "Issue exact source-frame evidence for offline media"
+
+status = "active"
+
+requirement = """
+When offline media evidence reports a packet or representative RTP stream frame, VERA shall issue an exact source-frame reference usable by the existing Desktop handoff.
+"""
+
+verification = "Verify issued references through a completed assistant citation and compare the recovered capture digest, frame and Decode As context to native evidence."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/wireshark.ts",
+  "05_Software/src/libraries/core/src/wireshark/media.ts",
+  "05_Software/src/libraries/core/src/wireshark/citations.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

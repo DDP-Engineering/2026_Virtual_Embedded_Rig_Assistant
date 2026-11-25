@@ -59,6 +59,7 @@ export * from "./wireshark-automotive.js";
 export * from "./wireshark-comparison.js";
 export * from "./wireshark-files.js";
 export * from "./wireshark-live.js";
+export * from "./wireshark-media.js";
 export * from "./wireshark-networking.js";
 export * from "./wireshark-traffic.js";
 export * from "./workbench.js";

@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Interrogez l’agent sur le trafic Wi-Fi, BLE, USB ou VoIP dans une capture enregistrée. Le résultat indique les limites de la capture, les liens vers les trames et les statistiques RTP disponibles. Ouvrez une trame citée dans Wireshark Desktop pour les vues spécialisées ou la lecture RTP. Gardez les clés et les données décodées dans Wireshark Desktop.
+
 Pour comparer hors ligne deux captures enregistrées, indiquez la référence, le candidat, les points d’observation et les fenêtres temporelles. Le rapport indique les différences TCP et UDP, les temps DNS et HTTP disponibles, les preuves manquantes et les liens vers les trames originales. Demandez à l’agent d’enregistrer le rapport localement.
 
 Demandez à l’agent d’importer un dump hexadécimal firmware ou UART au format PCAPNG. Indiquez si les données contiennent des trames Ethernet complètes, des charges utiles opaques ou nécessitent des en-têtes IPv4/UDP synthétiques. Précisez si le dump contient des heures UTC. Le manifeste de provenance indique le hachage de la source et les métadonnées synthétiques. L’importation nécessite Text2pcap.

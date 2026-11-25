@@ -4,6 +4,8 @@ Explanatory software documentation:
 
 - `CHANGELOG-archive.md`: releases older than the latest one, moved here by
   `02_Tools/release/set-version.mjs`.
+- [Wireshark coverage and Desktop workflows](Wireshark-coverage.md) records
+  supported saved-capture profiles, native evidence and pending platform checks.
 
 Evaluation methods, results and retained baselines live with their harnesses in
 [`05_Software/evaluators/`](../05_Software/evaluators/README.md). Store reports prepared for users

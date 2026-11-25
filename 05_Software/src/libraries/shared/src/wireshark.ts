@@ -2,6 +2,12 @@ import { z } from "zod";
 import { parseRef } from "./refs.js";
 import { automotiveInputs, automotiveLimits, automotiveProfileSchema } from "./wireshark-automotive.js";
 import {
+  mediaProfileSchema,
+  mediaProjectionSchema,
+  mediaResultLimit,
+  mediaStreamLimit,
+} from "./wireshark-media.js";
+import {
   acceptsNetworkQuery,
   networkingInputs,
   networkLimits,
@@ -207,6 +213,20 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
       ...networkingInputs,
     })
     .refine(acceptsNetworkQuery, "Select a query supported by the networking profile."),
+  z
+    .strictObject({
+      operation: z.literal("media"),
+      source,
+      mediaProfile: mediaProfileSchema,
+      filter: filter.optional(),
+      scanFrames: scanFrames.optional(),
+      limit: limit.max(mediaResultLimit).optional(),
+      rtpPort: decodeAs.shape.port.optional(),
+    })
+    .refine(
+      (args) => args.mediaProfile === "voip" || args.rtpPort === undefined,
+      "RTP Decode As requires the VoIP profile.",
+    ),
   z.strictObject({ operation: z.literal("import"), path }),
   z.strictObject({
     operation: z.literal("verify_reference"),
@@ -234,6 +254,7 @@ export const wiresharkCaptureToolSchema = z
       "follow",
       "automotive",
       "network",
+      "media",
       "verify_reference",
     ]),
     kind: kind.optional(),
@@ -263,6 +284,8 @@ export const wiresharkCaptureToolSchema = z
     automotiveProfile: automotiveInputs.automotiveProfile.optional(),
     ...networkingInputs,
     networkProfile: networkProfileSchema.optional(),
+    mediaProfile: mediaProfileSchema.optional(),
+    rtpPort: decodeAs.shape.port.optional(),
   })
   .refine((args) => wiresharkCaptureArgsSchema.safeParse(args).success, {
     message: "Supply only the inputs for the selected capture operation.",
@@ -278,6 +301,7 @@ export const captureAnalysisSchema = z.strictObject({
   trafficPreferences: trafficPreferencesSchema.optional(),
   automotiveProfile: automotiveProfileSchema.optional(),
   networkProfile: networkProfileSchema.optional(),
+  mediaProfile: mediaProfileSchema.optional(),
 });
 export type CaptureAnalysis = z.infer<typeof captureAnalysisSchema>;
 
@@ -344,3 +368,12 @@ export const captureNetworkingResultSchema = captureEvidenceSchema.extend({
   packetData: z.literal("untrusted_capture_data"),
 });
 export type CaptureNetworkingResult = z.infer<typeof captureNetworkingResultSchema>;
+
+export const captureMediaEvidenceSchema = z
+  .array(captureTrafficFrameSchema)
+  .max(mediaResultLimit + mediaStreamLimit);
+export const captureMediaResultSchema = captureEvidenceSchema.extend({
+  media: mediaProjectionSchema.extend({ evidence: captureMediaEvidenceSchema }),
+  packetData: z.literal("untrusted_capture_data"),
+});
+export type CaptureMediaResult = z.infer<typeof captureMediaResultSchema>;

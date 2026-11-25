@@ -64,3 +64,10 @@ entries:
       ro: Capturează trafic local cu Wireshark, în limite stabilite, și păstrează segmentele verificate.
       de: Lokalen Verkehr begrenzt mit Wireshark mitschneiden und geprüfte Segmente behalten.
       fr: Capturez le trafic local avec Wireshark et conservez les segments vérifiés.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze saved Wi-Fi, BLE, USB and VoIP captures with frame links and RTP statistics.
+      ro: Analizează capturi Wi-Fi, BLE, USB și VoIP cu legături la cadre și statistici RTP.
+      de: WLAN-, BLE-, USB- und VoIP-Mitschnitte mit Paketverweisen und RTP-Statistik prüfen.
+      fr: Analysez les captures Wi-Fi, BLE, USB et VoIP avec des liens de trame et des mesures RTP.

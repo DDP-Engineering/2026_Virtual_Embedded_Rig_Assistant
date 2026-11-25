@@ -25,6 +25,9 @@ captures. It validates cited frames, partial coverage and compact redaction. Set
 `VERA_REQUIRE_TSHARK=1` to require native execution. Select the saved capture comparison
 case to exercise planted differences, equivalent captures, limited coverage and both citation
 sources. `VERA_COMPARISON_EVIDENCE` can name an existing output folder for its JSON and Markdown.
+The offline media case covers native Wi-Fi, BLE, USB and VoIP fixtures, bounded RTP
+statistics and source-citation handoff preparation. It uses saved files only. Set
+`VERA_TEST_EVIDENCE_DIR` to retain its results and prepared native arguments.
 
 `plugins/wireshark-dumpcap.test.ts` checks the official optional package. Set `VERA_DUMPCAP_TEST_BINARY`
 to an absolute Dumpcap path for native discovery. Set `VERA_DUMPCAP_TEST_TSHARK` to the absolute TShark

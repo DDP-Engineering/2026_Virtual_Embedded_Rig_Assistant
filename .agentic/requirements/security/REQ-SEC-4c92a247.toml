@@ -1,0 +1,31 @@
+schema = 1
+
+id = "REQ-SEC-4c92a247"
+
+title = "Keep offline media payload and decryption secrets local"
+
+status = "active"
+
+requirement = """
+When VERA projects offline media evidence, its public tool result shall omit capture paths, filter text, decoded payload and private address identifiers.
+"""
+
+verification = "Assert the normal replay transcript omits planted path, filter, addresses and payload markers while the private locator resolves the original frame."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/wireshark-media.ts",
+  "05_Software/src/libraries/core/src/wireshark/media.ts",
+  "05_Software/src/libraries/core/src/wireshark/model-output.ts",
+  "05_Software/src/libraries/core/src/wireshark/citations.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

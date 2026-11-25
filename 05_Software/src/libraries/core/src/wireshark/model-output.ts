@@ -6,6 +6,7 @@ import {
   captureComparisonResultSchema,
   captureCoverageSchema,
   captureLimits,
+  captureMediaResultSchema,
   captureNetworkingResultSchema,
   capturePacketSchema,
   captureQueryCursorSchema,
@@ -228,6 +229,14 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
       : JSON.stringify({ isError: true, reason: "result_limit" });
   }
   if (result.networking !== undefined && result.coverage) return maskNetworking(decoded, scrub, limit);
+  if (result.analysis?.mediaProfile && result.coverage) {
+    const media = captureMediaResultSchema.safeParse(decoded).data;
+    if (!media) return JSON.stringify({ isError: true, reason: "media_projection_invalid" });
+    if (media.capture.source.kind === "workbench") media.capture.source.path = "[redacted]";
+    if (media.analysis.filter) media.analysis.filter = "[redacted]";
+    const masked = JSON.stringify(media);
+    return masked.length <= limit ? masked : JSON.stringify({ isError: true, reason: "result_limit" });
+  }
   if (result.capture?.source.kind === "workbench")
     result.capture.source.path = scrub(result.capture.source.path).slice(0, 1024);
   for (const reference of result.sources ?? []) {

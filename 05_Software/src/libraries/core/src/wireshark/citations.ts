@@ -9,6 +9,8 @@ import {
   captureComparisonResultSchema,
   captureFrameReferenceSchema,
   captureLimits,
+  captureMediaEvidenceSchema,
+  captureMediaResultSchema,
   captureNetworkingEvidenceSchema,
   captureNetworkingResultSchema,
   capturePacketSchema,
@@ -35,6 +37,7 @@ const resultSchema = z.object({
     .optional(),
   automotive: z.object({ evidence: captureAutomotiveEvidenceSchema }).optional(),
   networking: z.object({ evidence: captureNetworkingEvidenceSchema }).optional(),
+  media: z.object({ evidence: captureMediaEvidenceSchema }).optional(),
 });
 
 /** Retain the exact local locator before publication applies the agent mask. */
@@ -51,6 +54,9 @@ export function networkingCitationContext(text: string): CaptureNavigationContex
     const result = captureNetworkingResultSchema.safeParse(decoded).data;
     if (result?.analysis.networkProfile && result.networking.evidence.length)
       return { capture: result.capture, analysis: result.analysis };
+    const media = captureMediaResultSchema.safeParse(decoded).data;
+    if (media?.analysis.mediaProfile && media.media.evidence.length)
+      return { capture: media.capture, analysis: media.analysis };
   } catch {
     // Unstructured output cannot furnish local navigation context.
   }
@@ -130,11 +136,12 @@ export function issuedCaptureCitations(messages: readonly Message[], lookup?: Ca
         }
         const parsed = resultSchema.safeParse(decoded);
         if (!parsed.success) continue;
-        const { packet, packets, traffic, automotive, networking } = parsed.data;
-        const context = networking ? lookup?.(message.toolCallId) : undefined;
+        const { packet, packets, traffic, automotive, networking, media } = parsed.data;
+        const context = networking || media ? lookup?.(message.toolCallId) : undefined;
         const { capture, analysis } = context && "capture" in context ? context : parsed.data;
         if (capture.sha256 !== parsed.data.capture.sha256) continue;
-        for (const row of networking?.evidence ??
+        for (const row of media?.evidence ??
+          networking?.evidence ??
           automotive?.evidence ??
           traffic?.evidence ??
           packets ??

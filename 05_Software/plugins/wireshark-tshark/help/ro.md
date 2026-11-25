@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Întreabă agentul despre trafic Wi-Fi, BLE, USB sau VoIP din capturi salvate. Rezultatul include limitele capturii, legături la cadre și statisticile RTP disponibile. Deschide un cadru citat în Wireshark Desktop pentru vizualizări specializate sau redare RTP. Păstrează cheile și datele decodate în Wireshark Desktop.
+
 Pentru a compara offline două capturi salvate, indică o referință, un candidat, punctele de observare și ferestrele de timp. Raportul arată diferențele TCP și UDP, timpii DNS și HTTP disponibili, dovezile lipsă și legăturile la cadrele originale. Poți cere salvarea locală a raportului.
 
 Cere agentului să importe un dump hexazecimal firmware sau UART salvat ca PCAPNG. Precizează dacă ai cadre Ethernet complete, date opace sau ai nevoie de antete IPv4/UDP sintetice. Indică dacă dumpul conține ore UTC. Manifestul de proveniență identifică hashul sursei și metadatele sintetice. Importul necesită Text2pcap.

@@ -65,3 +65,10 @@ Start with `wireshark_capture` for offline evidence:
     coverage, missing timing and unmatched evidence. Cite the exact returned
     frames from both traces. Use `reportLocale` for the user's language and
     `artifact_save` to retain the returned Markdown locally when requested.
+13. Use `media` with `mediaProfile` set to `wifi`, `ble`, `usb` or `voip` for
+    compact observations from a saved capture. For VoIP without signaling, pass
+    `rtpPort` only when the capture's RTP UDP port is known. Cite exact frame
+    refs and report matched and omitted packets, scan limits and RTP metric
+    availability. Label the RTP clock assumption when it accompanies jitter.
+    Use a cited frame for the Wireshark Desktop handoff and keep
+    audio, decoded payload and decryption material in Wireshark Desktop.

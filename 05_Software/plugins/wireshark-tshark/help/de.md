@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Frage den Agenten nach WLAN-, BLE-, USB- oder VoIP-Verkehr in gespeicherten Mitschnitten. Das Ergebnis enthält Erfassungsgrenzen, Paketverweise und verfügbare RTP-Statistiken. Öffne ein zitiertes Paket in Wireshark Desktop für Detailansichten oder RTP-Wiedergabe. Schlüssel und dekodierte Daten bleiben in Wireshark Desktop.
+
 Für den Offlinevergleich zweier gespeicherter Mitschnitte nenne Referenz, Kandidat, Messpunkte und Zeitfenster. Der Bericht zeigt TCP- und UDP-Unterschiede, verfügbare DNS- und HTTP-Zeiten, fehlende Belege und Verweise auf die Originalpakete. Der Agent kann den Bericht lokal speichern.
 
 Bitte den Agenten, einen gespeicherten Firmware- oder UART-Hexdump als PCAPNG zu importieren. Gib an, ob vollständige Ethernet-Frames, undurchsichtige Nutzdaten oder synthetische IPv4/UDP-Header verwendet werden sollen und ob der Dump UTC-Zeiten enthält. Das Herkunftsmanifest nennt den Quellhash und die synthetischen Metadaten. Der Import benötigt Text2pcap.

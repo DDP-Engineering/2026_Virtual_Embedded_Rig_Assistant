@@ -1,0 +1,30 @@
+schema = 1
+
+id = "REQ-FUNC-3bd95cb0"
+
+title = "Report scoped RTP stream statistics"
+
+status = "active"
+
+requirement = """
+When the VoIP profile recognizes RTP in a saved capture, VERA shall report bounded per-stream packet counts and available timing and sequence statistics with explicit scope or clock limits.
+"""
+
+verification = "Check the known RTP gap, sequence rollover, arrival spacing and labeled jitter assumption on planted native packets, and verify partial selection, undecoded truncation and a signaled payload clock rebind."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/wireshark-media.ts",
+  "05_Software/src/libraries/core/src/wireshark/media.ts",
+  "05_Software/src/libraries/core/src/wireshark/media-rtp.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts", "05_Software/src/libraries/core/src/wireshark/media-rtp.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

@@ -18,6 +18,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - wireshark-tshark 0.7.0: Inspect, select, split, merge, convert, reorder, deduplicate and clean saved captures.
 - wireshark-tshark 0.8.0: Import firmware and UART hexdumps as verified PCAPNG with provenance.
 - wireshark-tshark 0.9.0: Compare saved captures offline with directional metrics, coverage and frame references.
+- wireshark-tshark 0.10.0: Profile saved Wi-Fi, BLE, USB and VoIP captures with RTP statistics and frame links.
 - wireshark-dumpcap 0.1.0: Capture bounded local traffic and retain verified PCAPNG segments.
 
 ### Fixed

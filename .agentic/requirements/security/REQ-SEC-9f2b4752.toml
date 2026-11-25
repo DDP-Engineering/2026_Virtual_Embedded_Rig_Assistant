@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-9f2b4752"
+
+title = "Reject embedded decryption secrets before media analysis"
+
+status = "active"
+
+requirement = """
+If a saved capture contains a PCAPNG decryption secrets block, the offline media operation shall reject it before native media dissection.
+"""
+
+verification = "Run the typed media tool on a fixture with a synthetic decryption secrets block and confirm the typed rejection and absence of a native packet read."
+
+affected_paths = ["05_Software/src/libraries/core/src/wireshark/media.ts", "05_Software/src/libraries/core/src/wireshark/network-capture.ts"]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

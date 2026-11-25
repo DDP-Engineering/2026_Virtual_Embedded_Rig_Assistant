@@ -1,0 +1,36 @@
+schema = 1
+
+id = "REQ-FUNC-78062da1"
+
+title = "Profile saved Wi-Fi BLE USB and VoIP captures"
+
+status = "active"
+
+requirement = """
+When a caller selects an offline Wi-Fi, BLE, USB or VoIP media profile on a verified saved capture, VERA shall return a bounded page of allowlisted native observations with explicit decode, scan and page coverage.
+"""
+
+verification = "Run the four independent saved fixtures through the typed tool and compare fields and counts with native TShark, including a restricted page, a prefix and an empty match."
+
+affected_paths = [
+  "05_Software/tests/support/build_media.py",
+  "05_Software/tests/fixtures/wireshark-tshark/",
+  "05_Software/plugins/wireshark-tshark/",
+  "05_Software/src/libraries/shared/src/index.ts",
+  "05_Software/src/libraries/core/src/tools/wireshark.ts",
+  "05_Software/src/libraries/shared/src/wireshark.ts",
+  "05_Software/src/libraries/shared/src/wireshark-media.ts",
+  "05_Software/src/libraries/core/src/wireshark/media.ts",
+  "05_Software/src/libraries/core/src/wireshark/service.ts",
+]
+
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-25

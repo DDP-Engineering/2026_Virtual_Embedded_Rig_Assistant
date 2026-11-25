@@ -1,5 +1,19 @@
 # wireshark-tshark fixture
 
+`media-*.pcapng` are independent wire fixtures from
+`tests/support/build_media.py`. The Wi-Fi trace uses Radiotap and includes a
+beacon and a truncated protected data packet. The BLE traces contain a
+link-layer advertisement and a separate HCI LE connection event and ATT read.
+The USBPcap and usbmon traces each contain a bulk transfer pair.
+The unsignaled VoIP trace has SIP status at frame 1, fixed-clock RTP at frames 2–4,
+dynamic-clock reverse RTP at frames 5–6 and unrelated ARP at frame 7. Frame 4
+follows a gap across sequence rollover. The clipped variant leaves only the
+UDP header at frame 3 and keeps the reported wire length. The signaled trace
+rebinds payload type 0 to L16 at 16 kHz using SDP at frame 1. TShark
+decodes RTP at frames 2–3 with that signaling. The secrets variant plants a
+dummy PCAPNG decryption secrets block for rejection before TShark. All text,
+addresses and media bytes are synthetic.
+
 `firmware-ethernet.hex` and `uart-payload.hex` are handwritten synthetic
 inputs. The first has two Ethernet frames with distinct nanosecond UTC
 timestamps in reverse chronological order. The second has two UART payloads

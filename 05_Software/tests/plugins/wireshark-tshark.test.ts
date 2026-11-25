@@ -39,6 +39,262 @@ const networkingSample = fileURLToPath(
   new URL("../fixtures/wireshark-tshark/networking.pcapng", import.meta.url),
 );
 
+it("profiles independent offline media captures with bounded private frame evidence", async (ctx) => {
+  const paths = {
+    wifi: "captures/private-wifi.pcapng",
+    ble: "captures/private-ble.pcapng",
+    "ble-hci": "captures/private-ble-hci.pcapng",
+    usb: "captures/private-usb.pcapng",
+    usbmon: "captures/private-usbmon.pcapng",
+    voip: "captures/private-voip.pcapng",
+    "voip-clipped": "captures/private-voip-clipped.pcapng",
+    "voip-signaled": "captures/private-voip-signaled.pcapng",
+    secrets: "captures/private-secrets.pcapng",
+  };
+  const media = (mediaProfile: "wifi" | "ble" | "usb" | "voip", options = {}) =>
+    typed("media", { mediaProfile, source: { path: paths[mediaProfile] }, ...options });
+  const voice = media("voip", { rtpPort: 5004 });
+  const rig = await workbench({
+    media: [
+      typed("capabilities"),
+      media("wifi", { limit: 1 }),
+      media("wifi", { filter: "frame.number == 2" }),
+      media("ble"),
+      media("ble", { source: { path: paths["ble-hci"] } }),
+      media("usb"),
+      media("usb", { source: { path: paths.usbmon } }),
+      voice,
+      media("voip", { rtpPort: 5004, scanFrames: 4 }),
+      media("voip", { rtpPort: 5004, filter: "frame.number == 3" }),
+      media("voip"),
+      media("voip", { source: { path: paths["voip-clipped"] }, rtpPort: 5004 }),
+      media("voip", { source: { path: paths["voip-signaled"] } }),
+      media("voip", { source: { path: paths["voip-signaled"] }, rtpPort: 5006 }),
+      media("wifi", { filter: "frame.number == 99" }),
+      { text: "Inspected the synthetic media captures." },
+    ],
+    secrets: [media("voip", { source: { path: paths.secrets } }), { text: "Capture refused." }],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    for (const [name, path] of Object.entries(paths))
+      await writeFile(
+        join(rig.bench, path),
+        await readFile(new URL(`../fixtures/wireshark-tshark/media-${name}.pcapng`, import.meta.url)),
+      );
+    const service = await rig.start();
+    const run = rig.session(service, "media", "read-only");
+    service.send(run.id, "Analyze the saved media captures.");
+    expect(await service.waitIdle(run.id)).toEqual({ stopReason: "end" });
+    const [
+      capabilities,
+      wifi,
+      protectedWifi,
+      ble,
+      hci,
+      usb,
+      usbmon,
+      voip,
+      prefix,
+      filteredRtp,
+      sipOnly,
+      clippedRtp,
+      signaled,
+      signaledOverride,
+      empty,
+    ] = run.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(capabilities.media.profiles).toEqual(["wifi", "ble", "usb", "voip"]);
+    expect(wifi).toMatchObject({
+      coverage: { scannedThrough: 2, scanComplete: true, matchedInScope: 2, returned: 1, partial: true },
+      media: {
+        packetsOmitted: 1,
+        truncatedFrames: 1,
+        rows: [
+          {
+            frame: 1,
+            fields: {
+              "wlan.fc.subtype": ["8"],
+              "radiotap.channel.freq": ["2412"],
+              "radiotap.dbm_antsignal": ["-42"],
+            },
+          },
+        ],
+      },
+    });
+    expect(protectedWifi.media.rows).toMatchObject([{ frame: 2, fields: { "wlan.fc.protected": ["True"] } }]);
+    expect(ble.media.rows).toMatchObject([
+      { frame: 1, fields: { "btle.advertising_header.pdu_type": ["0x00"] } },
+    ]);
+    expect(hci.media.rows).toMatchObject([
+      { frame: 1, protocols: ["bthci_evt"], fields: { "bthci_evt.le_meta_subevent": ["0x01"] } },
+      { frame: 2, protocols: ["btatt"], fields: { "btatt.opcode": ["0x0a"], "btatt.handle": ["0x0003"] } },
+    ]);
+    expect(usb.media.rows).toMatchObject([
+      { frame: 1, fields: { "usb.transfer_type": ["0x03"], "usb.endpoint_address": ["0x81"] } },
+      { frame: 2, fields: { "usb.usbd_status": ["0x00000000"] } },
+    ]);
+    expect(usbmon.media.rows).toMatchObject([
+      { frame: 1, fields: { "usb.transfer_type": ["0x03"], "usb.urb_status": ["0"] } },
+      { frame: 2, fields: { "usb.endpoint_address": ["0x81"], "usb.urb_status": ["0"] } },
+    ]);
+    expect(voip.media.rows.map((row: { frame: number }) => row.frame)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(voip.media.rows[0].fields).toEqual({ "sip.Status-Code": ["200"] });
+    expect(voip.media.rtp).toMatchObject({
+      scope: "whole_capture",
+      unresolvedFrames: 0,
+      streams: [
+        { frame: 2, packets: 3, missingSequenceNumbers: 1, maxDeltaMs: 45, jitterMs: 0.3125 },
+        { frame: 5, packets: 2, missingSequenceNumbers: 0, maxDeltaMs: 22, jitterMs: null },
+      ],
+    });
+    expect(prefix).toMatchObject({
+      coverage: { scanComplete: false, scannedThrough: 4, matchedInScope: 4 },
+      media: {
+        rtp: {
+          scope: "partial_observation",
+          streams: [{ frame: 2, packets: 3, missingSequenceNumbers: null, maxDeltaMs: null, jitterMs: null }],
+        },
+      },
+    });
+    expect(filteredRtp.media.rtp).toMatchObject({
+      scope: "partial_observation",
+      streams: [{ frame: 3, packets: 1, jitterMs: null }],
+    });
+    expect(sipOnly.media).toMatchObject({ rows: [{ frame: 1 }], rtp: { streams: [] } });
+    expect.soft(clippedRtp).toMatchObject({
+      coverage: { scanComplete: true, matchedInScope: 5, partial: true, truncated: true },
+      media: {
+        truncatedFrames: 1,
+        rtp: {
+          scope: "partial_observation",
+          streams: [
+            { frame: 2, packets: 2, missingSequenceNumbers: null, maxDeltaMs: null, jitterMs: null },
+            { frame: 5, packets: 2, missingSequenceNumbers: null, maxDeltaMs: null, jitterMs: null },
+          ],
+        },
+      },
+    });
+    expect.soft(signaled).toMatchObject({
+      analysis: { decodeAs: [] },
+      media: {
+        observedProtocols: { sip: 1, sdp: 1, rtp: 2 },
+        rtp: {
+          streams: [
+            {
+              frame: 2,
+              packets: 2,
+              missingSequenceNumbers: 0,
+              maxDeltaMs: 20,
+              jitterMs: null,
+              limitations: ["clock_rate_unavailable"],
+            },
+          ],
+        },
+      },
+    });
+    expect.soft(signaledOverride.media.rtp).toMatchObject({
+      streams: [
+        { frame: 2, packets: 2, maxDeltaMs: 20, jitterMs: null, limitations: ["clock_rate_unavailable"] },
+      ],
+    });
+    expect.soft(voip.media.rtp.streams[0]).toMatchObject({ jitterClock: "assumed_rtp_avp_8khz" });
+    expect(empty).toMatchObject({ coverage: { matchedInScope: 0 }, media: { rows: [], evidence: [] } });
+    expect(JSON.stringify(run.outputs)).not.toMatch(
+      /captures\/private|192\.168\.7\.|VERA_MEDIA|12345678|frame.number/,
+    );
+    expect(rig.modelResults.join("\n")).not.toMatch(/captures\/private|VERA_MEDIA|192\.168\.7\./);
+
+    const rejected = rig.session(service, "secrets", "read-only");
+    const start = rig.starts.length;
+    service.send(rejected.id, "Check if the saved capture is suitable.");
+    await service.waitIdle(rejected.id);
+    expect(JSON.parse(rejected.outputs[0]!.summary)).toMatchObject({ reason: "media_embedded_secrets" });
+    expect(rig.starts.slice(start).some((args) => args.includes("-r"))).toBe(false);
+
+    const navigation = [];
+    for (const [result, path, frame, call] of [
+      [wifi, paths.wifi, 1, media("wifi", { limit: 1 })],
+      [protectedWifi, paths.wifi, 2, media("wifi", { filter: "frame.number == 2" })],
+      [ble, paths.ble, 1, media("ble")],
+      [usb, paths.usb, 2, media("usb")],
+      [voip, paths.voip, 2, voice],
+    ] as const) {
+      const ref = result.media.evidence.find(
+        (item: { frame: { number: number } }) => item.frame.number === frame,
+      ).ref;
+      await rig.writeReplay("media-citation", [call, { text: `See the captured packet. [[${ref}]]` }]);
+      const cite = rig.session(service, "media-citation", "read-only");
+      service.send(cite.id, "Cite the captured packet.");
+      await service.waitIdle(cite.id);
+      const assistant = service
+        .get(cite.id)
+        .snapshot.items.find(
+          (item) =>
+            item.kind === "assistant" && item.citations.some((entry) => entry.ref === ref && entry.valid),
+        );
+      expect(assistant).toBeDefined();
+      const sourceBytes = await readFile(join(rig.bench, path));
+      const sha256 = createHash("sha256").update(sourceBytes).digest("hex");
+      const target = service.openCaptureCitation(cite.id, assistant?.id ?? "", ref);
+      expect(target.evidence).toMatchObject({
+        capture: { sha256, source: { path } },
+        frame: { number: frame, interfaceId: 0 },
+        analysis: {
+          mediaProfile: result.analysis.mediaProfile,
+          filter: result === protectedWifi ? "frame.number == 2" : null,
+          decodeAs: result === voip ? [{ transport: "udp", port: 5004, protocol: "rtp" }] : [],
+        },
+      });
+      const folder = await mkdtemp(join(rig.bench, "handoff-"));
+      const snapshot = join(folder, "cited capture.pcapng");
+      const prepared = await core.prepareWiresharkFrame(
+        target.context,
+        target.evidence,
+        undefined,
+        rig.runner,
+        rig.tshark.executable,
+        folder,
+        snapshot,
+        new AbortController().signal,
+      );
+      expect(await readFile(snapshot)).toEqual(sourceBytes);
+      expect(prepared).toEqual({
+        args: [
+          "-n",
+          "-r",
+          snapshot,
+          "-g",
+          String(frame),
+          ...(result === voip ? ["-d", "udp.port==5004,rtp"] : []),
+          ...(result === protectedWifi ? ["-Y", "frame.number == 2"] : []),
+        ],
+        filterAdjusted: false,
+      });
+      navigation.push({
+        sha256,
+        frame,
+        ref,
+        args: prepared.args.map((arg) => (arg === snapshot ? "<private snapshot>" : arg)),
+      });
+    }
+    if (evidence)
+      await writeFile(
+        join(evidence, `${process.platform}-media-replay.json`),
+        JSON.stringify(
+          { results: run.outputs.map(({ summary }) => JSON.parse(summary)), navigation },
+          null,
+          2,
+        ),
+      );
+  } finally {
+    await rig.close();
+  }
+}, 45_000);
+
 it("compares independent saved capture pairs offline with exact report evidence", async (ctx) => {
   const paths = [
     "baseline",
@@ -2201,6 +2457,11 @@ it("offers the typed capture contract in the model tool registry", () => {
       .success,
   ).toBe(false);
   expect(spec?.params.safeParse({ ...scoped, fields: ["tcp.payload"] }).success).toBe(false);
+  const media = { operation: "media", ...usesSource, mediaProfile: "voip" };
+  expect(spec?.params.safeParse({ ...media, rtpPort: 5004 }).success).toBe(true);
+  expect(spec?.params.safeParse({ ...media, mediaProfile: "wifi", rtpPort: 5004 }).success).toBe(false);
+  expect(spec?.params.safeParse({ ...media, limit: 13 }).success).toBe(false);
+  expect(spec?.params.safeParse({ ...media, fields: ["rtp.payload"] }).success).toBe(false);
   expect(
     spec?.params.safeParse({ operation: "inspect", source: { path: classicPath }, profile: "custom" })
       .success,

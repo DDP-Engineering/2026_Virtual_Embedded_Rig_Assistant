@@ -109,7 +109,10 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
   readback, exact bytes, timestamp origin, source hashes and grouped provenance publication.
 - Native Wireshark replay compares saved synthetic captures against field, statistics and follow
   output. Networking profile replay uses `networking.pcapng` and reports frame references, observed
-  limits and compact redaction. The focused checks use saved capture files.
+  limits and compact redaction. Media profile replay uses the independent `media-*.pcapng` fixtures
+  and verifies exact native Desktop launch preparation without starting the viewer. Set
+  `VERA_TEST_EVIDENCE_DIR` to a local directory to keep the Windows media replay receipt.
+  The focused checks use saved capture files.
 - Automotive Ethernet replay covers the independent `automotive.pcapng` and optionally the
   published SOME/IP protocol samples in `VERA_WIRESHARK_AUTOMOTIVE_SAMPLES`. The native
   replay requires TShark on the host and uses saved captures only.

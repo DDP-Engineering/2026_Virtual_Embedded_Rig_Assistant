@@ -1,5 +1,7 @@
 # Wireshark (TShark)
 
+Ask the agent about saved Wi-Fi, BLE, USB or VoIP traffic. The result shows capture limits and links to frames, and includes RTP stream statistics when available. Open a cited frame in Wireshark Desktop for specialized views or RTP playback. Keep keys and decoded data in Wireshark Desktop.
+
 To compare two saved captures offline, give the agent a baseline, a candidate, the observation point and matching time window for each. The report shows TCP and UDP differences, available DNS and HTTP timing, missing evidence and links to the original frames. Ask the agent to save the report locally.
 
 Ask the agent to import a saved firmware or UART hexdump as PCAPNG. Specify complete Ethernet frames, opaque payloads or synthetic IPv4/UDP headers, and tell the agent whether the dump records UTC times. The provenance manifest identifies the source hash and any synthetic metadata. The import requires Text2pcap.
