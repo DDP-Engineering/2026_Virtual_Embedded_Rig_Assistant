@@ -45,6 +45,8 @@ export interface ToolContext {
   todos?: TodoHost;
   askUser?: AskUser;
   knowledge?: DocumentKnowledge;
+  /** Project extracted text for the agent before dividing it into parts. */
+  maskDocumentText?: (text: string) => string;
   web?: WebProvider;
   browser?: AgentBrowserPort;
   downloads?: WebDownloads;

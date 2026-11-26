@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, symlink, unlink, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveAdvanced } from "@vera/shared";
 import Database from "better-sqlite3";
 import { strToU8, zipSync } from "fflate";
 import { expect, it, vi } from "vitest";
@@ -76,7 +77,7 @@ async function harness() {
       kind,
       sha256,
       bytes: Buffer.byteLength(text),
-      mtime: new Date().toISOString(),
+      mtime: (await stat(join(root, path))).mtime.toISOString(),
       pages: pages?.length ?? null,
       status: "indexed",
       error: null,
@@ -104,7 +105,7 @@ async function harness() {
       kind,
       sha256,
       bytes: bytes.length,
-      mtime: new Date().toISOString(),
+      mtime: (await stat(join(root, path))).mtime.toISOString(),
       pages: result.pages ?? null,
       status: "indexed",
       error: null,
@@ -543,6 +544,95 @@ it("returns full extraction with exact reduced refs; rejects mixed/out-of-range/
     await h.close();
   }
 });
+it("keeps delivered ranges and every part exact at the configured tool response limit", async () => {
+  const h = await harness();
+  try {
+    const firstPage = "A".repeat(4800);
+    await h.add("docs/range.pdf", "range fixture", [firstPage, "B".repeat(4800)]);
+    const long = '"💡text\n'.repeat(2200);
+    await h.add("docs/parts.pdf", "parts fixture", [long, "next page"]);
+    const ctx: ReturnType<typeof createToolContext> = {
+      ...createToolContext(h.root),
+      knowledge: h.knowledge,
+      advanced: (key) => resolveAdvanced(key, { app: { toolResultChars: 8000 } }).value,
+    };
+    const registry = new ToolRegistry();
+    const read = async (path: string, args: Record<string, number>) => {
+      const result = await registry.execute(ctx, "read_doc", { path, ...args }, h.signal);
+      expect(result.isError).toBe(false);
+      expect(result.text.length).toBeLessThanOrEqual(8000);
+      return JSON.parse(result.text) as {
+        ref: string;
+        text: string;
+        parts: number;
+        truncated: boolean;
+      };
+    };
+    expect(await read("docs/range.pdf", { page: 1, pageEnd: 2 })).toMatchObject({
+      ref: "docs/range.pdf#p=1",
+      text: firstPage,
+      truncated: true,
+    });
+    const first = await read("docs/parts.pdf", { page: 1, pageEnd: 2 });
+    expect(first.parts).toBeGreaterThan(1);
+    let text = first.text;
+    for (let part = 2; part <= first.parts; part++) {
+      const result = await read("docs/parts.pdf", { page: 1, part });
+      expect(result).toMatchObject({
+        parts: first.parts,
+        ref: "docs/parts.pdf#p=1",
+        truncated: part < first.parts,
+      });
+      text += result.text;
+    }
+    expect(text).toBe(long);
+    const masked = "stub ".repeat(1200);
+    await h.add("docs/masked.pdf", "redaction fixture", [masked]);
+    ctx.maskDocumentText = (value) => value.replaceAll("stub", "[REDACTED]");
+    const projected = await read("docs/masked.pdf", { page: 1 });
+    expect(projected.parts).toBeGreaterThan(1);
+    let projectedText = projected.text;
+    for (let part = 2; part <= projected.parts; part++)
+      projectedText += (await read("docs/masked.pdf", { page: 1, part })).text;
+    expect(projectedText).toBe(masked.replaceAll("stub", "[REDACTED]"));
+  } finally {
+    await h.close();
+  }
+});
+
+it("omits changed and missing sources while keeping current hits in every ranking mode", async () => {
+  const h = await harness();
+  try {
+    await h.add("docs/current.txt", "rail current 3.3 V");
+    const changed = await h.add("docs/changed.txt", "rail old value 12");
+    const gone = await h.add("docs/gone.txt", "rail removed");
+    const path = join(h.root, changed.path);
+    // Leave the length unchanged to exercise the indexed timestamp check.
+    await writeFile(path, "rail new value 24");
+    const later = new Date(Date.parse(changed.mtime ?? "") + 60000);
+    await utimes(path, later, later);
+    await unlink(join(h.root, gone.path));
+    const knowledge = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      undefined,
+      () => "settled",
+    );
+    for (const mode of ["keyword", "hybrid", "semantic"] as const) {
+      const result = await knowledge.search({ query: "rail", mode }, h.signal);
+      expect(result).toMatchObject({
+        coverage: "partial",
+        message: expect.stringContaining("since indexing"),
+      });
+      expect(result.results.map((hit) => hit.path)).toEqual(["docs/current.txt"]);
+    }
+    await expect(knowledge.read({ path: changed.path }, h.signal)).rejects.toThrow(/source changed/i);
+  } finally {
+    await h.close();
+  }
+});
+
 it("replays search/read PDF and persists a valid issued page citation while rejecting invented refs", async () => {
   const h = await harness();
   let service: SessionService | undefined;

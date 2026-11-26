@@ -30,6 +30,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.
+- Keep document citations and pagination aligned with the configured response limit.
+- Omit outdated results when indexed document sources change or disappear.
 
 ## [0.4.0] - 2026-11-26
 

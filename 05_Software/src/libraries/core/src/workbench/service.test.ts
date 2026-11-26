@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -983,13 +983,14 @@ it("retries Files source validation and reports repeated publication as unavaila
       await writeFile(join(root, path), text);
       const sha256 = createHash("sha256").update(text).digest("hex");
       const result = await processor({ root, path, sha256, kind: "text", signal, assertWritable: () => {} });
+      const mtime = (await stat(join(root, path))).mtime.toISOString();
       db.transaction(() => {
         const row = rows.save({
           path,
           sha256,
           kind: "text",
           bytes: Buffer.byteLength(text),
-          mtime: new Date().toISOString(),
+          mtime,
           pages: null,
           status: "indexed",
           error: null,
@@ -1066,7 +1067,7 @@ it("lists up to the resolved Docs panel results", async () => {
       kind: "markdown",
       sha256,
       bytes: Buffer.byteLength(text),
-      mtime: new Date().toISOString(),
+      mtime: (await stat(join(h.folder, path))).mtime.toISOString(),
       pages: null,
       status: "indexed",
       error: null,
@@ -1106,7 +1107,7 @@ it("Docs search verifies current source hash/status/kind/locator and rejects edi
       kind: "markdown",
       sha256,
       bytes: Buffer.byteLength(text),
-      mtime: new Date().toISOString(),
+      mtime: (await stat(join(h.folder, path))).mtime.toISOString(),
       pages: null,
       status: "indexed",
       error: null,
@@ -1164,7 +1165,7 @@ it("Docs search lists hits from a headingless docx with its #h= ref and drops th
       kind: "document",
       sha256,
       bytes: bytes.length,
-      mtime: new Date().toISOString(),
+      mtime: (await stat(join(h.folder, path))).mtime.toISOString(),
       pages: null,
       status: "indexed",
       error: null,

@@ -1,4 +1,5 @@
 import {
+  advancedSettings,
   formatRef,
   isDocumentKindIn,
   pagedDocumentKinds,
@@ -113,13 +114,14 @@ export type SearchArgs = z.input<typeof searchDocsSchema>;
 export type ReadDocArgs = z.input<typeof readDocSchema>;
 const READ_CHARS = 12000;
 const READ_JSON = 28000;
-const fits = (text: string) => text.length <= READ_CHARS && JSON.stringify({ text }).length <= READ_JSON;
+const fits = (text: string, jsonChars: number) =>
+  text.length <= READ_CHARS && JSON.stringify({ text }).length <= jsonChars;
 /** Whether the line starting at `from`, with its newline, fits a part by itself. */
-function lineFits(text: string, from: number): boolean {
+function lineFits(text: string, from: number, jsonChars: number): boolean {
   const window = text.slice(from, from + READ_CHARS + 1);
   const newline = window.indexOf("\n");
-  if (newline === -1) return from + window.length === text.length && fits(window);
-  return fits(window.slice(0, newline + 1));
+  if (newline === -1) return from + window.length === text.length && fits(window, jsonChars);
+  return fits(window.slice(0, newline + 1), jsonChars);
 }
 /**
  * Consecutive substrings of a section, each within the read budget, that concatenate to the
@@ -127,7 +129,7 @@ function lineFits(text: string, from: number): boolean {
  * itself; only such an over-budget line is cut, at the largest fitting length and never inside a
  * surrogate pair, so a heading line stays with the start of its long paragraph.
  */
-export function sectionParts(text: string): string[] {
+export function sectionParts(text: string, jsonChars = READ_JSON): string[] {
   if (!text) return [""];
   const parts: string[] = [];
   for (let start = 0; start < text.length; ) {
@@ -135,14 +137,14 @@ export function sectionParts(text: string): string[] {
       high = Math.min(text.length, start + READ_CHARS);
     while (low < high) {
       const middle = Math.ceil((low + high) / 2);
-      if (fits(text.slice(start, middle))) low = middle;
+      if (fits(text.slice(start, middle), jsonChars)) low = middle;
       else high = middle - 1;
     }
     let end = low;
     if (end < text.length) {
       // Search only this window, so a long section without newlines stays linear.
       const newline = text.slice(start, end).lastIndexOf("\n");
-      if (newline >= 0 && lineFits(text, start + newline + 1)) end = start + newline + 1;
+      if (newline >= 0 && lineFits(text, start + newline + 1, jsonChars)) end = start + newline + 1;
       else if (/[\uD800-\uDBFF]/.test(text[end - 1] ?? "") && end - 1 > start) end--;
     }
     parts.push(text.slice(start, end));
@@ -191,7 +193,9 @@ export class DocumentKnowledge {
     raw: ReadDocArgs,
     signal: AbortSignal,
     excludedRoots: readonly string[] = [],
+    output: { limit?: number; maskText?: ((text: string) => string) | undefined } = {},
   ): Promise<Record<string, unknown>> {
+    signal.throwIfAborted();
     const args = readDocSchema.parse(raw);
     const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots),
       target = await guard.resolve(args.path);
@@ -239,26 +243,47 @@ export class DocumentKnowledge {
         `Use one locator family. ${target.relative} is ${label} read by ${family}; remove ${extra.join(", ")}.`,
       );
     }
-    const bounded = (units: string[], separator: string) => {
+    const path = target.relative;
+    const project = output.maskText ?? ((text: string) => text);
+    // Reserve the response envelope before cutting text, with the same room for every part.
+    const textBudget = (ref: string) => {
+      const envelope = JSON.stringify({
+        path,
+        ref,
+        text: "",
+        truncated: false,
+        part: Number.MAX_SAFE_INTEGER,
+        parts: Number.MAX_SAFE_INTEGER,
+      });
+      const limit = output.limit ?? advancedSettings.toolResultChars.default;
+      const jsonChars = Math.min(
+        READ_JSON,
+        limit - Math.max(envelope.length, project(envelope).length) + JSON.stringify({ text: "" }).length,
+      );
+      if (jsonChars < JSON.stringify({ text: "\u0000\u0000" }).length)
+        throw Error("The tool result limit leaves no room for text with this document reference.");
+      return jsonChars;
+    };
+    const bounded = (units: string[], separator: string, first: string, jsonChars: number) => {
       let text = "",
         count = 0;
-      for (const unit of units) {
+      for (const source of units) {
+        const unit = count ? project(source) : first;
         const candidate = text + (count ? separator : "") + unit;
-        if (!fits(candidate)) break;
-        text += (count ? separator : "") + unit;
+        if (!fits(candidate, jsonChars)) break;
+        text = candidate;
         count++;
       }
       return { text, count, truncated: count < units.length };
     };
     // A long section, or one page, slide or line over the read budget, is read in parts.
-    const inParts = (text: string, unit: string) => {
-      const parts = sectionParts(text);
+    const inParts = (text: string, unit: string, jsonChars: number) => {
+      const parts = sectionParts(text, jsonChars);
       const part = args.part ?? 1;
       if (part < 1 || part > parts.length)
         throw Error(`Part ${part} is outside this ${unit}'s parts 1-${parts.length}.`);
       return { text: parts[part - 1], truncated: part < parts.length, part, parts: parts.length };
     };
-    const path = target.relative;
     if (extraction.kind === "pdf" || extraction.kind === "presentation") {
       // Presentation slides use the page locator family, numbered from 1 in deck order.
       const units = extraction.kind === "pdf" ? extraction.pages : extraction.slides;
@@ -267,10 +292,11 @@ export class DocumentKnowledge {
       const start = args.page ?? 1,
         end = args.pageEnd ?? start;
       if (end < start || end > units.length) throw Error("Page or slide range is outside the document.");
-      const first = units[start - 1] ?? "";
-      if (args.part !== undefined || !fits(first)) {
+      const jsonChars = textBudget(`${path}#p=${units.length}-${units.length}`);
+      const first = project(units[start - 1] ?? "");
+      if (args.part !== undefined || !fits(first, jsonChars)) {
         // Parts cover the first page of the range only; the ref names that page.
-        const result = inParts(first, extraction.kind === "pdf" ? "page" : "slide");
+        const result = inParts(first, extraction.kind === "pdf" ? "page" : "slide", jsonChars);
         return {
           path,
           ...result,
@@ -278,7 +304,7 @@ export class DocumentKnowledge {
           ref: formatRef({ kind: "page", path, page: start }),
         };
       }
-      const result = bounded(units.slice(start - 1, end), "\n\n");
+      const result = bounded(units.slice(start - 1, end), "\n\n", first, jsonChars);
       const actualEnd = start + result.count - 1;
       return {
         path,
@@ -297,9 +323,10 @@ export class DocumentKnowledge {
       const start = args.lineStart ?? 1,
         end = args.lineEnd ?? extraction.lines.length;
       if (end < start || end > extraction.lines.length) throw Error("Line range is outside the document.");
-      const first = extraction.lines[start - 1] ?? "";
-      if (args.part !== undefined || !fits(first)) {
-        const result = inParts(first, "line");
+      const jsonChars = textBudget(`${path}#L${extraction.lines.length}-L${extraction.lines.length}`);
+      const first = project(extraction.lines[start - 1] ?? "");
+      if (args.part !== undefined || !fits(first, jsonChars)) {
+        const result = inParts(first, "line", jsonChars);
         return {
           path,
           ...result,
@@ -307,7 +334,7 @@ export class DocumentKnowledge {
           ref: formatRef({ kind: "lines", path, start, end: start }),
         };
       }
-      const result = bounded(extraction.lines.slice(start - 1, end), "\n");
+      const result = bounded(extraction.lines.slice(start - 1, end), "\n", first, jsonChars);
       return {
         path,
         text: result.text,
@@ -322,13 +349,14 @@ export class DocumentKnowledge {
         : extraction.sections.find((s) => s.slug === args.heading);
     if (!section) throw Error("Heading not found. Use a heading slug from search_docs.");
     // Every part cites the whole section.
+    const ref =
+      !section.slug && extraction.kind === "markdown"
+        ? formatRef({ kind: "lines", path, start: section.start, end: section.end })
+        : formatRef({ kind: "heading", path, slug: section.slug });
     return {
       path,
-      ...inParts(section.text, "section"),
-      ref:
-        !section.slug && extraction.kind === "markdown"
-          ? formatRef({ kind: "lines", path, start: section.start, end: section.end })
-          : formatRef({ kind: "heading", path, slug: section.slug }),
+      ...inParts(project(section.text), "section", textBudget(ref)),
+      ref,
     };
   }
   async validPdfRef(ref: string): Promise<boolean> {

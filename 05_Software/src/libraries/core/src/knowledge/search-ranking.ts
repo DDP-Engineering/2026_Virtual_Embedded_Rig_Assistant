@@ -3,6 +3,7 @@ import { type DocumentSearchMetadata, formatRef, type WorkbenchRetrieval } from 
 import type Database from "better-sqlite3";
 import { keywordEpoch } from "../storage/repos/documents.js";
 import { rebuildingEmbeddings } from "../storage/repos/embedding-rebuild.js";
+import { entryDisappeared } from "../tools/discovery.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { type Chunk, locatorSchema } from "./chunk.js";
 import { type EmbeddingPort, embeddingDeadlineCode, type VectorRow } from "./embedding.js";
@@ -44,6 +45,8 @@ interface Row {
   path: string;
   text: string;
   locatorJson: string;
+  bytes: number | null;
+  mtime: string | null;
 }
 type FallbackReason = NonNullable<
   Extract<DocumentSearchMetadata["usage"], { mode: "keyword" }>["fallbackReason"]
@@ -220,45 +223,66 @@ async function attemptSearch(
       : mode === "semantic"
         ? semantic
         : lexical.map((row) => ({ id: row.id, score: -row.bm25 }));
-  const passage = db.prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson FROM chunks c
+  const passage =
+    db.prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson,d.bytes,d.mtime FROM chunks c
       JOIN documents d ON d.id=c.doc_id WHERE c.id=?`);
   // A model-only rechunk does not invalidate an already captured lexical candidate.
   const candidates = ranked
     .filter(({ id }) => eligible.has(id))
     .map(({ id, score }) => ({ score, row: passage.get(id) as Row | undefined }));
-  const results = await validateCandidates(options, candidates);
+  const { results, sourceChanged } = await validateCandidates(options, candidates);
   assertCurrent();
   const finalCoverage = coverage(phase?.());
+  const message = [
+    fallback && fallbackMessages[fallback],
+    sourceChanged &&
+      "Some sources changed or disappeared since indexing. Results omit their indexed fragments.",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return {
     results,
-    coverage:
-      initialCoverage === "unknown" || finalCoverage === "unknown"
+    coverage: sourceChanged
+      ? "partial"
+      : initialCoverage === "unknown" || finalCoverage === "unknown"
         ? "unknown"
         : initialCoverage === "partial" || finalCoverage === "partial"
           ? "partial"
           : "complete",
     usage: mode === "keyword" ? { mode, ...(fallback && { fallbackReason: fallback }) } : { mode },
-    ...(fallback && { message: fallbackMessages[fallback] }),
+    ...(message && { message }),
   };
 }
 
 async function validateCandidates(
   { root, query, signal, excludedRoots, k, createHitValidator }: SearchOptions,
   candidates: { score: number; row: Row | undefined }[],
-): Promise<SearchResult[]> {
-  if (!candidates.length) return [];
+): Promise<{ results: SearchResult[]; sourceChanged: boolean }> {
+  if (!candidates.length) return { results: [], sourceChanged: false };
   const guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
   const validateHit = createHitValidator?.();
   const results: SearchResult[] = [];
+  const current = new Map<string, boolean>();
+  let sourceChanged = false;
   for (const { score, row } of candidates) {
     signal.throwIfAborted();
     if (!row) continue;
-    try {
-      if (!(await lstat((await guard.resolve(row.path)).absolute)).isFile()) continue;
-    } catch {
-      continue;
+    if (!current.has(row.path)) {
+      let matches = false;
+      try {
+        const info = await lstat((await guard.resolve(row.path)).absolute);
+        matches =
+          info.isFile() &&
+          (row.bytes === null || info.size === row.bytes) &&
+          (row.mtime === null || info.mtime.toISOString() === row.mtime);
+        if (!matches) sourceChanged = true;
+      } catch (error) {
+        if (entryDisappeared(error)) sourceChanged = true;
+      }
+      current.set(row.path, matches);
     }
     signal.throwIfAborted();
+    if (!current.get(row.path)) continue;
     const locator = locatorSchema.parse(JSON.parse(row.locatorJson));
     const hit = {
       ref: documentRef(row.path, locator),
@@ -271,7 +295,7 @@ async function validateCandidates(
     results.push(hit);
     if (results.length === k) break;
   }
-  return results;
+  return { results, sourceChanged };
 }
 
 /** Search bounded coherent revisions without taking a lock across ranking and source checks. */

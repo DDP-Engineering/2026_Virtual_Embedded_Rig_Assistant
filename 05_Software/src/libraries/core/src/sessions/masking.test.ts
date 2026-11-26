@@ -17,6 +17,26 @@ import { readTool } from "../tools/read.js";
 import { maskToolOutput } from "./masking.js";
 
 const secret = "fixture-mqtt-private-password-283";
+it("keeps masked document search within the live result limit", () => {
+  const result = {
+    coverage: "partial",
+    usage: { mode: "keyword" },
+    results: Array.from({ length: 20 }, () => ({ snippet: "stub ".repeat(60) })),
+  };
+  const masked = maskToolOutput(
+    "search_docs",
+    JSON.stringify(result),
+    (text) => text.replaceAll("stub", "[REDACTED]"),
+    8000,
+  );
+  expect(masked.length).toBeLessThanOrEqual(8000);
+  expect(JSON.parse(masked)).toMatchObject({
+    coverage: "partial",
+    usage: { mode: "keyword" },
+    truncated: true,
+  });
+});
+
 it("updates read pagination if masking expands the serialized page", () => {
   const value = Array.from({ length: 200 }, (_, index) => `${index + 1}: ${"stub".repeat(10)}`).join("\n");
   const masked = maskToolOutput(

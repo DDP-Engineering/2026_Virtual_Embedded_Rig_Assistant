@@ -1666,6 +1666,7 @@ export class SessionService {
         return scope.signal;
       };
       ctx.knowledge = this.knowledge;
+      if (this.host.scrub) ctx.maskDocumentText = (text) => this.maskContent("agent", text);
     }
     if (delegated) {
       ctx.managedRoots = [

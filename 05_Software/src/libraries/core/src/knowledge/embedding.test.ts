@@ -1,5 +1,5 @@
 import { getEventListeners } from "node:events";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -107,8 +107,8 @@ it("runs local CPU batches32, enforces full query budget and caches deterministi
           path,
           kind: "text",
           sha256: "a".repeat(64),
-          bytes: 100,
-          mtime: new Date().toISOString(),
+          bytes: Buffer.byteLength(text),
+          mtime: (await stat(join(temporary, path))).mtime.toISOString(),
           pages: null,
           status: "indexed",
           error: null,

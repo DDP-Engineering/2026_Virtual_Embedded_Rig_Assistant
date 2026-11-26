@@ -59,7 +59,7 @@ export function maskToolOutput(
   }
   const { coverage, usage, ...rest } = result;
   const masked = maskValue(rest, scrub) as Record<string, unknown>;
-  return capToolResult({ ...masked, coverage, usage }).text;
+  return capToolResult({ ...masked, coverage, usage }, [], limit).text;
 }
 
 /** Retained transcript messages are projected again at each model dispatch. */

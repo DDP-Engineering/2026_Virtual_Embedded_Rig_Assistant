@@ -127,3 +127,10 @@ entries:
       ro: Căutarea listează fișiere distincte și raportează totaluri pentru cele scanate complet.
       de: Die Suche listet einzelne Dateien und meldet vollständige Trefferzahlen für geprüfte Dateien.
       fr: La recherche liste les fichiers distincts et donne le total pour chaque fichier analysé.
+  - category: fixed
+    topic: { en: Documents, ro: Documente, de: Dokumente, fr: Documents }
+    text:
+      en: Document reads keep citations and pages aligned, and search omits outdated text.
+      ro: Citările urmează textul livrat, iar căutarea omite fragmentele din surse modificate.
+      de: Zitate folgen dem gelesenen Text. Die Suche lässt veraltete Ausschnitte aus.
+      fr: Les citations suivent le texte lu et la recherche écarte les extraits périmés.

@@ -53,6 +53,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   and actual ranking usage. An absent semantic port, missing current-model vectors,
   indexer interruptions and embedding deadlines use keyword fallback when published
   chunks exist. Empty unsettled indexes suggest grep.
+  The search checks the current size and modification time once per candidate source.
+  Detected source changes and removals omit those hits and mark coverage partial.
 - read verifies confined current source SHA256 and reads full persisted extraction.
   PDF defaults page1; text defaults all lines; headings default first section, and
   `heading: ""` names the untitled text before the first heading. A heading section over
@@ -60,7 +62,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   `truncated`): each part fits 12000 characters and 28000 JSON characters, ends after its
   last fitting newline unless the next line cannot fit a part by itself (only such an
   over-budget line is cut, at the largest fitting length and never inside a surrogate pair), parts
-  concatenate to the section, and every part cites the whole section. A page, slide or line
+  concatenate to the section, and every part cites the whole section. The agent tool fits text
+  to its configured result size after reserving the reference and pagination metadata. A page, slide or line
   over the budget is read in parts the same way: the parts cover the first unit of the
   requested range, cite that unit, and `truncated` stays true while the range continues
   (REQ-FUNC-3b70651a). A part outside 1..parts is an error naming the range
