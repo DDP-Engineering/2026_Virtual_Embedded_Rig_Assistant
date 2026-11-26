@@ -156,7 +156,13 @@ function saveCache(input: DocumentInput, extraction: Extraction) {
     }
   }
 }
-export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8Array> {
+/** Verify the whole source, retaining its bytes only for callers that need them. */
+export function verifyDocumentSource(input: DocumentInput): Promise<Uint8Array>;
+export function verifyDocumentSource(input: DocumentInput, mode: "hash-only"): Promise<undefined>;
+export async function verifyDocumentSource(
+  input: DocumentInput,
+  mode?: "hash-only",
+): Promise<Uint8Array | undefined> {
   allowed(input);
   const guard = await PathGuard.create(input.root);
   const target = await guard.resolve(input.path);
@@ -182,12 +188,17 @@ export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8A
       opened.size !== before.size
     )
       throw Error("Source changed.");
-    const bytes = new Uint8Array(before.size);
+    const bytes = mode === "hash-only" ? undefined : new Uint8Array(before.size);
+    const buffer = bytes ?? new Uint8Array(Math.min(before.size, 1024 * 1024));
+    const hash = createHash("sha256");
     let offset = 0;
-    while (offset < bytes.length) {
+    while (offset < before.size) {
       allowed(input);
-      const read = await handle.read(bytes, offset, bytes.length - offset, offset);
+      const start = bytes ? offset : 0;
+      const size = Math.min(buffer.length - start, before.size - offset);
+      const read = await handle.read(buffer, start, size, offset);
       if (!read.bytesRead) break;
+      hash.update(buffer.subarray(start, start + read.bytesRead));
       offset += read.bytesRead;
     }
     const after = await handle.stat(),
@@ -203,7 +214,7 @@ export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8A
       after.size !== before.size ||
       after.mtimeMs !== before.mtimeMs ||
       after.ctimeMs !== before.ctimeMs ||
-      createHash("sha256").update(bytes).digest("hex") !== input.sha256
+      hash.digest("hex") !== input.sha256
     )
       throw Error("Source changed.");
     return bytes;

@@ -17,6 +17,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Read verified text artifacts by reference in their owning session.
 - Speed up paged reads of large files while retaining line counts and file verification.
 - Reduce filesystem work when listing and searching large directories.
+- Verify document reads with bounded memory and reuse locator checks within each message.
+- Reduce document search work on large indexes by applying filters before loading fragments and vectors.
 
 ### Fixed
 

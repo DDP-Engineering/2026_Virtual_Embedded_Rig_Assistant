@@ -151,7 +151,7 @@ function emptyIndex(
 
 async function semanticRank(
   options: SearchOptions,
-  eligible: ReadonlySet<number>,
+  documentIds: readonly number[] | undefined,
   epoch: string,
   assertCurrent: () => void,
 ) {
@@ -161,15 +161,16 @@ async function semanticRank(
   const key = `${epoch}:${port.modelId}:${pathGlob ?? ""}`;
   const loadVectors = (): VectorRow[] => {
     assertCurrent();
-    const vectors = (
-      db
-        .prepare("SELECT chunk_id AS id,vector FROM embeddings WHERE model_id=? ORDER BY chunk_id")
-        .all(port.modelId) as { id: number; vector: Buffer }[]
-    )
-      .filter((row) => eligible.has(row.id))
-      .map((row) => ({ id: row.id, vector: new Float32Array(new Uint8Array(row.vector).buffer) }));
-    if (!vectors.length) throw new SemanticUnavailable();
-    return vectors;
+    const rows = db
+      .prepare(`SELECT e.chunk_id AS id,e.vector FROM embeddings e JOIN chunks c ON c.id=e.chunk_id
+        JOIN documents d ON d.id=c.doc_id WHERE e.model_id=? AND d.status='indexed'
+        ${documentIds ? "AND c.doc_id IN (SELECT value FROM json_each(?))" : ""} ORDER BY e.chunk_id`)
+      .all(port.modelId, ...(documentIds ? [JSON.stringify(documentIds)] : [])) as {
+      id: number;
+      vector: Buffer;
+    }[];
+    if (!rows.length) throw new SemanticUnavailable();
+    return rows.map((row) => ({ id: row.id, vector: new Float32Array(new Uint8Array(row.vector).buffer) }));
   };
   try {
     return await port.rank(root, key, loadVectors, query, signal);
@@ -189,12 +190,15 @@ async function attemptSearch(
   const { db, query, pathGlob, acceptPath, signal, phase } = options;
   const initialPhase = phase?.();
   const initialCoverage = coverage(initialPhase);
-  const rows = db
-    .prepare(`SELECT c.id,d.path FROM chunks c
-      JOIN documents d ON d.id=c.doc_id WHERE d.status='indexed' ORDER BY c.id`)
-    .all() as Pick<Row, "id" | "path">[];
-  const eligible = new Set(rows.filter((row) => !acceptPath || acceptPath(row.path)).map((row) => row.id));
-  if (!eligible.size) return emptyIndex(rows.length > 0, initialCoverage, pathGlob);
+  const indexed = `FROM documents d WHERE d.status='indexed'
+    AND EXISTS (SELECT 1 FROM chunks c WHERE c.doc_id=d.id)`;
+  let documentIds: number[] | undefined;
+  if (acceptPath) {
+    const documents = db.prepare(`SELECT d.id,d.path ${indexed}`).all() as Pick<Row, "id" | "path">[];
+    documentIds = documents.filter((doc) => acceptPath(doc.path)).map((doc) => doc.id);
+    if (!documentIds.length) return emptyIndex(documents.length > 0, initialCoverage, pathGlob);
+  } else if (!db.prepare(`SELECT 1 ${indexed} LIMIT 1`).get())
+    return emptyIndex(false, initialCoverage, pathGlob);
 
   const fallback =
     options.mode !== "keyword" && rebuildingEmbeddings(db) ? "embedding-rebuild" : forcedFallback;
@@ -213,9 +217,9 @@ async function attemptSearch(
       (publishing(initialPhase) || publishing(phase?.()));
     throw new SearchRevisionChanged(preferKeyword);
   };
-  const lexical = mode === "semantic" ? [] : new KeywordSearch(db).search(query, acceptPath);
+  const lexical = mode === "semantic" ? [] : new KeywordSearch(db).search(query, documentIds);
   const semantic =
-    semanticEpoch === undefined ? [] : await semanticRank(options, eligible, semanticEpoch, assertCurrent);
+    semanticEpoch === undefined ? [] : await semanticRank(options, documentIds, semanticEpoch, assertCurrent);
   assertCurrent();
   const ranked =
     mode === "hybrid"
@@ -225,11 +229,12 @@ async function attemptSearch(
         : lexical.map((row) => ({ id: row.id, score: -row.bm25 }));
   const passage =
     db.prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson,d.bytes,d.mtime FROM chunks c
-      JOIN documents d ON d.id=c.doc_id WHERE c.id=?`);
+      JOIN documents d ON d.id=c.doc_id WHERE c.id=? AND d.status='indexed'`);
   // A model-only rechunk does not invalidate an already captured lexical candidate.
-  const candidates = ranked
-    .filter(({ id }) => eligible.has(id))
-    .map(({ id, score }) => ({ score, row: passage.get(id) as Row | undefined }));
+  const candidates = ranked.map(({ id, score }) => {
+    const row = passage.get(id) as Row | undefined;
+    return { score, row: row && (!acceptPath || acceptPath(row.path)) ? row : undefined };
+  });
   const { results, sourceChanged } = await validateCandidates(options, candidates);
   assertCurrent();
   const finalCoverage = coverage(phase?.());

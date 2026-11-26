@@ -22,18 +22,29 @@ export class KeywordSearch {
   constructor(private readonly db: Database.Database) {}
 
   /** `limit` candidates per index; at least the 50 a ranking needs, more for a larger Docs panel list. */
-  search(query: string, acceptsPath?: (path: string) => boolean, limit = 50): KeywordCandidate[] {
+  search(
+    query: string,
+    filter?: ((path: string) => boolean) | readonly number[],
+    limit = 50,
+  ): KeywordCandidate[] {
     const rowsPerTable = Number.isSafeInteger(limit) && limit > 50 ? limit : 50;
     const terms = [...new Set(query.match(/[\p{L}\p{N}_][\p{L}\p{N}\p{M}_]*/gu) ?? [])];
     if (!terms.length) return [];
     // A path filter is resolved to document ids first, so the match query keeps its LIMIT and
     // never loads the text of chunks that are filtered out.
     const docs =
-      acceptsPath &&
+      filter &&
       JSON.stringify(
-        (this.db.prepare("SELECT id,path FROM documents").all() as { id: number; path: string }[])
-          .filter((doc) => acceptsPath(doc.path))
-          .map((doc) => doc.id),
+        typeof filter === "function"
+          ? (
+              this.db.prepare("SELECT id,path FROM documents WHERE status='indexed'").all() as {
+                id: number;
+                path: string;
+              }[]
+            )
+              .filter((doc) => filter(doc.path))
+              .map((doc) => doc.id)
+          : filter,
       );
     const select = (table: "chunks_fts" | "chunks_tri", tokens: string[]): Row[] =>
       tokens.length
@@ -41,7 +52,8 @@ export class KeywordSearch {
             .prepare(`SELECT c.id,c.doc_id AS docId,c.ordinal,d.path,c.locator_json AS locatorJson,
               c.text,bm25(${table}) AS bm25 FROM ${table}
               JOIN chunks c ON c.id=${table}.rowid JOIN documents d ON d.id=c.doc_id
-              WHERE ${table} MATCH ? ${docs ? "AND c.doc_id IN (SELECT value FROM json_each(?))" : ""}
+              WHERE ${table} MATCH ? AND d.status='indexed'
+              ${docs ? "AND c.doc_id IN (SELECT value FROM json_each(?))" : ""}
               ORDER BY bm25(${table}),c.id LIMIT ${rowsPerTable}`)
             .all(tokens.map(quote).join(" OR "), ...(docs ? [docs] : [])) as Row[])
         : [];

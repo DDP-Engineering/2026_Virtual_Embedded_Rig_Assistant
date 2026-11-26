@@ -112,6 +112,9 @@ export const readDocSchema = z
   .strict();
 export type SearchArgs = z.input<typeof searchDocsSchema>;
 export type ReadDocArgs = z.input<typeof readDocSchema>;
+type CitationBounds = { pages: number } | { markdown: boolean; slugs: ReadonlySet<string> };
+/** Verified locator bounds shared by the citations in one finished message. */
+export type DocumentCitationCache = Map<string, Promise<CitationBounds | undefined>>;
 const READ_CHARS = 12000;
 const READ_JSON = 28000;
 const fits = (text: string, jsonChars: number) =>
@@ -209,14 +212,17 @@ export class DocumentKnowledge {
       .pluck()
       .get(doc.id);
     if (typeof stored !== "string") throw Error("Full extraction unavailable. Reindex documents.");
-    await verifyDocumentSource({
-      root: this.root,
-      path: target.relative,
-      kind: doc.kind,
-      sha256: doc.sha256,
-      signal,
-      assertWritable: () => {},
-    });
+    await verifyDocumentSource(
+      {
+        root: this.root,
+        path: target.relative,
+        kind: doc.kind,
+        sha256: doc.sha256,
+        signal,
+        assertWritable: () => {},
+      },
+      "hash-only",
+    );
     await guard.resolve(args.path);
     const extraction = extractionSchema.parse(JSON.parse(stored));
     const pages = args.page !== undefined || args.pageEnd !== undefined;
@@ -363,12 +369,8 @@ export class DocumentKnowledge {
     const parsed = parseRef(ref);
     return !!parsed && (parsed.kind === "page" || parsed.kind === "page-range") && this.validDocumentRef(ref);
   }
-  /**
-   * Issuance is checked by citations; validate current source and extraction bounds without output caps.
-   * `verified` holds the source checks of one finished message, so the citations into one file read
-   * and hash it once instead of once each.
-   */
-  async validDocumentRef(ref: string, verified?: Map<string, Promise<void>>): Promise<boolean> {
+  /** Issuance is checked by citations; validate the source and locator bounds independently of output caps. */
+  async validDocumentRef(ref: string, verified?: DocumentCitationCache): Promise<boolean> {
     const parsed = parseRef(ref);
     if (
       !parsed ||
@@ -379,55 +381,61 @@ export class DocumentKnowledge {
     )
       return false;
     try {
-      const target = await (await PathGuard.create(this.root)).resolve(parsed.path);
-      const doc = new DocumentsRepository(this.db).get(target.relative);
-      if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other") return false;
-      if (!isDocumentKindIn(doc.kind, parsed.kind === "heading" ? sectionDocumentKinds : pagedDocumentKinds))
-        return false;
-      // Markdown preambles are cited by line range, never as the untitled `#h=` section.
-      if (parsed.kind === "heading" && !parsed.slug && doc.kind === "markdown") return false;
-      const key = `${doc.kind}\n${doc.sha256}\n${parsed.path}`;
-      let source = verified?.get(key);
-      if (!source) {
-        // Only the outcome is kept, not the file's bytes.
-        source = verifyDocumentSource({
-          root: this.root,
-          path: parsed.path,
-          kind: doc.kind,
-          sha256: doc.sha256,
-          signal: new AbortController().signal,
-          assertWritable: () => {},
-        }).then(() => {});
-        verified?.set(key, source);
+      let pending = verified?.get(parsed.path);
+      if (!pending) {
+        pending = this.citationBounds(parsed.path);
+        verified?.set(parsed.path, pending);
       }
-      await source;
-      const current = new DocumentsRepository(this.db).get(target.relative);
-      if (
-        current?.id !== doc.id ||
-        current.sha256 !== doc.sha256 ||
-        current.kind !== doc.kind ||
-        current.status !== "indexed"
-      )
-        return false;
-      const stored = this.db
-        .prepare("SELECT extraction_json FROM document_extractions WHERE doc_id=?")
-        .pluck()
-        .get(doc.id);
-      if (typeof stored !== "string") return false;
-      const extraction = extractionSchema.parse(JSON.parse(stored));
-      if (extraction.kind !== current.kind) return false;
+      const bounds = await pending;
+      if (!bounds) return false;
       if (parsed.kind === "heading")
-        return "sections" in extraction && extraction.sections.some((s) => s.slug === parsed.slug);
+        return "slugs" in bounds && (!bounds.markdown || !!parsed.slug) && bounds.slugs.has(parsed.slug);
       const end = parsed.kind === "page" ? parsed.page : parsed.end;
-      const units =
-        extraction.kind === "pdf"
-          ? extraction.pages
-          : extraction.kind === "presentation"
-            ? extraction.slides
-            : undefined;
-      return !!units && current.pages === units.length && end <= units.length;
+      return "pages" in bounds && end <= bounds.pages;
     } catch {
       return false;
     }
+  }
+
+  private async citationBounds(path: string): Promise<CitationBounds | undefined> {
+    const target = await (await PathGuard.create(this.root)).resolve(path);
+    const rows = new DocumentsRepository(this.db);
+    const doc = rows.get(target.relative);
+    if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other") return;
+    if (!isDocumentKindIn(doc.kind, pagedDocumentKinds) && !isDocumentKindIn(doc.kind, sectionDocumentKinds))
+      return;
+    await verifyDocumentSource(
+      {
+        root: this.root,
+        path,
+        kind: doc.kind,
+        sha256: doc.sha256,
+        signal: new AbortController().signal,
+        assertWritable: () => {},
+      },
+      "hash-only",
+    );
+    const current = rows.get(target.relative);
+    if (
+      current?.id !== doc.id ||
+      current.sha256 !== doc.sha256 ||
+      current.kind !== doc.kind ||
+      current.status !== "indexed"
+    )
+      return;
+    const extraction = rows.extraction(doc.id);
+    if (extraction?.kind !== current.kind) return;
+    if ("sections" in extraction)
+      return {
+        markdown: extraction.kind === "markdown",
+        slugs: new Set(extraction.sections.map((s) => s.slug)),
+      };
+    const pages =
+      extraction.kind === "pdf"
+        ? extraction.pages.length
+        : extraction.kind === "presentation"
+          ? extraction.slides.length
+          : undefined;
+    return pages === current.pages && pages !== undefined ? { pages } : undefined;
   }
 }

@@ -134,3 +134,10 @@ entries:
       ro: Citările urmează textul livrat, iar căutarea omite fragmentele din surse modificate.
       de: Zitate folgen dem gelesenen Text. Die Suche lässt veraltete Ausschnitte aus.
       fr: Les citations suivent le texte lu et la recherche écarte les extraits périmés.
+  - category: improved
+    topic: { en: Documents, ro: Documente, de: Dokumente, fr: Documents }
+    text:
+      en: Large document indexes search faster, and reading documents uses less memory.
+      ro: Căutarea în indexuri mari e mai rapidă, iar citirea documentelor folosește mai puțină memorie.
+      de: Große Dokumentindizes werden schneller durchsucht. Das Lesen benötigt weniger Speicher.
+      fr: La recherche dans les grands index accélère et la lecture utilise moins de mémoire.

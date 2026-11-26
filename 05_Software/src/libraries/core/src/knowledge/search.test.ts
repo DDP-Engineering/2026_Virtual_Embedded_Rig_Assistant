@@ -27,7 +27,7 @@ import { PathGuard } from "../workbench/path-guard.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { documentKind } from "./ingest.js";
 import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
-import { DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
+import { type DocumentCitationCache, DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
 
 function deferred() {
   let resolve = () => {};
@@ -223,8 +223,9 @@ it("validates all issued document kinds against current extraction bounds indepe
     await h.close();
   }
 });
-it("reads and hashes a cited source once for all citations of one finished message", async () => {
+it("hashes and loads locator bounds once per source for all citations in one finished message", async () => {
   const h = await harness();
+  const extraction = vi.spyOn(DocumentsRepository.prototype, "extraction");
   try {
     await h.add(
       "docs/a.pdf",
@@ -251,7 +252,7 @@ it("reads and hashes a cited source once for all citations of one finished messa
     ];
     const reads = vi.mocked(verifyDocumentSource);
     reads.mockClear();
-    const verified = new Map<string, Promise<void>>();
+    const verified: DocumentCitationCache = new Map();
     const checked = await validateCitations(
       h.root,
       refs.map((ref) => `[[${ref}]]`).join(" "),
@@ -261,10 +262,32 @@ it("reads and hashes a cited source once for all citations of one finished messa
     );
     expect(checked.map((c) => c.valid)).toEqual([true, true, true, false, true]);
     expect(reads).toHaveBeenCalledTimes(2);
+    expect(extraction).toHaveBeenCalledTimes(2);
     // The next message starts without earlier checks, so a source changed meanwhile is refused.
     await writeFile(join(h.root, "docs/a.pdf"), "changed");
     expect(await h.knowledge.validDocumentRef("docs/a.pdf#p=1", new Map())).toBe(false);
     expect(reads).toHaveBeenCalledTimes(3);
+  } finally {
+    extraction.mockRestore();
+    await h.close();
+  }
+});
+
+it("applies the indexed status before the lexical candidate limit", async () => {
+  const h = await harness();
+  try {
+    const retired = await h.add("docs/retired.txt", "rail");
+    const current = await h.add("docs/current.txt", "rail electrical reference with more surrounding text");
+    h.rows.replaceChunks(
+      retired.id,
+      Array.from({ length: 60 }, () => ({
+        text: "rail",
+        locator: { type: "lines" as const, start: 1, end: 1 },
+      })),
+    );
+    h.db.prepare("UPDATE documents SET status='failed' WHERE id=?").run(retired.id);
+    const result = await h.knowledge.search({ query: "rail", mode: "keyword", k: 1 }, h.signal);
+    expect(result.results.map(({ path }) => path)).toEqual([current.path]);
   } finally {
     await h.close();
   }

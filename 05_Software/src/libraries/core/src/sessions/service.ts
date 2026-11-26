@@ -66,7 +66,7 @@ import { ArtifactStore } from "../artifacts/store.js";
 import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
 import type { DocumentIndexPhase } from "../knowledge/ingest.js";
-import { DocumentKnowledge } from "../knowledge/search.js";
+import { type DocumentCitationCache, DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { PartsSearcher } from "../parts/configured.js";
@@ -2365,8 +2365,7 @@ export class SessionService {
     let publicEvent: SessionEvent;
     if (event.type === "message.done") {
       this.host.db.transaction(() => this.sync(id, transcript))();
-      // One source check per cited file for the whole message, not one per citation.
-      const verified = new Map<string, Promise<void>>();
+      const verified: DocumentCitationCache = new Map();
       publicEvent = {
         type: "message.done",
         messageId: event.messageId,

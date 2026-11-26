@@ -55,7 +55,9 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   chunks exist. Empty unsettled indexes suggest grep.
   The search checks the current size and modification time once per candidate source.
   Detected source changes and removals omit those hits and mark coverage partial.
-- read verifies confined current source SHA256 and reads full persisted extraction.
+  Path filters select document IDs once per ranking attempt. SQLite applies indexed status and
+  those IDs to lexical candidates and to embeddings before their payloads are loaded.
+- read verifies confined current source SHA256 in bounded blocks and reads full persisted extraction.
   PDF defaults page1; text defaults all lines; headings default first section, and
   `heading: ""` names the untitled text before the first heading. A heading section over
   the budget is returned in consecutive parts (`part`, default 1, with `part`, `parts`,
@@ -78,7 +80,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   pages/ranges, presentation slides/ranges and Markdown/HTML/document/spreadsheet
   heading slugs (shared pagedDocumentKinds/sectionDocumentKinds) through current
   guarded source SHA256, indexed metadata and matching persisted extraction bounds
-  independently of output caps. The empty slug `path#h=` is the untitled leading section
+  independently of output caps. Citations in one message share a source check and compact
+  locator bounds. The empty slug `path#h=` is the untitled leading section
   of an HTML, document or spreadsheet source; it is never valid for Markdown, whose
   preamble is cited by line range (REQ-FUNC-2a51bc39, REQ-FUNC-845e3114). validPdfRef retains the page-only compatibility entrypoint. Shared refs.ts
   owns syntax/format/labels; sessions owns successful-tool provenance and current

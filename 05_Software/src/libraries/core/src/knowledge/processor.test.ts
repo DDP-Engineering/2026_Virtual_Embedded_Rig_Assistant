@@ -450,6 +450,17 @@ it("rejects source hash mismatch, invalid UTF8 and invalid cache keys without ca
   await expect(processor(binary)).rejects.toThrow();
   expect(existsSync(join(root, ".vera/cache"))).toBe(false);
 });
+
+it("verifies a multi-block source without retaining bytes and rejects a same-size replacement", async () => {
+  const root = await fixtureRoot();
+  const bytes = Buffer.alloc(2 * 1024 * 1024 + 17, 0x41);
+  const source = await input(root, "docs/streamed.txt", bytes);
+  await expect(verifyDocumentSource(source, "hash-only")).resolves.toBeUndefined();
+  expect(Buffer.from(await verifyDocumentSource(source)).equals(bytes)).toBe(true);
+  bytes[bytes.length - 1] = 0x42;
+  await writeFile(join(root, source.path), bytes);
+  await expect(verifyDocumentSource(source, "hash-only")).rejects.toThrow("Source changed.");
+});
 it.each(["abort", "owner", "source"])(
   "refuses publication after PDF processing loses %s",
   async (failure) => {
