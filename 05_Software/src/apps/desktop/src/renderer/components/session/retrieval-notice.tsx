@@ -15,6 +15,7 @@ export function RetrievalNotice({
     unknown: () => t("documents.turnSearchUnknown"),
     "embedding-rebuild": () => t("documents.turnSearchRebuild"),
     "semantic-unavailable": () => t("documents.turnSearchKeyword"),
+    "semantic-budget": () => t("documents.turnSearchBudget"),
     "revision-conflict": () => t("documents.turnSearchConflict"),
     unavailable: () => t("documents.turnSearchUnavailable"),
     "index-not-ready": () => t("documents.turnSearchNotReady"),

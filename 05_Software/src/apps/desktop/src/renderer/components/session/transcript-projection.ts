@@ -21,6 +21,7 @@ export type RetrievalLimitation =
   | "unknown"
   | "embedding-rebuild"
   | "semantic-unavailable"
+  | "semantic-budget"
   | "revision-conflict"
   | "unavailable"
   | "index-not-ready";

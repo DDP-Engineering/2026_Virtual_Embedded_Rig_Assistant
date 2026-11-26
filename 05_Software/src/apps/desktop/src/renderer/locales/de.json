@@ -792,6 +792,7 @@
     "turnSearchUnknown": "Die Abdeckung der Dokumentensuche konnte nicht überprüft werden.",
     "turnSearchRebuild": "Während der Neuerstellung der Embeddings wurde mit Stichwörtern gesucht.",
     "turnSearchKeyword": "Die Suche nutzte Stichwörter, da die semantische Suche nicht verfügbar war.",
+    "turnSearchBudget": "Die Suche wechselte zu Stichwörtern, da die semantische Suche zu lange dauerte.",
     "turnSearchConflict": "Die Suche nutzte Stichwörter, da sich der Index während der Suche geändert hat.",
     "turnSearchUnavailable": "Die Suche war während der Indexänderung nicht verfügbar. Bekannte Dateien lassen sich weiterhin öffnen.",
     "turnSearchNotReady": "Die Suche war nicht verfügbar, da noch keine durchsuchbaren Textstellen im Index standen.",

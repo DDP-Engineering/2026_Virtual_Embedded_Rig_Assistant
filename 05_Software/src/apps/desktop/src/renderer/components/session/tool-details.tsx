@@ -193,16 +193,18 @@ export const ToolDetails = memo(function ToolDetails({
     ? browserFailureText(t, browserFailure)
     : fallback === "embedding-rebuild"
       ? t("toolActivity.embeddingRebuild")
-      : fallback
-        ? t("toolActivity.keywordFallback")
-        : usage?.mode === null && usage.reason !== "no-candidates"
-          ? usage.reason === "revision-conflict"
-            ? t("documents.searchChanging")
-            : t("documents.searchUnavailable")
-          : (string(result?.error) ??
-            string(result?.output) ??
-            string(result?.text) ??
-            string(result?.message));
+      : fallback === "semantic-budget"
+        ? t("documents.turnSearchBudget")
+        : fallback
+          ? t("toolActivity.keywordFallback")
+          : usage?.mode === null && usage.reason !== "no-candidates"
+            ? usage.reason === "revision-conflict"
+              ? t("documents.searchChanging")
+              : t("documents.searchUnavailable")
+            : (string(result?.error) ??
+              string(result?.output) ??
+              string(result?.text) ??
+              string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
   // A program approval shows the exact command, folder and shell, so the raw arguments are not repeated.
   const programApproval = approvals?.some((approval) => approval.program) ?? false;

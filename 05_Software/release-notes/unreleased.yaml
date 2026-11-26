@@ -137,7 +137,7 @@ entries:
   - category: improved
     topic: { en: Documents, ro: Documente, de: Dokumente, fr: Documents }
     text:
-      en: Large document indexes search faster, and reading documents uses less memory.
-      ro: Căutarea în indexuri mari e mai rapidă, iar citirea documentelor folosește mai puțină memorie.
-      de: Große Dokumentindizes werden schneller durchsucht. Das Lesen benötigt weniger Speicher.
-      fr: La recherche dans les grands index accélère et la lecture utilise moins de mémoire.
+      en: Large indexes search faster, document reads use less memory, and slow hybrid searches use keywords.
+      ro: Indexuri mari mai rapide, citire cu mai puțină memorie și cuvinte-cheie când căutarea e lentă.
+      de: Große Indizes suchen schneller. Lesen spart Speicher. Langsame Hybridsuchen nutzen Stichwörter.
+      fr: Grands index plus rapides, lecture moins gourmande en mémoire et mots-clés si la recherche tarde.

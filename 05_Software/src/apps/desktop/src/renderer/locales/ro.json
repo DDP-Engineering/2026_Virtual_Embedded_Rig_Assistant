@@ -792,6 +792,7 @@
     "turnSearchUnknown": "Acoperirea căutării în documente nu a putut fi verificată.",
     "turnSearchRebuild": "Căutarea a folosit cuvinte-cheie în timpul reconstruirii vectorilor.",
     "turnSearchKeyword": "Căutarea a folosit cuvinte-cheie deoarece căutarea semantică nu era disponibilă.",
+    "turnSearchBudget": "Căutarea în documente a trecut la cuvinte-cheie fiindcă evaluarea semantică a durat prea mult.",
     "turnSearchConflict": "Căutarea a folosit cuvinte-cheie deoarece indexul s-a modificat în timpul căutării.",
     "turnSearchUnavailable": "Căutarea nu a fost disponibilă în timpul actualizării indexului. Poți deschide un fișier cunoscut.",
     "turnSearchNotReady": "Căutarea nu a fost disponibilă deoarece încă nu existau fragmente publicate în index.",

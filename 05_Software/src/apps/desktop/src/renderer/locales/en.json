@@ -792,6 +792,7 @@
     "turnSearchUnknown": "Document search coverage could not be verified.",
     "turnSearchRebuild": "Document search used keywords while embeddings were being rebuilt.",
     "turnSearchKeyword": "Document search used keywords because semantic ranking was unavailable.",
+    "turnSearchBudget": "Document search switched to keywords because semantic ranking took too long.",
     "turnSearchConflict": "Document search used keywords because the index changed during ranking.",
     "turnSearchUnavailable": "Document search was unavailable while the index changed. You can still open a known file.",
     "turnSearchNotReady": "Document search was unavailable because no searchable passages had been published.",

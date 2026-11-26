@@ -22,6 +22,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 - A semantic revision conflict during active publication switches to validated keyword after
   the current semantic attempt spends 150 ms. Cheap conflicts keep their requested-mode retry.
   All retries share the existing three-attempt cap and revision/cancellation checks.
+- Hybrid search shares a 2 s deadline for semantic ranking across attempts. Expiry cancels
+  the pending rank and uses the keyword candidates if their revision is current.
 
 - Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
 

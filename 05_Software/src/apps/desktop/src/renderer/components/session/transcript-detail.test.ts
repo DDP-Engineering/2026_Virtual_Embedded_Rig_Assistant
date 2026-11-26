@@ -444,6 +444,14 @@ it.each(["minimal", "normal", "verbose"] as const)(
         },
       },
       {
+        ...tool("timed-out"),
+        name: "search_docs",
+        documentSearch: {
+          coverage: "partial",
+          usage: { mode: "keyword", fallbackReason: "semantic-budget" },
+        },
+      },
+      {
         ...tool("later-complete", "turn2"),
         name: "search_docs",
         documentSearch: {
@@ -465,6 +473,7 @@ it.each(["minimal", "normal", "verbose"] as const)(
     expect(notices.map((notice) => notice.getAttribute("data-retrieval-notice"))).toEqual(["turn1", "turn3"]);
     expect(notices[0]?.textContent).toMatch(/pending or excluded sources/i);
     expect(notices[0]?.textContent).toMatch(/keyword/i);
+    expect(notices[0]?.textContent).toContain("semantic ranking took too long");
     expect(notices[1]?.textContent).toMatch(/unavailable/i);
   },
 );

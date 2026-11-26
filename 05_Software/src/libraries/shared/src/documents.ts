@@ -411,7 +411,9 @@ export const documentSearchHitSchema = z.strictObject({
 export const documentSearchUsageSchema = z.discriminatedUnion("mode", [
   z.strictObject({
     mode: z.literal("keyword"),
-    fallbackReason: z.enum(["embedding-rebuild", "semantic-unavailable", "revision-conflict"]).optional(),
+    fallbackReason: z
+      .enum(["embedding-rebuild", "semantic-unavailable", "semantic-budget", "revision-conflict"])
+      .optional(),
   }),
   z.strictObject({ mode: z.enum(["semantic", "hybrid"]) }),
   z.strictObject({

@@ -54,12 +54,14 @@ type FallbackReason = NonNullable<
 const fallbackMessages: Record<FallbackReason, string> = {
   "embedding-rebuild": "Embedding vectors are being rebuilt; these are keyword results.",
   "semantic-unavailable": "Semantic ranking is unavailable; these are keyword results.",
+  "semantic-budget": "Semantic ranking took too long. The search returned keyword results.",
   "revision-conflict": "The index changed during semantic ranking; these are keyword results.",
 };
 const SEMANTIC_RETRY_BUDGET_MS = 150;
+const HYBRID_SEMANTIC_BUDGET_MS = 2000;
 
 class SearchRevisionChanged extends Error {
-  constructor(readonly preferKeyword: boolean) {
+  constructor(readonly fallback?: FallbackReason) {
     super();
   }
 }
@@ -183,9 +185,34 @@ async function semanticRank(
   }
 }
 
+async function rankWithinBudget(
+  options: SearchOptions,
+  documentIds: readonly number[] | undefined,
+  epoch: string,
+  assertCurrent: () => void,
+  deadline: number,
+) {
+  const remaining = deadline - performance.now();
+  if (remaining <= 0) return null;
+  const budget = new AbortController();
+  const signal = AbortSignal.any([options.signal, budget.signal]);
+  const timer = setTimeout(() => budget.abort(), remaining);
+  try {
+    const hits = await semanticRank({ ...options, signal }, documentIds, epoch, assertCurrent);
+    return performance.now() < deadline ? hits : null;
+  } catch (error) {
+    options.signal.throwIfAborted();
+    if (budget.signal.aborted) return null;
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function attemptSearch(
   options: SearchOptions,
   forcedFallback: FallbackReason | undefined,
+  deadline: number | undefined,
 ): Promise<DocumentSearchResponse> {
   const { db, query, pathGlob, acceptPath, signal, phase } = options;
   const initialPhase = phase?.();
@@ -200,26 +227,38 @@ async function attemptSearch(
   } else if (!db.prepare(`SELECT 1 ${indexed} LIMIT 1`).get())
     return emptyIndex(false, initialCoverage, pathGlob);
 
-  const fallback =
+  let fallback =
     options.mode !== "keyword" && rebuildingEmbeddings(db) ? "embedding-rebuild" : forcedFallback;
-  const mode = fallback ? "keyword" : options.mode;
+  let mode = fallback ? "keyword" : options.mode;
   const semanticEpoch = mode === "keyword" ? undefined : embeddingEpoch(db);
-  const revision = semanticEpoch === undefined ? () => keywordEpoch(db) : () => embeddingEpoch(db);
-  const epoch = semanticEpoch ?? keywordEpoch(db);
+  const keywordRevision = mode === "semantic" ? undefined : keywordEpoch(db);
   const started = semanticEpoch === undefined ? undefined : performance.now();
   const assertCurrent = () => {
     signal.throwIfAborted();
-    if (revision() === epoch) return;
+    if (mode === "keyword") {
+      if (keywordEpoch(db) === keywordRevision) return;
+      throw new SearchRevisionChanged(fallback);
+    }
+    if (embeddingEpoch(db) === semanticEpoch) return;
     // A semantic retry at a new revision may reload the entire vector cache.
     const preferKeyword =
       started !== undefined &&
       performance.now() - started >= SEMANTIC_RETRY_BUDGET_MS &&
       (publishing(initialPhase) || publishing(phase?.()));
-    throw new SearchRevisionChanged(preferKeyword);
+    throw new SearchRevisionChanged(preferKeyword ? "revision-conflict" : undefined);
   };
   const lexical = mode === "semantic" ? [] : new KeywordSearch(db).search(query, documentIds);
-  const semantic =
-    semanticEpoch === undefined ? [] : await semanticRank(options, documentIds, semanticEpoch, assertCurrent);
+  let semantic =
+    semanticEpoch === undefined
+      ? []
+      : deadline === undefined
+        ? await semanticRank(options, documentIds, semanticEpoch, assertCurrent)
+        : await rankWithinBudget(options, documentIds, semanticEpoch, assertCurrent, deadline);
+  if (semantic === null) {
+    fallback = "semantic-budget";
+    mode = "keyword";
+    semantic = [];
+  }
   assertCurrent();
   const ranked =
     mode === "hybrid"
@@ -305,17 +344,18 @@ async function validateCandidates(
 
 /** Search bounded coherent revisions without taking a lock across ranking and source checks. */
 export async function searchPublishedDocuments(options: SearchOptions): Promise<DocumentSearchResponse> {
+  const deadline = options.mode === "hybrid" ? performance.now() + HYBRID_SEMANTIC_BUDGET_MS : undefined;
   let fallback: FallbackReason | undefined;
   for (let attempt = 1; attempt <= 3; attempt++) {
     options.signal.throwIfAborted();
     try {
-      return await attemptSearch(options, fallback);
+      return await attemptSearch(options, fallback, deadline);
     } catch (error) {
       options.signal.throwIfAborted();
       if (error instanceof SemanticUnavailable) fallback = "semantic-unavailable";
       else if (!(error instanceof SearchRevisionChanged)) throw error;
-      else if (error.preferKeyword || (attempt === 2 && options.mode !== "keyword"))
-        fallback ??= "revision-conflict";
+      else if (error.fallback) fallback ??= error.fallback;
+      else if (attempt === 2 && options.mode !== "keyword") fallback ??= "revision-conflict";
     }
   }
   return {

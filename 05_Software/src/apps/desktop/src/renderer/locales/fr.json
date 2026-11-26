@@ -792,6 +792,7 @@
     "turnSearchUnknown": "La couverture de la recherche documentaire n’a pas pu être vérifiée.",
     "turnSearchRebuild": "La recherche a utilisé les mots-clés pendant la reconstruction des vecteurs.",
     "turnSearchKeyword": "La recherche a utilisé les mots-clés, car la recherche sémantique était indisponible.",
+    "turnSearchBudget": "La recherche est passée aux mots-clés, car la recherche sémantique a pris trop de temps.",
     "turnSearchConflict": "La recherche a utilisé les mots-clés, car l’index a changé pendant le classement.",
     "turnSearchUnavailable": "La recherche était indisponible pendant la mise à jour de l’index. Vous pouvez toujours ouvrir un fichier connu.",
     "turnSearchNotReady": "La recherche était indisponible, car aucun passage interrogeable n’avait été publié.",

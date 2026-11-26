@@ -26,6 +26,7 @@ import { ToolRegistry } from "../tools/registry.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { documentKind } from "./ingest.js";
+import { KeywordSearch } from "./keyword.js";
 import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
 import { type DocumentCitationCache, DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
 
@@ -428,7 +429,47 @@ it("uses only current-model vectors and falls back after two transient semantic 
   }
 });
 
-it("cancels blocked ranking without retrying or falling back", async () => {
+it.each([
+  { sourceChanges: false, expectedPath: "docs/old.txt", keywordPasses: 1 },
+  { sourceChanges: true, expectedPath: "docs/new.txt", keywordPasses: 2 },
+])("falls back when hybrid ranking times out (source changed: $sourceChanges)", async (test) => {
+  const h = await harness();
+  const entered = deferred();
+  const controller = new AbortController();
+  const lexical = vi.spyOn(KeywordSearch.prototype, "search");
+  let waiting: ReturnType<DocumentKnowledge["search"]> | undefined;
+  try {
+    await h.add("docs/old.txt", "coolant");
+    const rank = vi.spyOn(h.port, "rank").mockImplementation(async (_root, _epoch, _rows, _query, signal) => {
+      entered.resolve();
+      return new Promise<never>((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+      });
+    });
+    vi.useFakeTimers({ toFake: ["performance", "setTimeout", "clearTimeout"] });
+    waiting = h.knowledge.search({ query: "coolant", mode: "hybrid" }, controller.signal);
+    await entered.promise;
+    if (test.sourceChanges) {
+      h.rows.remove("docs/old.txt");
+      await h.add("docs/new.txt", "coolant updated");
+    }
+    await vi.advanceTimersByTimeAsync(2000);
+    await expect(waiting).resolves.toMatchObject({
+      usage: { mode: "keyword", fallbackReason: "semantic-budget" },
+      results: [{ path: test.expectedPath }],
+    });
+    expect(rank).toHaveBeenCalledTimes(1);
+    expect(lexical).toHaveBeenCalledTimes(test.keywordPasses);
+  } finally {
+    controller.abort();
+    await waiting?.catch(() => {});
+    vi.useRealTimers();
+    lexical.mockRestore();
+    await h.close();
+  }
+});
+
+it.each(["semantic", "hybrid"] as const)("cancels blocked %s ranking without falling back", async (mode) => {
   const h = await harness();
   const entered = deferred();
   const resume = deferred();
@@ -442,7 +483,7 @@ it("cancels blocked ranking without retrying or falling back", async () => {
     });
     const controller = new AbortController();
     const reason = Error("Search cancelled");
-    waiting = h.knowledge.search({ query: "coolant", mode: "semantic" }, controller.signal);
+    waiting = h.knowledge.search({ query: "coolant", mode }, controller.signal);
     await entered.promise;
     controller.abort(reason);
     resume.resolve();
