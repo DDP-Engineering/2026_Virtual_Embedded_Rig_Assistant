@@ -166,7 +166,10 @@ for (const action of ["Approve", "Deny", "A", "D"] as const)
       await input.press("Enter");
       const card = page.locator("[data-approval-card]");
       await expect(card).toBeVisible();
-      await expect(input).toBeDisabled();
+      await expect(input).toBeEditable();
+      await input.fill("Keep this draft");
+      const send = page.getByRole("button", { name: "Send", exact: true });
+      await expect(send).toBeDisabled();
       await expect(
         page.locator('[aria-current="page"] [data-session-status="awaiting_approval"]'),
       ).toBeVisible();
@@ -176,7 +179,6 @@ for (const action of ["Approve", "Deny", "A", "D"] as const)
         await card.focus();
         await card.press(action);
       } else await card.getByRole("button", { name: action, exact: true }).click();
-      await expect(input).toBeEnabled();
       await expect
         .poll(async () => {
           const current = await page.evaluate(
@@ -187,6 +189,8 @@ for (const action of ["Approve", "Deny", "A", "D"] as const)
           return current.snapshot.turns.at(-1)?.stopReason;
         })
         .toBe("end");
+      await expect(send).toBeEnabled();
+      await expect(input).toHaveValue("Keep this draft");
       const result = await page.evaluate(
         async (id) =>
           (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }),
@@ -342,10 +346,14 @@ test("browser approval keys and mode picker remain accessible at minimum size", 
   await input.press("Enter");
   const card = page.locator("[data-approval-card]");
   await expect(card).toBeVisible();
-  await expect(input).toBeDisabled();
+  await expect(input).toBeEditable();
+  await input.fill("Next request draft");
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await expect(send).toBeDisabled();
   await card.focus();
   await card.press("D");
-  await expect(input).toBeEnabled();
+  await expect(send).toBeEnabled();
+  await expect(input).toHaveValue("Next request draft");
   await input.fill("Edit notes again");
   await input.press("Enter");
   const latest = page.locator("[data-approval-card]").last();

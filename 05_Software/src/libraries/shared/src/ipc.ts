@@ -673,7 +673,11 @@ export const channels = {
       requestId: z.string().min(1).max(256).optional(),
     }),
   ),
-  "docs.reindex": defineChannel("docs.reindex", docsScopeSchema.partial(), z.strictObject({})),
+  "docs.reindex": defineChannel(
+    "docs.reindex",
+    docsScopeSchema.partial().extend({ failedOnly: z.boolean().optional() }),
+    z.strictObject({}),
+  ),
   "indexer.status": defineChannel(
     "indexer.status",
     z.strictObject({}),

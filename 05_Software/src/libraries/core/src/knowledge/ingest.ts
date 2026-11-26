@@ -408,18 +408,16 @@ export class Ingester {
       .get();
     if (previous === fingerprint) return;
     const changedModel = typeof previous === "string" && JSON.parse(previous).model !== settings.model;
-    if (!changedModel && !resetChunks) return;
+    if (previous !== undefined && !changedModel && !resetChunks) return;
     this.mutation(() => {
       if (changedModel) beginEmbeddingRebuild(this.options.db);
-      else if (previous !== undefined) for (const row of this.rows.list()) this.rows.remove(row.path);
       this.saveIndexingConfig(fingerprint);
     });
     if (changedModel) this.rebuilding = true;
-    else if (previous !== undefined) this.status.clearPublished();
   }
 
   /** Explicit reindex executes in the same queue as background batches. */
-  reindex(): Promise<void> {
+  reindex(failedOnly = false): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
     this.reindexRuns++;
     this.status.notify();
@@ -429,7 +427,11 @@ export class Ingester {
           this.refreshWatcher();
           await this.waitForWatcher();
         }
-        await this.runPass(true);
+        if (failedOnly) {
+          this.attempted.clear();
+          this.crashes.clear();
+        }
+        await this.runPass(!failedOnly);
       } finally {
         this.reindexRuns--;
         if (!this.closed) this.status.notify();
@@ -578,7 +580,7 @@ export class Ingester {
         this.status.published(row.id, false);
         this.emit({ type: "index.document", path: row.path, document: null });
       }
-      this.syncIndexingConfig(true);
+      this.syncIndexingConfig(clear);
     });
     if (this.closed) return;
     this.status.select(selected.size);

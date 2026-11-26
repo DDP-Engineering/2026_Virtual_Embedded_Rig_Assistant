@@ -196,7 +196,7 @@ test("a taken composer focus request never pulls a later document tab back to Ch
   expect(selected()).toBe("a.md");
 });
 
-test("attaching while the composer is disabled shows Chat once and lets documents stay selected", async () => {
+test("attaching during an approval shows Chat once and lets documents stay selected", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   await mount();
   const selected = () =>
@@ -211,12 +211,12 @@ test("attaching while the composer is disabled shows Chat once and lets document
   await act(async () => {
     await api.invoke("session.send", { sessionId: session.id, text: "edit notes" });
   });
-  await act(async () => {
-    await new Promise((done) => setTimeout(done, 400));
-  });
-  await attach("board.txt");
+  expect(await attach("board.txt")).toBeNull();
   expect(selected()).toBe("Chat");
-  expect(message()?.disabled).toBe(true);
+  await vi.waitFor(() => expect(container.querySelector("[data-approval-card]")).not.toBeNull());
+  expect(chips()).toEqual(["board.txt"]);
+  expect(message()?.disabled).toBe(false);
+  expect(container.querySelector<HTMLButtonElement>('[data-action="send-message"]')?.disabled).toBe(true);
   await act(async () =>
     [...container.querySelectorAll<HTMLElement>('[data-document-tabs] [role="tab"]')]
       .find((tab) => tab.textContent === "a.md")

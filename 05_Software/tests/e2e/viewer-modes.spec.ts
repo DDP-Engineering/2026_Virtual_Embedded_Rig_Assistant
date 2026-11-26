@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
@@ -215,7 +215,7 @@ test("native binary automatic Hex and real extension preference survive full app
   await writeFile(join(folder, "ordinary.txt"), "Independent text extension.");
   await mkdir(join(folder, "unindexed"));
   await writeFile(join(folder, "unindexed/source.md"), "# Unindexed source\nReadable without indexing.");
-  await writeFile(join(folder, "unindexed/container.pdf"), Uint8Array.of(0, 255, 65));
+  await copyFile(resolve("tests/fixtures/documents/pages.pdf"), join(folder, "unindexed/container.pdf"));
   const env = Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
@@ -272,8 +272,7 @@ test("native binary automatic Hex and real extension preference survive full app
     await page.locator('[data-tree-path="binary.bin"]').click();
     await expect(panel(page).locator('[data-hex-byte="1"]')).toHaveText("FF");
     await page.locator('[data-tree-path="invalid.unknown"]').click();
-    await expect(panel(page).locator('[data-viewer-mode="hex"]')).toHaveAttribute("aria-pressed", "true");
-    await choose(page, "text");
+    await expect(panel(page).locator('[data-viewer-mode="text"]')).toHaveAttribute("aria-pressed", "true");
     await panel(page).locator("[data-show-as-text]").click();
     await expect(panel(page).locator('[data-line="1"]')).toContainText("ok�");
     await page.locator('[data-tree-path="unindexed"]').click();
@@ -293,7 +292,7 @@ test("native binary automatic Hex and real extension preference survive full app
     await page.locator('[data-tree-path="unindexed/source.md"]').click();
     await expect(panel(page).locator('[data-viewer-mode="text"]')).toHaveAttribute("aria-pressed", "true");
     await page.locator('[data-tree-path="unindexed/container.pdf"]').click();
-    await expect(panel(page).locator('[data-hex-byte="1"]')).toHaveText("FF");
+    await expect(panel(page).locator(".pdf-sheet[data-page-number='1']")).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem("vera.viewer.modes"))).toBe(preferences);
     await page.locator(`[data-tree-path="${identity}"]`).click();
     await expect(panel(page).locator('[data-viewer-mode="rendered"]')).toHaveAttribute(

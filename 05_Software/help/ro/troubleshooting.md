@@ -48,7 +48,7 @@ Când catalogul nu poate fi accesat sau semnătura lui nu se potrivește, pagina
 
 ## VERA se închide imediat după pornire
 
-VERA nu pornește când fișierul său `settings.json` este deteriorat sau a fost editat manual într-o formă invalidă. Caută cauza în cel mai recent fișier jurnal. Corectează fișierul sau mută-l în altă parte: VERA pornește atunci cu setările implicite, iar tu îți configurezi din nou furnizorii și preferințele.
+Dacă `settings.json` este invalid, VERA afișează la pornire calea fișierului și setările cu probleme. Corectează fișierul sau mută-l pentru a recrea valorile implicite, apoi configurează din nou furnizorii și preferințele.
 
 ## Jurnale
 

@@ -8,6 +8,7 @@
 | **Web access** | Web search and reading for the agent |
 | **Appearance and language** | Language, theme and text sizes |
 | **Commands** | The shell for agent commands and new terminals |
+| **Permissions** | Full Access for delegated tasks. See [Permissions](permissions.md). |
 | **Notifications** | Desktop alerts for turn completion, approvals and questions |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |
@@ -78,7 +79,7 @@ Web access lets the agent search the public web, read public pages and download 
 3. Choose the **Access mode**: **Anonymous — no account required**, or **Use my API key** and enter the key. Brave always needs a key and only searches; it cannot read pages.
 4. Select **Save**, then **Test connection**.
 
-Only the search text and the addresses the agent asks for leave your computer; VERA does not upload project files for a search. Anonymous use is subject to the provider's limits. Web results are treated as untrusted content, and the agent cites them with their public links; opening a link asks before your browser opens it.
+Only the search text and the addresses the agent asks for leave your computer; VERA does not upload project files for a search. Anonymous use is subject to the provider's limits. Web results are treated as untrusted content, and the agent cites them with their public links. Click a citation to open its public link in your browser.
 
 Turning web access off also stops searches and downloads in progress. Individual workbenches can disable the web tools under **Edit workbench** → **Tools**.
 

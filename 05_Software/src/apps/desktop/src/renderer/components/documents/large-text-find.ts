@@ -19,6 +19,9 @@ export interface LargeTextMatches {
   total: number;
 }
 
+const cachedMatches = new WeakMap<LargeTextSource, { key: string; hits: LargeTextMatch[] }>();
+const MAX_CACHED_HITS = 10_000;
+
 /** Counts matching source lines with scalar first/last/selected hits, wrapping without a file-wide list. */
 export async function findLargeText(
   source: LargeTextSource,
@@ -32,12 +35,27 @@ export async function findLargeText(
   reveal: (hit: LargeTextMatch) => Promise<void>,
 ): Promise<LargeTextMatches> {
   if (!query) return { current: 0, total: 0 };
+  const cacheKey = JSON.stringify([encoding, replace, query]);
+  const cached = cachedMatches.get(source);
+  if (!source.file.verified && cached?.key === cacheKey) {
+    await source.verify(signal);
+    const { hits } = cached;
+    if (!hits.length) return { current: 0, total: 0 };
+    const found = forward
+      ? hits.findIndex((hit) => hit.line > fromLine)
+      : hits.findLastIndex((hit) => hit.line < fromLine);
+    const at = found < 0 ? (forward ? 0 : hits.length - 1) : found;
+    const hit = hits[at];
+    if (hit) await reveal(hit);
+    return { ...(hit ? { hit } : {}), current: at + 1, total: hits.length };
+  }
   const expression = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
   let total = 0,
     current = 0,
     line = 1,
     offset = 0;
   let matched = false;
+  let hits: LargeTextMatch[] | undefined = source.file.verified ? undefined : [];
   let carry = new Uint8Array(0);
   let first: LargeTextMatch | undefined,
     last: LargeTextMatch | undefined,
@@ -99,6 +117,10 @@ export async function findLargeText(
         matched = true;
         total++;
         const hit = { offset: rawStart + textByteOffset(part, encoding, rawStart, match.index), line };
+        if (hits) {
+          if (hits.length < MAX_CACHED_HITS) hits.push(hit);
+          else hits = undefined;
+        }
         first ??= hit;
         last = hit;
         if ((forward && selected === undefined && line > fromLine) || (!forward && line < fromLine)) {
@@ -123,6 +145,7 @@ export async function findLargeText(
     await yieldTextScan(signal);
   }
   await source.verify(signal);
+  if (hits) cachedMatches.set(source, { key: cacheKey, hits });
   if (selected === undefined) {
     selected = forward ? first : last;
     current = selected ? (forward ? 1 : total) : 0;

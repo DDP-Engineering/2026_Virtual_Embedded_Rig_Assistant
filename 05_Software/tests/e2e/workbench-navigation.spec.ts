@@ -19,6 +19,8 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   await page.locator('[data-action="choose-create"]').click();
   await page.locator('[data-action="create-workbench"]').click();
   const group = page.locator("[data-workbench-entry]").filter({ hasText: "ESP32 bench" });
+  await expect(page.locator('[data-session][aria-current="page"]')).toBeVisible();
+  await group.locator(".workbench-group-name").click();
   const disclosure = group.locator(".workbench-sessions-toggle");
   await expect(disclosure).toHaveAttribute("aria-expanded", "true");
   await expect(disclosure).toHaveAttribute("title", "Hide sessions: ESP32 bench");

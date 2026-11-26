@@ -7,7 +7,8 @@ export interface LineRef {
 function valid(value: LineRef): boolean {
   return (
     !!value.path &&
-    !/[\0\r\n\u2028\u2029\\:]/.test(value.path) &&
+    !/[\0\r\n\u2028\u2029\\]/.test(value.path) &&
+    !/^(?:[A-Z]:|artifact:|capture:|help:)/i.test(value.path) &&
     !value.path.startsWith("/") &&
     !value.path.split("/").some((segment) => segment === ".." || segment === "." || !segment) &&
     Number.isSafeInteger(value.start) &&

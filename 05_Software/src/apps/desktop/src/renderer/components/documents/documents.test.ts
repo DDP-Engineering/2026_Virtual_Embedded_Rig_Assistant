@@ -114,7 +114,7 @@ it("moves index details to the overview while preserving Files search, focus and
     try {
       await act(async () => retry?.click());
       await settle();
-      expect(invoke).toHaveBeenCalledWith("docs.reindex", { workbenchId: id });
+      expect(invoke).toHaveBeenCalledWith("docs.reindex", { workbenchId: id, failedOnly: true });
     } finally {
       invoke.mockRestore();
     }

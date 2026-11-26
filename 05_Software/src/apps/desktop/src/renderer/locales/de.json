@@ -582,6 +582,7 @@
     "searchMatches": "Passende Nachrichten: {{count}}",
     "searchHint": "Text eingeben, um passende Nachrichten zu finden.",
     "searchMatch": "Suchtreffer",
+    "latestMessage": "Zur neuesten Nachricht",
     "messagePlaceholder": "Fragen Sie VERA zu Ihrem Projekt…",
     "defaultModelShort": "Standardmodell",
     "contextWindow": "Kontextfenster",

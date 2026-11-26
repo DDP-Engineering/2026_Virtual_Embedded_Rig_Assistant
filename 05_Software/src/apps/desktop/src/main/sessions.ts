@@ -77,13 +77,13 @@ export class SessionsHost {
   private programHost: ProgramHost | undefined;
   /** The last resolved run_command shell, for the prompt; refreshed whenever a prompt is built. */
   private shellLabel: string | undefined;
-  private refreshShell(): void {
+  private async refreshShell(): Promise<void> {
     const shell = this.programHost?.shell;
     if (!shell) {
       this.shellLabel = undefined;
       return;
     }
-    shell.resolve().then(
+    await shell.resolve().then(
       ({ executable, kind }) => {
         const name = executable
           .replace(/^.*[\\/]/, "")
@@ -297,9 +297,9 @@ export class SessionsHost {
         const partsProvider = options.parts;
         const browser = options.browser;
         const workbenchId = snapshot.config.id;
-        this.refreshShell();
+        await this.refreshShell();
         const prompt = (mode: PermissionMode, review: boolean) => {
-          this.refreshShell();
+          void this.refreshShell();
           return buildSystemPrompt({
             workbench: this.config ?? snapshot.config,
             pinned: this.pinned,

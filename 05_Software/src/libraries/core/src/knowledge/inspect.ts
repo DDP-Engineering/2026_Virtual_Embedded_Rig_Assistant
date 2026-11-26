@@ -3,8 +3,8 @@ import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import { join } from "node:path";
 import { binaryDocumentKinds, type DocumentKind, isDocumentKindIn } from "@vera/shared";
-import { isBinary } from "../tools/binary.js";
 import { sourceLimit } from "./kinds.js";
+import { isBinaryDocumentText } from "./text-source.js";
 
 export interface InspectInput {
   root: string;
@@ -36,7 +36,7 @@ export async function inspectSource(input: InspectInput): Promise<SourceInspecti
       const read = await handle.read(buffer, 0, buffer.length, null);
       if (!read.bytesRead) break;
       if (bytes === 0 && !isDocumentKindIn(input.kind, binaryDocumentKinds))
-        binary = isBinary(buffer.subarray(0, read.bytesRead));
+        binary = isBinaryDocumentText(buffer.subarray(0, read.bytesRead));
       bytes += read.bytesRead;
       if (bytes > sourceLimit(input.kind)) return { status: "changed" };
       hash.update(buffer.subarray(0, read.bytesRead));

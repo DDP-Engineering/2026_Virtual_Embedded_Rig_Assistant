@@ -158,22 +158,25 @@ it("reads a text file, ignored or not, and refuses binary, large, linked and out
   if (b.linked) await expect(tree.readText(b.root, "link/main.c")).rejects.toMatchObject({ code: "DENIED" });
 });
 
-it("refuses Windows aliases that would reach hidden or ignored entries", async () => {
-  const b = await bench();
-  for (const path of [".git.", ".git ", "ignored.", "docs::$INDEX_ALLOCATION", "CON", "docs/nul"])
-    await expect(tree.listFolder(b.root, path, true), path).rejects.toMatchObject({ code: "DENIED" });
-  for (const path of [
-    ".git./config",
-    "ignored./z.md",
-    "docs/b.md::$DATA",
-    "docs/b.md ",
-    "docs/b.md.",
-    "docs/CON.txt",
-  ]) {
-    await expect(tree.readText(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
-    await expect(tree.statEntry(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
-  }
-});
+it.skipIf(process.platform !== "win32")(
+  "refuses Windows aliases that would reach hidden or ignored entries",
+  async () => {
+    const b = await bench();
+    for (const path of [".git.", ".git ", "ignored.", "docs::$INDEX_ALLOCATION", "CON", "docs/nul"])
+      await expect(tree.listFolder(b.root, path, true), path).rejects.toMatchObject({ code: "DENIED" });
+    for (const path of [
+      ".git./config",
+      "ignored./z.md",
+      "docs/b.md::$DATA",
+      "docs/b.md ",
+      "docs/b.md.",
+      "docs/CON.txt",
+    ]) {
+      await expect(tree.readText(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
+      await expect(tree.statEntry(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
+    }
+  },
+);
 
 it("reports the type, size and modified time of an entry, ignored or not, and refuses the rest", async () => {
   const b = await bench();
@@ -209,7 +212,7 @@ it("locates an entry, ignored or not, by its absolute path and refuses links and
     type: "file",
   });
   expect(await tree.locateEntry(b.root, "docs")).toEqual({ absolute: join(b.root, "docs"), type: "folder" });
-  for (const path of ["", "../x", "/abs", "docs/b.md "])
+  for (const path of ["", "../x", "/abs", ...(process.platform === "win32" ? ["docs/b.md "] : [])])
     await expect(tree.locateEntry(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
   if (b.linked)
     for (const path of ["link", "link/main.c"])

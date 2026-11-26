@@ -66,7 +66,19 @@ it("runs all grep options inside a worker with ignored/binary/oversized skips an
   expect(await call({ pattern: "Hello", glob: "*.txt", output: "files" })).toMatchObject({
     paths: ["docs/notes.txt"],
   });
-});
+  await mkdir(join(root, ".vera/runs"));
+  await writeFile(join(root, ".vera/runs/run_01ABC.log"), "build failure\n");
+  expect(await call({ pattern: "failure", path: ".vera/runs/run_01ABC.log" })).toMatchObject({
+    matches: [{ path: ".vera/runs/run_01ABC.log", line: 1 }],
+  });
+  await writeFile(
+    join(root, "docs/console.txt"),
+    Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from("startup ready\n", "utf16le")]),
+  );
+  expect(await call({ pattern: "ready", path: "docs/console.txt" })).toMatchObject({
+    matches: [{ path: "docs/console.txt", line: 1, text: "startup ready" }],
+  });
+}, 15_000);
 
 // REQ-FUNC-0df8e905 REQ-FUNC-820e2701
 it("returns up to the session's Grep results and skips files above its Grep file size", async () => {

@@ -105,6 +105,7 @@ test("native agent searches and reads via Exa adapter, presents sources/tool cal
       };
       Reflect.set(globalThis, "veraWebOpened", []);
       shell.openExternal = async (url) => {
+        if (Reflect.get(globalThis, "veraWebBlocked")) throw Error("Fixture unavailable");
         (Reflect.get(globalThis, "veraWebOpened") as string[]).push(url);
       };
     }, `http://127.0.0.1:${address.port}`);
@@ -133,21 +134,29 @@ test("native agent searches and reads via Exa adapter, presents sources/tool cal
     if (process.env.VERA_WEB_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_WEB_SCREENSHOT.replace(".png", "-sources.png") });
     await source.click();
+    const opened = () => app.evaluate(() => Reflect.get(globalThis, "veraWebOpened"));
+    await expect.poll(opened).toEqual(["https://example.com/guide"]);
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
+    const blockBrowser = (blocked: boolean) =>
+      app.evaluate((_electron, blocked) => Reflect.set(globalThis, "veraWebBlocked", blocked), blocked);
+    await blockBrowser(true);
+    await source.click();
     await expect(page.locator("dialog[open]")).toContainText("Open external website?");
     if (process.env.VERA_WEB_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_WEB_SCREENSHOT.replace(".png", "-confirm.png") });
     await page.locator("[data-web-cancel]").click();
-    expect(await app.evaluate(() => Reflect.get(globalThis, "veraWebOpened"))).toEqual([]);
+    expect(await opened()).toEqual(["https://example.com/guide"]);
     await expect(source).toBeFocused();
     await source.click();
+    await expect(page.locator("dialog[open]")).toBeVisible();
+    await blockBrowser(false);
     await page.locator("[data-web-open]").click();
-    expect(await app.evaluate(() => Reflect.get(globalThis, "veraWebOpened"))).toEqual([
-      "https://example.com/guide",
-    ]);
+    await expect.poll(opened).toEqual(["https://example.com/guide", "https://example.com/guide"]);
     const transcript = page.locator("[data-transcript]");
     await expect(transcript.locator('[data-tool-row="web_search"]')).toHaveCount(1);
     await expect(transcript.locator('[data-tool-row="web_read"]')).toHaveCount(1);
     if (process.env.VERA_WEB_SCREENSHOT) await page.screenshot({ path: process.env.VERA_WEB_SCREENSHOT });
+    await blockBrowser(true);
     for (const [language, label] of [
       ["ro", "Deschizi un site extern?"],
       ["de", "Externe Website öffnen?"],

@@ -159,6 +159,8 @@ for (const language of ["en", "ro", "de", "fr"] as const) {
       await page.locator('[data-action="create-workbench"]').click();
       const first = await invoke(page, "workbench.config.get", {});
       expect(first.config.privacy?.mask?.agent).toBe("on");
+      await expect(page.locator('[data-session][aria-current="page"]')).toBeVisible();
+      await page.locator('.workbench-group-name[aria-current="page"]').click();
       const openEditor = async () => {
         await page.locator('[data-action="edit-workbench-overview"]').click();
         await page.locator('[data-project-section="privacy"]').click();

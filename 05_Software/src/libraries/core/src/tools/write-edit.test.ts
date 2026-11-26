@@ -59,6 +59,30 @@ it("refuses agent writes to installed plugin files and workbench authority even 
 const read = (ctx: api.ToolContext, path = "file.txt") => api.readTool.execute(ctx, { path }, signal());
 const edit = (ctx: api.ToolContext, oldString: string, newString: string, replaceAll = false) =>
   api.editTool.execute(ctx, { path: "file.txt", oldString, newString, replaceAll }, signal());
+it("uses the same decoding for read and edit when legacy bytes occur after the first window", async () => {
+  const prefix = Buffer.from(`v=é\n${"a\n".repeat(33_000)}`, "utf8");
+  const suffix = Buffer.from("voltage=5µV\n", "latin1");
+  await writeFile(join(root, "file.txt"), Buffer.concat([prefix, suffix]));
+  const ctx = context();
+  const result = await api.readTool.execute(ctx, { path: "file.txt", limit: 1 }, signal());
+  expect(result.text).toBe("1: v=Ã©");
+  await edit(ctx, "v=Ã©", "v=3V");
+  expect(
+    (await readFile(join(root, "file.txt"))).equals(
+      Buffer.concat([Buffer.from("v=3V\n"), prefix.subarray(5), suffix]),
+    ),
+  ).toBe(true);
+});
+it("allows reading a program log without allowing file tools to overwrite it", async () => {
+  await mkdir(join(root, ".vera/runs"));
+  const path = ".vera/runs/run_01ABC.log";
+  await writeFile(join(root, path), "native result\n");
+  const ctx = context();
+  await expect(read(ctx, path)).resolves.toMatchObject({ text: expect.stringContaining("native result") });
+  await expect(api.writeTool.prepare?.(ctx, { path, content: "overwritten" }, signal())).rejects.toThrow(
+    /ignored/,
+  );
+});
 it("registers sequential write/edit and creates UTF8 files and parent folders", async () => {
   const registry = new api.ToolRegistry();
   expect(

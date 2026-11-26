@@ -20,7 +20,7 @@ export function WorkbenchIndexDetails({
   const { t } = useTranslation();
   const status = useDocumentIndexStatus(workbenchId, indexLease);
   const list = useIndexedDocuments(workbenchId);
-  const reindex = useReindexDocuments(workbenchId);
+  const reindex = useReindexDocuments(workbenchId, true);
   const describe = useDescribeDocument();
   const exceptional = useMemo(
     () =>
@@ -65,7 +65,7 @@ export function WorkbenchIndexDetails({
           {missingDetails && !list.isPending && <p>{t("documents.indexFailureDetailsUnavailable")}</p>}
           <div className="overview-index-actions">
             <button type="button" disabled={!canReindex} onClick={() => reindex.mutate()}>
-              {t("documents.reindex")}
+              {t("settings.retry")}
             </button>
           </div>
           {reindex.isError && <ErrorMessage error={reindex.error} />}

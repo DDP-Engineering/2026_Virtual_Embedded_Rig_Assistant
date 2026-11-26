@@ -2,7 +2,7 @@
 
 VERA indexează documentația unui workbench pe calculatorul tău, astfel încât agentul să poată căuta în ea și să citeze exact pagina, secțiunea sau linia pe care a folosit-o. Indexarea și căutarea semantică folosesc modelul local al workbench-ului. BGE Small EN v1.5 este modelul implicit pentru engleză. Un workbench configurat cu Multilingual E5 Small poate găsi pasaje după sens în română, germană, franceză și alte limbi, chiar dacă întrebarea este în altă limbă. Pachetele pentru Windows și Linux includ ambele modele. Poți indexa offline cu oricare dintre ele imediat după instalarea VERA. Când agentul citește un pasaj pentru a-ți răspunde, acel pasaj ajunge la furnizorul tău de modele, la fel ca restul conversației; cu un server local precum LM Studio sau Ollama, rămâne pe calculatorul tău.
 
-Pentru a schimba modelul, deschide **Editează workbench-ul** → **Indexare**, alege modelul și salvează. VERA afișează numărul de documente indexate și îți cere confirmarea. După confirmare, păstrează textul extras și reconstruiește vectorii workbench-ului în fundal. În acest timp poți căuta în continuare după cuvinte-cheie.
+Pentru a schimba modelul, deschide **Editează workbench-ul** → **Indexare**, alege modelul și salvează. VERA afișează numărul de documente indexate și îți cere confirmarea. După confirmare, păstrează textul extras și reconstruiește vectorii workbench-ului în fundal. În acest timp poți căuta în continuare după cuvinte-cheie. Dacă între timp se termină indexarea altor documente, poți confirma în continuare schimbarea.
 
 Mascarea afișării este dezactivată implicit. Când este activată pentru un workbench, secretele salvate din numele fișierelor și textul vizualizatorului apar ca [REDACTED]. Fișierele și rezultatele căutării rămân în listă și deschid același fișier, chiar dacă două nume mascate arată identic. Mascarea afișării nu schimbă indexarea sau ce poate trimite agentul unui model. Imaginile paginilor PDF păstrează octeții originali; se maschează doar textul extras.
 
@@ -17,6 +17,8 @@ Se indexează folderele bifate la **Editează workbench-ul** → **Documente și
 Fișierele vechi `.doc`, `.ppt`, `.xls` și RTF nu sunt indexate; salvează-le într-un format modern. Fișierele care se potrivesc cu `.vera/.veraignore` și tot ce se află în `.vera`, `.git` sau `node_modules` nu sunt indexate niciodată. Nici codul sursă și jurnalele nu sunt indexate; agentul le citește direct cu instrumentele sale pentru fișiere.
 
 Cu **Folosește .gitignore** bifat (implicit pentru workbench-urile noi), nici fișierele și folderele excluse de fișierele `.gitignore` ale workbench-ului nu sunt indexate: cel din folderul workbench-ului și cele din subfoldere, fiecare pentru folderul său, ca în Git. O linie care începe cu `!` în `.vera/.veraignore` readuce un fișier sau un folder exclus de `.gitignore`, cu tot conținutul lui; `.vera`, `.git` și `node_modules` rămân ignorate. Instrumentele agentului pentru fișiere citesc în continuare fișierele excluse doar de `.gitignore`.
+
+Extragerea textului detectează UTF-8 și UTF-16 cu marcaj BOM. Pentru un fișier recunoscut ca text, VERA folosește Windows-1252 când decodarea UTF-8 eșuează.
 
 Indexarea rulează în fundal și urmărește modificările: fișierele noi, modificate și șterse sunt preluate automat.
 
@@ -42,7 +44,7 @@ La **Editează workbench-ul** → **Indexare**, **Căutare în documente** setea
 
 ## Fila Fișiere
 
-Fila **Fișiere** afișează întregul folder al workbench-ului ca arbore. Fișierele ignorate de VERA sunt afișate cu caractere cursive. Caseta **Caută fișiere și documente** filtrează arborele după numele fișierului și listează la **În documente** pasajele potrivite din documentele indexate.
+Fila **Fișiere** afișează întregul folder al workbench-ului ca arbore. Fișierele ignorate de VERA sunt afișate cu caractere cursive. Caseta **Caută fișiere și documente** filtrează arborele după numele fișierului și listează la **În documente** pasajele potrivite din documentele indexate. Revino la fereastra VERA pentru a actualiza arborele de fișiere și rezultatele căutării după schimbări făcute în afara aplicației.
 
 Meniul unui fișier oferă **Deschide**, **Atașează ca context**, **Deschide în** (aplicația implicită sau altă aplicație), **Arată în Explorer** (Finder sau folderul pe alte sisteme), **Copiază** (calea absolută, calea relativă sau numele fișierului) și **Proprietăți**, care include starea indexării.
 
@@ -73,7 +75,7 @@ Fișierele text oferă **Codificare** și **Încadrare pe rânduri**. Marcajele 
 Fișierele mari sunt citite în ferestre. Bara din dreapta selectează poziția în octeți; bara interioară derulează fereastra curentă. Ctrl+Home/End ajunge la începutul/sfârșitul fișierului. Numerele cu ≈ sunt estimări până la finalizarea indexării progresive. Saltul la linie este întâi aproximativ, apoi exact. Căutarea parcurge ferestrele; Enter caută următoarea potrivire, Shift+Enter pe cea anterioară, iar **Anulează** oprește scanarea. Liniile foarte lungi apar în fragmente limitate, marcate cu …; derularea continuă în fragmentul următor. Căutarea numără liniile sursă potrivite și revine la început sau sfârșit. Citatele mari păstrează intervalul verificat.
 
 - Fișierele PDF se derulează continuu și afișează numărul paginii. Mărește sau micșorează cu Ctrl+rotița mouse-ului sau cu Ctrl+= , Ctrl+- și Ctrl+0.
-- Ctrl+F caută text într-un PDF sau într-un document text; în fișierele text, Ctrl+G sare la o linie.
+- Ctrl+F caută în PDF pornind de la pagina curentă. Funcționează și în documentele text. Ctrl+G sare la o pagină sau o linie. Poți mări un PDF până la 400%.
 - Ctrl+Tab și Ctrl+Shift+Tab comută între file, Ctrl+W închide fila curentă, iar Escape revine la **Chat**.
 - Meniul unei file oferă **Închide**, **Închide celelalte**, **Închide la dreapta**, **Mută la stânga** și **Mută la dreapta**. Filele pot fi și trase cu mouse-ul.
 
@@ -102,5 +104,7 @@ Octeții imaginii urmează mascarea Afișare curentă. Mascarea poate împiedica
 ## Starea indexării
 
 Pictograma de lângă numele workbench-ului activ arată starea scanării, indexării sau reconstruirii indexului. Mută focalizarea sau cursorul pe ea pentru a vedea numărul de fișiere, apoi activeaz-o pentru a deschide Fișiere. Fișierele procesate le includ și pe cele omise, pe cele care necesită OCR sau pentru care indexarea a eșuat. Documentele disponibile pentru căutare au fragmente în index. În timpul scanării, totalul nu este afișat până când selecția nu este cunoscută. Într-un workbench doar pentru citire, VERA poate folosi indexul salvat fără să-l verifice din nou. Selectează numele workbench-ului și deschide **Documente și index** din prezentarea generală pentru progres, numărul de fișiere și detalii despre fișierele omise, cele care necesită OCR și eșecuri. Bara din **Fișiere** indică activitatea și păstrează comenzile pentru limită și repornire.
+
+Deschide **Prezentarea generală a workbench-ului**, extinde excepțiile de indexare și alege **Reîncearcă** pentru a relua documentele cu probleme și a păstra rezultatele reușite. Folosește **Reindexează** din **Fișiere** pentru a reface întreaga selecție.
 
 Chatul marchează răspunsul care a folosit o căutare parțială, cuvinte-cheie în locul căutării semantice sau pentru care căutarea a fost indisponibilă. O căutare parțială fără rezultate poate rata surse în așteptare sau excluse. Poți continua conversația sau deschide un fișier cunoscut în timpul actualizării indexului.

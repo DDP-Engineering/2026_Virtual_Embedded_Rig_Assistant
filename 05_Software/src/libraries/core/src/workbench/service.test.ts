@@ -155,6 +155,33 @@ it("reads fresh validated config without catalog discovery while getConfig retai
   }
 });
 
+it("releases the replacement guard when the previous indexer cannot stop", async () => {
+  const h = await harness();
+  const processor: DocumentProcessor = Object.assign(async () => ({ status: "failed" as const }), {
+    release: vi.fn().mockRejectedValueOnce(Error("indexer refused shutdown")),
+  });
+  const active = new WorkbenchService(h.host, processor);
+  const replacement = join(h.root, "replacement");
+  try {
+    await mkdir(replacement);
+    await h.service.create(replacement, "Replacement");
+    await h.service.close();
+    const original = await active.create(h.folder, "Original");
+    let staged: Database.Database | undefined;
+    await expect(
+      active.open(replacement, (_snapshot, db) => {
+        staged = db;
+      }),
+    ).rejects.toThrow("indexer refused shutdown");
+    expect(staged?.open).toBe(false);
+    expect(active.getSnapshot()).toEqual(original);
+    expect((await h.service.open(replacement)).readOnly).toBe(false);
+  } finally {
+    await active.close();
+    await h.service.close();
+  }
+});
+
 it("rejects invalid and changed-identity current config without changing the snapshot", async () => {
   const h = await harness();
   await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
@@ -1263,6 +1290,16 @@ it("lost token reopen and close preserve every live-owner runtime byte while dis
   await h.service.close();
   expect(await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))))).toEqual(before);
 });
+it("reclaims a stale lock when its PID has been reused and the native guard is free", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  await h.service.close();
+  const path = join(h.folder, ".vera", "lock");
+  await writeFile(path, JSON.stringify({ pid: process.pid, app: "other", since: "now", token: "stale" }));
+  expect((await h.service.open(h.folder)).readOnly).toBe(false);
+  expect(await readFile(path, "utf8")).not.toContain('"token":"stale"');
+  await h.service.close();
+});
 it("failed prior-lock unlink leaves prior storage usable and releases replacement storage/token", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");
@@ -1324,10 +1361,16 @@ it("live owner opens a WAL snapshot readonly and leaves source bytes intact, abs
     join(h.folder, ".vera/lock"),
     JSON.stringify({ pid: process.pid, app: "owner", since: "now" }),
   );
-  expect((await reader.open(h.folder)).readOnly).toBe(true);
-  expect(existsSync(join(h.folder, ".vera/vera.db"))).toBe(false);
-  expect(() => reader.getDatabase()).toThrow();
-  await reader.close();
+  const liveGuard = await acquireGuard(h.folder);
+  if (!liveGuard) throw Error("Expected the simulated live owner to acquire its guard");
+  try {
+    expect((await reader.open(h.folder)).readOnly).toBe(true);
+    expect(existsSync(join(h.folder, ".vera/vera.db"))).toBe(false);
+    expect(() => reader.getDatabase()).toThrow();
+    await reader.close();
+  } finally {
+    await liveGuard();
+  }
 });
 it("creates the specified English template and rejects malformed YAML with line and another format before writes", async () => {
   const h = await harness();

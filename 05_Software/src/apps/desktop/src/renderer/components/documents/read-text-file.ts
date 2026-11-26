@@ -42,6 +42,7 @@ export async function readTextFile(
     };
     if (existing?.byteSource) {
       const verified = existing.byteSource;
+      largeText.encoding = verified.encoding ?? "utf-8";
       largeText.verified = { revision: verified.revision, lines: verified.lines, utf8Log: verified.utf8Log };
       return { workbenchId, content, textBytes: undefined, largeText };
     }

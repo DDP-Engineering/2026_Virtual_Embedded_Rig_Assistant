@@ -130,7 +130,7 @@ O imagine trimisă unui model părăsește calculatorul dacă furnizorul ruleaz�
 
 ## Testează o conexiune
 
-**Testează** rulează patru verificări: **Conectivitate**, **Autentificare și model**, **Apelare instrumente** și **Streaming**. Fiecare afișează **Reușit**, **Eșuat** sau **Omis**. Agentul folosește apeluri de instrumente pentru a căuta în documente, a citi și modifica fișiere și a rula programe, așa că alege un model care trece de **Apelare instrumente**.
+**Testează** rulează patru verificări: **Conectivitate**, **Autentificare și model**, **Apelare instrumente** și **Streaming**. Fiecare afișează **Reușit**, **Eșuat** sau **Omis**. Agentul folosește apeluri de instrumente pentru a căuta în documente, a citi și modifica fișiere și a rula programe, așa că alege un model care trece de **Apelare instrumente**. Poți testa un furnizor înainte să alegi modelul implicit al aplicației. VERA folosește modelul implicit al acelui furnizor sau unul dintre modelele sale activate, când este disponibil.
 
 ## Chei și stocare securizată
 

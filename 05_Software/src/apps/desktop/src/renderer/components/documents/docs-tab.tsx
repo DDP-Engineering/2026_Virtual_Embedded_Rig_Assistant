@@ -79,9 +79,11 @@ export function DocsTab({
     const offApp = api.subscribe("app", (event) => {
       if (event.type === "settings.changed") resetDisplay();
     });
+    window.addEventListener("focus", refreshSoon);
     refresh();
     return () => {
       clearTimeout(timer);
+      window.removeEventListener("focus", refreshSoon);
       off();
       offApp();
     };

@@ -29,13 +29,16 @@ import { ReasoningPicker } from "./reasoning-picker.js";
  * Typed text per session, for the life of the window: the composer unmounts when the user opens another
  * session, Settings, Help or Plugins, and a long prompt must still be there on the way back.
  */
-const drafts = new Map<string, string>();
+type Draft = { text: string; revision: number };
+const drafts = new Map<string, Draft>();
+const draftUpdates = new EventTarget();
 
 export type ComposerState = Pick<SessionState, "mode" | "modelRef" | "status" | "activeTurnId" | "reasoning">;
 
 export function Composer({
   state,
   disabled,
+  draftDisabled = false,
   sendDisabled: sendingLocked = false,
   archived = false,
   send,
@@ -55,6 +58,7 @@ export function Composer({
   workbenchId?: string;
   state: ComposerState;
   disabled: boolean;
+  draftDisabled?: boolean;
   sendDisabled?: boolean;
   archived?: boolean;
   send: (text: string, images?: string[]) => Promise<boolean>;
@@ -64,24 +68,31 @@ export function Composer({
 }) {
   const { t } = useTranslation();
   const draftKey = sessionId && workbenchId ? `${workbenchId}/${sessionId}` : undefined;
-  const [text, setText] = useState(() => (draftKey ? (drafts.get(draftKey) ?? "") : ""));
-  const draft = useRef({ text, revision: 0 });
+  const draft = useRef((draftKey ? drafts.get(draftKey) : undefined) ?? { text: "", revision: 0 });
+  const [text, setText] = useState(draft.current.text);
   const shownKey = useRef(draftKey);
   const updateDraft = useCallback((value: string) => {
     if (draft.current.text === value) return;
     draft.current = { text: value, revision: draft.current.revision + 1 };
     setText(value);
     if (!shownKey.current) return;
-    if (value) drafts.set(shownKey.current, value);
+    if (value) drafts.set(shownKey.current, draft.current);
     else drafts.delete(shownKey.current);
+    draftUpdates.dispatchEvent(new Event(shownKey.current));
   }, []);
-  // The same composer shown for another session takes up that session's draft.
-  useEffect(() => {
-    if (shownKey.current === draftKey) return;
-    shownKey.current = draftKey;
-    const kept = draftKey ? (drafts.get(draftKey) ?? "") : "";
-    draft.current = { text: kept, revision: draft.current.revision + 1 };
-    setText(kept);
+  // A composer remounted during send must observe that draft's eventual acknowledgement.
+  useLayoutEffect(() => {
+    const sync = () => {
+      const saved = draftKey ? drafts.get(draftKey) : undefined;
+      if (shownKey.current === draftKey && (saved ? draft.current === saved : !draft.current.text)) return;
+      shownKey.current = draftKey;
+      draft.current = saved ?? { text: "", revision: draft.current.revision + 1 };
+      setText(draft.current.text);
+    };
+    sync();
+    if (!draftKey) return;
+    draftUpdates.addEventListener(draftKey, sync);
+    return () => draftUpdates.removeEventListener(draftKey, sync);
   }, [draftKey]);
   const [token, setToken] = useState<{ start: number; end: number; query: string }>();
   const [matches, setMatches] = useState<string[]>([]);
@@ -124,10 +135,9 @@ export function Composer({
   }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
-  const locked = disabled || sendingLocked || archived || state.status === "awaiting_approval";
-  // The message box is disabled while a send is pending, which drops its focus; once it is enabled again
-  // focus returns there (a refused send keeps the draft to edit or resend, REQ-UX-f20cb322), unless the
-  // user has focused something else meanwhile.
+  const locked = disabled || archived || draftDisabled;
+  const sendingBlocked = locked || sendingLocked || state.status === "awaiting_approval";
+  // Reopening an editable session restores focus if the host temporarily disabled the composer.
   const refocus = useRef(false);
   useEffect(() => {
     if (locked || !refocus.current) return;
@@ -181,7 +191,7 @@ export function Composer({
     ],
   );
   const sendDisabled =
-    locked ||
+    sendingBlocked ||
     imageDraft?.pending ||
     imageModelPending ||
     (!text.trim() && !attached.length && !images.length);
@@ -233,7 +243,10 @@ export function Composer({
     try {
       const message = withMentions(submitted.text, sent);
       if (await (sentImages.length ? send(message, sentImages) : send(message))) {
-        if (draft.current === submitted) updateDraft("");
+        if (draftKey && drafts.get(draftKey) === submitted) {
+          drafts.delete(draftKey);
+          draftUpdates.dispatchEvent(new Event(draftKey));
+        } else if (!draftKey && draft.current === submitted) updateDraft("");
         if (sessionId && sent.length) attachments?.clear(sessionId, sent);
         if (sessionId && workbenchId && sentImages.length)
           attachments?.clearImages?.(workbenchId, sessionId, sentImages);

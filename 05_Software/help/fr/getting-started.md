@@ -31,11 +31,11 @@ Les détails figurent dans [Fournisseurs et modèles](providers.md).
 3. Sous **Documents et RAG**, vérifiez les dossiers de documentation trouvés par VERA, ou utilisez **Ajouter un dossier…**.
 4. Sélectionnez **Créer un banc de travail**.
 
-VERA lance l’indexation en arrière-plan. Vous pouvez déjà discuter ; la barre d’outils de **Fichiers** indique l’activité et la vue d’ensemble du banc affiche la progression détaillée. Consultez [Bancs de travail](workbenches.md) et [Documents et recherche](documents-and-search.md).
+VERA ouvre une session, place le focus dans la zone de message et lance l’indexation en arrière-plan. Vous pouvez déjà discuter ; la barre d’outils de **Fichiers** indique l’activité et la vue d’ensemble du banc affiche la progression détaillée. Consultez [Bancs de travail](workbenches.md) et [Documents et recherche](documents-and-search.md).
 
 ## Étape 3 : poser une première question
 
-1. Sélectionnez **Nouvelle session**.
+1. Utilisez la session ouverte avec le banc de travail. Pour une autre conversation, sélectionnez **Nouvelle session**.
 2. Dans les commandes de la zone de message, choisissez un **Modèle**. Laissez pour l’instant le mode d’autorisation sur **Demander**.
 3. Saisissez une question sur votre projet, par exemple « Quelle est la fréquence d’horloge SPI maximale du capteur, et quelles broches utilise-t-il ? », puis appuyez sur Enter.
 

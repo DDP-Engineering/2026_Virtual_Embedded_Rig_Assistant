@@ -1,0 +1,130 @@
+version: 0.4.0
+date: 2026-11-26
+entries:
+  - category: fixed
+    topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
+    text:
+      en: Keep chat drafts and return to the latest message. Long conversations compact faster.
+      ro: Păstrează ciornele și revino la ultimul mesaj. Conversațiile lungi se compactează mai rapid.
+      de: Entwürfe behalten und zur neuesten Nachricht springen. Lange Chats schneller verdichten.
+      fr: Gardez les brouillons et revenez au dernier message. Les longs chats se résument plus vite.
+  - category: fixed
+    topic: { en: Documents, ro: Documente, de: Dokumente, fr: Documents }
+    text:
+      en: Retry failed documents while keeping successful results. Index more text encodings.
+      ro: Reîncearcă documentele eșuate și păstrează rezultatele bune. Indexează mai multe codări.
+      de: Fehlgeschlagene Dokumente erneut versuchen und mehr Textkodierungen indizieren.
+      fr: Réessayez les documents en échec et indexez davantage de codages de texte.
+  - category: new
+    topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
+    text:
+      en: Open a cited packet from a saved capture in Wireshark Desktop.
+      ro: Deschide în Wireshark Desktop un cadru citat dintr-o captură salvată.
+      de: Ein zitiertes Paket aus einem gespeicherten Mitschnitt in Wireshark Desktop öffnen.
+      fr: Ouvrez une trame citée d’une capture enregistrée dans Wireshark Desktop.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Inspect saved captures offline with Wireshark, using filters and frame references.
+      ro: Inspectează capturi offline cu Wireshark, folosind filtre și referințe la cadre.
+      de: Gespeicherte Mitschnitte offline mit Wireshark, Filtern und Paketverweisen prüfen.
+      fr: Inspectez les captures hors ligne avec Wireshark, des filtres et des références de trame.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze traffic, timing and streams in saved Wireshark captures with frame references.
+      ro: Analizează traficul, timpii și fluxurile din capturi Wireshark, cu referințe la cadre.
+      de: Verkehr, Antwortzeiten und Datenströme in Wireshark-Mitschnitten mit Paketverweisen prüfen.
+      fr: Analysez le trafic, les temps de réponse et les flux Wireshark avec des renvois aux trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze DoIP, SOME/IP and Service Discovery in saved captures with PDU and frame references.
+      ro: Analizează DoIP, SOME/IP și Service Discovery în capturi salvate, cu referințe la PDU-uri și cadre.
+      de: DoIP, SOME/IP und Service Discovery in Mitschnitten mit PDU- und Paketverweisen prüfen.
+      fr: Analysez DoIP, SOME/IP et Service Discovery avec des références aux PDU et aux trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze network protocols in saved captures and return redacted evidence with frame links.
+      ro: Analizează protocoale din capturi salvate și obține dovezi mascate cu legături la cadre.
+      de: Netzwerkprotokolle in Mitschnitten prüfen und maskierte Belege mit Paketverweisen erhalten.
+      fr: Analysez les protocoles réseau et obtenez des preuves masquées avec des liens vers les trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Split, merge and clean saved Wireshark captures while keeping the originals.
+      ro: Împarte, combină și curăță capturi Wireshark salvate, păstrând originalele.
+      de: Wireshark-Mitschnitte teilen, zusammenführen und bereinigen. Originale bleiben erhalten.
+      fr: Divisez, fusionnez et nettoyez des captures Wireshark en conservant les originaux.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Import firmware and UART hexdumps as Wireshark captures with source provenance.
+      ro: Importă dumpuri hexazecimale firmware și UART ca capturi Wireshark cu proveniența sursei.
+      de: Firmware- und UART-Hexdumps als Wireshark-Mitschnitte mit Herkunftsnachweis importieren.
+      fr: Importez des dumps hexadécimaux firmware et UART dans Wireshark avec leur provenance.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Compare saved captures offline with traffic differences and links to original frames.
+      ro: Compară offline capturi salvate și vezi diferențele de trafic și cadrele originale.
+      de: Gespeicherte Mitschnitte offline vergleichen und Unterschiede mit Paketverweisen sehen.
+      fr: Comparez des captures hors ligne avec les écarts de trafic et les liens vers les trames.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Capture bounded local traffic with Wireshark and retain verified segments.
+      ro: Capturează trafic local cu Wireshark, în limite stabilite, și păstrează segmentele verificate.
+      de: Lokalen Verkehr begrenzt mit Wireshark mitschneiden und geprüfte Segmente behalten.
+      fr: Capturez le trafic local avec Wireshark et conservez les segments vérifiés.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Analyze saved Wi-Fi, BLE, USB and VoIP captures with frame links and RTP statistics.
+      ro: Analizează capturi Wi-Fi, BLE, USB și VoIP cu legături la cadre și statistici RTP.
+      de: WLAN-, BLE-, USB- und VoIP-Mitschnitte mit Paketverweisen und RTP-Statistik prüfen.
+      fr: Analysez les captures Wi-Fi, BLE, USB et VoIP avec des liens de trame et des mesures RTP.
+
+  - category: fixed
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Change reasoning while a delegated session is working.
+      ro: Schimbă nivelul de reasoning în timpul unei sesiuni delegate.
+      de: Reasoning während einer delegierten Sitzung ändern.
+      fr: Modifier le raisonnement pendant une session déléguée.
+  - category: improved
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Completed program and shell operations are grouped and expandable.
+      ro: Operațiile finalizate pentru programe și comenzi sunt grupate și extensibile.
+      de: Abgeschlossene Programm- und Shell-Aktionen sind gruppiert und aufklappbar.
+      fr: Les opérations terminées des programmes et commandes sont groupées et dépliables.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
+    text:
+      en: Delegated Bypass tasks start in Auto-edit unless Full Access is allowed.
+      ro: Sarcinile delegate din Bypass pornesc în Editare automată dacă accesul complet nu e permis.
+      de: Delegierte Bypass-Aufgaben starten ohne Vollzugriff im Modus Automatisch bearbeiten.
+      fr: Sans accès complet, les tâches déléguées depuis Bypass démarrent en Modification auto.
+  - category: new
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Delegated sessions appear as an expandable tree under their parent in the session list.
+      ro: Sesiunile delegate apar ca arbore extensibil sub sesiunea părinte în lista de sesiuni.
+      de: Delegierte Sitzungen erscheinen als aufklappbarer Baum unter ihrer Sitzung in der Liste.
+      fr: Les sessions déléguées apparaissent en arbre dépliable sous leur parent dans la liste.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Filter plugins by what they need, such as a Python script, an external program or settings.
+      ro: Filtrează pluginurile după ce necesită, de exemplu un script Python, un program extern sau setări.
+      de: Plugins nach Voraussetzungen filtern, etwa Python-Skript, externes Programm oder Einstellungen.
+      fr: Filtrez les plugins par prérequis, par exemple un script Python, un programme ou des réglages.
+  - category: improved
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Long tasks stop less often, and a stopped turn now explains where it is and offers Continue.
+      ro: Sarcinile lungi se opresc mai rar, iar o tură oprită explică unde a ajuns și oferă Continuă.
+      de: Lange Aufgaben stoppen seltener; ein gestoppter Durchlauf erklärt den Stand und bietet Fortsetzen.
+      fr: Les tâches longues s’arrêtent moins. Un tour arrêté résume son état et propose Continuer.

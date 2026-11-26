@@ -8,6 +8,7 @@
 | **Acces web** | Căutarea și citirea pe web pentru agent |
 | **Aspect și limbă** | Limba, tema și dimensiunile textului |
 | **Comenzi** | Shell-ul pentru comenzile agentului și terminalele noi |
+| **Permisiuni** | Acces complet pentru sarcinile delegate. Vezi [Permisiuni](permissions.md). |
 | **Notificări** | Alerte desktop pentru finalizarea turelor, aprobări și întrebări |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
@@ -78,7 +79,7 @@ Accesul web îi permite agentului să caute pe webul public, să citească pagin
 3. Alege **Mod de acces**: **Anonim — fără cont** sau **Folosește cheia mea API** și introdu cheia. Brave are întotdeauna nevoie de o cheie și doar caută; nu poate citi pagini.
 4. Selectează **Salvează**, apoi **Testează conexiunea**.
 
-Doar textul căutării și adresele cerute de agent părăsesc calculatorul tău; VERA nu încarcă fișiere de proiect pentru o căutare. Utilizarea anonimă este supusă limitelor furnizorului. Rezultatele web sunt tratate drept conținut nesigur, iar agentul le citează cu linkurile lor publice; la deschiderea unui link, ești întrebat înainte ca browserul să îl deschidă.
+Doar textul căutării și adresele cerute de agent părăsesc calculatorul tău; VERA nu încarcă fișiere de proiect pentru o căutare. Utilizarea anonimă este supusă limitelor furnizorului. Rezultatele web sunt tratate drept conținut nesigur, iar agentul le citează cu linkurile lor publice. Selectează o citare ca să deschizi linkul public în browser.
 
 Dezactivarea accesului web oprește și căutările și descărcările în curs. Workbench-urile individuale pot dezactiva instrumentele web la **Editează workbench-ul** → **Instrumente**.
 

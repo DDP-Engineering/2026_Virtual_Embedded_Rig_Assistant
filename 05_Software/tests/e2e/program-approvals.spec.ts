@@ -85,10 +85,14 @@ test("approves a device-write run on the card and an irreversible run only with 
   await approve.click();
   await expect(burn.getByRole("alert")).toContainText("The typed word does not match");
   await expect(burn.getByRole("status")).toHaveCount(0);
-  await expect(input).toBeDisabled();
+  await expect(input).toBeEditable();
+  await input.fill("Follow-up draft");
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await expect(send).toBeDisabled();
   await word.fill("burn-key");
   await approve.click();
-  await expect(input).toBeEnabled();
+  await expect(send).toBeEnabled();
+  await expect(input).toHaveValue("Follow-up draft");
   const burnSummary = page.locator("[data-external-tool-group] .disclosure-toggle").last();
   await expect(burnSummary).toHaveAttribute("aria-expanded", "false");
   await burnSummary.click();
@@ -130,12 +134,9 @@ test("lists irreversible plugin rules in the bypass warning, then runs the comma
   await expect(warning).toBeHidden();
   await input.fill("burn the key");
   await input.press("Enter");
-  const group = page.locator("[data-external-tool-group]");
-  await group.locator(".disclosure-toggle").first().click();
-  await group.locator('[data-tool-row="run_program"] > button').click();
-  await expect(group.locator('[data-completed-approval-details] [role="status"]')).toHaveText(
-    "Approved · automatic mode",
-  );
-  await expect(group.locator("[data-approval-confirmation]")).toHaveCount(0);
+  await page.getByRole("button", { name: "run_program · espefuse · Approved", exact: true }).click();
+  const completed = page.locator('[data-approval-card][data-risk="irreversible"]');
+  await expect(completed.getByRole("status")).toHaveText("Approved · automatic mode");
+  await expect(completed.locator("[data-approval-confirmation]")).toHaveCount(0);
   await expect(input).toBeEnabled();
 });

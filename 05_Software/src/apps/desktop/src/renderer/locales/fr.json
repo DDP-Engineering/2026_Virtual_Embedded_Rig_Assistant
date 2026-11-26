@@ -582,6 +582,7 @@
     "searchMatches": "Messages correspondants : {{count}}",
     "searchHint": "Saisissez du texte pour trouver les messages correspondants.",
     "searchMatch": "Résultat de recherche",
+    "latestMessage": "Aller au dernier message",
     "messagePlaceholder": "Interrogez VERA sur votre projet…",
     "defaultModelShort": "Modèle par défaut",
     "contextWindow": "Fenêtre de contexte",

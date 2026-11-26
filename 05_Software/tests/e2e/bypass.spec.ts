@@ -86,22 +86,24 @@ test("marked Bypass selectors confirm each change and cancellation retains the p
   await page.locator('[data-project-section="agent"]').click();
   await expect(page.locator("#panel-docs")).toBeVisible();
   const form = page.locator(".workbench-agent-settings");
-  await expect(form.locator("[data-session-launch] > button")).toBeVisible();
-  const rows = await form.locator(":scope > label, :scope > [data-session-launch]").evaluateAll((elements) =>
-    elements.map((element) => {
-      const label = element.querySelector("span")?.getBoundingClientRect();
-      const control = element.querySelector("input, select, button")?.getBoundingClientRect();
-      if (!label || !control) throw Error("Missing settings label or control");
-      return { labelRight: label.right, controlLeft: control.left, top: control.top };
-    }),
-  );
-  await expect(form.locator(".workbench-question-toggle input")).toBeVisible();
-  expect(rows).toHaveLength(5);
+  await expect(form.locator("[data-permission-picker]")).toBeVisible();
+  const rows = await form
+    .locator(":scope > label, :scope > .workbench-question-setting")
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const label = element.querySelector(":scope > label, :scope > span")?.getBoundingClientRect();
+        const control = element.querySelector("input, select, button")?.getBoundingClientRect();
+        if (!label || !control) throw Error("Missing settings label or control");
+        return { labelRight: label.right, controlLeft: control.left, top: control.top };
+      }),
+    );
+  await expect(form.locator('.workbench-question-setting input[type="checkbox"]')).toBeVisible();
+  expect(rows).toHaveLength(4);
   expect(
     rows.every(({ labelRight, controlLeft }) => labelRight < controlLeft),
     JSON.stringify(rows),
   ).toBe(true);
-  expect(rows.map(({ controlLeft }) => controlLeft)).toEqual(Array(5).fill(rows[0]?.controlLeft));
+  expect(rows.map(({ controlLeft }) => controlLeft)).toEqual(Array(4).fill(rows[0]?.controlLeft));
   expect(rows.every(({ top }, index) => index === 0 || top > (rows[index - 1]?.top ?? 0))).toBe(true);
 });
 
@@ -169,6 +171,10 @@ test("native Bypass refuses application-data reads and writes and confirms each 
     await page.locator("#workbench-name").fill("Bypass bench");
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
+    const starter = page.locator('[data-session][aria-current="page"]');
+    const starterId = await starter.getAttribute("data-session");
+    if (!starterId) throw Error("Missing starter session");
+    await page.locator('.workbench-group-name[aria-current="page"]').click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="agent"]').click();
     await page.locator(".workbench-editor [data-permission-picker]").selectOption("bypass");
@@ -179,6 +185,10 @@ test("native Bypass refuses application-data reads and writes and confirms each 
     await expect(page.locator(".workbench-editor [data-permission-picker]")).toBeFocused();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
+    await page.evaluate(async (sessionId) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      await api.invoke("session.archive.set", { sessionId, archived: true });
+    }, starterId);
     await page.locator('[data-action="new-session"]').click();
     let picker = page.locator(".composer [data-permission-picker]");
     await expect(picker).toHaveValue("bypass");

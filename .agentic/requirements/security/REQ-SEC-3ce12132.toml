@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-3ce12132"
+
+title = "Confine agent access to run logs to read operations"
+
+status = "active"
+
+requirement = """
+When an agent accesses a managed program log outside Bypass, the file tools shall admit direct read, search and parsing of the ordinary log without extending write or sibling-file authority. Verified line citations shall open the same guarded sources.
+"""
+
+verification = "Read, search, parse and open a verified citation to a direct run log; refuse a direct write, redirected run log and other runtime paths in ordinary modes."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/knowledge/viewer.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/read.test.ts", "05_Software/src/libraries/core/src/tools/grep.test.ts", "05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/src/libraries/core/src/tools/write-edit.test.ts", "05_Software/src/libraries/core/src/knowledge/viewer.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-26

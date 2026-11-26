@@ -8,6 +8,7 @@
 | **Webzugriff** | Websuche und Lesen von Webseiten für den Agenten |
 | **Darstellung und Sprache** | Sprache, Design und Textgrößen |
 | **Befehle** | Die Shell für Agentenbefehle und neue Terminals |
+| **Berechtigungen** | Vollzugriff für delegierte Aufgaben. Siehe [Berechtigungen](permissions.md). |
 | **Benachrichtigungen** | Desktop-Hinweise bei abgeschlossenen Durchläufen, Freigaben und Fragen |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
@@ -78,7 +79,7 @@ Der Webzugriff erlaubt dem Agenten, das öffentliche Web zu durchsuchen, öffent
 3. Wählen Sie den **Zugriffsmodus**: **Anonym — kein Konto erforderlich** oder **Meinen API-Schlüssel verwenden**, und geben Sie dann den Schlüssel ein. Brave benötigt immer einen Schlüssel und kann nur suchen, keine Seiten lesen.
 4. Wählen Sie **Speichern** und dann **Verbindung testen**.
 
-Nur der Suchtext und die Adressen, die der Agent anfordert, verlassen Ihren Computer; VERA lädt für eine Suche keine Projektdateien hoch. Die anonyme Nutzung unterliegt den Limits des Anbieters. Webergebnisse werden als nicht vertrauenswürdige Inhalte behandelt, und der Agent zitiert sie mit ihren öffentlichen Links; beim Öffnen eines Links wird nachgefragt, bevor Ihr Browser ihn öffnet.
+Nur der Suchtext und die Adressen, die der Agent anfordert, verlassen Ihren Computer; VERA lädt für eine Suche keine Projektdateien hoch. Die anonyme Nutzung unterliegt den Limits des Anbieters. Webergebnisse werden als nicht vertrauenswürdige Inhalte behandelt, und der Agent zitiert sie mit ihren öffentlichen Links. Wählen Sie einen Quellenverweis, um dessen öffentlichen Link im Browser zu öffnen.
 
 Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einzelne Workbenches können die Webwerkzeuge unter **Workbench bearbeiten** → **Werkzeuge** deaktivieren.
 

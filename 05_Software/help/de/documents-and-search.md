@@ -2,7 +2,7 @@
 
 VERA indiziert die Dokumentation eines Workbenchs auf Ihrem Computer, damit der Agent sie durchsuchen und genau die Seite, den Abschnitt oder die Zeile angeben kann, die er verwendet hat. Indizierung und semantische Suche verwenden das lokale Modell des Workbenchs. BGE Small EN v1.5 ist das Standardmodell für Englisch. Ein Workbench mit Multilingual E5 Small findet passende Textstellen auf Rumänisch, Deutsch, Französisch und in weiteren Sprachen, auch bei einer Anfrage in einer anderen Sprache. Die Pakete für Windows und Linux enthalten beide Modelle. Mit beiden können Sie direkt nach der Installation offline indizieren. Liest der Agent eine Textstelle, um Ihnen zu antworten, geht diese Textstelle wie der Rest der Unterhaltung an Ihren Modellanbieter; mit einem lokalen Server wie LM Studio oder Ollama bleibt sie auf Ihrem Computer.
 
-Öffnen Sie **Workbench bearbeiten** → **Indizierung**, wählen Sie das Modell und speichern Sie. VERA zeigt die Anzahl der indizierten Dokumente an und bittet um Bestätigung. Danach erstellt VERA die Vektoren des Workbenchs im Hintergrund neu und behält den extrahierten Text. Die Stichwortsuche bleibt währenddessen verfügbar.
+Öffnen Sie **Workbench bearbeiten** → **Indizierung**, wählen Sie das Modell und speichern Sie. VERA zeigt die Anzahl der indizierten Dokumente an und bittet um Bestätigung. Danach erstellt VERA die Vektoren des Workbenchs im Hintergrund neu und behält den extrahierten Text. Die Stichwortsuche bleibt währenddessen verfügbar. Wenn während der Bestätigung weitere Dokumente fertig indiziert werden, können Sie den Wechsel weiterhin bestätigen.
 
 Die Anzeigemaskierung ist standardmäßig ausgeschaltet. Wenn sie für einen Workbench aktiviert ist, erscheinen gespeicherte Geheimnisse in Dateinamen und im Viewer-Text als [REDACTED]. Dateien und Suchtreffer bleiben aufgelistet und öffnen dieselbe Datei, auch wenn zwei maskierte Namen gleich aussehen. Dies ändert weder die Indizierung noch die Daten, die der Agent an ein Modell senden darf. PDF-Seitenbilder behalten ihre ursprünglichen Bytes; nur extrahierter Text wird maskiert.
 
@@ -17,6 +17,8 @@ Indiziert werden die Ordner, die unter **Workbench bearbeiten** → **Dokumente 
 Ältere `.doc`-, `.ppt`-, `.xls`- und RTF-Dateien werden nicht indiziert; speichern Sie sie in einem modernen Format. Dateien, auf die `.vera/.veraignore` zutrifft, und alles in `.vera`, `.git` oder `node_modules` werden nie indiziert. Auch Quellcode und Protokolle werden nicht indiziert; der Agent liest sie direkt mit seinen Dateiwerkzeugen.
 
 Ist **.gitignore verwenden** aktiviert (Standard für neue Workbenches), werden auch Dateien und Ordner nicht indiziert, die die `.gitignore`-Dateien des Workbenchs ausschließen: die im Workbench-Ordner und die in seinen Unterordnern, jede für ihren eigenen Ordner, wie in Git. Eine Zeile, die in `.vera/.veraignore` mit `!` beginnt, holt eine Datei oder einen Ordner zurück, den `.gitignore` ausschließt, mit allem darin; `.vera`, `.git` und `node_modules` bleiben ignoriert. Die Dateiwerkzeuge des Agenten lesen Dateien, die nur `.gitignore` ausschließt, weiterhin.
+
+Die Textextraktion erkennt UTF-8 und UTF-16 mit Byte Order Mark (BOM). Schlägt die UTF-8-Dekodierung einer als Text erkannten Datei fehl, verwendet VERA Windows-1252.
 
 Die Indizierung läuft im Hintergrund und folgt Änderungen: Neue, geänderte und gelöschte Dateien werden automatisch erfasst.
 
@@ -42,7 +44,7 @@ Unter **Workbench bearbeiten** → **Indizierung** legt **Dokumentsuche** die St
 
 ## Der Tab Dateien
 
-Der Tab **Dateien** zeigt den gesamten Workbench-Ordner als Baum. Von VERA ignorierte Dateien werden kursiv dargestellt. Das Feld **Dateien und Dokumente suchen** filtert den Baum nach Dateinamen und listet unter **In Dokumenten** passende Textstellen aus indizierten Dokumenten auf.
+Der Tab **Dateien** zeigt den gesamten Workbench-Ordner als Baum. Von VERA ignorierte Dateien werden kursiv dargestellt. Das Feld **Dateien und Dokumente suchen** filtert den Baum nach Dateinamen und listet unter **In Dokumenten** passende Textstellen aus indizierten Dokumenten auf. Wechseln Sie zurück zum VERA-Fenster, um nach Änderungen außerhalb der App den Dateibaum und die Suchergebnisse zu aktualisieren.
 
 Das Menü einer Datei bietet **Öffnen**, **Als Kontext anhängen**, **Öffnen in** (die Standard-App oder eine andere App), **Im Explorer anzeigen** (Finder bzw. Ordner auf anderen Systemen), **Kopieren** (absoluter Pfad, relativer Pfad oder Dateiname) und **Eigenschaften**, einschließlich des Indexstatus.
 
@@ -73,7 +75,7 @@ Textdateien bieten **Zeichenkodierung** und **Zeilenumbruch**. UTF-8- und UTF-16
 Große Dateien werden in Fenstern gelesen. Die rechte Bildlaufleiste wählt eine Byteposition; die innere bewegt sich im aktuellen Textfenster. Ctrl+Home/End springt zum Dateianfang/-ende. Zeilennummern mit ≈ sind Schätzungen, bis die fortlaufende Indizierung sie präzisiert. Ein Zeilensprung ist zunächst ungefähr, dann exakt. Die Suche durchsucht Fenster; Enter findet den nächsten, Shift+Enter den vorherigen Treffer. **Abbrechen** stoppt die Suche. Sehr lange Zeilen erscheinen in begrenzten, mit … markierten Abschnitten; beim Scrollen folgt der nächste Abschnitt. Die Suche zählt passende Quellzeilen und setzt am anderen Ende fort. Große Zitate behalten ihren geprüften Bereich.
 
 - PDF-Dateien scrollen fortlaufend und zeigen die Seitenzahl. Zoomen Sie mit Ctrl+Mausrad oder mit Ctrl+= , Ctrl+- und Ctrl+0.
-- Ctrl+F sucht Text in einem PDF- oder Textdokument; in Textdateien springt Ctrl+G zu einer Zeile.
+- Ctrl+F sucht in PDF-Dateien ab der aktuellen Seite und funktioniert auch in Textdokumenten. Mit Ctrl+G springen Sie zu einer Seite oder Zeile. PDF-Dateien lassen sich bis auf 400 % vergrößern.
 - Ctrl+Tab und Ctrl+Shift+Tab wechseln zwischen Tabs, Ctrl+W schließt den aktuellen Tab, und Escape kehrt zu **Chat** zurück.
 - Das Menü eines Tabs bietet **Schließen**, **Andere schließen**, **Rechts schließen**, **Nach links verschieben** und **Nach rechts verschieben**. Tabs lassen sich auch ziehen.
 
@@ -102,5 +104,7 @@ Die Bildbytes folgen der aktuellen Anzeigemaskierung. Maskierung kann die Dekodi
 ## Indizierungsstatus
 
 Das Symbol neben dem Namen der aktiven Workbench zeigt den Stand der Erfassung, Indizierung oder Neuerstellung. Fokussieren Sie das Symbol oder zeigen Sie darauf, um die gemessenen Anzahlen zu sehen. Aktivieren Sie es, um Dateien zu öffnen. Zu den verarbeiteten Dateien zählen auch übersprungene, OCR-pflichtige und fehlgeschlagene Dateien. Durchsuchbare Dokumente haben Textstellen im Index. Während der Erfassung erscheint erst nach Abschluss der Auswahl eine Gesamtzahl. In einer schreibgeschützten Workbench kann VERA den gespeicherten Index ohne erneute Prüfung nutzen. Wählen Sie den Workbench-Namen. Unter **Dokumente und Index** in der Übersicht finden Sie Fortschritt, Anzahlen und Details zu übersprungenen, OCR-pflichtigen und fehlgeschlagenen Dateien. Die Symbolleiste in **Dateien** zeigt die Aktivität. Dateilimit und Neustart bleiben dort verfügbar.
+
+Öffnen Sie die **Workbench-Übersicht**, klappen Sie die Ausnahmen der Indizierung auf und wählen Sie **Erneut versuchen**, um Dateien mit Problemen erneut zu verarbeiten. Erfolgreiche Ergebnisse bleiben erhalten. **Neu indizieren** in **Dateien** verarbeitet die gesamte Auswahl erneut.
 
 Der Chat kennzeichnet Antworten mit teilweiser Dokumentensuche, Stichwortsuche als Ersatz oder nicht verfügbarer Suche. Eine Teilsuche ohne Treffer kann ausstehende oder ausgeschlossene Quellen übersehen. Sie können während der Aktualisierung weiter chatten oder eine bekannte Datei öffnen.

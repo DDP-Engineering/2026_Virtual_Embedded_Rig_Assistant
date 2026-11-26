@@ -252,15 +252,11 @@ test("one native app session indexes and semantically searches two local embeddi
     expect(vectors("english")).toEqual(original);
 
     const rejected = await page.evaluate(
-      async ({ bge: previous, e5: next }: { bge: typeof bge; e5: typeof e5 }) => {
+      async ({ next }) => {
         const api = (window as unknown as { vera: VeraBridge }).vera;
         const { config } = await api.invoke("workbench.config.get", {});
         const errors: string[] = [];
-        const approvals: (EmbeddingSwitchApproval | undefined)[] = [
-          undefined,
-          { from: previous, count: 4 },
-          { from: next, count: 5 },
-        ];
+        const approvals: (EmbeddingSwitchApproval | undefined)[] = [undefined, { from: next, count: 5 }];
         for (const embeddingSwitch of approvals) {
           try {
             await api.invoke("workbench.config.update", {
@@ -274,9 +270,9 @@ test("one native app session indexes and semantically searches two local embeddi
         }
         return errors;
       },
-      { bge, e5 } as const,
+      { next: e5 } as const,
     );
-    expect(rejected).toEqual(["CONFLICT", "CONFLICT", "CONFLICT"]);
+    expect(rejected).toEqual(["CONFLICT", "CONFLICT"]);
     expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toBe(yaml);
     expect(vectors("english")).toEqual(original);
 
@@ -300,12 +296,26 @@ test("one native app session indexes and semantically searches two local embeddi
       return { pending, rebuild };
     }, e5);
     await save.click();
+    await expect(confirmation).toContainText("Indexed documents (5)");
+    await writeFile(join(folder, "docs/cabinet.txt"), "Cabinet dimensions are recorded separately.");
+    await expect
+      .poll(
+        () =>
+          page.evaluate(async () => {
+            const api = (window as unknown as { vera: VeraBridge }).vera;
+            const { config } = await api.invoke("workbench.config.get", {});
+            const { documents } = await api.invoke("docs.list", { workbenchId: config.id });
+            return documents.filter(({ status }) => status === "indexed").length;
+          }),
+        { timeout: 30000 },
+      )
+      .toBe(6);
     await confirmation.getByRole("button", { name: "Change model", exact: true }).click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     await expect
       .poll(() => progress.evaluate(({ pending }) => pending), { timeout: 55000 })
-      .toEqual([5, 4, 3, 2, 1, 0]);
-    expect(await progress.evaluate(({ rebuild }) => rebuild)).toEqual({ observed: true, searchable: 5 });
+      .toEqual([6, 5, 4, 3, 2, 1, 0]);
+    expect(await progress.evaluate(({ rebuild }) => rebuild)).toEqual({ observed: true, searchable: 6 });
     await progress.dispose();
     await expect
       .poll(

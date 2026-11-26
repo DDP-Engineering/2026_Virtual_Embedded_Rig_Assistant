@@ -1493,8 +1493,8 @@ ipcMain.handle(
         indexer.restart();
         return {};
       },
-      "docs.reindex": async ({ workbenchId }) => {
-        await workbench().reindexDocuments(workbenchId);
+      "docs.reindex": async ({ workbenchId, failedOnly }) => {
+        await workbench().reindexDocuments(workbenchId, failedOnly);
         return {};
       },
       "downloads.list": ({ workbenchId }) =>
@@ -2419,14 +2419,14 @@ if (!firstInstance) {
       const known = veraErrorSchema.safeParse(error).data;
       const detail = known
         ? { code: known.code, ...known.params }
-        : { message: error instanceof Error ? `${error.name}: ${error.message}` : String(error) };
+        : { type: error instanceof Error ? error.name : typeof error };
       logger.log("error", "app.startup.failed", detail);
       // Without this the application exits with no window and no reason.
       if (!__VERA_TEST__)
         dialog.showErrorBox(
-          "VERA could not start",
+          app.getName(),
           Object.entries(detail)
-            .map(([key, value]) => `${key}: ${value}`)
+            .map(([key, value]) => `${key}: ${credentials.scrub(String(value))}`)
             .join("\n"),
         );
       try {

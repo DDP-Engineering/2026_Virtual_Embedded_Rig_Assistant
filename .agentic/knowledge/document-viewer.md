@@ -37,7 +37,7 @@ progress travels through existing workbench events.
 - DocumentViewer.open(ref,snippet?) and openPath(path) check source/locators;
   SessionService.openCitation resolves a completed assistant citation against
   preceding successful tool results and current file/artifact content.
-- SessionService admits UTF8 control-byte logs only for successful parse_log line-ref provenance. The viewer uses guarded direct reads up to50MiB, fatal UTF8 and matching source hashes, independent of document indexing; ordinary document/file refs retain binary and index checks.
+- SessionService admits UTF8 control-byte logs only for successful parse_log line-ref provenance. The viewer uses guarded direct reads up to 50 MiB, fatal UTF8 and matching source hashes, independent of document indexing. Ordinary file and indexed text refs retain binary and index checks, admit UTF16 with a BOM, and decode legacy bytes using file-tool Latin-1 or indexed Windows-1252. Large verified views bind revision and encoding to the byte source, including newline positions in UTF16 code units. Managed program logs can be opened through confined line citations.
 - Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicWebDownload scrubs metadata strings and drops invalid redacted records.
 - DisplayDocuments uses the live createMaskingResolver(() => settings.get().settings) for Files,
   Find, document list/search, text/viewer content and index document/guard presentation. App Display

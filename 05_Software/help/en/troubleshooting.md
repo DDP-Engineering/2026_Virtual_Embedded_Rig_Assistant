@@ -48,7 +48,7 @@ When the catalog cannot be reached or its signature does not match, the **Plugin
 
 ## VERA closes right after starting
 
-VERA does not start when its `settings.json` is damaged or was edited by hand into an invalid form. Look at the latest log file for the cause. Correct the file, or move it aside: VERA then starts with default settings, and you set up your providers and preferences again.
+If `settings.json` is invalid, VERA shows its path and the affected settings in a startup dialog. Correct the file or move it aside to recreate the defaults, then set up your providers and preferences again.
 
 ## Logs
 

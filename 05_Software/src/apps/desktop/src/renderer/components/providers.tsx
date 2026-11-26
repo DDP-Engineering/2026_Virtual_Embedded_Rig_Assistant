@@ -198,7 +198,7 @@ export function Providers({
   const testModel =
     selected && defaultModel?.startsWith(`${selected.id}/`)
       ? defaultModel.slice(selected.id.length + 1)
-      : undefined;
+      : providerEnabled?.[0];
   const editModel = (id: string) => {
     const model = connection?.models?.find((item) => item.id === id);
     if (model && connection) setEditing({ kind: "model", model, provider: connection });
@@ -279,9 +279,7 @@ export function Providers({
                     }
                     disabled={
                       locked ||
-                      (selected.id === "openai"
-                        ? !openai?.configured || !(openai?.model || testModel)
-                        : connection?.configured === false)
+                      (selected.id === "openai" ? !openai?.configured : connection?.configured === false)
                     }
                     before={
                       <button

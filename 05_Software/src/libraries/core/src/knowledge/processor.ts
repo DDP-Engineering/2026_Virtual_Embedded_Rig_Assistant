@@ -27,6 +27,7 @@ import {
 import type { DocumentInput, DocumentProcessor } from "./ingest.js";
 import { sourceLimit } from "./kinds.js";
 import { OfficeLimitError, officeFormat } from "./office-format.js";
+import { decodeDocumentText, isBinaryDocumentText } from "./text-source.js";
 import type { PassageBudget } from "./token-budget.js";
 import type { OfficeExtractor, PdfExtractor } from "./worker-host.js";
 
@@ -282,7 +283,8 @@ export function createDocumentProcessor(
         throw error;
       }
     } else {
-      const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      if (isBinaryDocumentText(bytes)) throw Error("Binary text source.");
+      const text = decodeDocumentText(bytes);
       extraction =
         input.kind === "markdown"
           ? extractMarkdown(text)

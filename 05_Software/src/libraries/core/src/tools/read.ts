@@ -24,7 +24,7 @@ export const readTool: ToolDefinition = {
   }),
   async execute(ctx, raw, signal) {
     const args = readTool.params.parse(raw) as { path: string; offset?: number; limit?: number };
-    const guard = await toolPathGuard(ctx, true);
+    const guard = await toolPathGuard(ctx, true, { allowRunLogs: true });
     const target = await guard.resolve(args.path);
     if (/\.pdf$/i.test(target.relative))
       throw Error(

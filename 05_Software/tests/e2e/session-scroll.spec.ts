@@ -141,9 +141,10 @@ test("fixed viewport and independent left conversation rail retain composer and 
   );
   const reading = await transcript.evaluate((node) => node.scrollTop);
   await input.fill("Another short question");
+  expect(await transcript.evaluate((node) => node.scrollTop)).toBeCloseTo(reading, 0);
   await input.press("Enter");
   await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(2);
-  expect(await transcript.evaluate((node) => node.scrollTop)).toBeCloseTo(reading, 0);
+  await expect(rail).toHaveAttribute("aria-valuenow", "100");
   await rail.focus();
   await page.keyboard.press("End");
   await input.fill("A third question while following the conversation");

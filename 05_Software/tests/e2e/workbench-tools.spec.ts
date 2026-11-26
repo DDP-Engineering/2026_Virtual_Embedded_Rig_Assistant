@@ -52,14 +52,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
       },
       [resolve("plugins/electrical-network"), resolve("plugins/kicad-layout")],
     );
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Tool selection");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await openTools(page);
-    await expect(page.locator("[data-tool-toggle]")).toHaveCount(coreToolNames.length - 1);
-    const viewImage = page.locator('[data-tool-toggle="view_image"]');
-    await expect(viewImage).toHaveCount(0);
+    // The starter session loads the provider catalog when the workbench is created.
     await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("providers.save", {
         provider: "custom",
@@ -80,6 +73,16 @@ test("native tool checkbox configuration persists, cancels drafts and translates
         },
       }),
     );
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator("#workbench-name").fill("Tool selection");
+    await page.locator('[data-action="choose-create"]').click();
+    await page.locator('[data-action="create-workbench"]').click();
+    await expect(page.locator('[data-session][aria-current="page"]')).toBeVisible();
+    await page.locator('.workbench-group-name[aria-current="page"]').click();
+    await openTools(page);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(coreToolNames.length - 1);
+    const viewImage = page.locator('[data-tool-toggle="view_image"]');
+    await expect(viewImage).toHaveCount(0);
     await page.locator('[data-project-section="agent"]').click();
     await expect(
       page.locator('datalist option[value="custom:workbench-model-fixture/org/manual/model"]'),

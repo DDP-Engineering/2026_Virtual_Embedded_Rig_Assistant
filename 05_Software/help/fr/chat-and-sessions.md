@@ -6,13 +6,13 @@ Dans la réponse de l’agent, sélectionnez **Ouvrir la trame … dans Wireshar
 
 Laissez **Filtre d’affichage** vide pour reprendre le filtre de la citation, s’il existe. Vous pouvez saisir un autre filtre d’affichage hors ligne. Si le filtre masque la trame citée, VERA l’ajoute au filtre et vous en informe. Si la capture a changé ou est inaccessible, inspectez-la de nouveau pour obtenir une nouvelle citation.
 
-Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Au plus trois tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
+Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Par défaut, au plus quatre tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
 
 ## Démarrer et gérer des sessions
 
 - **Nouvelle session** démarre une conversation dans le banc de travail ouvert. S’il existe une session vide inutilisée, VERA l’ouvre au lieu d’en créer une autre.
-- Le premier message devient le titre. **Renommer** définit votre propre titre.
-- **Rechercher des sessions** trouve des sessions par titre et par texte des messages.
+- Le premier message devient le titre. Utilisez **Renommer** à tout moment, y compris pendant un tour.
+- **Rechercher des sessions** trouve les sessions par titre et par texte des messages. Utilisez les commandes de pagination sous les listes longues pour voir les autres sessions.
 - Chaque ligne de session indique l’heure de sa dernière activité et possède un menu avec **Exporter en Markdown**, **Exporter en JSON**, **Renommer**, **Monter**, **Descendre**, **Archiver** et **Supprimer**.
 - Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**. Une session en cours porte une marque qui tourne près de l’heure, et une session en attente d’approbation un bouclier.
 
@@ -52,13 +52,13 @@ Le résultat apparaît à la position initiale du curseur ou après le texte sé
 
 ## Orienter ou arrêter un tour en cours
 
-Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.
+Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Vous pouvez modifier le brouillon pendant l’envoi d’un message ou l’attente d’une approbation. L’envoi redevient disponible après l’acceptation du message ou la décision. Le brouillon reste dans sa session quand vous changez de vue.
 
-**Arrêter** termine le tour en cours. Escape demande aussi **Arrêter le tour en cours ?**. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
+**Arrêter** termine le tour en cours. Échap ouvre **Arrêter le tour en cours ?** et place le focus sur **Arrêter**. Appuyez sur Entrée pour arrêter le tour. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
 
 ## Répondre à une question
 
-Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
+Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. Appuyez sur Entrée pour envoyer une réponse saisie. Vous pouvez également écrire votre réponse dans la zone de message principale et l’envoyer de là. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
 
 Dans les réglages **Agent et chat** du banc de travail, l’option **Utiliser les réponses recommandées après un délai** est désactivée par défaut. Activez-la et choisissez un nombre entier de 1 à 1440 minutes. Lorsqu’une recommandation est valide, la carte affiche l’échéance et la conversation indique les réponses automatiques. Le délai continue en arrière-plan et pendant le rechargement de l’interface. Les opérations soumises à approbation la demandent séparément.
 
@@ -86,7 +86,7 @@ Une session déléguée en mode Bypass suit les mêmes règles qu’une session 
 | **Normal** | Les appels d’outils de routine, regroupés dans une ligne dépliable **Opérations** |
 | **Minimal** | Uniquement la conversation ; les appels d’outils de routine sont masqués et un indicateur d’activité s’affiche pendant que l’agent travaille |
 
-Les approbations qui vous attendent, les erreurs et les cartes de téléchargement s’affichent à tous les niveaux ; les approbations accordées par le mode d’autorisation sont masquées en **Minimal** et regroupées en **Normal**. Le niveau ne change que l’affichage ; la session enregistrée et ses exports sont toujours complets.
+Les approbations qui vous attendent, les erreurs et les cartes de téléchargement s’affichent à tous les niveaux ; les approbations automatiques ordinaires sont masquées en **Minimal** et regroupées en **Normal**. Les écritures sur un appareil et les opérations irréversibles des plugins restent visibles. Le niveau ne change que l’affichage ; la session enregistrée et ses exports sont toujours complets.
 
 Les activités affichent une action courte, le fichier, la page ou la commande concernés et leur état. Dépliez-les pour lire le résultat ou la commande exacte et le dossier de travail. **Détails techniques** contient le nom de l’outil, la durée, les arguments d’origine et le résultat brut ; les grands extraits enregistrés restent chargeables en entier. Un code de sortie non nul apparaît comme une erreur et les exécutions en arrière-plan sont distinguées. Les niveaux de détail et les demandes d’approbation gardent leur comportement. Les mises à jour du plan affichent les étapes réelles et leur état au dépliage ; les détails techniques restent facultatifs et séparés.
 
@@ -98,7 +98,9 @@ Pour les modèles qui le prennent en charge, **Niveau de raisonnement** propose 
 
 L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). Pendant ce temps, l’indicateur tourne et garde le dernier pourcentage, mis à jour dès que la requête suivante est prête. La transcription complète reste enregistrée et visible.
 
-**Rechercher dans la conversation** effectue une recherche dans la session en cours. La bande de repères au bord gauche de la conversation comporte un repère par message que vous avez envoyé ; survolez un repère pour avoir un aperçu du message et sélectionnez-le pour y accéder.
+Si le dernier tour échoue à cause d’une erreur temporaire du fournisseur, sélectionnez **Réessayer** pour renvoyer son message. En cas de dépassement du contexte, utilisez **Compacter maintenant** si le bouton est proposé. Quand le tour atteint la limite de sortie ou d’appels d’outils, **Continuer** lance un nouveau tour.
+
+**Rechercher dans la conversation** effectue une recherche dans la session en cours. Appuyez sur Entrée pour le résultat suivant et Maj+Entrée pour le précédent. Envoyez un message ou sélectionnez **Aller au dernier message** pour revenir à la fin. La bande de repères au bord gauche de la conversation comporte un repère par message que vous avez envoyé ; survolez un repère pour avoir un aperçu du message et sélectionnez-le pour y accéder.
 
 ## Archiver, supprimer et exporter
 

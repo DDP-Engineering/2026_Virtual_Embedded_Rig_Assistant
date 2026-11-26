@@ -31,11 +31,11 @@ Detaliile sunt în [Furnizori și modele](providers.md).
 3. La **Documente și RAG**, verifică folderele de documentație găsite de VERA sau folosește **Adaugă folder…**.
 4. Selectează **Creează un workbench**.
 
-VERA începe indexarea în fundal. Poți folosi deja chatul; bara din **Fișiere** indică activitatea, iar prezentarea generală a workbench-ului arată progresul detaliat. Vezi [Workbench-uri](workbenches.md) și [Documente și căutare](documents-and-search.md).
+VERA deschide o sesiune cu caseta de mesaj focalizată și începe indexarea în fundal. Poți folosi deja chatul; bara din **Fișiere** indică activitatea, iar prezentarea generală a workbench-ului arată progresul detaliat. Vezi [Workbench-uri](workbenches.md) și [Documente și căutare](documents-and-search.md).
 
 ## Pasul 3: pune o primă întrebare
 
-1. Selectează **Sesiune nouă**.
+1. Folosește sesiunea deschisă odată cu workbench-ul. Pentru altă conversație, selectează **Sesiune nouă**.
 2. În controalele casetei de mesaj, alege un **Model**. Deocamdată lasă modul de permisiuni pe **Întreabă**.
 3. Scrie o întrebare despre proiect, de exemplu „Care este frecvența maximă de ceas SPI a senzorului și ce pini folosește?”, și apasă Enter.
 

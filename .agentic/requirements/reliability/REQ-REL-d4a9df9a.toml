@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d4a9df9a"
+
+title = "Preserve indexed documents during failed-document retry"
+
+status = "active"
+
+requirement = """
+When a user retries failed document indexing, the workbench shall retry the failed documents while retaining usable rows for unchanged indexed documents.
+"""
+
+verification = "Index one good and one failed file, retry the failure and confirm the good row and stored extraction remain available."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest.test.ts","05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-26

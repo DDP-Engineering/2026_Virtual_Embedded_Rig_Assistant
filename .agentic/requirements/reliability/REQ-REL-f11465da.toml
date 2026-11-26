@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-f11465da"
+
+title = "Skip repeated failed automatic summaries within a turn"
+
+status = "active"
+
+requirement = """
+When an automatic summary attempt fails, the current agent turn shall reuse its ordinary context policy without dispatching another automatic summary in that turn.
+"""
+
+verification = "Trigger a failed summary and a later loop step in the same turn; verify one attempt and allow normal or explicit compaction on a later turn."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts","05_Software/src/libraries/core/src/agent/compaction.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-26

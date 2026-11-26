@@ -364,10 +364,12 @@ describe("files the guard cannot bind outside Windows (REQ-SEC-aaeae5cb)", () =>
   });
   it.runIf(process.platform === "linux")("refuses an existing aux.bin natively", async () => {
     const root = await bench();
-    await writeFile(join(root, "aux.bin"), "aux");
-    await expect(prepareProgramRequest(input(root, ["aux.bin"]))).rejects.toMatchObject({
-      params: { reason: "unbound", index: 0 },
-    });
+    for (const path of ["aux.bin", "build\\aux.bin"]) {
+      await writeFile(join(root, path), "aux");
+      await expect(prepareProgramRequest(input(root, [path]))).rejects.toMatchObject({
+        params: { reason: "unbound", index: 0 },
+      });
+    }
   });
 });
 describe("verifyProgramFiles (REQ-SEC-370f2d9b)", () => {

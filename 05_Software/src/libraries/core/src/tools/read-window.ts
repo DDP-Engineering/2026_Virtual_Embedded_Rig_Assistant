@@ -2,8 +2,18 @@ import { createHash } from "node:crypto";
 import { lstat, open } from "node:fs/promises";
 import { fileRevision } from "../workbench/file-revision.js";
 import type { PathGuard } from "../workbench/path-guard.js";
-import { isBinary } from "./binary.js";
+import { isBinary, utf16Bom } from "./binary.js";
 import { assertNotSpecialFile } from "./files.js";
+
+class LegacyText extends Error {
+  constructor(
+    readonly key: string,
+    readonly revision: string,
+  ) {
+    super("Legacy text encoding");
+  }
+}
+type ReadWindowOptions = { utf8Log?: boolean; maxChars?: number };
 
 /**
  * Full-file metadata scan stays streaming; only the requested source window is retained. `maxChars` bounds
@@ -15,7 +25,24 @@ export async function readWindow(
   offset: number,
   limit: number,
   signal: AbortSignal,
-  options: { utf8Log?: boolean; maxChars?: number } = {},
+  options: ReadWindowOptions = {},
+) {
+  try {
+    return await scanWindow(guard, path, offset, limit, signal, options);
+  } catch (error) {
+    if (!(error instanceof LegacyText)) throw error;
+    return scanWindow(guard, path, offset, limit, signal, options, error);
+  }
+}
+
+async function scanWindow(
+  guard: PathGuard,
+  path: string,
+  offset: number,
+  limit: number,
+  signal: AbortSignal,
+  options: ReadWindowOptions,
+  fallback?: LegacyText,
 ) {
   signal.throwIfAborted();
   const maxChars = options.maxChars ?? 30000;
@@ -26,8 +53,22 @@ export async function readWindow(
   try {
     const before = await handle.stat();
     if (!before.isFile()) throw Error("Read an ordinary file.");
+    const revision = fileRevision(before);
+    if (fallback && (target.key !== fallback.key || revision !== fallback.revision))
+      throw Error("File changed while reading. Read it again.");
+    const latin1 = fallback !== undefined;
     const hash = createHash("sha256");
-    const decoder = new TextDecoder("utf-8", { fatal: options.utf8Log === true });
+    let encoding: "utf-8" | "utf-16le" | "utf-16be" | "latin1" = latin1 ? "latin1" : "utf-8";
+    let decoder = new TextDecoder("utf-8", { fatal: true });
+    const decode = (bytes?: Buffer) => {
+      if (latin1) return bytes?.toString("latin1") ?? "";
+      try {
+        return decoder.decode(bytes, { stream: bytes !== undefined });
+      } catch (error) {
+        if (encoding === "utf-8" && !options.utf8Log) throw new LegacyText(target.key, revision);
+        throw error;
+      }
+    };
     const buffer = Buffer.alloc(64 * 1024);
     const selected: { line: number; text: string }[] = [];
     let totalLines = 0;
@@ -85,13 +126,21 @@ export async function readWindow(
       if (options.utf8Log && position + bytesRead > 50 * 1024 * 1024)
         throw Error("Log exceeds the 50 MiB source limit.");
       const bytes = buffer.subarray(0, bytesRead);
-      if (!position && !options.utf8Log && isBinary(bytes))
-        throw Error("Cannot read a binary file. Choose a text file.");
+      if (!position && !options.utf8Log) {
+        const bom = utf16Bom(bytes);
+        if (bom) {
+          if (latin1) throw Error("File changed while reading. Read it again.");
+          encoding = bom;
+          decoder = new TextDecoder(bom, { fatal: true });
+        } else if (isBinary(bytes)) {
+          throw Error("Cannot read a binary file. Choose a text file.");
+        }
+      }
       hash.update(bytes);
-      consume(decoder.decode(bytes, { stream: true }));
+      consume(decode(bytes));
       position += bytesRead;
     }
-    consume(decoder.decode());
+    consume(decode());
     if (hasContent) endLine();
     const after = await handle.stat();
     const currentTarget = await guard.resolve(path);
@@ -110,6 +159,7 @@ export async function readWindow(
     guard.assertAuthorized();
     return {
       target,
+      encoding,
       selected,
       totalLines,
       truncated: clipped || offset - 1 + limit < totalLines,

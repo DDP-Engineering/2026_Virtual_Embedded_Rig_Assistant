@@ -48,6 +48,12 @@ it.each(["en", "ro", "de", "fr"])("sends only an explicit chosen user prefix in 
   await act(async () =>
     root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
   );
+  expect(container.querySelector("[data-command-always-allow]")).toBeNull();
+  await act(async () =>
+    root?.render(
+      createElement(ApprovalCard, { approval, sessionId: "s", disabled: false, canSavePrefix: true }),
+    ),
+  );
   const button = container.querySelector<HTMLButtonElement>("[data-command-always-allow]");
   expect(button?.textContent).toBe(i18n.t("approval.alwaysAllow"));
   expect(container.querySelector<HTMLSelectElement>("[data-command-prefix]")?.value).toBe("npm test");
@@ -89,7 +95,9 @@ it("decides with A and D on the card, never while the prefix list has the key", 
   document.body.append(container);
   root = createRoot(container);
   await act(async () =>
-    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+    root?.render(
+      createElement(ApprovalCard, { approval, sessionId: "s", disabled: false, canSavePrefix: true }),
+    ),
   );
   vi.mocked(api.invoke).mockClear();
   const press = (target: Element | null | undefined, key: string) =>

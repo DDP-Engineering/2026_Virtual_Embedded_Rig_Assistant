@@ -172,15 +172,17 @@ it("cancels scans between chunks and discards cancelled byte replies without cac
 });
 
 it("counts matching source lines and wraps with scalar navigation across long-line fragments", async () => {
-  const { source, index } = fixture(
+  const { source, index, invoke } = fixture(
     encode(`HIT twice HIT\n${"x".repeat(TEXT_SCAN_BYTES * 2)}HIT\nlast HIT\n`),
   );
   const reveal = vi.fn(async () => {});
   const first = await findLargeText(source, index, "utf-8", false, "hit", 0, true, signal(), reveal);
   expect(first).toMatchObject({ hit: { line: 1, offset: 0 }, current: 1, total: 3 });
+  invoke.mockClear();
   expect(await findLargeText(source, index, "utf-8", false, "hit", 1, false, signal(), reveal)).toMatchObject(
     { hit: { line: 3 }, current: 3, total: 3 },
   );
+  expect(invoke.mock.calls.map(([channel]) => channel)).toEqual(["docs.stat"]);
   expect(await findLargeText(source, index, "utf-8", false, "hit", 3, true, signal(), reveal)).toMatchObject({
     hit: { line: 1 },
     current: 1,

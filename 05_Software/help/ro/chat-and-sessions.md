@@ -6,13 +6,13 @@
 
 Lasă câmpul **Filtru de afișare** gol pentru a folosi filtrul citării, dacă există. Poți introduce alt filtru de afișare offline. Dacă filtrul ascunde cadrul citat, VERA îl include în filtru și te anunță. Dacă fișierul s-a schimbat sau nu este disponibil, inspectează-l din nou pentru a obține o citare nouă.
 
-O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp. Cel mult trei ture rulează simultan în toate workbench-urile deschise, sau câte sunt setate la **Ture simultane** în [Setări avansate](advanced-settings.md); un mesaj trimis la limită rămâne netrimis în caseta de mesaj până se termină o tură.
+O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp. Implicit, cel mult patru ture rulează simultan în toate workbench-urile deschise, sau câte sunt setate la **Ture simultane** în [Setări avansate](advanced-settings.md); un mesaj trimis la limită rămâne netrimis în caseta de mesaj până se termină o tură.
 
 ## Pornește și gestionează sesiuni
 
 - **Sesiune nouă** pornește o conversație în workbench-ul deschis. Dacă există o sesiune goală nefolosită, VERA o deschide pe aceea în loc să creeze alta.
-- Primul mesaj devine titlul. **Redenumește** setează un titlu ales de tine.
-- **Caută sesiuni** găsește sesiuni după titlu și după textul mesajelor.
+- Primul mesaj devine titlul. Folosește **Redenumește** oricând, inclusiv în timpul unei ture.
+- **Caută sesiuni** găsește sesiuni după titlu și textul mesajelor. Folosește comenzile de paginare de sub listele lungi pentru a vedea mai multe sesiuni.
 - Fiecare rând de sesiune afișează ora ultimei activități și are un meniu cu **Exportă Markdown**, **Exportă JSON**, **Redenumește**, **Mută mai sus**, **Mută mai jos**, **Arhivează** și **Șterge**.
 - O sesiune își afișează starea: **Inactiv**, **În lucru**, **Așteaptă aprobare** sau **Eroare**. O sesiune în lucru are un semn care se rotește lângă oră, iar una care așteaptă aprobare un scut.
 
@@ -52,13 +52,13 @@ Rezultatul apare la cursorul inițial sau după textul selectat. Dacă ai editat
 
 ## Ghidează sau oprește o execuție în curs
 
-Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.
+Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Poți edita ciorna în timp ce VERA trimite un mesaj sau așteaptă aprobarea ta. Poți trimite din nou după acceptarea mesajului sau soluționarea aprobării. Ciorna rămâne în sesiunea ei când schimbi pagina.
 
-**Oprește** încheie execuția curentă. Și Escape întreabă **Oprești execuția curentă?**. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
+**Oprește** încheie execuția curentă. Escape deschide **Oprești execuția curentă?** cu butonul **Oprește** focalizat. Apasă Enter pentru a opri tura. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
 
 ## Răspunde la o întrebare
 
-Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
+Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Poți apăsa și Enter în câmpul răspunsului. Poți scrie și trimite răspunsul în caseta principală de mesaj. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
 
 În setările **Agent și chat** ale workbench-ului, opțiunea **Folosește răspunsurile recomandate după un interval** este dezactivată implicit. Activeaz-o și stabilește un număr întreg de la 1 la 1440 de minute. Cardul afișează termenul când se poate aplica o recomandare validă, iar conversația marchează răspunsul automat. Timpul continuă să curgă în fundal și la reîncărcarea interfeței. Operațiunile care necesită aprobare o cer separat.
 
@@ -86,7 +86,7 @@ O sesiune delegată în Bypass respectă aceleași reguli ca o sesiune Bypass di
 | **Normal** | Apelurile de rutină ale instrumentelor, grupate într-o linie extensibilă **Operații** |
 | **Minimal** | Doar conversația; apelurile de rutină ale instrumentelor sunt ascunse, iar un indicator de lucru este afișat cât timp agentul lucrează |
 
-Aprobările care te așteaptă, erorile și cardurile de descărcare sunt afișate la orice nivel; aprobările acordate de modul de permisiuni sunt ascunse la **Minimal** și grupate la **Normal**. Nivelul schimbă doar afișarea; sesiunea salvată și exporturile ei sunt întotdeauna complete.
+Aprobările care te așteaptă, erorile și cardurile de descărcare sunt afișate la orice nivel; aprobările automate obișnuite sunt ascunse la **Minimal** și grupate la **Normal**. Scrierile pe dispozitiv și operațiile ireversibile ale pluginurilor rămân vizibile. Nivelul schimbă doar afișarea; sesiunea salvată și exporturile ei sunt întotdeauna complete.
 
 Activitatea instrumentelor arată pe scurt acțiunea, fișierul, pagina sau comanda vizată și starea. Extinde operația pentru rezultat sau pentru comanda exactă și folderul de lucru. **Detalii tehnice** conține numele instrumentului, durata, argumentele originale și rezultatul brut; fragmentele mari salvate pot fi încărcate integral. Un cod de ieșire diferit de zero apare ca eroare, iar rulările în fundal au o etichetă distinctă. Nivelurile de detaliu și cererile de aprobare își păstrează comportamentul. Operațiile de actualizare a planului arată pașii efectivi și starea lor la extindere; detaliile tehnice sunt opționale și separate.
 
@@ -98,7 +98,9 @@ Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** ș
 
 Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Între timp indicatorul se rotește și păstrează ultimul procent, care se actualizează când următoarea cerere este pregătită. Transcriptul complet rămâne salvat și vizibil.
 
-**Caută în conversație** caută în sesiunea curentă. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
+Dacă ultima tură eșuează din cauza unei erori temporare a furnizorului, alege **Reîncearcă** pentru a retrimite mesajul. La o eroare de limită de context, alege **Compactează acum** când butonul este disponibil. Dacă tura atinge limita de răspuns sau limita de apeluri ale instrumentelor, **Continuă** pornește o tură nouă.
+
+**Caută în conversație** caută în sesiunea curentă. Apasă Enter pentru potrivirea următoare și Shift+Enter pentru cea anterioară. Trimiterea unui mesaj sau acțiunea **Mergi la ultimul mesaj** te duce la final. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
 
 ## Arhivează, șterge și exportă
 

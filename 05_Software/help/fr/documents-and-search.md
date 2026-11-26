@@ -2,7 +2,7 @@
 
 VERA indexe la documentation d’un banc de travail sur votre ordinateur, afin que l’agent puisse y faire des recherches et citer exactement la page, la section ou la ligne qu’il a utilisée. L’indexation et la recherche sémantique utilisent le modèle local du banc de travail. BGE Small EN v1.5 est le modèle par défaut pour l’anglais. Avec Multilingual E5 Small, le banc peut trouver des passages par leur sens en roumain, en allemand, en français et dans d’autres langues, même si la requête est dans une autre langue. Les paquets Windows et Linux contiennent les deux modèles. Vous pouvez indexer hors ligne avec l’un ou l’autre dès l’installation. Lorsque l’agent lit un passage pour vous répondre, ce passage est transmis à votre fournisseur de modèles comme le reste de la conversation ; avec un serveur local comme LM Studio ou Ollama, il reste sur votre ordinateur.
 
-Ouvrez **Modifier le banc** → **Indexation**, choisissez le modèle et enregistrez. VERA affiche le nombre de documents indexés et demande une confirmation. Après confirmation, VERA conserve le texte extrait et recrée les vecteurs du banc en arrière-plan. La recherche par mots-clés reste disponible pendant cette opération.
+Ouvrez **Modifier le banc** → **Indexation**, choisissez le modèle et enregistrez. VERA affiche le nombre de documents indexés et demande une confirmation. Après confirmation, VERA conserve le texte extrait et recrée les vecteurs du banc en arrière-plan. La recherche par mots-clés reste disponible pendant cette opération. Si d’autres documents finissent d’être indexés pendant la confirmation, vous pouvez toujours confirmer le changement.
 
 Le masquage de l’affichage est désactivé par défaut. Lorsqu’il est activé pour un banc, les secrets enregistrés dans les noms de fichiers et le texte du lecteur apparaissent sous la forme [REDACTED]. Les fichiers et résultats restent listés et ouvrent le même fichier, même si deux noms masqués sont identiques. Cela ne change ni l’indexation ni ce que l’agent peut envoyer à un modèle. Les images des pages PDF conservent leurs octets d’origine ; seul le texte extrait est masqué.
 
@@ -17,6 +17,8 @@ Sont indexés les dossiers cochés dans **Modifier le banc** → **Documents et 
 Les anciens fichiers `.doc`, `.ppt`, `.xls` et RTF ne sont pas indexés ; enregistrez-les dans un format moderne. Les fichiers correspondant à `.vera/.veraignore` et tout ce qui se trouve dans `.vera`, `.git` ou `node_modules` ne sont jamais indexés. Le code source et les journaux ne sont pas indexés non plus ; l’agent les lit directement avec ses outils de fichiers.
 
 Lorsque **Utiliser .gitignore** est coché (par défaut pour les nouveaux bancs), les fichiers et dossiers exclus par les fichiers `.gitignore` du banc ne sont pas indexés non plus : celui du dossier du banc et ceux de ses sous-dossiers, chacun pour son propre dossier, comme dans Git. Une ligne commençant par `!` dans `.vera/.veraignore` rétablit un fichier ou un dossier exclu par `.gitignore`, avec tout son contenu ; `.vera`, `.git` et `node_modules` restent ignorés. Les outils de fichiers de l’agent lisent toujours les fichiers exclus uniquement par `.gitignore`.
+
+L’extraction de texte détecte l’UTF-8 et l’UTF-16 avec marque d’ordre des octets (BOM). Elle utilise Windows-1252 si le décodage UTF-8 échoue sur un fichier reconnu comme texte.
 
 L’indexation s’exécute en arrière-plan et suit les changements : les fichiers nouveaux, modifiés et supprimés sont pris en compte automatiquement.
 
@@ -42,7 +44,7 @@ Sous **Modifier le banc** → **Indexation**, **Recherche de documents** défini
 
 ## L’onglet Fichiers
 
-L’onglet **Fichiers** affiche tout le dossier du banc de travail sous forme d’arborescence. Les fichiers ignorés par VERA apparaissent en italique. Le champ **Rechercher des fichiers et documents** filtre l’arborescence par nom de fichier et liste sous **Dans les documents** les passages correspondants des documents indexés.
+L’onglet **Fichiers** affiche tout le dossier du banc de travail sous forme d’arborescence. Les fichiers ignorés par VERA apparaissent en italique. Le champ **Rechercher des fichiers et documents** filtre l’arborescence par nom de fichier et liste sous **Dans les documents** les passages correspondants des documents indexés. Revenez à la fenêtre VERA pour actualiser l’arborescence de fichiers et les résultats de recherche après des modifications effectuées hors de l’application.
 
 Le menu d’un fichier propose **Ouvrir**, **Joindre comme contexte**, **Ouvrir avec** (l’application par défaut ou une autre application), **Afficher dans l’Explorateur** (le Finder ou le dossier sur les autres systèmes), **Copier** (chemin absolu, chemin relatif ou nom du fichier) et **Propriétés**, qui inclut l’état d’indexation.
 
@@ -68,12 +70,12 @@ Dans une réponse, chaque puce de citation indique la source et l’emplacement�
 
 Les documents s’ouvrent dans des onglets à côté de l’onglet **Discussion**, si bien que la conversation reste où elle était. Vous pouvez passer librement de l’un à l’autre.
 
-Les fichiers texte jusqu’à 5 Mio proposent **Encodage** et **Retour à la ligne**. Les BOM UTF-8 et UTF-16 sont détectés ; sans BOM, UTF-8 est utilisé. Choisissez Windows-1252, ISO-8859-1, ISO-8859-2 ou UTF-16 LE/BE au besoin. Chromium décode ISO-8859-1 via son alias Windows-1252. **Afficher en texte** affiche les octets invalides comme caractères de remplacement. Recherche et saut à la ligne utilisent les lignes source numérotées même avec le retour à la ligne. Ces commandes ne modifient ni le fichier, ni l’indexation, ni la vérification des citations. Si le masquage est actif, le texte ordinaire remplace les octets secrets par des astérisques (les paires UTF-16 apparaissent comme ⨪) ; noms et citations rendues utilisent [REDACTED].
+Les fichiers texte proposent **Encodage** et **Retour à la ligne**. Les BOM UTF-8 et UTF-16 sont détectés ; sans BOM, UTF-8 est utilisé. Choisissez Windows-1252, ISO-8859-1, ISO-8859-2 ou UTF-16 LE/BE au besoin. Chromium décode ISO-8859-1 via son alias Windows-1252. **Afficher en texte** affiche les octets invalides comme caractères de remplacement. Recherche et saut à la ligne utilisent les lignes source numérotées même avec le retour à la ligne. Ces commandes ne modifient ni le fichier, ni l’indexation, ni la vérification des citations. Si le masquage est actif, le texte ordinaire remplace les octets secrets par des astérisques (les paires UTF-16 apparaissent comme ⨪) ; noms et citations rendues utilisent [REDACTED].
 
 Les grands fichiers sont lus par fenêtres. La barre tout à droite choisit une position en octets ; la barre intérieure parcourt la fenêtre courante. Ctrl+Home/End rejoint le début/la fin du fichier. Les numéros avec ≈ sont estimés jusqu’à leur précision par l’indexation progressive. Le saut à une ligne est d’abord approximatif, puis exact. La recherche parcourt les fenêtres ; Enter trouve le résultat suivant, Shift+Enter le précédent, et **Annuler** arrête l’analyse. Les très longues lignes apparaissent en fragments bornés marqués … ; le défilement passe au fragment suivant. La recherche compte les lignes correspondantes et reprend à l’autre extrémité. Les grandes citations gardent leur plage vérifiée.
 
 - Les fichiers PDF défilent en continu et affichent le numéro de page. Zoomez avec Ctrl+molette de la souris ou avec Ctrl+= , Ctrl+- et Ctrl+0.
-- Ctrl+F recherche du texte dans un PDF ou un document texte ; dans les fichiers texte, Ctrl+G permet d’aller à une ligne.
+- Ctrl+F lance la recherche à partir de la page actuelle dans un PDF et fonctionne aussi dans les documents texte. Ctrl+G va à une page ou à une ligne. Le zoom des PDF atteint 400 %.
 - Ctrl+Tab et Ctrl+Shift+Tab passent d’un onglet à l’autre, Ctrl+W ferme l’onglet actif, et Escape revient à **Discussion**.
 - Le menu d’un onglet propose **Fermer**, **Fermer les autres**, **Fermer à droite**, **Déplacer à gauche** et **Déplacer à droite**. Les onglets peuvent aussi être déplacés par glisser-déposer.
 
@@ -102,5 +104,7 @@ Les octets suivent le masquage Affichage actuel. Celui-ci peut empêcher le déc
 ## État de l’indexation
 
 L’icône à côté du nom du banc de travail actif indique l’état de l’analyse, de l’indexation ou de la reconstruction. Placez-y le focus ou le pointeur pour consulter les compteurs, puis activez-la pour ouvrir Fichiers. Le total des fichiers traités comprend les fichiers ignorés, ceux qui nécessitent une reconnaissance par OCR et les échecs. Les documents interrogeables ont des passages dans l’index. Le total reste inconnu tant que la sélection n’est pas déterminée. Dans un banc de travail en lecture seule, VERA peut utiliser l’index enregistré sans le vérifier à nouveau. Sélectionnez le nom du banc de travail. La rubrique **Documents et index** de sa vue d’ensemble affiche la progression, les compteurs et les détails des fichiers ignorés, nécessitant une OCR ou en échec. La barre d’outils de **Fichiers** indique l’activité. La limite de fichiers et le redémarrage restent accessibles dans cet onglet.
+
+Ouvrez la **Vue d’ensemble du banc**, dépliez les exceptions d’indexation et choisissez **Réessayer** pour reprendre les documents en échec. Les résultats valides sont conservés. Utilisez **Réindexer** dans **Fichiers** pour reconstruire toute la sélection.
 
 Le chat signale les réponses pour lesquelles la recherche a été partielle, s’est rabattue sur les mots-clés ou était indisponible. Une recherche partielle sans résultat peut manquer des sources en attente ou exclues. Vous pouvez poursuivre la conversation ou ouvrir un fichier connu pendant la mise à jour de l’index.

@@ -42,13 +42,13 @@ export function useIndexedDocuments(workbenchId: string) {
   return list;
 }
 
-export function useReindexDocuments(workbenchId: string) {
+export function useReindexDocuments(workbenchId: string, failedOnly = false) {
   const client = useQueryClient();
   const mutationKey = ["docs.reindex", workbenchId];
   const pending = useIsMutating({ mutationKey }) > 0;
   const mutation = useMutation({
     mutationKey,
-    mutationFn: () => api.invoke("docs.reindex", { workbenchId }),
+    mutationFn: () => api.invoke("docs.reindex", { workbenchId, ...(failedOnly ? { failedOnly } : {}) }),
     onSettled: async () => {
       await Promise.all([
         client.invalidateQueries({ queryKey: ["docs.list", workbenchId] }),

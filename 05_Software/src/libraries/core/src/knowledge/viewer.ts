@@ -3,12 +3,12 @@ import { createHash } from "node:crypto";
 import { binaryDocumentKinds, isDocumentKindIn, parseRef, type ViewerContent, veraError } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { DocumentsRepository } from "../storage/repos/documents.js";
-import { isBinary } from "../tools/binary.js";
 import { readGuardedFile, textLines } from "../tools/files.js";
 import { readWindow } from "../tools/read-window.js";
-import { PathGuard } from "../workbench/path-guard.js";
+import { PathGuard, runLogLocation } from "../workbench/path-guard.js";
 import { extractionSchema } from "./extraction.js";
 import { verifyDocumentSource } from "./processor.js";
+import { decodeDocumentText, isBinaryDocumentText } from "./text-source.js";
 
 /** The largest PDF rendered without an index row; its base64 form stays inside the viewer content limit. */
 export const UNINDEXED_PDF_BYTES = 100 * 1024 * 1024;
@@ -24,7 +24,10 @@ export class DocumentViewer {
       const parsed = byPath ? undefined : parseRef(target);
       if (!byPath && (!parsed || parsed.kind === "artifact")) throw Error("Invalid document ref.");
       const path = byPath ? target : parsed && "path" in parsed ? parsed.path : "";
-      const guard = await PathGuard.create(this.root);
+      const managedLog = parsed?.kind === "lines" && runLogLocation(path);
+      const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, [], [], {
+        allowRunLogs: managedLog,
+      });
       const current = await guard.resolve(path);
       if (current.relative !== path && !utf8Log) throw Error("Noncanonical source.");
       const rows = new DocumentsRepository(this.db),
@@ -37,19 +40,19 @@ export class DocumentViewer {
         if (parsed.end > window.totalLines) throw Error("Line bounds.");
         if (!utf8Log && doc && (doc.status !== "indexed" || doc.sha256 !== window.sha256))
           throw Error("Stale index.");
-        const bytes = utf8Log
-          ? (await readGuardedFile(guard, path, 50 * 1024 * 1024, signal)).bytes
-          : await verifyDocumentSource({
-              root: this.root,
-              path,
-              kind: "text",
-              sha256: window.sha256,
-              signal,
-              assertWritable: () => {},
-            });
-        if (utf8Log ? createHash("sha256").update(bytes).digest("hex") !== window.sha256 : isBinary(bytes))
-          throw Error("Changed or binary source.");
-        const lines = textLines(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+        const bytes =
+          utf8Log || managedLog
+            ? (await readGuardedFile(guard, path, 50 * 1024 * 1024, signal)).bytes
+            : await verifyDocumentSource({
+                root: this.root,
+                path,
+                kind: "text",
+                sha256: window.sha256,
+                signal,
+                assertWritable: () => {},
+              });
+        if ((utf8Log || managedLog) && createHash("sha256").update(bytes).digest("hex") !== window.sha256)
+          throw Error("Source changed.");
         const after = rows.get(path);
         if (
           !utf8Log &&
@@ -58,21 +61,30 @@ export class DocumentViewer {
             : after !== undefined)
         )
           throw Error("Index changed.");
-        if (parsed.end > lines.length) throw Error("Line bounds.");
+        const encoding = window.encoding === "latin1" && doc ? "windows-1252" : window.encoding;
+        const large = bytes.length > 5 * 1024 * 1024;
+        const lines = large
+          ? []
+          : textLines(
+              encoding === "latin1"
+                ? Buffer.from(bytes).toString("latin1")
+                : new TextDecoder(encoding, { fatal: true }).decode(bytes),
+            );
         return {
           ...base,
           kind: "text",
-          lines: bytes.length > 5 * 1024 * 1024 ? [] : lines,
+          lines,
           start: parsed.start,
           end: parsed.end,
-          ...(bytes.length > 5 * 1024 * 1024
+          ...(large
             ? {
                 byteSource: {
                   size: window.size,
                   modified: window.modified,
                   revision: window.revision,
-                  lines: lines.length,
+                  lines: window.totalLines,
                   utf8Log,
+                  encoding,
                 },
               }
             : {}),
@@ -123,7 +135,6 @@ export class DocumentViewer {
       }
       if (extraction.kind === "text") {
         if (parsed) throw Error("Text locator required.");
-        if (isBinary(bytes)) throw Error("Binary.");
         if (bytes.length > 5 * 1024 * 1024) {
           const window = await readWindow(guard, path, 1, 1, signal);
           const after = rows.get(path);
@@ -146,6 +157,7 @@ export class DocumentViewer {
               revision: window.revision,
               lines: window.totalLines,
               utf8Log: false,
+              encoding: window.encoding === "latin1" ? "windows-1252" : window.encoding,
             },
           };
         }
@@ -196,7 +208,7 @@ export class DocumentViewer {
           ? { kind: "pdf" as const, pages: Array<string>(doc.pages).fill("") }
           : undefined;
     if (!extraction || extraction.kind !== doc.kind) throw Error("Full extraction unavailable.");
-    if (!isDocumentKindIn(extraction.kind, binaryDocumentKinds) && isBinary(bytes))
+    if (!isDocumentKindIn(extraction.kind, binaryDocumentKinds) && isBinaryDocumentText(bytes))
       throw Error("Binary source.");
     return { doc, bytes, extraction };
   }
@@ -217,7 +229,7 @@ export class DocumentViewer {
         // Office sources are archives: they have sections but no line locators.
         lines: isDocumentKindIn(extraction.kind, binaryDocumentKinds)
           ? 0
-          : textLines(new TextDecoder("utf-8", { fatal: true }).decode(bytes)).length,
+          : textLines(decodeDocumentText(bytes)).length,
         slugs: new Set("sections" in extraction ? extraction.sections.map((s) => s.slug) : []),
       };
     } catch {

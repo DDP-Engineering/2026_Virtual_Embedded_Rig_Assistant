@@ -134,6 +134,7 @@ test("native Bypass edits and runs in a sibling repository, exports absolute pat
       files: [{ arg: 1, path: file.replaceAll("\\", "/") }],
       directories: [{ arg: 2, path: outside.replaceAll("\\", "/") }],
     });
+    await page.getByRole("button", { name: "run_program · echo · Approved", exact: true }).click();
     await expect(page.locator("[data-approval-directories]")).toContainText(outside.replaceAll("\\", "/"));
     for (const format of ["json", "md"] as const) {
       const destination = join(scratch, `export.${format}`);

@@ -22,6 +22,8 @@ it("detects UTF BOM variants and defaults to strict UTF8 with explicit replaceme
   expect(decodeTextLines(Uint8Array.of(0xff), "utf-8", true)).toEqual(["�"]);
   expect(decodeTextLines(Uint8Array.of(0xa1), "iso-8859-2")).toEqual(["Ą"]);
   expect(decodeTextLines(Uint8Array.of(0x80), "windows-1252")).toEqual(["€"]);
+  expect(decodeTextLines(Uint8Array.of(0x80), "iso-8859-1")).toEqual(["€"]);
+  expect(decodeTextLines(Uint8Array.of(0x80), "latin1")).toEqual(["\x80"]);
   expect(decodeTextLines(Uint8Array.of(0x61), "utf-16le")).toBeNull();
   expect(decodeTextLines(new Uint8Array(), "utf-8")).toEqual([""]);
 });

@@ -16,6 +16,7 @@ import {
   type GuardedPath,
   PathGuard,
   validateRelativePath,
+  windowsNameAlias,
 } from "../workbench/path-guard.js";
 import type { ClaimedResources, ProgramResource } from "./resource-registry.js";
 import type { LoadedPlugin } from "./store.js";
@@ -239,13 +240,16 @@ async function namedPath(
       return undefined;
     }
     path = inside(guard.root, path) ? relative(guard.root, path) || "." : path;
+    if (platform !== "win32" && (await reservedFile(guard.root, path, guard.scope === "filesystem")))
+      throw denied({ reason: "unbound", index });
     target = await guard.resolve(path);
     const info = await lstat(target.absolute);
     if (info.isDirectory() && !inside(guard.root, target.absolute)) return { path: target.relative };
     if (!info.isFile()) return undefined;
   } catch (error) {
     if (error instanceof ApplicationDataAccessError) throw error;
-    if ((error as { params?: { reason?: string } })?.params?.reason === "outside") throw error;
+    const reason = (error as { params?: { reason?: string } })?.params?.reason;
+    if (reason === "outside" || reason === "unbound") throw error;
     // Missing or ignored paths are ordinary arguments; host exclusions and outside files fail closed.
     signal?.throwIfAborted();
     guard.assertAuthorized();
@@ -265,14 +269,16 @@ async function reservedFile(root: string, path: string, filesystem = false): Pro
   const absolute = isAbsolute(path) ? path : resolve(root, path);
   if (!filesystem && !inside(root, absolute)) return false;
   try {
-    validateRelativePath(relative(root, absolute));
-    return false;
-  } catch {
-    try {
-      return (await lstat(absolute)).isFile();
-    } catch {
+    const relativePath = validateRelativePath(relative(root, absolute));
+    if (!relativePath.split("/").some((part) => part !== "." && part !== ".." && windowsNameAlias(part)))
       return false;
-    }
+  } catch {
+    // A path the Windows or portable file guard rejects can still name a literal ordinary file.
+  }
+  try {
+    return (await lstat(absolute)).isFile();
+  } catch {
+    return false;
   }
 }
 /** Hashes the files of an approved request again; CONFLICT when any differs or cannot be read. */

@@ -1,9 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, inject, it } from "vitest";
+import { acquireGuard } from "../../src/libraries/core/src/workbench/guard.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 it("runs owned CLI index/search and PDF replay through real local worker bundles, preserving a locked snapshot", async () => {
@@ -113,20 +114,26 @@ it("runs owned CLI index/search and PDF replay through real local worker bundles
         since: new Date().toISOString(),
       }),
     );
-    const locked = await run(["index", "--workbench", bench]);
-    expect(locked.status).toBe(1);
-    const protectedSearch = await run([
-      "search",
-      "--workbench",
-      bench,
-      "--query",
-      "I2C1_CR1",
-      "--mode",
-      "hybrid",
-    ]);
-    expect(protectedSearch.status, protectedSearch.stderr).toBe(0);
-    expect(JSON.parse(protectedSearch.stdout).results.length).toBeGreaterThan(0);
-    expect(await readFile(join(bench, ".vera/vera.db"))).toEqual(before);
+    const release = await acquireGuard(await realpath(bench));
+    if (!release) throw new Error("Expected the fixture to hold the native workbench guard");
+    try {
+      const locked = await run(["index", "--workbench", bench]);
+      expect(locked.status).toBe(1);
+      const protectedSearch = await run([
+        "search",
+        "--workbench",
+        bench,
+        "--query",
+        "I2C1_CR1",
+        "--mode",
+        "hybrid",
+      ]);
+      expect(protectedSearch.status, protectedSearch.stderr).toBe(0);
+      expect(JSON.parse(protectedSearch.stdout).results.length).toBeGreaterThan(0);
+      expect(await readFile(join(bench, ".vera/vera.db"))).toEqual(before);
+    } finally {
+      await release();
+    }
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }

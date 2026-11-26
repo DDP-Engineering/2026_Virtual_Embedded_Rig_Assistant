@@ -6,13 +6,13 @@ Wählen Sie in der Antwort des Agenten **Paket … in Wireshark öffnen** und da
 
 Lassen Sie **Anzeigefilter** leer, um den Filter des Verweises zu verwenden, sofern vorhanden. Sie können einen anderen Offline-Anzeigefilter eingeben. Blendet der Filter das zitierte Paket aus, ergänzt VERA den Filter um dieses Paket und weist Sie darauf hin. Ist der Mitschnitt geändert worden oder nicht verfügbar, prüfen Sie ihn erneut, um einen neuen Verweis zu erhalten.
 
-Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen. Höchstens drei Durchläufe laufen gleichzeitig in allen geöffneten Workbenches, oder so viele, wie unter **Gleichzeitige Durchläufe** in [Erweiterte Einstellungen](advanced-settings.md) eingestellt; eine am Limit gesendete Nachricht bleibt ungesendet im Eingabefeld, bis ein Durchlauf endet.
+Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen. Standardmäßig höchstens vier Durchläufe laufen gleichzeitig in allen geöffneten Workbenches, oder so viele, wie unter **Gleichzeitige Durchläufe** in [Erweiterte Einstellungen](advanced-settings.md) eingestellt; eine am Limit gesendete Nachricht bleibt ungesendet im Eingabefeld, bis ein Durchlauf endet.
 
 ## Sitzungen starten und verwalten
 
 - **Neue Sitzung** startet eine Unterhaltung im geöffneten Workbench. Gibt es eine ungenutzte leere Sitzung, öffnet VERA diese, statt eine weitere anzulegen.
-- Die erste Nachricht wird zum Titel. **Umbenennen** legt einen eigenen Titel fest.
-- **Sitzungen suchen** findet Sitzungen nach Titel und Nachrichtentext.
+- Die erste Nachricht wird zum Titel. Mit **Umbenennen** vergeben Sie jederzeit einen neuen Titel, auch während eines Durchlaufs.
+- **Sitzungen suchen** findet Sitzungen nach Titel und Nachrichteninhalt. Mit den Seitensteuerelementen unter langen Listen gelangen Sie zu weiteren Sitzungen.
 - Jede Sitzungszeile zeigt den Zeitpunkt der letzten Aktivität und hat ein Menü mit **Markdown exportieren**, **JSON exportieren**, **Umbenennen**, **Nach oben verschieben**, **Nach unten verschieben**, **Archivieren** und **Löschen**.
 - Eine Sitzung zeigt ihren Zustand: **Bereit**, **Läuft**, **Wartet auf Freigabe** oder **Fehler**. Eine laufende Sitzung hat neben der Zeit ein drehendes Zeichen, eine auf Freigabe wartende einen Schild.
 
@@ -52,13 +52,13 @@ Der Text erscheint an der ursprünglichen Cursorposition oder nach der Auswahl. 
 
 ## Einen laufenden Durchlauf steuern oder stoppen
 
-Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Solange eine Freigabekarte auf Ihre Entscheidung wartet, ist das Senden angehalten.
+Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Sie können den Entwurf weiter bearbeiten, während VERA eine Nachricht sendet oder auf Ihre Freigabe wartet. Sobald die Nachricht angenommen oder über die Freigabe entschieden wurde, können Sie wieder senden. Der Entwurf bleibt beim Ansichtswechsel in seiner Sitzung.
 
-**Stoppen** beendet den laufenden Durchlauf. Auch Escape fragt **Laufenden Durchlauf stoppen?**. Bereits abgeschlossene Arbeit, etwa angewendete Dateiänderungen, bleibt erhalten.
+**Stoppen** beendet den laufenden Durchlauf. Escape öffnet **Laufenden Durchlauf stoppen?** mit Fokus auf **Stoppen**. Drücken Sie Enter, um den Durchlauf zu stoppen. Bereits abgeschlossene Arbeit, etwa angewendete Dateiänderungen, bleibt erhalten.
 
 ## Eine Frage beantworten
 
-Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Klicke dann auf **Antwort senden**. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
+Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Wählen Sie **Antwort senden** oder drücken Sie Enter im Antwortfeld. Sie können auch im Nachrichtenfeld antworten. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
 
 In den Workbench-Einstellungen unter **Agent und Chat** ist **Empfohlene Antworten nach einer Wartezeit übernehmen** standardmäßig aus. Nach dem Einschalten sind 1 bis 1440 ganze Minuten erlaubt. Bei gültiger Empfehlung zeigt die Karte den Zeitpunkt an, und der Chat kennzeichnet automatische Antworten. Die Zeit läuft im Hintergrund und beim Neuladen weiter. Genehmigungspflichtige Vorgänge fragen weiterhin gesondert nach.
 
@@ -86,7 +86,7 @@ Eine delegierte Sitzung im Bypass-Modus folgt denselben Regeln wie eine direkte 
 | **Normal** | Routinemäßige Werkzeugaufrufe, gruppiert in einer aufklappbaren Zeile **Vorgänge** |
 | **Minimal** | Nur die Unterhaltung; routinemäßige Werkzeugaufrufe sind ausgeblendet, und eine Arbeitsanzeige ist zu sehen, solange der Agent arbeitet |
 
-Freigaben, die auf Sie warten, Fehler und Download-Karten werden auf jeder Stufe angezeigt; Freigaben, die der Berechtigungsmodus erteilt hat, sind bei **Minimal** ausgeblendet und bei **Normal** gruppiert. Die Stufe ändert nur die Anzeige; die gespeicherte Sitzung und ihre Exporte sind immer vollständig.
+Freigaben, die auf Sie warten, Fehler und Download-Karten werden auf jeder Stufe angezeigt; gewöhnliche automatische Freigaben werden bei **Minimal** ausgeblendet und bei **Normal** gruppiert. Schreibzugriffe auf Geräte und irreversible Plugin-Vorgänge bleiben sichtbar. Die Stufe ändert nur die Anzeige; die gespeicherte Sitzung und ihre Exporte sind immer vollständig.
 
 Werkzeugaktivitäten zeigen eine kurze Aktionsbeschreibung, die betroffene Datei, Seite oder den Befehl und den Status. Klappen Sie sie für das Ergebnis oder den genauen Befehl und Arbeitsordner auf. **Technische Details** enthält Werkzeugname, Dauer, ursprüngliche Argumente und Rohergebnis; große gespeicherte Auszüge lassen sich weiterhin vollständig laden. Ein Exitcode ungleich null erscheint als Fehler, Hintergrundläufe sind gesondert gekennzeichnet. Detailstufen und Genehmigungsanfragen behalten ihr Verhalten. Aufgeklappte Planaktualisierungen zeigen die tatsächlichen Aufgaben und ihren Status; technische Details bleiben optional und getrennt.
 
@@ -98,7 +98,9 @@ Bei Modellen, die es unterstützen, bietet **Reasoning-Stufe** die Option **Stan
 
 Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Währenddessen dreht sich die Anzeige und behält den letzten Prozentsatz, der sich aktualisiert, sobald die nächste Anfrage bereit ist. Das vollständige Transkript bleibt gespeichert und sichtbar.
 
-**In Unterhaltung suchen** durchsucht die aktuelle Sitzung. Die Markierungsleiste am linken Rand der Unterhaltung hat eine Markierung pro Nachricht von Ihnen; zeigen Sie auf eine Markierung, um eine Vorschau der Nachricht zu sehen, und wählen Sie sie aus, um dorthin zu springen.
+Schlägt der letzte Durchlauf wegen eines vorübergehenden Anbieterfehlers fehl, senden Sie seine Nachricht mit **Erneut versuchen** noch einmal. Bei einem Kontextlimit wählen Sie, sofern verfügbar, **Jetzt kompaktieren**. Bei Erreichen des Ausgabe- oder Werkzeugaufruflimits startet **Fortsetzen** einen weiteren Durchlauf.
+
+**In Unterhaltung suchen** durchsucht die aktuelle Sitzung. Mit Enter springen Sie zum nächsten Treffer, mit Shift+Enter zum vorherigen. Das Senden einer Nachricht oder **Zur neuesten Nachricht** bringt Sie ans Ende. Die Markierungsleiste am linken Rand der Unterhaltung hat eine Markierung pro Nachricht von Ihnen; zeigen Sie auf eine Markierung, um eine Vorschau der Nachricht zu sehen, und wählen Sie sie aus, um dorthin zu springen.
 
 ## Archivieren, löschen und exportieren
 

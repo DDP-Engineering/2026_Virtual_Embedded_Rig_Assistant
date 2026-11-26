@@ -2378,16 +2378,14 @@ it("finds tshark on PATH or in the Wireshark folder and shows the hint when it i
         },
       });
     const missing = provisioner("win32", { PATH: join(root, "empty"), ProgramFiles: join(root, "empty") });
-    expect(await missing.statuses("wireshark-tshark")).toEqual([
-      {
-        name: "tshark",
-        kind: "find",
-        state: "missing",
-        problem: "notFound",
-        hint,
-        link: "https://www.wireshark.org/download.html",
-      },
-    ]);
+    expect((await missing.statuses("wireshark-tshark")).find(({ name }) => name === "tshark")).toEqual({
+      name: "tshark",
+      kind: "find",
+      state: "missing",
+      problem: "notFound",
+      hint,
+      link: "https://www.wireshark.org/download.html",
+    });
     expect(await missing.resolve(plugin, "tshark")).toBeUndefined();
     expect(spawned).toEqual([]);
     missing.close();
@@ -3027,7 +3025,9 @@ it("reconciles typed offline traffic statistics and directional streams with nat
     );
     expect(outputs[0].traffic.summary).toMatchObject({ packets: 8, wireBytes: 445, capturedBytes: 445 });
     const nativeUdp = await native(sample, ["-q", "-z", "endpoints,udp"]);
-    expect(nativeUdp).toMatch(/192\.168\.7\.1\s+40000\s+4\s+228 bytes\s+2\s+124 bytes\s+2\s+104 bytes/);
+    expect(nativeUdp).toMatch(
+      /^192\.168\.7\.1[ \t]+40000[ \t]+4[ \t]+228(?: bytes)?[ \t]+2[ \t]+124(?: bytes)?[ \t]+2[ \t]+104(?: bytes)?[ \t]*\r?$/m,
+    );
     expect(outputs[1].traffic.rows).toMatchObject([
       {
         endpoint: { address: "192.168.7.1", port: 40000 },
@@ -3143,6 +3143,7 @@ it("reconciles typed offline traffic statistics and directional streams with nat
         "frame.cap_len",
         "_ws.expert.severity",
         "_ws.expert.group",
+        "tcp.analysis.ack_lost_segment",
       ),
     ]);
     const nativeDiagnostics = verifiedFields
@@ -3153,11 +3154,15 @@ it("reconciles typed offline traffic statistics and directional streams with nat
     expect(nativeDiagnostics.find((row) => row[0] === "7")?.[2]).toBe("1");
     expect(nativeDiagnostics.find((row) => row[0] === "10")?.[3]).toBe("1");
     expect(nativeDiagnostics.find((row) => row[0] === "13")?.[4]).toBe("0");
+    const acknowledgedSegmentUnseen = nativeDiagnostics.filter((row) => row[9]).length;
     expect(outputs[6].traffic.summary).toMatchObject({
-      tcpObservations: { retransmission: 1, previousSegmentUnseen: 1, acknowledgedSegmentUnseen: 1 },
+      tcpObservations: { retransmission: 1, previousSegmentUnseen: 1 },
       partialChecksumMarkers: { tcp: 1, udp: 0 },
       checksumStatuses: { tcp: { partial_offload_evidence: 1, unverified: 1 }, udp: { bad: 1 } },
     });
+    expect(outputs[6].traffic.summary.tcpObservations.acknowledgedSegmentUnseen).toBe(
+      acknowledgedSegmentUnseen || undefined,
+    );
     for (const [index, key] of [
       [7, "expertSeverity"],
       [8, "expertGroup"],

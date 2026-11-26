@@ -90,6 +90,7 @@ export function Transcript({
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
   const following = useRef(true);
+  const [showLatest, setShowLatest] = useState(false);
   /** scrollTop of the last marker jump; auto-follow stays off until the user returns to the end elsewhere. */
   const suspended = useRef<number | null>(null);
   const [anchors] = useState(() => new Map<string, HTMLElement>());
@@ -157,6 +158,7 @@ export function Transcript({
       suspended.current = null;
       following.current = true;
       node.scrollTop = node.scrollHeight;
+      setShowLatest(false);
     };
     node.addEventListener(TRANSCRIPT_FOLLOW, follow);
     return () => node.removeEventListener(TRANSCRIPT_FOLLOW, follow);
@@ -273,6 +275,7 @@ export function Transcript({
           onScroll={(e) => {
             const node = e.currentTarget;
             const atEnd = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+            setShowLatest(!atEnd);
             settledMax.current = node.scrollHeight - node.clientHeight;
             // Within a screen of the oldest mounted row (scrolling, Home, the rail): mount the rest now,
             // as a transition so input stays responsive while it renders.
@@ -288,12 +291,6 @@ export function Transcript({
         >
           <div className="transcript-content" ref={content}>
             {!state.items.length && <p className="muted">{t("chat.empty")}</p>}
-            {detail === "verbose" &&
-              Object.entries(reasoning).map(([id, text]) => (
-                <Disclosure className="reasoning" key={id} title={t("chat.reasoning")}>
-                  <pre>{text}</pre>
-                </Disclosure>
-              ))}
             {shown.map((row) => {
               if (row.kind === "retrieval-notice")
                 return (
@@ -342,6 +339,7 @@ export function Transcript({
                     workbenchId={workbenchId}
                     sessionId={sessionId}
                     disabled={disabled}
+                    canSavePrefix={state.mode === "auto-edit"}
                   />
                 );
               if (item.kind === "error")
@@ -368,12 +366,23 @@ export function Transcript({
                   anchors={anchors}
                   workbenchId={workbenchId}
                   detail={detail}
+                  reasoningText={
+                    detail === "verbose" && item.kind === "assistant" ? reasoning[item.id] : undefined
+                  }
                   bookmarked={bookmarks.has(item.id)}
                   bookmarkDisabled={disabled || !sessionId || bookmarks.busy(item.id)}
                   onBookmark={bookmarks.toggle}
                 />
               );
             })}
+            {detail === "verbose" &&
+              Object.entries(reasoning)
+                .filter(([id]) => !state.items.some((item) => item.kind === "assistant" && item.id === id))
+                .map(([id, text]) => (
+                  <Disclosure className="reasoning" key={id} title={t("chat.reasoning")}>
+                    <pre>{text}</pre>
+                  </Disclosure>
+                ))}
             {stopped && (
               <p className="muted" data-chat-stopped role="status">
                 {t("chatDetail.stopped")}
@@ -398,6 +407,15 @@ export function Transcript({
             )}
           </div>
         </div>
+        {showLatest && (
+          <button
+            type="button"
+            className="transcript-latest"
+            onClick={() => scroll.current?.dispatchEvent(new Event(TRANSCRIPT_FOLLOW))}
+          >
+            {t("chat.latestMessage")}
+          </button>
+        )}
       </div>
     </>
   );
@@ -417,6 +435,7 @@ const MessageRow = memo(function MessageRow({
   anchors,
   workbenchId,
   detail,
+  reasoningText,
   bookmarked,
   bookmarkDisabled,
   onBookmark,
@@ -428,6 +447,7 @@ const MessageRow = memo(function MessageRow({
   anchors: Map<string, HTMLElement>;
   workbenchId: string | undefined;
   detail: ChatDetail;
+  reasoningText: string | undefined;
   bookmarked: boolean;
   bookmarkDisabled: boolean;
   onBookmark: (id: string, value: boolean) => void;
@@ -468,6 +488,11 @@ const MessageRow = memo(function MessageRow({
       data-search-match={match ? "true" : undefined}
     >
       {match && <span className="sr-only">{t("chat.searchMatch")}</span>}
+      {reasoningText && (
+        <Disclosure className="reasoning" title={t("chat.reasoning")}>
+          <pre>{reasoningText}</pre>
+        </Disclosure>
+      )}
       {item.kind === "user" ? (
         <>
           <strong data-parent-instruction={item.parentSessionId ? "" : undefined}>
@@ -525,6 +550,7 @@ const ToolRow = memo(function ToolRow({
   workbenchId,
   sessionId,
   disabled,
+  canSavePrefix,
 }: {
   item: ToolItem;
   detail: ChatDetail;
@@ -534,6 +560,7 @@ const ToolRow = memo(function ToolRow({
   workbenchId: string | undefined;
   sessionId: string | undefined;
   disabled: boolean;
+  canSavePrefix: boolean;
 }) {
   return (
     <article data-message-kind="tool" className="transcript-item tool">
@@ -559,6 +586,7 @@ const ToolRow = memo(function ToolRow({
           completed={item.status !== "running"}
           sessionId={sessionId}
           disabled={disabled}
+          canSavePrefix={canSavePrefix}
         />
       ))}
     </article>
@@ -638,13 +666,14 @@ function ToolGroupRow({
   sessionId: string | undefined;
 }) {
   const { t } = useTranslation();
+  const running = tools.find((tool) => tool.status === "running");
   return (
     <div className="transcript-item tool" data-tool-group>
       <Disclosure
         title={
           <>
             {t("chatDetail.operations", { count: tools.length })}
-            {tools.some((tool) => tool.status === "running") ? ` · ${t("chat.running")}` : ""}
+            {running ? ` · ${t("chat.running")} · ${running.name}` : ""}
           </>
         }
       >

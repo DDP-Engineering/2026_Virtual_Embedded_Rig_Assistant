@@ -20,7 +20,7 @@ const sessionAttachmentLocation = (relative: string) =>
   relative === ".vera" || /^\.vera\/attachments(?:\/ses_[0-9A-HJKMNP-TV-Z]{26}(?:\/[^/]+)?)?$/.test(relative);
 
 // The full log of a command the agent ran: run_command returns only its tail and names this file.
-const runLogLocation = (relative: string) => /^\.vera\/runs\/[A-Za-z0-9_-]+\.log$/.test(relative);
+export const runLogLocation = (relative: string) => /^\.vera\/runs\/[A-Za-z0-9_-]+\.log$/.test(relative);
 
 const pathIdentity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 
@@ -49,16 +49,25 @@ export class ApplicationDataAccessError extends Error {
   }
 }
 
+export const windowsNameAlias = (part: string) =>
+  /[ .]$/.test(part) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(part);
+
 export function validateRelativePath(path: string): string {
   const slash = path.replaceAll("\\", "/");
   // Colons, device names and trailing dots or spaces are Windows hazards; on Linux they are ordinary
   // file names (capture_12:30.log, aux.c) the agent must be able to open.
   const windows = process.platform === "win32";
-  if (!path || slash.startsWith("/") || isAbsolute(path) || (windows ? /[\0:]/ : /\0/).test(path))
+  if (
+    !path ||
+    slash.startsWith("/") ||
+    isAbsolute(path) ||
+    /^[A-Za-z]:/.test(slash) ||
+    (windows ? /[\0:]/ : /\0/).test(path)
+  )
     throw Error("Use a workbench-relative path.");
   for (const part of slash.split("/")) {
     if (part === "." || part === "..") continue;
-    if (windows && (/[ .]$/.test(part) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(part)))
+    if (windows && windowsNameAlias(part))
       throw Error("Device names and ambiguous Windows paths are unavailable.");
   }
   return slash;
@@ -75,6 +84,7 @@ export class PathGuard {
     readonly additionalRoots: readonly PathRootBinding[] = [],
     private readonly allowSessionAttachments = false,
     private readonly refuseLinks = false,
+    private readonly allowRunLogs = false,
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
@@ -85,7 +95,7 @@ export class PathGuard {
     authorize?: () => void,
     excludedRoots: readonly string[] = [],
     additionalRoots: readonly (string | PathRootBinding)[] = [],
-    options: { allowSessionAttachments?: boolean; refuseLinks?: boolean } = {},
+    options: { allowSessionAttachments?: boolean; refuseLinks?: boolean; allowRunLogs?: boolean } = {},
   ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
@@ -137,6 +147,7 @@ export class PathGuard {
       additional,
       options.allowSessionAttachments,
       options.refuseLinks,
+      options.allowRunLogs,
     );
   }
 
@@ -176,7 +187,7 @@ export class PathGuard {
 
   private allowed(path: string): void {
     if (this.allowSessionAttachments && sessionAttachmentLocation(path)) return;
-    if (runLogLocation(path)) return;
+    if (this.allowRunLogs && runLogLocation(path)) return;
     if (path && (this.ignored(path) || this.ignored(`${path}/`)))
       throw Error("Path is ignored by the workbench.");
   }
@@ -210,7 +221,7 @@ export class PathGuard {
           );
         for (const segment of slash.replace(/^[A-Za-z]:\//, "").split("/")) {
           if (segment === "." || segment === "..") continue;
-          if (/[ .]$/.test(segment) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(segment))
+          if (windowsNameAlias(segment))
             throw Error("Device names and ambiguous Windows paths are unavailable.");
         }
       }
@@ -257,6 +268,12 @@ export class PathGuard {
       )
     )
       throw Error("Managed image attachment paths may not be redirected.");
+    if (
+      this.allowRunLogs &&
+      pathIdentity(lexical) !== pathIdentity(canonical) &&
+      [lexical, canonical].some((target) => runLogLocation(relative(this.root, target).split(sep).join("/")))
+    )
+      throw Error("Managed program log paths may not be redirected.");
     this.authorize?.();
     if ((this.scope === "filesystem" || this.additionalRoots.length) && exists) {
       const info = await lstat(canonical);

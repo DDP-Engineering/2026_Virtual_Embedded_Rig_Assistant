@@ -28,6 +28,11 @@ it("round trips every reference kind and labels its exact locator", () => {
     ["docs/a.html#h=reset-1", { kind: "heading", path: "docs/a.html", slug: "reset-1" }, "a.html #reset-1"],
     ["logs/boot.log#L1-L2", { kind: "lines", path: "logs/boot.log", start: 1, end: 2 }, "boot.log L1–2"],
     ["artifact:summary.md", { kind: "artifact", name: "summary.md" }, "summary.md"],
+    [
+      "logs/capture_12:30.log#L1-L1",
+      { kind: "lines", path: "logs/capture_12:30.log", start: 1, end: 1 },
+      "capture_12:30.log L1",
+    ],
   ] as const;
   for (const [ref, value, label] of cases) {
     expect(api.parseRef(ref)).toEqual(value);

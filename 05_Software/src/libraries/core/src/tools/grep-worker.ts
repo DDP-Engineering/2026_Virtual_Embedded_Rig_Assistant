@@ -3,7 +3,7 @@ import { parentPort } from "node:worker_threads";
 import { formatLineRef, parseLineRef } from "@vera/shared";
 import type { GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
-import { isBinary } from "./binary.js";
+import { isBinary, utf16Bom, validUtf8 } from "./binary.js";
 import { discoverFiles } from "./discovery.js";
 import { readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
@@ -40,6 +40,7 @@ async function execute(task: WorkerTask) {
       undefined,
       task.excludedRoots,
       task.additionalRoots,
+      { allowRunLogs: true },
     );
     const signal = new AbortController().signal;
     const files = await discoverFiles(guard, args.path ?? ".", args.glob ?? "**/*", signal);
@@ -63,11 +64,21 @@ async function execute(task: WorkerTask) {
         skipped++;
         continue;
       }
-      if (isBinary(bytes)) {
+      const bom = utf16Bom(bytes);
+      if (!bom && isBinary(bytes)) {
         skipped++;
         continue;
       }
-      const lines = textLines(bytes.toString("utf8"));
+      let decoded: string;
+      try {
+        decoded = bom
+          ? new TextDecoder(bom, { fatal: true }).decode(bytes)
+          : bytes.toString(validUtf8(bytes) ? "utf8" : "latin1");
+      } catch {
+        skipped++;
+        continue;
+      }
+      const lines = textLines(decoded);
       for (let i = 0; i < lines.length; i++) {
         const text = lines[i] ?? "";
         if (!regex.test(text)) continue;

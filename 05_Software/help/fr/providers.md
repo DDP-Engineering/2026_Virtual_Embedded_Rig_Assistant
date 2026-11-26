@@ -130,7 +130,7 @@ Une image envoyée à un modèle quitte votre ordinateur si le fournisseur est d
 
 ## Tester une connexion
 
-**Tester** exécute quatre vérifications : **Accessibilité**, **Authentification et modèle**, **Appel d’outils** et **Streaming**. Chacune affiche **Réussi**, **Échec** ou **Ignoré**. L’agent utilise des appels d’outils pour rechercher dans les documents, lire et modifier des fichiers et exécuter des programmes ; choisissez donc un modèle qui réussit **Appel d’outils**.
+**Tester** exécute quatre vérifications : **Accessibilité**, **Authentification et modèle**, **Appel d’outils** et **Streaming**. Chacune affiche **Réussi**, **Échec** ou **Ignoré**. L’agent utilise des appels d’outils pour rechercher dans les documents, lire et modifier des fichiers et exécuter des programmes ; choisissez donc un modèle qui réussit **Appel d’outils**. Vous pouvez tester un fournisseur avant de choisir le modèle par défaut de l’application. VERA utilise le modèle par défaut de ce fournisseur ou l’un de ses modèles activés lorsqu’il est disponible.
 
 ## Clés et stockage sécurisé
 

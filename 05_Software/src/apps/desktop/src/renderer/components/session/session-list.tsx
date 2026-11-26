@@ -8,6 +8,7 @@ import { api } from "../../api/index.js";
 import { useSettingsSnapshot } from "../../hooks/use-preferences.js";
 import { reorderOffset } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
+import { Pager, usePaged } from "../pager.js";
 import { ActivityIcon } from "../workbench-activity.js";
 import { useDelegatedStatusLabels } from "./delegation-links.js";
 import { SessionAdvancedDialog } from "./session-advanced.js";
@@ -183,6 +184,8 @@ export function SessionList({
   const archivedSessions = sessions.filter((s) => s.archived);
   const listedTree = sessionTree(listed);
   const archivedTree = sessionTree(archivedSessions);
+  const listedPage = usePaged(listedTree.roots);
+  const archivedPage = usePaged(archivedTree.roots);
   const delegatedStatus = useDelegatedStatusLabels();
   const [collapsed, setCollapsed] = useState(() => readCollapsed(workbenchId));
   const saveCollapsed = (next: Set<string>) => {
@@ -540,7 +543,8 @@ export function SessionList({
       {!!search.trim() && !searching && searchError == null && sessions.length === 0 && (
         <p role="status">{t("chat.noSessions")}</p>
       )}
-      {listedTree.roots.map((s) => renderBranch(s, listedTree))}
+      {listedPage.rows.map((s) => renderBranch(s, listedTree))}
+      <Pager {...listedPage.pager} />
       {archivedSessions.length > 0 && (
         <details
           className="archived-sessions"
@@ -550,7 +554,8 @@ export function SessionList({
           <summary>
             {t("chat.archived")} ({archivedSessions.length})
           </summary>
-          {archivedTree.roots.map((s) => renderBranch(s, archivedTree))}
+          {archivedPage.rows.map((s) => renderBranch(s, archivedTree))}
+          <Pager {...archivedPage.pager} />
         </details>
       )}
       {exportResult !== undefined && (

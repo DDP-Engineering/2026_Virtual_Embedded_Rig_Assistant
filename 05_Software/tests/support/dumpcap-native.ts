@@ -178,8 +178,8 @@ export async function proveNativeDumpcap(options: NativeOptions) {
       approved = requestSha256(prepared.request);
       return prepared.apply(rig.signal);
     }
-    async function sendSynthetic(count: number) {
-      for (let index = 0; index < count; index++) {
+    async function sendSynthetic(count: number, active = () => true) {
+      for (let index = 0; index < count && active(); index++) {
         await sleep(65, undefined, { signal: rig.signal });
         const data = Buffer.from(`VERA-Dumpcap-lab-${index}`);
         await new Promise<void>((resolve, reject) =>
@@ -230,7 +230,12 @@ export async function proveNativeDumpcap(options: NativeOptions) {
       return manifest;
     }
     const shortInput = { interfaceId, filter, durationSeconds: 2, totalBytes: 128_000 };
-    const [short] = await Promise.all([capture(shortInput, "short"), sendSynthetic(35)]);
+    let shortActive = true;
+    const shortCapture = capture(shortInput, "short").finally(() => {
+      shortActive = false;
+    });
+    // Start sending during preparation and keep sending through the kernel capture window.
+    const [short] = await Promise.all([shortCapture, sendSynthetic(400, () => shortActive)]);
     const shortManifest = await assertReadable(short, "short");
     assert.equal(shortManifest.status, "expired");
     assert.equal(shortManifest.lastSegmentPartial, false);

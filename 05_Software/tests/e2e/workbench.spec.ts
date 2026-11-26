@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
+import { acquireGuard } from "../../src/libraries/core/src/workbench/guard.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
@@ -40,7 +41,9 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("VERA-DEMO-01");
     await page.locator('[data-action="create-workbench"]').click();
-    await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
+    await expect(page.locator('[data-session][aria-current="page"]')).toBeVisible();
+    await page.locator('.workbench-group-name[aria-current="page"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toBeVisible();
     expect(existsSync(join(folder, ".vera/lock"))).toBe(true);
     expect(existsSync(join(folder, ".vera/vera.db"))).toBe(true);
     await page.locator('[data-action="edit-workbench-overview"]').focus();
@@ -104,7 +107,7 @@ test("Welcome deleted recent is missing and can be removed", async () => {
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("Deleted board");
     await page.locator('[data-action="create-workbench"]').click();
-    await expect(page.locator('[data-workbench="active"]')).toBeVisible();
+    await expect(page.locator('.workbench-group-name[aria-current="page"]')).toHaveText("Deleted board");
     await app.close();
     await rm(folder, { recursive: true });
     app = await launch(join(root, "data"), folder);
@@ -135,8 +138,12 @@ test("Welcome opens copied demo with a live lock read-only and preserves owner b
   await mkdir(join(folder, ".vera"), { recursive: true });
   const lock = JSON.stringify({ pid: process.pid, app: "0.0.0", since: "2026-10-11T00:00:00Z" });
   await writeFile(join(folder, ".vera/lock"), lock);
-  const app = await launch(join(root, "data"), folder);
+  let release: Awaited<ReturnType<typeof acquireGuard>>;
+  let app: Awaited<ReturnType<typeof launch>> | undefined;
   try {
+    release = await acquireGuard(await realpath(folder));
+    if (!release) throw new Error("Expected the fixture to hold the native workbench guard");
+    app = await launch(join(root, "data"), folder);
     const page = await app.firstWindow();
     await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
@@ -158,8 +165,12 @@ test("Welcome opens copied demo with a live lock read-only and preserves owner b
     expect(await outboundAttempts(app)).toEqual([]);
     await page.screenshot({ path: test.info().outputPath("demo-readonly.png") });
   } finally {
-    await app.close();
-    await rm(root, { recursive: true, force: true });
+    try {
+      await app?.close();
+    } finally {
+      await release?.();
+      await rm(root, { recursive: true, force: true });
+    }
   }
 });
 // REQ-UX-2c674629 REQ-UX-7f289a2c REQ-UX-68353a4e REQ-FUNC-3815bacc

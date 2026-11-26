@@ -31,7 +31,7 @@ test("Show advanced settings reveals the Advanced sections and a session value i
   await page.locator("[data-show-advanced]").click();
   await expect(page.locator("[data-show-advanced]")).toBeChecked();
   const appField = page.locator(`[data-settings-section="advanced"] ${toolCalls}`);
-  await expect(appField).toHaveAttribute("placeholder", "50 (default)");
+  await expect(appField).toHaveAttribute("placeholder", "200 (default)");
   const providers = page.locator('[data-advanced-group="providers"]');
   await expect(providers).toHaveJSProperty("open", false);
   await providers.locator("summary").click();

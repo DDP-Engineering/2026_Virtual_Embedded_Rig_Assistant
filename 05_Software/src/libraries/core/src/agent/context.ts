@@ -66,7 +66,7 @@ export function sourceRefs(value: unknown, refs = new Set<string>()): Set<string
     }
   return refs;
 }
-function minimumResult(result: ToolResultMessage): ToolResultMessage {
+export function minimumResult(result: ToolResultMessage): ToolResultMessage {
   const refs = sourceRefs(result);
   for (const block of result.content)
     if (block.type === "text") {

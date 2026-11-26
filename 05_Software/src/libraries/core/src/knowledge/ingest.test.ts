@@ -37,6 +37,56 @@ function latestWatcher() {
   return current;
 }
 
+it("retries failed documents without reprocessing unchanged successful documents", async () => {
+  const process = createDocumentProcessor(async () => {
+    throw Error("Unexpected PDF extraction");
+  });
+  const calls: string[] = [];
+  let fail = true;
+  const h = await harness(async (input) => {
+    calls.push(input.path);
+    if (fail && input.path === "docs/bad.md") throw Error("Temporary extraction failure");
+    return process(input);
+  });
+  await writeFile(join(h.folder, "docs/good.md"), "Retain this manual.\n");
+  await writeFile(join(h.folder, "docs/bad.md"), "Retry this manual.\n");
+  await h.service.reindexDocuments();
+  const rows = new DocumentsRepository(h.db);
+  const goodId = rows.get("docs/good.md")?.id;
+  expect(rows.get("docs/bad.md")?.status).toBe("failed");
+  expect(rows.get("docs/good.md")?.status).toBe("indexed");
+  calls.length = 0;
+  fail = false;
+  await h.service.reindexDocuments(undefined, true);
+  expect(rows.get("docs/bad.md")?.status).toBe("indexed");
+  expect(rows.get("docs/good.md")?.id).toBe(goodId);
+  expect(calls).toEqual(["docs/bad.md"]);
+});
+
+it("indexes and validates text with explicit UTF-16 and legacy single-byte encodings", async () => {
+  const h = await harness(
+    createDocumentProcessor(async () => {
+      throw Error("Unexpected PDF extraction");
+    }),
+  );
+  await writeFile(
+    join(h.folder, "docs/wide.txt"),
+    Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from("Wide capacitor 20 µF\n", "utf16le")]),
+  );
+  await writeFile(join(h.folder, "docs/legacy.txt"), Buffer.from("Legacy capacitor 35 µF\n", "latin1"));
+  await h.service.reindexDocuments();
+  const rows = new DocumentsRepository(h.db);
+  for (const [path, text] of [
+    ["docs/wide.txt", "Wide capacitor 20 µF"],
+    ["docs/legacy.txt", "Legacy capacitor 35 µF"],
+  ] as const) {
+    const row = rows.get(path);
+    expect(row?.status).toBe("indexed");
+    if (!row) throw Error("Missing indexed text document");
+    expect(rows.extraction(row.id)).toMatchObject({ kind: "text", lines: [text] });
+  }
+});
+
 const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const close of cleanup.reverse().splice(0)) await close();

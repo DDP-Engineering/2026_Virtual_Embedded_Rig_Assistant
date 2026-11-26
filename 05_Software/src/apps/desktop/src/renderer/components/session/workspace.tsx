@@ -6,7 +6,7 @@ import {
   type SessionSummary,
   veraErrorSchema,
 } from "@vera/shared";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionView } from "../../hooks/session-view.js";
@@ -23,6 +23,9 @@ import { SessionInspector } from "./session-inspector.js";
 import { TRANSCRIPT_FOLLOW, Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
 import { ContextIndicator } from "./usage-meter.js";
+
+const pendingSends = new Set<string>();
+const sendUpdates = new EventTarget();
 
 export function SessionWorkspace({
   id,
@@ -68,7 +71,19 @@ export function SessionWorkspace({
     veraErrorSchema.safeParse(failure).data?.code === "TURN_LIMIT" &&
     !!turns.capacity &&
     turns.capacity.active < turns.capacity.limit;
-  const [pending, setPending] = useState(false);
+  const [actionPending, setPending] = useState(false);
+  const sendKey = `${workbenchId}/${id}`;
+  const sending = useSyncExternalStore(
+    useCallback(
+      (notify) => {
+        sendUpdates.addEventListener(sendKey, notify);
+        return () => sendUpdates.removeEventListener(sendKey, notify);
+      },
+      [sendKey],
+    ),
+    () => pendingSends.has(sendKey),
+  );
+  const pending = actionPending || sending;
   const [feedbackRestored, setFeedbackRestored] = useState(false);
   const restoring = useRef(false);
   const scopeGeneration = useRef(0);
@@ -205,13 +220,16 @@ export function SessionWorkspace({
       !view ||
       (!text.trim() && !images?.length) ||
       pending ||
+      pendingSends.has(sendKey) ||
       restoring.current ||
       readOnly ||
       activeReview ||
       view?.state.status === "awaiting_approval"
     )
       return false;
-    setPending(true);
+    const generation = scopeGeneration.current;
+    pendingSends.add(sendKey);
+    sendUpdates.dispatchEvent(new Event(sendKey));
     setFailure(undefined);
     try {
       // The agent is waiting on a question: what the user types in the message box is the answer to it,
@@ -226,14 +244,15 @@ export function SessionWorkspace({
           reply: { kind: "text", text: reply },
         });
         changed();
-        showLatest();
+        if (generation === scopeGeneration.current) showLatest();
         return true;
       }
       await api.invoke("session.send", { sessionId: id, text, ...(images?.length && { images }) });
       changed();
-      showLatest();
+      if (generation === scopeGeneration.current) showLatest();
       return true;
     } catch (e) {
+      if (generation !== scopeGeneration.current) return false;
       // At the Concurrent turns limit the message stays unsent in the composer (REQ-UX-f20cb322).
       const refusal = veraErrorSchema.safeParse(e);
       if (refusal.success && refusal.data.code === "TURN_LIMIT")
@@ -241,7 +260,8 @@ export function SessionWorkspace({
       setFailure(e);
       return false;
     } finally {
-      setPending(false);
+      pendingSends.delete(sendKey);
+      sendUpdates.dispatchEvent(new Event(sendKey));
     }
   }
   async function retryRequest() {
@@ -393,8 +413,9 @@ export function SessionWorkspace({
                     '[data-search-match="true"]',
                   );
                   if (!matches?.length) return;
-                  searchStep.current =
-                    (searchStep.current + (e.shiftKey ? -1 : 1) + matches.length * 2) % matches.length;
+                  const direction = e.shiftKey ? -1 : 1;
+                  const current = e.shiftKey && searchStep.current === -1 ? 0 : searchStep.current;
+                  searchStep.current = (current + direction + matches.length) % matches.length;
                   matches[searchStep.current]?.scrollIntoView({ block: "center" });
                   return;
                 }
@@ -453,8 +474,9 @@ export function SessionWorkspace({
           inspectorControls={
             view ? <ContextIndicator state={view.state} open={() => setInspector(true)} /> : undefined
           }
-          disabled={readOnly || pending}
-          sendDisabled={!view || activeReview}
+          disabled={readOnly || actionPending}
+          draftDisabled={!view || activeReview}
+          sendDisabled={pending}
           archived={archived}
           send={send}
           stop={() => void stop()}

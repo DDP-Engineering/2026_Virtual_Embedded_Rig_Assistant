@@ -79,6 +79,18 @@ it("counts baseline and candidate fixture logs with exact cited WARN and ERROR",
     ref: "logs/boot-0413.log#L4-L4",
   });
 });
+it("parses a managed run log without admitting adjacent runtime files", async () => {
+  const path = ".vera/runs/build.log";
+  await mkdir(join(root, ".vera/runs"), { recursive: true });
+  await writeFile(join(root, path), "I (10) build: started\nE (20) build: failed\n");
+  await writeFile(join(root, ".vera/runs/runtime.txt"), "I (10) build: started\n");
+  const result = await call({ path, profile: "esp-idf" });
+  expect(result.isError).toBe(false);
+  expect(result.value.events[1]).toMatchObject({ ref: `${path}#L2-L2`, level: "error" });
+  expect((await call({ path: ".vera/runs/runtime.txt", profile: "esp-idf" })).value).toMatchObject({
+    reason: "path_denied",
+  });
+});
 it("parses ANSI, ESP-IDF timestamps, Zephyr and custom normalized levels", async () => {
   await log(
     "\x1b[0;32mI (1234) wifi: connected\x1b[0m\nW (12:34:56.789) i2c: delayed\nE (44) i2c: failed\nV (45) x: trace\nD (46) x: debug\nBacktrace: panic\n\n",

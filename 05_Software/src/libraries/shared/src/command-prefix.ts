@@ -13,10 +13,6 @@ const gitProgramOptions = ["upload-pack", "receive-pack", "exec-path", "extcmd",
 // Git subcommands that run a named program or always discard work.
 const gitRefused = /^(?:clean|restore|bisect|difftool|mergetool|filter-branch|foreach)$/;
 
-// Programs whose -c or -e option takes code or configuration that can run a program.
-const inlineCode =
-  /^(?:python[0-9.]*|py|node|nodejs|deno|bun|perl|ruby|php|lua[0-9.]*|rscript|julia|groovy|tclsh|osascript|sed|awk|gawk|git)$/;
-
 function longOption(word: string): string {
   return word.startsWith("--") ? (word.slice(2).split(/[=:]/)[0]?.toLowerCase() ?? "") : "";
 }
@@ -83,10 +79,17 @@ function words(command: string): string[] | undefined {
   if (tokens.some((word) => /^-[A-Za-z]*f[A-Za-z]*$/.test(word) || word.startsWith("+"))) return;
   // Code/config dispatch can reinterpret otherwise literal suffixes as shell code.
   if (tokens.some((word) => /^(?:--eval|--execute|--exec|--config-env)/i.test(word))) return;
-  // -c and -e carry inline code only for these programs; elsewhere they are plain options
-  // (pio run -e <env>), and -C is a directory (make -C, ninja -C, git -C).
-  const program = (tokens[0] ?? "").toLowerCase().replace(/\.(?:exe|com|cmd|bat)$/, "");
-  if (inlineCode.test(program) && tokens.some((word) => /^-[ce]/.test(word))) return;
+  // Only the known build forms may reuse -c/-e option spellings.
+  const program = tokens[0]?.toLowerCase();
+  if (
+    tokens.some(
+      (word) =>
+        /^-[ce]/i.test(word) &&
+        !(word === "-C" && (program === "make" || program === "ninja" || program === "git")) &&
+        !(word === "-e" && program === "pio" && tokens[1] === "run"),
+    )
+  )
+    return;
   return tokens;
 }
 

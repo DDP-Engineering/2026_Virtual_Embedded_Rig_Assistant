@@ -26,7 +26,7 @@ export const grepTool: ToolDefinition = {
     if (!ctx.workers) throw Error("Grep worker host is unavailable.");
     const results = toolLimit(ctx, "grepResults");
     const args = { ...parsed, maxResults: Math.min(parsed.maxResults ?? results, results) };
-    const guard = await toolPathGuard(ctx, true);
+    const guard = await toolPathGuard(ctx, true, { allowRunLogs: true });
     guard.assertAuthorized();
     const result = await ctx.workers.run(
       {

@@ -8,6 +8,7 @@
 | **Accès web** | Recherche et lecture sur le web pour l’agent |
 | **Apparence et langue** | Langue, thème et tailles de texte |
 | **Commandes** | Le shell des commandes de l’agent et des nouveaux terminaux |
+| **Autorisations** | Accès complet pour les tâches déléguées. Voir [Autorisations](permissions.md). |
 | **Notifications** | Alertes du bureau à la fin d’un tour, pour les approbations et les questions |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |
@@ -78,7 +79,7 @@ L’accès web permet à l’agent de faire des recherches sur le web public, de
 3. Choisissez le **Mode d’accès** : **Anonyme — aucun compte requis**, ou **Utiliser ma clé API** et saisissez la clé. Brave exige toujours une clé et ne fait que rechercher ; il ne peut pas lire de pages.
 4. Sélectionnez **Enregistrer**, puis **Tester la connexion**.
 
-Seuls le texte de la recherche et les adresses demandées par l’agent quittent votre ordinateur ; VERA n’envoie aucun fichier du projet pour une recherche. L’utilisation anonyme est soumise aux limites du fournisseur. Les résultats web sont traités comme du contenu non fiable, et l’agent les cite avec leurs liens publics ; à l’ouverture d’un lien, une confirmation vous est demandée avant que votre navigateur ne l’ouvre.
+Seuls le texte de la recherche et les adresses demandées par l’agent quittent votre ordinateur ; VERA n’envoie aucun fichier du projet pour une recherche. L’utilisation anonyme est soumise aux limites du fournisseur. Les résultats web sont traités comme du contenu non fiable, et l’agent les cite avec leurs liens publics. Sélectionnez une citation pour ouvrir son lien public dans votre navigateur.
 
 La désactivation de l’accès web arrête aussi les recherches et téléchargements en cours. Chaque banc de travail peut désactiver les outils web dans **Modifier le banc** → **Outils**.
 

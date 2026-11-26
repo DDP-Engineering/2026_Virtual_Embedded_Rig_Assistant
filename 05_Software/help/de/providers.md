@@ -130,7 +130,7 @@ Wenn der Anbieter auf einem entfernten Rechner läuft, verlässt das Bild beim S
 
 ## Eine Verbindung testen
 
-**Testen** führt vier Prüfungen aus: **Erreichbarkeit**, **Authentifizierung und Modell**, **Werkzeugaufrufe** und **Streaming**. Jede zeigt **Bestanden**, **Fehlgeschlagen** oder **Übersprungen**. Der Agent verwendet Werkzeugaufrufe, um Dokumente zu durchsuchen, Dateien zu lesen und zu ändern und Programme auszuführen; wählen Sie daher ein Modell, das **Werkzeugaufrufe** besteht.
+**Testen** führt vier Prüfungen aus: **Erreichbarkeit**, **Authentifizierung und Modell**, **Werkzeugaufrufe** und **Streaming**. Jede zeigt **Bestanden**, **Fehlgeschlagen** oder **Übersprungen**. Der Agent verwendet Werkzeugaufrufe, um Dokumente zu durchsuchen, Dateien zu lesen und zu ändern und Programme auszuführen; wählen Sie daher ein Modell, das **Werkzeugaufrufe** besteht. Sie können einen Anbieter testen, bevor Sie das Standardmodell der Anwendung wählen. VERA verwendet dessen Standardmodell oder eines seiner aktivierten Modelle, sofern eines verfügbar ist.
 
 ## Schlüssel und sichere Speicherung
 

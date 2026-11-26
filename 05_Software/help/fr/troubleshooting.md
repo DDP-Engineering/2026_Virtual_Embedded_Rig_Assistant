@@ -48,7 +48,7 @@ Lorsque le catalogue est injoignable ou que sa signature ne correspond pas, la p
 
 ## VERA se ferme juste après le démarrage
 
-VERA ne démarre pas lorsque son fichier `settings.json` est endommagé ou a été modifié à la main de façon invalide. Recherchez la cause dans le fichier journal le plus récent. Corrigez le fichier ou déplacez-le ailleurs : VERA démarre alors avec les paramètres par défaut, et vous configurez de nouveau vos fournisseurs et vos préférences.
+Si le fichier `settings.json` est invalide, VERA affiche son chemin et les paramètres concernés au démarrage. Corrigez ou déplacez le fichier pour recréer les valeurs par défaut, puis configurez à nouveau vos fournisseurs et préférences.
 
 ## Journaux
 

@@ -62,12 +62,13 @@ skill, tool or plugin names give `UNKNOWN_NAME` warnings.
 
 ### Lock and read-only workbenches
 
-Opening takes `.vera/lock`. A lock of another live process opens the workbench read-only: the
+Opening holds a native local IPC guard and writes `.vera/lock`. Another guard owner opens the workbench read-only: the
 database is read from a private temporary copy, nothing is written, nothing is indexed; sessions,
-files and exports stay readable, but messages, settings and skills cannot change. A lock of a dead
-process, or one that does not parse, is taken over under a short local IPC guard (busy guard:
-read-only with `LOCK_GUARD_BUSY`). Saves and session changes recheck the lock's pid and token. Close
-stops indexing, checkpoints the WAL and deletes the lock only if it is still this process's.
+files and exports stay readable, but messages, settings and skills cannot change. An unowned file
+left on disk is reclaimed while holding the guard, even when another process has reused its PID.
+A guard whose lock file is still being established reports `LOCK_GUARD_BUSY`. Saves and session
+changes recheck the lock's PID and token. Close stops indexing, checkpoints the WAL, deletes its
+own lock and releases the guard.
 
 ### Additional folders
 
@@ -220,7 +221,8 @@ thread, remote models off and network `fetch` blocked; one worker per model in u
   re-embeds from the stored extraction in the background; keyword search works meanwhile.
 - **Reindex** deletes every document row and indexes again, reusing the extraction cache. A changed
   chunk size or overlap applies to documents processed after the change; Reindex applies it to all.
-- A failed document is tried once more after the workbench is reopened.
+- **Retry** in the index failure details retries failed documents while preserving successful
+  rows with unchanged content. A failed document is also tried once more after reopening.
 
 ## Search and citations
 

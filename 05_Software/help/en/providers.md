@@ -130,7 +130,7 @@ An image sent to a model leaves your computer if the provider runs remotely. Tex
 
 ## Test a connection
 
-**Test** runs four checks: **Reachability**, **Authentication and model**, **Tool calling** and **Streaming**. Each shows **Pass**, **Fail** or **Skipped**. The agent uses tool calls to search documents, read and change files and run programs, so choose a model that passes **Tool calling**.
+**Test** runs four checks: **Reachability**, **Authentication and model**, **Tool calling** and **Streaming**. Each shows **Pass**, **Fail** or **Skipped**. The agent uses tool calls to search documents, read and change files and run programs, so choose a model that passes **Tool calling**. You can test a provider before choosing an application default model. VERA uses the default for that provider or one of its enabled models when available.
 
 ## Keys and secure storage
 

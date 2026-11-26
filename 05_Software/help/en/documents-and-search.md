@@ -2,7 +2,7 @@
 
 VERA indexes the documentation of a workbench on your computer, so the agent can search it and cite the exact page, section or line it used. Indexing and semantic search use the workbench’s local model. BGE Small EN v1.5 is the default for English. A workbench configured with Multilingual E5 Small can find passages by meaning in Romanian, German, French and other languages, including with a query in a different language. Windows and Linux packages include both models. You can index offline with either model as soon as you install VERA. When the agent reads a passage to answer you, that passage goes to your model provider like the rest of the conversation; with a local server such as LM Studio or Ollama it stays on your computer.
 
-To change the model, open **Edit workbench** → **Indexing**, choose the model, and save. VERA asks for confirmation with the indexed document count. When you confirm, it keeps the extracted text and rebuilds the workbench’s vectors in the background. You can still search by keyword during the rebuild.
+To change the model, open **Edit workbench** → **Indexing**, choose the model, and save. VERA asks for confirmation with the indexed document count. When you confirm, it keeps the extracted text and rebuilds the workbench’s vectors in the background. You can still search by keyword during the rebuild. If more documents finish indexing while the confirmation is open, you can still confirm the switch.
 
 Display masking is off by default. When enabled for a workbench, stored secrets in file names and viewer text appear as [REDACTED]. Files and search results remain listed and open the same file, even when two masked names look alike. Display masking does not change indexing or what the agent may send to a model. PDF page images keep their original bytes; only extracted text is masked.
 
@@ -17,6 +17,8 @@ The folders checked under **Edit workbench** → **Documents & RAG** are indexed
 Legacy `.doc`, `.ppt`, `.xls` and RTF files are not indexed; save them in a modern format. Files matched by `.vera/.veraignore`, and anything in `.vera`, `.git` or `node_modules`, are never indexed. Source code and logs are not indexed either; the agent reads them directly with its file tools.
 
 With **Use .gitignore** checked (the default for new workbenches), files and folders that the workbench's `.gitignore` files exclude are not indexed either: the one in the workbench folder and those in its subfolders, each for its own folder, as in Git. A line starting with `!` in `.vera/.veraignore` brings back a file or folder that `.gitignore` excludes, with everything inside it; `.vera`, `.git` and `node_modules` stay ignored. The agent's file tools still read files that only `.gitignore` excludes.
+
+Text extraction detects UTF-8 and UTF-16 with a byte order mark (BOM). It uses Windows-1252 if UTF-8 decoding fails on a file recognized as text.
 
 Indexing runs in the background and follows changes: new, changed and deleted files are picked up automatically.
 
@@ -42,7 +44,7 @@ Under **Edit workbench** → **Indexing**, **Document search** sets the agent's 
 
 ## The Files tab
 
-The **Files** tab shows the whole workbench folder as a tree. Files ignored by VERA are shown in italics. The box **Search files and documents** filters the tree by file name and lists matching passages from indexed documents under **In documents**.
+The **Files** tab shows the whole workbench folder as a tree. Files ignored by VERA are shown in italics. The box **Search files and documents** filters the tree by file name and lists matching passages from indexed documents under **In documents**. Return to the VERA window to refresh the file tree and search results after changes made outside the app.
 
 The menu of a file offers **Open**, **Attach as context**, **Open in** (the default app or another app), **Show in Explorer** (Finder or folder on other systems), **Copy** (absolute path, relative path or file name) and **Properties**, which includes the index status.
 
@@ -73,7 +75,7 @@ Text files offer **Encoding** and **Word wrap**. UTF-8 and UTF-16 BOMs are detec
 Large files are read in windows. The rightmost scrollbar selects a byte position; the inner scrollbar moves within the current text window. Ctrl+Home/End reaches the file start/end. Line numbers marked ≈ are estimates until progressive indexing settles them. Go to line first jumps approximately, then settles exactly. Find scans windows; Enter finds the next match, Shift+Enter the previous one, and **Cancel** stops the scan. Very long lines appear in bounded fragments marked …; scrolling continues into the next fragment. Find counts matching source lines and wraps at the ends. Large citations keep their verified source range.
 
 - PDF files scroll continuously and show the page number. Zoom with Ctrl+mouse wheel or Ctrl+= , Ctrl+- and Ctrl+0.
-- Ctrl+F finds text in a PDF or text document; in text files Ctrl+G goes to a line.
+- Ctrl+F searches from the current page in a PDF and also finds text in text documents. Ctrl+G goes to a page or line. PDFs can zoom up to 400%.
 - Ctrl+Tab and Ctrl+Shift+Tab switch tabs, Ctrl+W closes the current tab, and Escape returns to **Chat**.
 - A tab's menu offers **Close**, **Close others**, **Close to the right**, **Move left** and **Move right**. Tabs can also be dragged.
 
@@ -102,5 +104,7 @@ Image bytes follow the current Display masking choice. Masking can make an encod
 ## Indexing status
 
 The status icon next to the active workbench name shows the current scan, indexing, rebuild or final state. Focus or hover over it for measured counts, then activate it to open Files. Processed files can include skipped files, files that need OCR and failures. Searchable documents have text passages in the index. A scan has no progress total until the selection is known. In a read-only workbench VERA can use the saved index without verifying it again. Select the workbench name and look under **Documents and index** in **Workbench overview** for progress, counts and details about skipped, OCR and failed files. **Files** shows activity in its toolbar and keeps the count-limit and Restart controls.
+
+Open **Workbench overview**, expand the indexing exceptions, and choose **Retry** to retry problem documents and keep successful results. Use **Reindex** in **Files** to rebuild the full selection.
 
 Chat marks the turn that used partial document search, keyword fallback or an unavailable index. An empty partial search can miss sources that are still pending or were excluded. You can continue chatting or open a known file while the index updates.

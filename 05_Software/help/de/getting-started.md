@@ -31,11 +31,11 @@ Details finden Sie unter [Anbieter und Modelle](providers.md).
 3. Prüfen Sie unter **Dokumente & RAG** die Dokumentationsordner, die VERA gefunden hat, oder verwenden Sie **Ordner hinzufügen…**.
 4. Wählen Sie **Workbench erstellen**.
 
-VERA beginnt im Hintergrund mit der Indizierung. Sie können bereits chatten; die Symbolleiste in **Dateien** zeigt die Aktivität und die Workbench-Übersicht den detaillierten Fortschritt. Siehe [Workbenches](workbenches.md) und [Dokumente und Suche](documents-and-search.md).
+VERA öffnet eine Sitzung mit Fokus auf dem Nachrichtenfeld und beginnt im Hintergrund mit der Indizierung. Sie können bereits chatten; die Symbolleiste in **Dateien** zeigt die Aktivität und die Workbench-Übersicht den detaillierten Fortschritt. Siehe [Workbenches](workbenches.md) und [Dokumente und Suche](documents-and-search.md).
 
 ## Schritt 3: eine erste Frage stellen
 
-1. Wählen Sie **Neue Sitzung**.
+1. Verwenden Sie die beim Erstellen des Workbenchs geöffnete Sitzung. Wählen Sie **Neue Sitzung** für eine weitere Unterhaltung.
 2. Wählen Sie in den Steuerelementen des Nachrichtenfelds ein **Modell**. Lassen Sie den Berechtigungsmodus vorerst auf **Nachfragen**.
 3. Geben Sie eine Frage zu Ihrem Projekt ein, zum Beispiel „Wie hoch ist der maximale SPI-Takt des Sensors, und welche Pins verwendet er?“, und drücken Sie Enter.
 

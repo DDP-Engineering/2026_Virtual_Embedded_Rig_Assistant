@@ -6,13 +6,13 @@ Select **Open frame … in Wireshark** in the agent’s reply, then select **Ope
 
 Leave **Display filter** empty to use the filter from the citation, if there is one. You can enter another offline display filter. If that filter hides the cited frame, VERA adds the frame to the filter and tells you. If the capture changed or is unavailable, inspect it again to get a new citation.
 
-A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. At most three turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
+A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. By default, at most four turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
 
 ## Start and manage sessions
 
 - **New session** starts a conversation in the open workbench. If an unused empty session exists, VERA opens that one instead of creating another.
-- The first message becomes the title. **Rename** sets your own title.
-- **Search sessions** finds sessions by title and message text.
+- The first message becomes the title. Use **Rename** at any time, including during a turn.
+- **Search sessions** finds sessions by title and message text. Use the page controls below long lists to see more sessions.
 - Each session row shows the time of its last activity and has a menu with **Export Markdown**, **Export JSON**, **Rename**, **Move up**, **Move down**, **Archive** and **Delete**.
 - A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**. A running session has a turning mark beside its time, and a session awaiting approval a shield.
 
@@ -52,13 +52,13 @@ The result appears at the original caret or after the selected text. If you edit
 
 ## Steer or stop a running turn
 
-While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.
+While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. You can keep editing the draft while VERA sends a message or waits for your approval. Send becomes available when the request is accepted or the approval is resolved. Drafts stay with their session when you switch views.
 
-**Stop** ends the running turn. Escape also asks **Stop the running turn?**. Work that was already completed, such as applied file changes, stays.
+**Stop** ends the running turn. Escape opens **Stop the running turn?** with **Stop** focused. Press Enter to stop. Work that was already completed, such as applied file changes, stays.
 
 ## Answer a question
 
-When VERA asks a question, select a choice or enter your own answer, then select **Submit answer**. The card marks any recommended choice. You can also select **Cancel question** to continue the turn with a cancellation, or stop the turn to end it. Open a waiting question from the activity menu in its workbench heading.
+When VERA asks a question, select a choice or enter your own answer, then select **Submit answer**. Enter also submits a typed answer. You can type a text answer in the main message box and send it there. The card marks any recommended choice. You can also select **Cancel question** to continue the turn with a cancellation, or stop the turn to end it. Open a waiting question from the activity menu in its workbench heading.
 
 In the workbench’s **Agent and chat** settings, **Use recommended answers after a timeout** is off by default. Enable it to set a whole number from 1 to 1440 minutes. The card shows the deadline when a valid recommendation can be applied, and the transcript marks automatic answers. The timer keeps running with the window in the background or the view reloading. Any operation that needs approval still asks for it separately.
 
@@ -86,7 +86,7 @@ A delegated session in Bypass follows the same rules as a direct Bypass session:
 | **Normal** | Routine tool calls grouped into an expandable **Operations** line |
 | **Minimal** | Only the conversation; routine tool calls are hidden and a working indicator shows while the agent works |
 
-Approvals waiting for you, errors and download cards are shown at every level; approvals the permission mode granted are hidden at **Minimal** and grouped at **Normal**. The level changes only the display; the saved session and its exports are always complete.
+Approvals waiting for you, errors and download cards are shown at every level; routine automatic approvals are hidden at **Minimal** and grouped at **Normal**. Device writes and irreversible plugin operations remain visible. The level changes only the display; the saved session and its exports are always complete.
 
 Tool activity uses a short action description, the affected file, page or command, and its status. Expand it to read the result or exact command and working folder. **Technical details** contains the tool name, duration, original arguments and raw result; large stored excerpts can still be loaded in full. A nonzero program exit code is shown as an error, and background runs are labelled separately. Detail levels and approval requests keep their existing behavior. Plan-update operations show the actual task steps and their statuses when expanded; optional technical details stay separate.
 
@@ -98,7 +98,9 @@ For models that support it, **Reasoning level** offers **Default** and the level
 
 The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). Meanwhile the indicator spins and keeps the last percentage, which updates when the next request is ready. The full transcript stays saved and visible.
 
-**Find in conversation** searches the current session. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
+If the latest turn fails with a temporary provider error, select **Retry** to resend its message. On a context-limit error, use **Compact now** when available. When a turn reaches the output or tool-call limit, **Continue** starts another turn.
+
+**Find in conversation** searches the current session. Use Enter for the next match and Shift+Enter for the previous one. Sending a message or selecting **Jump to latest message** returns you to the end. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
 
 ## Archive, delete and export
 

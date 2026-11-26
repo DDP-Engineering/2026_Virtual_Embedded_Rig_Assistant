@@ -1,11 +1,12 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as api from "../index.js";
 import { readGuardedFile } from "./files.js";
+import { readWindow } from "./read-window.js";
 
 let root: string;
 beforeEach(async () => {
@@ -19,6 +20,27 @@ function context() {
   expect(api.createToolContext).toBeTypeOf("function");
   return api.createToolContext(root);
 }
+it("refuses redirected program logs and adjacent runtime data", async () => {
+  await mkdir(join(root, ".vera"));
+  await symlink(join(root, "docs"), join(root, ".vera/runs"), "junction");
+  await writeFile(join(root, "docs/build.log"), "log\n");
+  await writeFile(join(root, "docs/runtime.txt"), "runtime\n");
+  for (const path of [".vera/runs/build.log", ".vera/runs/runtime.txt"])
+    await expect(api.readTool.execute(context(), { path }, new AbortController().signal)).rejects.toThrow();
+});
+it("refuses a changed source before replaying a legacy text window", async () => {
+  const path = "docs/encoding.txt";
+  const file = join(root, path);
+  await writeFile(file, Buffer.from("Legacy voltage 5µV\n", "latin1"));
+  const guard = await api.PathGuard.create(root);
+  const resolve = guard.resolve.bind(guard);
+  const resolvePath = vi.spyOn(guard, "resolve").mockImplementationOnce(resolve);
+  resolvePath.mockImplementationOnce(async (name) => {
+    await writeFile(file, "Replacement UTF-8 3.3µV\n");
+    return resolve(name);
+  });
+  await expect(readWindow(guard, path, 1, 1, new AbortController().signal)).rejects.toThrow(/changed/i);
+});
 it("reads numbered offset/limit lines with canonical refs and independent session fingerprints", async () => {
   const data = "one\r\nBanc ă\r\nthree\r\n";
   await writeFile(join(root, "docs/notes.md"), data);

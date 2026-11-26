@@ -582,6 +582,7 @@
     "searchMatches": "Mesaje găsite: {{count}}",
     "searchHint": "Introdu text pentru a găsi mesaje.",
     "searchMatch": "Rezultat al căutării",
+    "latestMessage": "Mergi la ultimul mesaj",
     "messagePlaceholder": "Întreabă VERA despre proiect…",
     "defaultModelShort": "Model implicit",
     "contextWindow": "Fereastra de context",

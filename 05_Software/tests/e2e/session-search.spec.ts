@@ -57,19 +57,25 @@ test("finds a renamed session by a word only in a later message", async () => {
       }
       await api.invoke("session.rename", { sessionId: id, title: "Renamed board" });
     }, id as string);
-    await expect(page.locator('#sidebar input[type="search"]')).toHaveCount(0);
+    const search = page.locator('#sidebar input[type="search"]');
+    await search.fill("OSCILLATORNEEDLE");
+    const row = page.locator(`[data-session="${id}"]`);
+    await expect(row).toContainText("Renamed board");
     const found = await page.evaluate(async () =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("session.search", {
         query: "OSCILLATORNEEDLE",
       }),
     );
     expect(found.some((entry) => entry.id === id && entry.title === "Renamed board")).toBe(true);
+    await search.fill("missingneedle");
+    await expect(row).toHaveCount(0);
     const absent = await page.evaluate(async () =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("session.search", { query: "missingneedle" }),
     );
     expect(absent).toEqual([]);
+    await search.clear();
     await expect(page.locator('[data-message-kind="user"]').last()).toContainText("oscillatorneedle");
-    await expect(page.locator(`[data-session="${id}"]`)).toBeVisible();
+    await expect(row).toBeVisible();
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app.close();

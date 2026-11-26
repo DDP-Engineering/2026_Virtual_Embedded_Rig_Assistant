@@ -31,11 +31,11 @@ Details are in [Providers and models](providers.md).
 3. Under **Documents & RAG**, check the documentation folders VERA found, or use **Add folder…**.
 4. Select **Create a workbench**.
 
-VERA starts indexing in the background. You can already chat; the **Files** toolbar shows indexing activity and **Workbench overview** shows detailed progress. See [Workbenches](workbenches.md) and [Documents and search](documents-and-search.md).
+VERA opens a session with the message box focused and starts indexing in the background. You can already chat; the **Files** toolbar shows indexing activity and **Workbench overview** shows detailed progress. See [Workbenches](workbenches.md) and [Documents and search](documents-and-search.md).
 
 ## Step 3: ask a first question
 
-1. Select **New session**.
+1. Use the session that opened with the workbench. To start another conversation, select **New session**.
 2. In the controls of the message box, pick a **Model**. Leave the permission mode at **Ask** for now.
 3. Type a question about your project, for example "What is the maximum SPI clock of the sensor, and which pins does it use?", and press Enter.
 

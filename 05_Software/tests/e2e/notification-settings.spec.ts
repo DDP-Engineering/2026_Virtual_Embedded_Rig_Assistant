@@ -6,9 +6,10 @@ test("opens notification preferences by keyboard and keeps the draft through a f
 }, async ({ page, rendererUrl }) => {
   await page.goto(rendererUrl);
   await page.locator('[data-i18n="nav.settings"]').click();
-  const appearance = page.getByRole("tab", { selected: true });
-  await appearance.press("ArrowDown");
-  await page.getByRole("tab", { selected: true }).press("ArrowDown");
+  for (const section of ["commands", "permissions", "notifications"]) {
+    await page.getByRole("tab", { selected: true }).press("ArrowDown");
+    await expect(page.locator(`[data-section="${section}"]`)).toBeFocused();
+  }
   const tab = page.getByRole("tab", { name: "Notifications", exact: true });
   await expect(tab).toBeFocused();
   const panel = page.getByRole("tabpanel", { name: "Notifications" });

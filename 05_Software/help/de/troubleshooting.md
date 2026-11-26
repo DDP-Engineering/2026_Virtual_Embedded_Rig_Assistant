@@ -48,7 +48,7 @@ Ist der Katalog nicht erreichbar oder stimmt seine Signatur nicht überein, zeig
 
 ## VERA schließt sich direkt nach dem Start
 
-VERA startet nicht, wenn seine `settings.json` beschädigt ist oder von Hand in eine ungültige Form gebracht wurde. Die Ursache finden Sie in der neuesten Protokolldatei. Korrigieren Sie die Datei oder verschieben Sie sie an einen anderen Ort: VERA startet dann mit Standardeinstellungen, und Sie richten Ihre Anbieter und Einstellungen neu ein.
+Ist die Datei `settings.json` ungültig, zeigt VERA beim Start ihren Pfad und die betroffenen Einstellungen an. Korrigieren oder verschieben Sie die Datei, um die Standardeinstellungen neu anzulegen. Richten Sie anschließend Ihre Anbieter und Einstellungen erneut ein.
 
 ## Protokolle
 

@@ -379,6 +379,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
           revision: z.string().min(1).max(4096),
           lines: count,
           utf8Log: z.boolean(),
+          encoding: z.enum(["utf-8", "utf-16le", "utf-16be", "windows-1252", "latin1"]).optional(),
         })
         .optional(),
     })

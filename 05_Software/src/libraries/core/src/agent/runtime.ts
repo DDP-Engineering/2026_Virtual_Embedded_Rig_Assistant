@@ -39,8 +39,10 @@ function providerErrorEvent(error: VeraError, limit = false): Extract<RuntimeEve
     type: "error",
     code: limit ? "CONTEXT_LIMIT" : error.code,
     messageKey: limit ? "context.budget_exceeded" : error.messageKey,
-    // A context limit needs a smaller input; every other provider failure can be sent again.
-    retryable: !limit,
+    // Authentication and setup need a settings change before the request can be sent again.
+    retryable:
+      !limit &&
+      !["provider.auth", "provider.noModel", "provider.modelUnavailable"].includes(error.messageKey),
     ...(retryAfter ? { retryAfter } : {}),
     ...(typeof seconds === "number" ? { params: { seconds } } : {}),
   };
@@ -354,6 +356,7 @@ export class ReferenceRuntime implements AgentRuntime {
     let outputTokens = 0;
     let promptIds = [initialPromptId];
     let firstRequest = true;
+    let summaryFailed = false;
     this.lastTotals = { inputTokens: 0, outputTokens: 0 };
     const addUsage = (message: AssistantMessage) => {
       inputTokens += message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
@@ -402,10 +405,13 @@ export class ReferenceRuntime implements AgentRuntime {
         },
         capabilities,
         init.contextPolicy,
-        this.summarizer(init, signal, () => ({ inputTokens, outputTokens }), addUsage),
+        summaryFailed
+          ? undefined
+          : this.summarizer(init, signal, () => ({ inputTokens, outputTokens }), addUsage),
         historicalEnd,
         scale,
       );
+      summaryFailed ||= compacted.compactionStatus === "failed";
       this.recordCompaction();
       // Messages admitted during an awaited historical summary join the next normal
       // request too. Recheck M1 once, without another compaction attempt.

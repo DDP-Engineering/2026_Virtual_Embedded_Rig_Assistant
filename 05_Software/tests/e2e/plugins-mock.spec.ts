@@ -209,6 +209,8 @@ test("empty workbench opens the unfiltered catalog and returns to its editor", {
   await page.locator("#workbench-name").fill("Plugin catalog bench");
   await page.locator('[data-action="choose-create"]').click();
   await page.locator('[data-action="create-workbench"]').click();
+  await expect(page.locator('[data-session][aria-current="page"]')).toBeVisible();
+  await page.locator('.workbench-group-name[aria-current="page"]').click();
   await page.locator('[data-action="edit-workbench-overview"]').click();
   await page.locator('[data-project-section="plugins"]').click();
   const workbenchPlugins = page.locator("[data-workbench-plugins]");

@@ -60,9 +60,14 @@ function TerminalSurface({
     styles.open(() => term.open(element));
     const input = term.onData((data) => {
       if (!available()) return;
-      void api.invoke("terminal.input", { workbenchId, id: terminal.id, data }).catch((error) => {
-        if (available()) failure(error);
-      });
+      void api.invoke("terminal.input", { workbenchId, id: terminal.id, data }).then(
+        () => {
+          if (available()) wake();
+        },
+        (error) => {
+          if (available()) failure(error);
+        },
+      );
     });
     const resized = term.onResize(({ cols, rows }) => {
       if (!available() || cols < 2 || rows < 1 || cols > 500 || rows > 300) return;
@@ -84,7 +89,18 @@ function TerminalSurface({
     preferences.observe(root, { attributes: true, attributeFilter: ["style"] });
     size();
     term.focus();
+    let polling = false;
+    let wakePending = false;
+    function schedule(delay: number) {
+      clearTimeout(timer);
+      timer = setTimeout(() => void poll(), delay);
+    }
+    function wake() {
+      if (polling) wakePending = true;
+      else schedule(25);
+    }
     async function poll() {
+      polling = true;
       try {
         if (!available()) return;
         const snapshot = await api.invoke("terminal.output", { workbenchId, id: terminal.id });
@@ -108,10 +124,9 @@ function TerminalSurface({
       } catch (error) {
         if (available()) failure(error);
       } finally {
-        if (live)
-          timer = setTimeout(() => {
-            void poll();
-          }, 250);
+        polling = false;
+        if (live) schedule(wakePending ? 25 : 250);
+        wakePending = false;
       }
     }
     void poll();

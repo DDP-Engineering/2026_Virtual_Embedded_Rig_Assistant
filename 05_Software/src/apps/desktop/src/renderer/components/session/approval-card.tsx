@@ -146,11 +146,13 @@ export function ApprovalCard({
   approval,
   sessionId,
   disabled,
+  canSavePrefix = false,
   completed = false,
 }: {
   approval: SessionState["approvals"][number];
   sessionId?: string | undefined;
   disabled: boolean;
+  canSavePrefix?: boolean;
   completed?: boolean;
 }) {
   const { t } = useTranslation();
@@ -160,7 +162,8 @@ export function ApprovalCard({
   const field = useId();
   const locked = disabled || pending || !!approval.decision || !sessionId;
   const program = approval.program;
-  const prefixes = approval.tool === "run_command" ? commandPrefixes(program?.args[0] ?? "") : [];
+  const prefixes =
+    canSavePrefix && approval.tool === "run_command" ? commandPrefixes(program?.args[0] ?? "") : [];
   const [chosenPrefix, setChosenPrefix] = useState<string>();
   const prefix = prefixes.includes(chosenPrefix ?? "") ? chosenPrefix : prefixes.at(-1);
   // A pending irreversible program command always needs the typed word; core checks it.

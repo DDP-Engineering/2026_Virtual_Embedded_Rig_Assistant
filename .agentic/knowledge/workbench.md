@@ -144,10 +144,10 @@ sidebar are described in [workbench editor](workbench-editor.md).
 - Create publishes configuration exclusively, retains existing user content and adds metadata only inside .vera.
 - YAML format1 supports JSON-compatible extension values. Non-finite numbers/circular aliases are
   refused without rewriting source. An invalid format or changed identity blocks user saves.
-- One service serializes operations; a short exclusive process-owned local IPC guard coordinates stale takeover.
-  A live pid yields read-only without changing its runtime files; a dead pid permits takeover.
-  Windows named pipes/Linux abstract Unix sockets auto-release on crash; EADDRINUSE contention
-  yields read-only with a warning. Every reopen reassesses ownership; matching owned tokens survive.
+- One service serializes operations and holds an exclusive local IPC guard throughout writable ownership.
+  A held guard yields read-only without changing runtime files. An unowned lock file can be reclaimed
+  when its PID has been reused. Windows named pipes and Linux abstract Unix sockets release on crash.
+  Every reopen reassesses ownership; matching owned tokens survive.
 - Locks hold pid/app/since and unique ownership token. Writes recheck ownership; close releases only
   its matching lock. A failed replacement/recent save retains the preceding workbench and cleans
   newly acquired ownership. Confirmed config saves publish events; observer errors cannot undo saves.

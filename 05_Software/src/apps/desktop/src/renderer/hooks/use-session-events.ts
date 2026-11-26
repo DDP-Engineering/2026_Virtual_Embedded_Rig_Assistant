@@ -27,6 +27,9 @@ function applyBatch(old: View, batch: readonly SessionEvent[]): View {
     } else if (event.type === "tool.update") {
       if (updates === old.updates) updates = { ...updates };
       updates[event.callId] = tail((updates[event.callId] ?? "") + event.text);
+    } else if (event.type === "tool.done" && Object.hasOwn(updates, event.callId)) {
+      if (updates === old.updates) updates = { ...updates };
+      delete updates[event.callId];
     }
   }
   return { ...old, state, reasoning, updates };

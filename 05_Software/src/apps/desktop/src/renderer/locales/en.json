@@ -582,6 +582,7 @@
     "searchMatches": "Matching messages: {{count}}",
     "searchHint": "Enter text to find matching messages.",
     "searchMatch": "Search match",
+    "latestMessage": "Jump to latest message",
     "messagePlaceholder": "Ask VERA about your project…",
     "defaultModelShort": "Default model",
     "contextWindow": "Context window",

@@ -861,7 +861,7 @@ export function DocumentViewerProvider({
     });
     const offWorkbench = workbenchIdSchema.safeParse(workbenchId).success
       ? api.subscribe("workbench", workbenchId, (event) => {
-          if (event.type === "config.changed") refresh(workbenchId);
+          if (event.type === "config.changed" && event.displayMaskingChanged !== false) refresh(workbenchId);
         })
       : () => {};
     return () => {

@@ -77,6 +77,13 @@ it("compacts verified large indexed and line citations before transport and bind
       lines: [],
       byteSource: { utf8Log: true, lines: 1 },
     });
+    const managedLog = ".vera/runs/build.log";
+    await mkdir(join(root, ".vera/runs"), { recursive: true });
+    await writeFile(join(root, managedLog), text);
+    const logged = await viewer.open(`${managedLog}#L2-L3`);
+    expect(logged).toMatchObject({ lines: [], byteSource: { encoding: "utf-8", lines: 3 } });
+    if (logged.kind !== "text" || !logged.byteSource) throw Error("Missing managed source");
+    expect((await readBytes(root, managedLog, 0, 4)).revision).toBe(logged.byteSource.revision);
   } finally {
     db.close();
     await rm(root, { recursive: true, force: true });
@@ -90,7 +97,7 @@ it("opens exact page ranges, duplicate heading anchors and unindexed file-tool l
   await mkdir(join(root, "docs"));
   await mkdir(join(root, ".vera"));
   const rows = new DocumentsRepository(db);
-  const add = async (path: string, text: string, kind: "pdf" | "markdown" | "html" | "text") => {
+  const add = async (path: string, text: string | Buffer, kind: "pdf" | "markdown" | "html" | "text") => {
     await writeFile(join(root, path), text);
     const sha256 = createHash("sha256").update(text).digest("hex");
     const result = await createDocumentProcessor(async () => ({
@@ -139,6 +146,22 @@ it("opens exact page ranges, duplicate heading anchors and unindexed file-tool l
       end: 3,
       lines: ["first", "second", "third"],
     });
+    await add("docs/wide.txt", Buffer.from("\uFEFFTensiune 3,3 V\r\nReset", "utf16le"), "text");
+    await add("docs/legacy.txt", Buffer.from("Voltage \x80\nReset", "latin1"), "text");
+    for (const [path, first] of [
+      ["docs/wide.txt", "Tensiune 3,3 V"],
+      ["docs/legacy.txt", "Voltage €"],
+    ] as const) {
+      const lines = [first, "Reset"];
+      expect(await viewer.open(`${path}#L1-L1`)).toMatchObject({ lines, start: 1, end: 1 });
+      expect(await viewer.openPath(path)).toMatchObject({ lines });
+    }
+    await mkdir(join(root, ".vera/runs"));
+    await writeFile(join(root, ".vera/runs/build.log"), "Build output\nDone\n");
+    expect(await viewer.open(".vera/runs/build.log#L1-L1")).toMatchObject({
+      lines: ["Build output", "Done"],
+    });
+    await expect(viewer.openPath(".vera/runs/build.log")).rejects.toMatchObject({ code: "NOT_FOUND" });
     for (const ref of [
       "docs/a.pdf#p=3",
       "docs/a.pdf#h=power",

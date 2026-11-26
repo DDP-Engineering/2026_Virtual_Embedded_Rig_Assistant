@@ -521,6 +521,45 @@ it("seals verified text revisions to owner and path and retains original newline
 });
 
 // REQ-UX-9c6aa149 REQ-UX-16e08c34
+it.each(["utf-16le", "utf-16be"] as const)(
+  "uses aligned %s newline code units for verified byte windows",
+  async (encoding) => {
+    const f = fixture(),
+      path = rawPaths[0] as string;
+    const raw = Buffer.from("\uFEFFa\r\nb\r\u410Ac\n", "utf16le");
+    if (encoding === "utf-16be") raw.swap16();
+    f.host.readBytes.mockImplementation(async (_id, path, offset) => ({
+      path,
+      offset,
+      size: raw.length,
+      start: 0,
+      bytes: raw,
+      revision: "verified-revision",
+    }));
+    const shown = f.display.viewer(id, {
+      ...f.content(path),
+      kind: "text",
+      ref: `${path}#L1-L3`,
+      lines: [],
+      start: 1,
+      end: 3,
+      byteSource: {
+        size: raw.length,
+        modified: "2026-11-17T00:00:00.000Z",
+        revision: "verified-revision",
+        lines: 3,
+        utf8Log: false,
+        encoding,
+      },
+    });
+    if (shown.kind !== "text" || !shown.byteSource) throw Error("Missing source");
+    const first = await f.display.readBytes(id, shown.path, 0, 8, shown.byteSource.revision);
+    const last = await f.display.readBytes(id, shown.path, 8, raw.length - 8, shown.byteSource.revision);
+    expect(first.lineEnds).toEqual([8]);
+    expect(last.lineEnds).toEqual([4, 10]);
+  },
+);
+
 describe("transcript image thumbnails", () => {
   it("returns a bounded PNG through opaque Display identities and the current byte policy", async () => {
     const f = fixture();

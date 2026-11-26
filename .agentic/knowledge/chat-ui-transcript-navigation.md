@@ -45,7 +45,7 @@ overlay and sends changes through IPC.
 
 ## Invariants
 
-- Content and viewport resize refresh rail metrics; new messages retain an older reading position until the reader returns to the bottom. A return to the end whose scroll event is dispatched after the next commit still follows (the range settled at the last commit or scroll event decides). Composer and shell stay in place.
+- Content and viewport resize refresh rail metrics. Incoming messages retain an older reading position while the reader is detached. Sending a message or choosing Jump to latest returns to the end and resumes following. A return to the end whose scroll event is dispatched after the next commit still follows (the range settled at the last commit or scroll event decides). Composer and shell stay in place.
 - Successful IPC retains the optimistic value until the event/snapshot confirms it; failure restores the preceding value and shows ErrorMessage. Obsolete session/unmount completions are ignored.
 - App supplies selected-summary archive state (locked until known); workspace combines it with readOnly for transcript mutation guards. IPC remains authoritative.
 

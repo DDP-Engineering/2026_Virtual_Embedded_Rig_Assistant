@@ -478,7 +478,7 @@ test("A runs in the background while B runs; the sidebar follows both and both r
     const sessionA = await start(page, "long-a", "Long answer A");
     await expect(row(page, sessionA).locator('[data-session-activity="running"]')).toBeVisible();
     await expect(activity(page, a)).toHaveAttribute("data-activity", "running");
-    await expect(page.locator("[data-turn-capacity]")).toContainText("1/3");
+    await expect(page.locator("[data-turn-capacity]")).toContainText("1/4");
 
     await switchWorkbench(page, b);
     // A keeps running in the background; its collapsed row shows it.
@@ -494,7 +494,7 @@ test("A runs in the background while B runs; the sidebar follows both and both r
     const sessionB = await start(page, "long-b", "Long answer B");
     await expect(row(page, sessionB).locator('[data-session-activity="running"]')).toBeVisible();
     await expect(activity(page, b)).toHaveAttribute("data-activity", "running");
-    await expect(page.locator("[data-turn-capacity]")).toContainText("2/3");
+    await expect(page.locator("[data-turn-capacity]")).toContainText("2/4");
     // B's shorter turn ends first: its marks go while A's stays.
     await expect(activity(page, b)).toHaveCount(0, { timeout: 60000 });
     await expect(row(page, sessionB).locator("[data-session-activity]")).toHaveCount(0);

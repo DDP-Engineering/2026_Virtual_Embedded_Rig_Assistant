@@ -65,7 +65,7 @@ export async function scanLog(
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
   try {
-    guard = await PathGuard.create(root, root, scope, undefined, excludedRoots);
+    guard = await PathGuard.create(root, root, scope, undefined, excludedRoots, [], { allowRunLogs: true });
     target = await guard.resolve(args.path);
     sourcePath = target.relative;
     local = !sourcePath.startsWith("/") && !/^[A-Za-z]:/.test(sourcePath);

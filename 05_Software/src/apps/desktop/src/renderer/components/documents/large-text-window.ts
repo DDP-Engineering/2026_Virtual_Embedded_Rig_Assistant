@@ -1,5 +1,5 @@
 import { forTextNewlines, type LargeTextSource, TEXT_WINDOW_BYTES, textUnit } from "./large-text-source.js";
-import type { TextEncoding } from "./text-encoding.js";
+import { createTextDecoder, type TextEncoding } from "./text-encoding.js";
 
 export interface TextWindow {
   offset: number;
@@ -18,7 +18,7 @@ export function decodeTextChunk(
   eof: boolean,
   allowNul = false,
 ) {
-  const text = new TextDecoder(encoding, { fatal: !replace, ignoreBOM: offset > 0 }).decode(bytes, {
+  const text = createTextDecoder(encoding, { fatal: !replace, ignoreBOM: offset > 0 }).decode(bytes, {
     stream: !eof,
   });
   if (!replace && !allowNul && text.includes("\0")) throw new TypeError("Binary text");
@@ -47,7 +47,7 @@ export function textByteOffset(
     high = bytes.length;
   while (low < high) {
     const middle = Math.floor((low + high) / 2);
-    const text = new TextDecoder(encoding, { ignoreBOM: offset > 0 }).decode(bytes.subarray(0, middle), {
+    const text = createTextDecoder(encoding, { ignoreBOM: offset > 0 }).decode(bytes.subarray(0, middle), {
       stream: true,
     });
     if (text.length < characters) low = middle + 1;
@@ -88,7 +88,7 @@ export async function readTextWindow(
   let lines: string[];
   if (bytes.lineEnds) {
     lines = [];
-    const decoder = new TextDecoder(encoding, { fatal: !replace, ignoreBOM: offset > 0 });
+    const decoder = createTextDecoder(encoding, { fatal: !replace, ignoreBOM: offset > 0 });
     let from = 0;
     for (const boundary of bytes.lineEnds) {
       const until = boundary - skip;
@@ -115,7 +115,7 @@ export async function readTextWindow(
     0,
     starts.findLastIndex((start) => start <= target),
   );
-  const column = new TextDecoder(encoding, { ignoreBOM: (starts[index] ?? 0) > 0 }).decode(
+  const column = createTextDecoder(encoding, { ignoreBOM: (starts[index] ?? 0) > 0 }).decode(
     part.subarray((starts[index] ?? offset) - offset, Math.max(0, target - offset)),
     { stream: true },
   ).length;

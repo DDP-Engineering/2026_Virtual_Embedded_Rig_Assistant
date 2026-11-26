@@ -153,7 +153,7 @@ let nextIndexLease = 0;
 export class WorkbenchService {
   private readonly folderSelections = new Map<string, string>();
   private state: WorkbenchSnapshot | undefined;
-  private owned: { folder: string; token: string } | undefined;
+  private owned: { folder: string; token: string; releaseGuard: () => Promise<void> } | undefined;
   private database: WorkbenchDatabase | undefined;
   private ingest: Ingester | undefined;
   private indexRevision = 0;
@@ -269,7 +269,7 @@ export class WorkbenchService {
         this.assertSessionWritable();
         const warnings = await this.warnings(config, state.folder);
         this.state = { ...state, config, warnings };
-        this.emit(id, { type: "config.changed", config, warnings });
+        this.emit(id, { type: "config.changed", config, warnings, displayMaskingChanged: false });
         return {};
       }),
     );
@@ -289,7 +289,7 @@ export class WorkbenchService {
         this.assertSessionWritable();
         const warnings = await this.warnings(config, state.folder);
         this.state = { ...state, config, warnings };
-        this.emit(id, { type: "config.changed", config, warnings });
+        this.emit(id, { type: "config.changed", config, warnings, displayMaskingChanged: false });
         return {};
       }),
     );
@@ -391,13 +391,13 @@ export class WorkbenchService {
     this.ingest = undefined;
     if (this.state) await this.processDocument?.release?.(this.state.folder);
   }
-  reindexDocuments(workbenchId?: string): Promise<void> {
+  reindexDocuments(workbenchId?: string, failedOnly = false): Promise<void> {
     // Admit on the lifecycle queue, then wait outside it so close/switch can abort processing.
     return this.run(async () => {
       if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
       this.assertSessionWritable();
       if (!this.ingest) throw veraError("NOT_FOUND");
-      return { completion: this.ingest.reindex() };
+      return { completion: this.ingest.reindex(failedOnly) };
     }).then(({ completion }) => completion);
   }
   /** "Index anyway" for the active workbench's guarded selection of `files` documents. */
@@ -793,18 +793,18 @@ export class WorkbenchService {
       if (newlyOwned && acquired.owned) await this.release(acquired.owned);
       throw error;
     }
-    await this.stopIngest();
-    if (!same && this.owned) {
-      try {
+    try {
+      await this.stopIngest();
+      if (this.owned && acquired.owned !== this.owned) {
         await this.release(this.owned, () => {
           if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");
         });
-      } catch (error) {
-        if (database !== this.database) database?.close();
-        if (acquired.owned) await this.release(acquired.owned);
-        this.startIngest();
-        throw error;
       }
+    } catch (error) {
+      if (database !== this.database) database?.close();
+      if (newlyOwned && acquired.owned) await this.release(acquired.owned);
+      this.startIngest();
+      throw error;
     }
     const preceding = this.state;
     if (database !== this.database) this.database?.close(true);
@@ -980,7 +980,12 @@ export class WorkbenchService {
             this.state = { ...state, config, warnings };
             if (changingModel) this.ingest?.embeddingModelChanged();
             else this.ingest?.request();
-            this.emit(config.id, { type: "config.changed", config, warnings });
+            this.emit(config.id, {
+              type: "config.changed",
+              config,
+              warnings,
+              displayMaskingChanged: current.privacy?.mask?.display !== config.privacy?.mask?.display,
+            });
           }
         };
         if (changingModel && this.ingest) await this.ingest.withStableDocuments(saveConfig);
@@ -1046,7 +1051,12 @@ export class WorkbenchService {
         const warnings = await this.warnings(config, state.folder);
         await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
         this.state = { ...state, config, warnings };
-        this.emit(config.id, { type: "config.changed", config, warnings });
+        this.emit(config.id, {
+          type: "config.changed",
+          config,
+          warnings,
+          displayMaskingChanged: state.config.privacy?.mask?.display !== config.privacy?.mask?.display,
+        });
       }),
     );
   }
@@ -1177,27 +1187,21 @@ export class WorkbenchService {
   private async acquire(
     folder: string,
     warnings: WorkbenchWarning[],
-  ): Promise<{ readOnly: boolean; owned?: { folder: string; token: string } }> {
+  ): Promise<{ readOnly: boolean; owned?: NonNullable<WorkbenchService["owned"]> }> {
     const observed = await this.lock(folder);
-    if (observed && this.host.isProcessAlive(observed.pid)) {
-      if (
-        this.owned?.folder === folder &&
-        observed.token === this.owned.token &&
-        observed.pid === this.host.pid
-      )
+    if (this.owned?.folder === folder) {
+      if (observed?.token === this.owned.token && observed.pid === this.host.pid)
         return { readOnly: false, owned: this.owned };
       return { readOnly: true };
     }
-    const release = await acquireGuard(folder);
-    if (!release) {
-      warnings.push({ code: "LOCK_GUARD_BUSY" });
+    const releaseGuard = await acquireGuard(folder);
+    if (!releaseGuard) {
+      if (!observed) warnings.push({ code: "LOCK_GUARD_BUSY" });
       return { readOnly: true };
     }
     try {
       await mkdir(join(folder, ".vera"), { recursive: true });
-      const lock = await this.lock(folder);
-      if (lock && this.host.isProcessAlive(lock.pid)) return { readOnly: true };
-      // Also removes a lock that did not parse, which reads as no owner.
+      // The native guard lives as long as the owner. A remaining file alone may have a reused PID.
       await rm(join(folder, ".vera/lock"), { force: true });
       await this.prepare(folder);
       const token = this.host.token();
@@ -1210,24 +1214,24 @@ export class WorkbenchService {
           token,
         }),
       );
-      return { readOnly: false, owned: { folder, token } };
-    } finally {
-      await release();
+      return { readOnly: false, owned: { folder, token, releaseGuard } };
+    } catch (error) {
+      await releaseGuard();
+      throw error;
     }
   }
-  private async release(owned: { folder: string; token: string }, beforeRelease?: () => void): Promise<void> {
-    if (!(await ordinary(owned.folder, true)) || !(await ordinary(join(owned.folder, ".vera"), true))) return;
-    const release = await acquireGuard(owned.folder);
-    if (!release) throw veraError("BUSY");
-    try {
+  private async release(
+    owned: NonNullable<WorkbenchService["owned"]>,
+    beforeRelease?: () => void,
+  ): Promise<void> {
+    if ((await ordinary(owned.folder, true)) && (await ordinary(join(owned.folder, ".vera"), true))) {
       const lock = await this.lock(owned.folder);
       if (lock?.token === owned.token && lock.pid === this.host.pid) {
         beforeRelease?.();
         await unlink(join(owned.folder, ".vera/lock"));
       }
-    } finally {
-      await release();
     }
+    await owned.releaseGuard();
   }
   close(): Promise<void> {
     return this.run(async () => {

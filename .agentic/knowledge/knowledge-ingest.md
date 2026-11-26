@@ -27,8 +27,9 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   after the batch drains. Known document exceptions settle separately. Guarded, failed or
   unfinished selections can be blocked. A queued pass keeps coverage unsettled. Read-only
   workbenches have no live Ingester.
-- WorkbenchService.reindexDocuments serializes an owned rebuild. Strict empty
-  docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
+- WorkbenchService.reindexDocuments serializes an owned rebuild or a failed-document retry.
+  The docs.reindex IPC accepts an optional failedOnly flag. Retry uses the same ingest queue,
+  preserving unchanged successful rows and resetting the retry budget for failed work.
 - Ingester.request coalesces changes with a trailing debounce of `IngestOptions.pauseMs()` (the application Indexing pause, default 1000 ms, read at each request; REQ-FUNC-2fba7b9c); reindex selects
   first and clears only inside reconcile, after the count guard let the selection through, in
   the same queue (a failed or guarded selection leaves the index intact, TASK-f09609fd,

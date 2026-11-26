@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, type Locator, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { tabStorageKey } from "../../src/apps/desktop/src/renderer/lib/document-tabs-store.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 /** Scrolls a continuous PDF so the top of page `page` meets the top of the view (TASK-4c04273a). */
@@ -316,9 +317,13 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     // REQ-FUNC-d9d16533: deleting the session deletes its saved tabs; other sessions keep theirs.
     const tabRecords = () =>
       page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("vera.tabs.")));
-    const own = (await tabRecords()).find((key) => key.endsWith(`.${id}`));
-    expect(own).toBeDefined();
-    const other = `${own?.slice(0, -(id?.length ?? 0))}other-session`;
+    const workbench = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.get", {}),
+    );
+    const owner = { folder: workbench.folder, workbenchId: workbench.config.id };
+    const own = tabStorageKey({ ...owner, sessionId: id! });
+    expect(await tabRecords()).toContain(own);
+    const other = tabStorageKey({ ...owner, sessionId: "other-session" });
     await page.evaluate((key) => localStorage.setItem(key, "{}"), other);
     const entry = page.locator(".session-entry", { has: page.locator(`[data-session="${id}"]`) });
     await entry.locator("summary").click();

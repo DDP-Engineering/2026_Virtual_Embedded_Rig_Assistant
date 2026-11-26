@@ -101,7 +101,11 @@ export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
 export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
-export async function toolPathGuard(ctx: ToolContext, additional = false): Promise<PathGuard> {
+export async function toolPathGuard(
+  ctx: ToolContext,
+  additional = false,
+  options: { allowRunLogs?: boolean } = {},
+): Promise<PathGuard> {
   const bypass = ctx.permissionMode?.() === "bypass" && (!ctx.delegated || !!ctx.bypassSignal);
   const grantedFolders = additional && !ctx.delegated;
   const excluded = toolExcludedRoots(ctx);
@@ -120,6 +124,7 @@ export async function toolPathGuard(ctx: ToolContext, additional = false): Promi
       },
       excluded,
       folders,
+      options,
     );
   }
   const epoch = ctx.bypassSignal?.();

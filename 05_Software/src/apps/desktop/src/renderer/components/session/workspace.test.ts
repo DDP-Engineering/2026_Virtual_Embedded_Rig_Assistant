@@ -424,7 +424,7 @@ test("running composer accepts Enter and Send while retaining Stop and locking t
   expect(input.value).toBe("");
 });
 
-test("approval waits lock the running composer and delivery removes only the pending marker", async () => {
+test("approval waits allow drafting, block sending and delivery removes only the pending marker", async () => {
   const state = emptySessionState();
   state.activeTurnId = "turn";
   state.status = "awaiting_approval";
@@ -438,7 +438,7 @@ test("approval waits lock the running composer and delivery removes only the pen
       setMode: vi.fn(),
     }),
   );
-  expect(container.querySelector<HTMLTextAreaElement>("textarea")?.disabled).toBe(true);
+  expect(container.querySelector<HTMLTextAreaElement>("textarea")?.disabled).toBe(false);
   expect(button("Send").disabled).toBe(true);
   expect(button("Stop").disabled).toBe(false);
   const queued = applySessionEvent(state, {
@@ -459,6 +459,50 @@ test("approval waits lock the running composer and delivery removes only the pen
   expect(container.querySelectorAll('[data-message-kind="user"]')).toHaveLength(1);
   expect(container.textContent).toContain("Use 3.3V");
 });
+test.each([false, true])(
+  "typing stays enabled during send and remount preserves only unsent text (%s)",
+  async (editDraft) => {
+    await api.invoke("workbench.create", { folder: `/mock/send-draft-${editDraft}`, name: "Drafts" });
+    for (const title of ["Origin", "Other"]) {
+      const session = await api.invoke("session.create", {});
+      await api.invoke("session.rename", { sessionId: session.id, title });
+    }
+    let finish = () => {};
+    const wait = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const invoke = api.invoke.bind(api);
+    vi.spyOn(api, "invoke").mockImplementation(async (channel, args) => {
+      if (channel === "session.send") await wait;
+      return invoke(channel, args);
+    });
+    await mount();
+    const user = userEvent.setup();
+    const choose = async (title: string) => {
+      const entry = [...container.querySelectorAll<HTMLButtonElement>("[data-session]")].find((item) =>
+        item.textContent?.includes(title),
+      );
+      expect(entry).toBeDefined();
+      await act(async () => entry?.click());
+      await settle();
+    };
+    const editor = () =>
+      container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]') as HTMLTextAreaElement;
+    await choose("Origin");
+    await act(async () => user.type(editor(), "First{Enter}"));
+    expect(editor().disabled).toBe(false);
+    expect(document.activeElement).toBe(editor());
+    expect(button("Send").disabled).toBe(true);
+    await choose("Other");
+    await choose("Origin");
+    expect(editor().value).toBe("First");
+    expect(button("Send").disabled).toBe(true);
+    if (editDraft) await act(async () => user.type(editor(), " more"));
+    await act(async () => finish());
+    await settle();
+    expect(editor().value).toBe(editDraft ? "First more" : "");
+  },
+);
 test("renderer reload of a read-only workbench disables session mutations", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const config = await api.invoke("workbench.config.get", {});
@@ -1454,7 +1498,8 @@ test.each(["a", "d"])(
     const card = container.querySelector<HTMLElement>("[data-approval-card]");
     expect(card).toBeTruthy();
     if (!card) throw Error("Approval card is missing.");
-    expect(input.disabled).toBe(true);
+    expect(input.disabled).toBe(false);
+    expect(button("Send").disabled).toBe(true);
     expect(
       container.querySelector('[aria-current="page"] [data-session-status="awaiting_approval"]'),
     ).toBeTruthy();

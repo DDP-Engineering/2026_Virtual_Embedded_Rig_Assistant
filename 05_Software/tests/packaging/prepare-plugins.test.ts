@@ -73,6 +73,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["serial-monitor", "official"],
     ["sigrok", "official"],
     ["stm32-cubeprog", "official"],
+    ["wireshark-dumpcap", "official"],
     ["wireshark-tshark", "official"],
     ["wokwi", "official"],
     ["zephyr", "official"],

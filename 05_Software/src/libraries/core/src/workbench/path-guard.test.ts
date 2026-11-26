@@ -40,11 +40,6 @@ describe("file tool confinement", () => {
     ["\\\\server\\share", notRelative],
     ["\\\\?\\C:\\x", notRelative],
     ["\\\\.\\pipe\\x", notRelative],
-    ["CON", device],
-    ["nul.txt", device],
-    ["Docs/aux.md", device],
-    ["LPT1.log", device],
-    ["COM9", device],
     ["../outside", leaves],
     ["Docs/../../outside", leaves],
     ["a\0b", notRelative],
@@ -53,14 +48,34 @@ describe("file tool confinement", () => {
     ["node_modules/x", ignored],
     ["hidden/new.txt", ignored],
     ["secret.secret", ignored],
-    ["Docs/file:stream", notRelative],
-    ["Docs/NUL .txt", device],
-    ["Docs/trailing.", device],
-    ["Docs/trailing ", device],
   ])("rejects %s", async (path, message) => {
     // The exact refusal: a path refused for another reason than its own would hide a lost check.
     await expect((await guard()).resolve(path)).rejects.toThrow(new Error(message));
   });
+  it.skipIf(process.platform !== "win32").each([
+    ["CON", device],
+    ["nul.txt", device],
+    ["Docs/aux.md", device],
+    ["LPT1.log", device],
+    ["COM9", device],
+    ["Docs/file:stream", notRelative],
+    ["Docs/NUL .txt", device],
+    ["Docs/trailing.", device],
+    ["Docs/trailing ", device],
+  ])("refuses %s on Windows", async (path, message) => {
+    await expect((await guard()).resolve(path)).rejects.toThrow(new Error(message));
+  });
+  it.skipIf(process.platform === "win32")(
+    "admits absolute in-workbench paths to ordinary POSIX names",
+    async () => {
+      const g = await guard();
+      for (const relative of ["Docs/capture_12:30.log", "Docs/aux.md", "Docs/trailing."]) {
+        const absolute = join(root, relative);
+        await writeFile(absolute, "test evidence");
+        expect(await g.resolve(absolute)).toMatchObject({ absolute, relative });
+      }
+    },
+  );
   it("rejects external directory links including nonexistent descendants", async () => {
     await symlink(outside, join(root, "escape"), process.platform === "win32" ? "junction" : "dir");
     await expect((await guard()).resolve("escape/new.txt")).rejects.toThrow();

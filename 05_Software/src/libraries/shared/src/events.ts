@@ -115,6 +115,7 @@ export const workbenchEventSchema = z.discriminatedUnion("type", [
     type: z.literal("config.changed"),
     config: workbenchSchema,
     warnings: z.array(workbenchWarningSchema),
+    displayMaskingChanged: z.boolean().optional(),
   }),
 ]);
 export type WorkbenchEvent = z.infer<typeof workbenchEventSchema>;

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-910ee3cb"
+
+title = "Bound candidate selection work during context compaction"
+
+status = "active"
+
+requirement = """
+When choosing a history prefix for a summary, the compactor shall bound full candidate measurements logarithmically in the number of valid cuts.
+"""
+
+verification = "Exercise long user-only and tool-heavy histories under a constrained budget, and assert sublinear complete measurement count, a valid complete prefix and a summary request that fits."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-25
+updated = 2026-11-26

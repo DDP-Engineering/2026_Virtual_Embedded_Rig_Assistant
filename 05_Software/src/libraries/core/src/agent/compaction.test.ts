@@ -1,9 +1,10 @@
 // REQ-FUNC-e5b6a1c9. Runtime execution deferred by direct user instruction.
 import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
 import { expect, it, vi } from "vitest";
+import { z } from "zod";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
 import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
-import { ContextPolicy } from "./context.js";
+import { ContextPolicy, conservativeCounter } from "./context.js";
 import { buildContext, ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
 
@@ -40,6 +41,96 @@ const exchange = (): Message[] => [
 ];
 const request = (messages: Message[]) => ({ system: "Current system rules", tools: [], messages });
 const text = (value: string) => ({ type: "text" as const, text: value });
+
+it("bounds full prefix measurements while finding the longest prefix that fits", async () => {
+  const count = vi.fn(conservativeCounter);
+  const measured = new ContextPolicy(count);
+  const history = Array.from(
+    { length: 128 },
+    (_, index): Message => ({
+      role: "user",
+      content: `${index}: ${"a".repeat(80)}`,
+      timestamp: index,
+    }),
+  );
+  const input = request([...history, { role: "user", content: "Current", timestamp: 200 }]);
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
+  await new ContextCompactor().prepare(input, caps, measured, summarize, undefined, undefined, false, true);
+  expect(count.mock.calls.length).toBeLessThan(16);
+  const chosen = summarize.mock.calls[0]?.[0];
+  expect(chosen).toBeDefined();
+  if (!chosen) throw Error("Expected a summary request");
+  expect(policy.prepare(chosen, caps, false).fits).toBe(true);
+  const following = history[chosen.messages.length - 1];
+  const instruction = chosen.messages.at(-1);
+  if (!following || !instruction) throw Error("Expected an unselected message and instruction");
+  expect(
+    policy.prepare(
+      { ...chosen, messages: [...chosen.messages.slice(0, -1), following, instruction] },
+      caps,
+      false,
+    ).fits,
+  ).toBe(false);
+});
+
+it("bounds summary candidate measurements for complete tool exchanges", async () => {
+  const count = vi.fn(conservativeCounter);
+  const measured = new ContextPolicy(count);
+  const history = Array.from({ length: 96 }, (_, index): Message[] => {
+    const id = `read-${index}`;
+    return [
+      {
+        ...answer(""),
+        stopReason: "toolUse",
+        content: [{ type: "toolCall", id, name: "read", arguments: {} }],
+      },
+      {
+        role: "toolResult",
+        toolCallId: id,
+        toolName: "read",
+        content: [text("result ".repeat(100))],
+        isError: false,
+        timestamp: index,
+      },
+    ];
+  }).flat();
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
+  const current: Message = { role: "user", content: "Current", timestamp: 200 };
+  await new ContextCompactor().prepare(
+    request([...history, current]),
+    caps,
+    measured,
+    summarize,
+    history.length,
+    undefined,
+    false,
+    true,
+  );
+  const probes = count.mock.calls.filter(([input]) => input.system.includes("Return only JSON:"));
+  expect(probes.length).toBeLessThan(17);
+  expect(summarize).toHaveBeenCalledTimes(1);
+  const chosen = summarize.mock.calls[0];
+  expect(chosen?.[1].fits).toBe(true);
+  expect(chosen?.[0].messages.at(-2)?.role).toBe("toolResult");
+});
+
+it("keeps the adopted summary and reports a failed follow-up in the same prepare", async () => {
+  const compactor = new ContextCompactor();
+  compactor.settings = { ...compactor.settings, trigger: 0.05, tailTokens: 0 };
+  const summarize = vi
+    .fn<SummarizeHistory>()
+    .mockResolvedValueOnce(summary())
+    .mockRejectedValueOnce(Error("offline"));
+  const history = Array.from(
+    { length: 6 },
+    (_, index): Message => ({ role: "user", content: `${index} ${"a".repeat(700)}`, timestamp: index }),
+  );
+  const input = request([...history, { role: "user", content: "Current", timestamp: 7 }]);
+  const view = await compactor.prepare(input, caps, policy, summarize);
+  expect(summarize).toHaveBeenCalledTimes(2);
+  expect(view).toMatchObject({ compactionStatus: "failed", fits: true });
+  expect(JSON.stringify(view.messages)).toContain("Board investigation.");
+});
 
 it("continues a small-window multi-turn replay, counts both requests and retains the complete transcript", async () => {
   const requests: LlmRequest[] = [];
@@ -97,6 +188,57 @@ it("continues a small-window multi-turn replay, counts both requests and retains
         e.requestViewTokens === e.contextTokens,
     ),
   ).toBe(true);
+});
+
+it("attempts a failing automatic summary only once per turn", async () => {
+  let summaries = 0;
+  let normalRequests = 0;
+  let id = 0;
+  const capabilities = { ...caps, contextWindow: 12_000 };
+  const compactor = new ContextCompactor();
+  compactor.settings = { ...compactor.settings, trigger: 0.25 };
+  const runtime = new ReferenceRuntime({
+    gateway: {
+      capabilities: () => capabilities,
+      selectedModel: () => "compaction",
+      models: async () => ({ models: [], reachability: "pass" }),
+      async *stream(input) {
+        if (input.system.includes("Return only JSON:")) {
+          summaries++;
+          yield { type: "done", message: answer("invalid JSON") };
+          return;
+        }
+        normalRequests++;
+        const response = normalRequests === 1 ? (call("probe") as AssistantMessage) : answer("Completed.");
+        response.usage.input = policy.prepare(input, capabilities, false).rawTokens;
+        yield { type: "done", message: response };
+      },
+    },
+    now: () => 1,
+    nextId: () => String(++id),
+    approve: async () => "approved",
+  });
+  runtime.start({
+    systemPrompt: "Current rules",
+    model: "replay/compaction",
+    tools: [
+      {
+        name: "read",
+        class: "read",
+        description: "Read a fixture",
+        params: z.strictObject({}),
+        execute: async () => "Fixture result",
+      },
+    ],
+    messages: [...exchange(), ...exchange()],
+    contextPolicy: policy,
+    contextCompactor: compactor,
+  });
+  expect(await runtime.send("Read the fixture")).toEqual({ stopReason: "end" });
+  expect(normalRequests).toBe(2);
+  expect(summaries).toBe(1);
+  expect(await runtime.send("Next turn")).toEqual({ stopReason: "end" });
+  expect(summaries).toBe(2);
 });
 
 it("retains current first-turn reduction, oversized instruction and smaller-model limit semantics without summary dispatch", async () => {
@@ -198,6 +340,51 @@ const result = (id: string, body: string): Message => ({
   isError: false,
   timestamp: 1,
 });
+
+it.each([4924, 5124])(
+  "fits a one-pass compaction when a longer prefix needs reduced results (%s)",
+  async (contextWindow) => {
+    const user = (content: string): Message => ({ role: "user", content, timestamp: 0 });
+    const history = [
+      user("u".repeat(50)),
+      call("early"),
+      result("early", "d".repeat(500)),
+      call("later"),
+      result("later", "e".repeat(2900)),
+      user("a".repeat(600)),
+      answer("done"),
+      user("b".repeat(600)),
+      answer("done"),
+    ];
+    const compactor = new ContextCompactor();
+    compactor.settings = { ...compactor.settings, maxPasses: 1, tailTokens: 0 };
+    const summarize = vi.fn<SummarizeHistory>(async () => summary());
+    const budget = { ...caps, contextWindow };
+    const view = await compactor.prepare(
+      request([...history, user("c".repeat(30))]),
+      budget,
+      policy,
+      summarize,
+    );
+    expect(view).toMatchObject({ fits: true, compactionStatus: "completed" });
+    expect(compactor.takeRecord()?.covered).toBeGreaterThanOrEqual(5);
+    const selected = summarize.mock.calls[0];
+    if (!selected) throw Error("Expected one summary request");
+    const [detailed, summaryView] = selected;
+    expect(summaryView.fits).toBe(true);
+    expect(
+      summaryView.messages.some((message) => message.role === "toolResult" && message.toolCallId === "later"),
+    ).toBe(true);
+    const withEarlierDetail = summaryView.messages.map((message, index) =>
+      message.role === "toolResult" && message.toolCallId === "early"
+        ? (detailed.messages[index] ?? message)
+        : message,
+    );
+    expect(JSON.stringify(summaryView.messages).includes("d".repeat(500))).toBe(
+      policy.prepare({ ...detailed, messages: withEarlierDetail }, budget, false).fits,
+    );
+  },
+);
 /** Every tool result in a view follows the assistant call that requested it. */
 function pairsIntact(messages: Message[]): boolean {
   const calls = new Set<string>();

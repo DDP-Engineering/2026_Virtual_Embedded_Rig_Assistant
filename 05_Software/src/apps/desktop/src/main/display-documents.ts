@@ -242,7 +242,7 @@ export class DisplayDocuments {
               ...content.byteSource,
               revision: this.identities.encode(
                 `${this.owner}\nbyte-source:${content.path}`,
-                content.byteSource.revision,
+                `${content.byteSource.revision}\n${content.byteSource.encoding ?? "utf-8"}`,
               ),
             },
           }
@@ -322,18 +322,25 @@ export class DisplayDocuments {
       throw veraError("DENIED");
     const source = await this.run(id, () => this.workbench().readBytes(id, original, offset, length));
     if (source.path !== original || source.offset !== offset) throw veraError("NOT_FOUND");
-    if (
-      revision !== undefined &&
-      this.identities.decode(`${this.owner}\nbyte-source:${original}`, revision) !== source.revision
-    )
-      throw veraError("CONFLICT");
     const lineEnds: number[] = [];
     if (revision !== undefined) {
+      const [originalRevision, encoding] = this.identities
+        .decode(`${this.owner}\nbyte-source:${original}`, revision)
+        .split("\n");
+      if (originalRevision !== source.revision) throw veraError("CONFLICT");
+      const width = encoding?.startsWith("utf-16") ? 2 : 1;
+      const codeUnit = (at: number) => {
+        const i = at - source.start;
+        const byte = source.bytes[i];
+        if (width === 1) return byte;
+        const second = source.bytes[i + 1];
+        if (byte === undefined || second === undefined) return undefined;
+        return encoding === "utf-16le" ? byte + second * 256 : byte * 256 + second;
+      };
       const end = Math.min(source.size, offset + length);
-      for (let at = offset; at < end; at++) {
-        const byte = source.bytes[at - source.start],
-          next = source.bytes[at + 1 - source.start];
-        if (byte === 10 || (byte === 13 && next !== 10)) lineEnds.push(at - offset + 1);
+      for (let at = Math.ceil(offset / width) * width; at + width <= end; at += width) {
+        const code = codeUnit(at);
+        if (code === 10 || (code === 13 && codeUnit(at + width) !== 10)) lineEnds.push(at - offset + width);
       }
     }
     const masked = this.maskingFor(this.current(id).config, "display");

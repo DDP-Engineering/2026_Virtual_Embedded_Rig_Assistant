@@ -89,10 +89,9 @@ it("refuses folders, traversal, absolute paths, Windows aliases and ordinary-fil
     "/absolute",
     "ignored\\binary.bin",
     "ignored/../ignored/binary.bin",
-    "ignored/binary.bin.",
-    "ignored/binary.bin ",
-    "ignored/binary.bin::$DATA",
-    "NUL",
+    ...(process.platform === "win32"
+      ? ["ignored/binary.bin.", "ignored/binary.bin ", "ignored/binary.bin::$DATA", "NUL"]
+      : []),
     "ignored//binary.bin",
   ])
     await expect(reader.readBytes(root, path, 0, 1), path).rejects.toMatchObject({ code: "DENIED" });
@@ -110,6 +109,13 @@ it("refuses folders, traversal, absolute paths, Windows aliases and ordinary-fil
     await expect(reader.readBytes(root, "file-link", 0, 1)).rejects.toMatchObject({ code: "DENIED" });
   }
   await expect(reader.readBytes(root, "missing", 0, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+it.skipIf(process.platform === "win32")("reads an ordinary POSIX path containing a colon", async () => {
+  const path = "ignored/capture_12:30.log";
+  await fs.writeFile(join(root, path), "evidence");
+  const read = await reader.readBytes(root, path, 0, 1);
+  expect(read.bytes.subarray(0, 1).toString()).toBe("e");
 });
 
 it("refuses a stored canonical root redirected through an ancestor before the request", async () => {

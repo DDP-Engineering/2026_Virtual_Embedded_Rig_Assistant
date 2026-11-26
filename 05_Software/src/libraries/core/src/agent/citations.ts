@@ -107,7 +107,7 @@ export async function validateCitations(
     : undefined;
   let guard: PathGuard;
   try {
-    guard = await PathGuard.create(root);
+    guard = await PathGuard.create(root, root, "workbench", undefined, [], [], { allowRunLogs: true });
   } catch {
     return found.map((ref) => ({ ref, valid: false }));
   }
