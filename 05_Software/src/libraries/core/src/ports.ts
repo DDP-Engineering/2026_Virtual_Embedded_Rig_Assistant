@@ -11,6 +11,11 @@ export interface GrepMatch {
   ref?: string;
   context?: { line: number; text: string }[];
 }
+/** One matching file, or its complete matching-line count in count mode. */
+export interface GrepFileResult {
+  path: string;
+  count: number;
+}
 export interface WorkerTask {
   kind: "grep" | "parse_log";
   root: string;
@@ -26,6 +31,7 @@ export interface WorkerResult {
   value?: ParseLogResult;
   failure?: { code: VeraError["code"]; reason: string; message: string };
   matches: GrepMatch[];
+  files?: GrepFileResult[];
   truncated: boolean;
   /** Grep: files not searched because they are too large, binary or unreadable. */
   skipped?: number;

@@ -3,10 +3,10 @@ import { lstat, opendir } from "node:fs/promises";
 import { z } from "zod";
 import type { GuardedPath } from "../workbench/path-guard.js";
 import type { ToolDefinition } from "./context.js";
-import { toolPathGuard } from "./context.js";
+import { toolLimit, toolPathGuard } from "./context.js";
 import { entryDisappeared, resolveDiscoveryPath } from "./discovery.js";
 
-/** Entries collected at most; the tool result cap cuts the returned list far below this. */
+/** Upper bound in addition to the response size. */
 const LISTED = 5000;
 
 export const listTool: ToolDefinition = {
@@ -23,6 +23,8 @@ export const listTool: ToolDefinition = {
     const { target: base, info } = await resolveDiscoveryPath(guard, args.path ?? ".", signal);
     if (!info.isDirectory()) throw Error("List path must be a directory.");
     const entries: { name: string; type: "file" | "directory"; bytes: number }[] = [];
+    let remaining = toolLimit(ctx, "toolResultChars") - JSON.stringify({ entries, truncated: true }).length;
+    let truncated = false;
     const walk = async (path: string, depth: number, top = false) => {
       signal.throwIfAborted();
       const items: Dirent[] = [];
@@ -39,7 +41,7 @@ export const listTool: ToolDefinition = {
       }
       signal.throwIfAborted();
       for (const item of items.sort((a, b) => a.name.localeCompare(b.name))) {
-        if (entries.length >= LISTED) return;
+        if (truncated) return;
         signal.throwIfAborted();
         if (item.isSymbolicLink() || (!item.isFile() && !item.isDirectory())) continue;
         const relative = path === "." ? item.name : `${path}/${item.name}`;
@@ -54,17 +56,24 @@ export const listTool: ToolDefinition = {
           throw error;
         });
         if (!info || (!info.isFile() && !info.isDirectory())) continue;
-        entries.push({
+        const type = info.isDirectory() ? "directory" : "file";
+        const entry: (typeof entries)[number] = {
           name: target.relative,
-          type: info.isDirectory() ? "directory" : "file",
-          bytes: info.isDirectory() ? 0 : info.size,
-        });
-        if (info.isDirectory() && depth > 1) await walk(target.relative, depth - 1);
+          type,
+          bytes: type === "directory" ? 0 : info.size,
+        };
+        remaining -= JSON.stringify(entry).length + (entries.length ? 1 : 0);
+        if (entries.length >= LISTED || remaining < 0) {
+          truncated = true;
+          return;
+        }
+        entries.push(entry);
+        if (type === "directory" && depth > 1) await walk(target.relative, depth - 1);
       }
     };
     await walk(base.relative, args.depth ?? 1, true);
     signal.throwIfAborted();
     guard.assertAuthorized();
-    return { entries, ...(entries.length >= LISTED ? { truncated: true } : {}) };
+    return { entries, ...(truncated ? { truncated: true } : {}) };
   },
 };

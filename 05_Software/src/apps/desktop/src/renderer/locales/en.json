@@ -1927,7 +1927,7 @@
       "toolResultChars": "Characters of one tool result the model receives; longer results are shrunk. A size below the read output size also shortens reads.",
       "readLines": "Lines one read returns at most, and when the agent names no count.",
       "readChars": "Characters of text one read returns at most.",
-      "grepResults": "Matches one text search returns at most, and when the agent names no count.",
+      "grepResults": "Default and maximum text search results. The limit counts matching lines or files, depending on the output mode.",
       "grepFileMB": "Text search skips files larger than this.",
       "globResults": "Paths one file pattern search returns at most.",
       "workerDeadline": "Seconds a text search or log analysis may run; a running one keeps its deadline.",

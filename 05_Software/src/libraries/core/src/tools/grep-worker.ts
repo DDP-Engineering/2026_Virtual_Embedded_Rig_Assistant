@@ -1,10 +1,10 @@
 import { isAbsolute } from "node:path";
 import { parentPort } from "node:worker_threads";
 import { formatLineRef, parseLineRef } from "@vera/shared";
-import type { GrepMatch, WorkerTask } from "../ports.js";
+import type { GrepFileResult, GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary, utf16Bom, validUtf8 } from "./binary.js";
-import { discoverFiles } from "./discovery.js";
+import { discoverFilePaths, inspectDiscoveredFile } from "./discovery.js";
 import { readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
 import { LogFailure } from "./log-failure.js";
@@ -43,27 +43,34 @@ async function execute(task: WorkerTask) {
       { allowRunLogs: true },
     );
     const signal = new AbortController().signal;
-    const files = await discoverFiles(guard, args.path ?? ".", args.glob ?? "**/*", signal);
-    files.sort((a, b) => a.path.localeCompare(b.path));
-    let count = 0;
+    const paths = await discoverFilePaths(guard, args.path ?? ".", args.glob ?? "**/*", signal);
+    paths.sort((a, b) => a.localeCompare(b));
+    const maxResults = args.maxResults ?? 500;
+    let returned = 0;
     let truncated = false;
-    let limitReached = false;
     // Files left unsearched are reported, so "no matches" is never mistaken for "searched and clean".
     let skipped = 0;
     const content = !args.output || args.output === "content";
+    const reportedFiles = content ? undefined : new Set<string>();
     const maxFileBytes = task.maxFileBytes ?? 5 * 1024 * 1024;
-    for (const file of files) {
+    for (const [index, candidate] of paths.entries()) {
+      const file = await inspectDiscoveredFile(guard, candidate, signal);
+      if (!file || reportedFiles?.has(file.path)) continue;
       if (file.size > maxFileBytes) {
         skipped++;
         continue;
       }
       let bytes: Buffer;
+      let path: string;
       try {
-        bytes = (await readGuardedFile(guard, file.path, maxFileBytes, signal)).bytes;
+        const read = await readGuardedFile(guard, file.path, maxFileBytes, signal);
+        bytes = read.bytes;
+        path = read.target.relative;
       } catch {
         skipped++;
         continue;
       }
+      if (reportedFiles?.has(path)) continue;
       const bom = utf16Bom(bytes);
       if (!bom && isBinary(bytes)) {
         skipped++;
@@ -79,20 +86,26 @@ async function execute(task: WorkerTask) {
         continue;
       }
       const lines = textLines(decoded);
+      let fileMatches = 0;
       for (let i = 0; i < lines.length; i++) {
         const text = lines[i] ?? "";
         if (!regex.test(text)) continue;
+        if (!content) {
+          fileMatches++;
+          if (args.output === "files") break;
+          continue;
+        }
         const match: GrepMatch = {
-          path: file.path,
+          path,
           line: i + 1,
-          text: content ? text.slice(0, 16000) : "",
-          ...(!isAbsolute(file.path) || parseLineRef(`${file.path}#L${i + 1}-L${i + 1}`)
-            ? { ref: formatLineRef({ path: file.path, start: i + 1, end: i + 1 }) }
+          text: text.slice(0, 16000),
+          ...(!isAbsolute(path) || parseLineRef(`${path}#L${i + 1}-L${i + 1}`)
+            ? { ref: formatLineRef({ path, start: i + 1, end: i + 1 }) }
             : {}),
         };
-        if (content && match.text.length < text.length) truncated = true;
+        if (match.text.length < text.length) truncated = true;
         const context = args.context;
-        if (content && context)
+        if (context)
           match.context = lines.slice(Math.max(0, i - context), i + context + 1).flatMap((line, n) => {
             const number = Math.max(0, i - context) + n + 1;
             if (number === i + 1) return [];
@@ -100,14 +113,18 @@ async function execute(task: WorkerTask) {
             return [{ line: number, text: line.slice(0, 2000) }];
           });
         port.postMessage({ type: "partial", match });
-        count++;
-        if (count >= (args.maxResults ?? 500)) {
-          truncated = true;
-          limitReached = true;
-          break;
-        }
+        if (++returned >= maxResults) break;
       }
-      if (limitReached) break;
+      if (reportedFiles && fileMatches) {
+        reportedFiles.add(path);
+        const file: GrepFileResult = { path, count: fileMatches };
+        port.postMessage({ type: "file", file });
+        returned++;
+      }
+      if (returned >= maxResults) {
+        truncated ||= content || index + 1 < paths.length;
+        break;
+      }
     }
     port.postMessage({ type: "done", truncated, skipped });
   } catch (error) {

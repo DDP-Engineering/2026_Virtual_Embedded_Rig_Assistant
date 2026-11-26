@@ -1927,7 +1927,7 @@
       "toolResultChars": "Caractères d’un résultat d’outil que le modèle reçoit ; les résultats plus longs sont raccourcis. Une taille inférieure à celle de lecture raccourcit aussi les lectures.",
       "readLines": "Lignes qu’une lecture renvoie au plus, et quand l’agent n’indique aucun nombre.",
       "readChars": "Caractères de texte qu’une lecture renvoie au plus.",
-      "grepResults": "Correspondances qu’une recherche de texte renvoie au plus, et quand l’agent n’indique aucun nombre.",
+      "grepResults": "Nombre de résultats par défaut et maximal. La limite s’applique aux lignes ou aux fichiers selon le mode de sortie.",
       "grepFileMB": "La recherche de texte ignore les fichiers plus grands.",
       "globResults": "Chemins qu’une recherche par motif de fichiers renvoie au plus.",
       "workerDeadline": "Secondes pendant lesquelles une recherche de texte ou une analyse de journal peut s’exécuter ; une tâche en cours garde son délai.",

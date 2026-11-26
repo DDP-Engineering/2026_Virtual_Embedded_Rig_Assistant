@@ -15,9 +15,17 @@ export const grepParams = z.strictObject({
   output: z
     .enum(["content", "files", "count"])
     .optional()
-    .describe("content: matching lines (default); files: paths only; count: matches per file."),
+    .describe(
+      "content: matching lines (default); files: matching paths; count: complete matching-line totals per file.",
+    ),
   // Up to the setting's largest value; the session's Grep results caps it (REQ-FUNC-0df8e905).
-  maxResults: z.number().int().min(1).max(advancedSettings.grepResults.max).optional(),
+  maxResults: z
+    .number()
+    .int()
+    .min(1)
+    .max(advancedSettings.grepResults.max)
+    .optional()
+    .describe("Maximum matching lines for content, or matching files for files and count."),
 });
 export const grepTool: ToolDefinition = {
   name: "grep",
@@ -53,12 +61,8 @@ export const grepTool: ToolDefinition = {
       ...(result.skipped ? { skippedFiles: result.skipped } : {}),
     };
     if (parsed.output === "files")
-      return { paths: [...new Set(result.matches.map((match) => match.path))], ...metadata };
-    if (parsed.output === "count") {
-      const counts = new Map<string, number>();
-      for (const match of result.matches) counts.set(match.path, (counts.get(match.path) ?? 0) + 1);
-      return { counts: [...counts].map(([path, count]) => ({ path, count })), ...metadata };
-    }
+      return { paths: (result.files ?? []).map((file) => file.path), ...metadata };
+    if (parsed.output === "count") return { counts: result.files ?? [], ...metadata };
     return { matches: result.matches, ...metadata };
   },
 };

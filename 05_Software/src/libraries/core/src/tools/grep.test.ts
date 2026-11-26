@@ -119,6 +119,30 @@ it("returns up to the session's Grep results and skips files above its Grep file
   expect(api.grepParams.safeParse({ pattern: "x", maxResults: 2000 }).success).toBe(true);
 });
 
+it("limits files and count by matching paths without cutting the totals within a file", async () => {
+  root = await mkdtemp(join(tmpdir(), "vera-grep-modes-"));
+  await writeFile(join(root, "a.txt"), "needle\n".repeat(20));
+  await writeFile(join(root, "b.txt"), "needle\n".repeat(3));
+  await writeFile(join(root, "c.txt"), "needle\n");
+  bundle = workerFixture();
+  pool = new api.NodeWorkerPool(bundle.url);
+  const ctx = api.createToolContext(root, pool);
+  const call = (output: string, maxResults: number, path?: string) =>
+    api.grepTool.execute(ctx, { pattern: "needle", output, maxResults, path }, new AbortController().signal);
+  expect(await call("files", 2)).toEqual({ paths: ["a.txt", "b.txt"], truncated: true });
+  expect(await call("count", 2)).toEqual({
+    counts: [
+      { path: "a.txt", count: 20 },
+      { path: "b.txt", count: 3 },
+    ],
+    truncated: true,
+  });
+  expect(await call("count", 1, "a.txt")).toEqual({
+    counts: [{ path: "a.txt", count: 20 }],
+    truncated: false,
+  });
+}, 15_000);
+
 it.each(["content", "files", "count"] as const)(
   "continues searching after a long matching preview for %s output",
   async (output) => {

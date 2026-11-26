@@ -16,6 +16,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - analysis-skills 0.4.0: Route firmware analysis by intent and build manual plans from saved comparisons.
 - Read verified text artifacts by reference in their owning session.
 - Speed up paged reads of large files while retaining line counts and file verification.
+- Reduce filesystem work when listing and searching large directories.
 
 ### Fixed
 
@@ -28,6 +29,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Identify UTF-16 as an unsupported editing encoding in file write errors.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
+- Apply grep file limits to distinct paths and return complete counts for fully searched files.
 
 ## [0.4.0] - 2026-11-26
 

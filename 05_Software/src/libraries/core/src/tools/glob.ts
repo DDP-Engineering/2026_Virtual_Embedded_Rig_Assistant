@@ -3,10 +3,7 @@ import type { ToolDefinition } from "./context.js";
 import { toolLimit, toolPathGuard } from "./context.js";
 import { discoverFiles } from "./discovery.js";
 
-/**
- * Files examined at most: the largest Glob results value, so a huge tree costs a bounded number of file
- * checks while any configured count can still be returned.
- */
+/** Maximum matching files whose metadata is collected for newest-first ordering. */
 const DISCOVERED = 5000;
 
 export const globTool: ToolDefinition = {

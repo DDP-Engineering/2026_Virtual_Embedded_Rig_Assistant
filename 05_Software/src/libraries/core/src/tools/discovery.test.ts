@@ -150,7 +150,7 @@ it("globs up to the session's Glob results, newest first", async () => {
   expect((under.paths as string[]).length).toBeLessThan(100);
   expect(under.truncated).toBe(false);
 });
-it("stops collecting at a hard entry count and marks the result truncated", async () => {
+it("bounds list metadata work by the response budget and keeps the glob discovery ceiling", async () => {
   const guard = await PathGuard.create(root);
   expect(await discoverFiles(guard, "docs", "**/*.md", signal(), 1)).toHaveLength(1);
   expect(await discoverFiles(guard, "docs", "**/*.md", signal())).toHaveLength(2);
@@ -159,8 +159,15 @@ it("stops collecting at a hard entry count and marks the result truncated", asyn
   for (let start = 0; start < names.length; start += 250)
     await Promise.all(names.slice(start, start + 250).map((name) => writeFile(join(root, "big", name), "")));
   const ctx = api.createToolContext(root);
+  const resolved = vi.spyOn(PathGuard.prototype, "resolve");
   const listed = await api.listTool.execute(ctx, { path: "big" }, signal());
-  expect(listed.entries).toHaveLength(5000);
+  const entries = listed.entries as { name: string }[];
+  expect(entries.length).toBeLessThan(5000);
+  expect(JSON.stringify(listed).length).toBeLessThanOrEqual(32000);
+  // One base resolution, one per delivered entry, and one entry that did not fit.
+  expect(resolved).toHaveBeenCalledTimes(entries.length + 2);
+  expect(entries[0]?.name).toBe("big/0.md");
+  resolved.mockRestore();
   expect(listed.truncated).toBe(true);
   expect((await api.listTool.execute(ctx, { path: "docs" }, signal())).truncated).toBeUndefined();
   expect(await api.globTool.execute(ctx, { pattern: "big/*.md" }, signal())).toMatchObject({

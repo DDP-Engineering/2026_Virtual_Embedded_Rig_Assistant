@@ -86,7 +86,7 @@ export const advancedSettings = {
   readLines: int(500, 10000, 2000, ["app"]),
   /** Characters of text one read returns at most. */
   readChars: int(10000, 120000, 30000, ["app"]),
-  /** Matches one grep returns at most, and when the call names none. */
+  /** Default and maximum grep result rows, measured in matching lines or files depending on output mode. */
   grepResults: int(50, 2000, 500, ["app"]),
   /** MiB above which grep skips a file. */
   grepFileMB: int(1, 50, 5, ["app"]),

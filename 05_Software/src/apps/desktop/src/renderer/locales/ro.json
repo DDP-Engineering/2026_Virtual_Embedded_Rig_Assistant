@@ -1927,7 +1927,7 @@
       "toolResultChars": "Câte caractere dintr-un rezultat de instrument primește modelul; rezultatele mai lungi sunt scurtate. O mărime sub cea a citirii scurtează și citirile.",
       "readLines": "Câte linii returnează cel mult o citire, și câte când agentul nu cere un număr.",
       "readChars": "Câte caractere de text returnează cel mult o citire.",
-      "grepResults": "Câte potriviri returnează cel mult o căutare de text, și câte când agentul nu cere un număr.",
+      "grepResults": "Numărul implicit și maxim de rezultate. Limita se aplică liniilor potrivite sau fișierelor, în funcție de modul de afișare.",
       "grepFileMB": "Căutarea de text sare peste fișierele mai mari.",
       "globResults": "Câte căi returnează cel mult o căutare după tipar de fișiere.",
       "workerDeadline": "Câte secunde poate rula o căutare de text sau o analiză de log; una pornită își păstrează termenul.",

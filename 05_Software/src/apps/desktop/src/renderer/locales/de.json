@@ -1927,7 +1927,7 @@
       "toolResultChars": "Zeichen eines Werkzeugergebnisses, die das Modell erhält; längere Ergebnisse werden gekürzt. Ein Wert unter der Lesegröße kürzt auch Lesevorgänge.",
       "readLines": "Zeilen, die ein Lesevorgang höchstens liefert, und wenn der Agent keine Anzahl nennt.",
       "readChars": "Zeichen Text, die ein Lesevorgang höchstens liefert.",
-      "grepResults": "Treffer, die eine Textsuche höchstens liefert, und wenn der Agent keine Anzahl nennt.",
+      "grepResults": "Standard- und Höchstzahl der Suchergebnisse. Je nach Ausgabemodus zählt das Limit passende Zeilen oder Dateien.",
       "grepFileMB": "Die Textsuche überspringt größere Dateien.",
       "globResults": "Pfade, die eine Suche nach Dateimustern höchstens liefert.",
       "workerDeadline": "Sekunden, die eine Textsuche oder Log-Analyse laufen darf; eine laufende behält ihre Frist.",

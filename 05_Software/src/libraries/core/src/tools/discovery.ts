@@ -31,13 +31,12 @@ export async function resolveDiscoveryPath(guard: PathGuard, path: string, signa
   }
 }
 
-/** Files matching a glob; with `limit`, collection stops there and a result of that length is incomplete. */
-export async function discoverFiles(
+/** Enumerate candidate names first so searches can inspect only the files they visit. */
+export async function discoverFilePaths(
   guard: PathGuard,
   path: string,
   pattern: string,
   signal: AbortSignal,
-  limit = Number.POSITIVE_INFINITY,
 ) {
   validateGlob(pattern);
   const { target: base, info: own } = await resolveDiscoveryPath(guard, path, signal);
@@ -48,7 +47,7 @@ export async function discoverFiles(
     const negated = anywhere.startsWith("!") && !anywhere.startsWith("!(");
     guard.assertAuthorized();
     if (negated || !picomatch(anywhere, { dot: true, posix: true })(name)) return [];
-    return [{ path: base.relative, mtimeMs: own.mtimeMs, size: own.size }];
+    return [base.relative];
   }
   if (!own.isDirectory()) throw Error("Search path must be an ordinary file or directory.");
   const paths = await glob(anywhere, {
@@ -70,24 +69,42 @@ export async function discoverFiles(
           ],
   });
   signal.throwIfAborted();
+  guard.assertAuthorized();
+  return base.relative === "." ? paths : paths.map((item) => `${base.relative}/${item}`);
+}
+
+/** Inspect the actual entry before reporting it or attempting to read it. */
+export async function inspectDiscoveredFile(guard: PathGuard, path: string, signal: AbortSignal) {
+  signal.throwIfAborted();
+  let target: GuardedPath;
+  try {
+    target = await guard.resolve(path);
+  } catch {
+    return undefined;
+  }
+  const info = await lstat(target.absolute).catch((error) => {
+    if (entryDisappeared(error)) return undefined;
+    throw error;
+  });
+  if (!info?.isFile()) return undefined;
+  return { path: target.relative, mtimeMs: info.mtimeMs, size: info.size };
+}
+
+/** Validate candidates in small batches while preserving the examined-file limit and order. */
+export async function discoverFiles(
+  guard: PathGuard,
+  path: string,
+  pattern: string,
+  signal: AbortSignal,
+  limit = Number.POSITIVE_INFINITY,
+) {
+  const paths = await discoverFilePaths(guard, path, pattern, signal);
   const files: { path: string; mtimeMs: number; size: number }[] = [];
-  for (const item of paths) {
-    if (files.length >= limit) break;
-    signal.throwIfAborted();
-    const relative = base.relative === "." ? item : `${base.relative}/${item}`;
-    let target: GuardedPath;
-    try {
-      target = await guard.resolve(relative);
-    } catch {
-      continue;
-    }
-    const info = await lstat(target.absolute).catch((error) => {
-      if (entryDisappeared(error)) return undefined;
-      throw error;
-    });
-    if (!info) continue;
-    if (!info.isFile() || info.isSymbolicLink()) continue;
-    files.push({ path: target.relative, mtimeMs: info.mtimeMs, size: info.size });
+  for (let start = 0; start < paths.length && files.length < limit; ) {
+    const batch = paths.slice(start, start + Math.min(16, limit - files.length));
+    const inspected = await Promise.all(batch.map((item) => inspectDiscoveredFile(guard, item, signal)));
+    for (const file of inspected) if (file) files.push(file);
+    start += batch.length;
   }
   signal.throwIfAborted();
   guard.assertAuthorized();

@@ -1,6 +1,6 @@
 import { performance } from "node:perf_hooks";
 import { Worker } from "node:worker_threads";
-import type { GrepMatch, WorkerPool, WorkerResult, WorkerTask } from "../ports.js";
+import type { GrepFileResult, GrepMatch, WorkerPool, WorkerResult, WorkerTask } from "../ports.js";
 
 export interface WorkerHostOptions {
   capacity?: number;
@@ -13,6 +13,7 @@ interface Pending {
   signal: AbortSignal;
   deadline: number;
   matches: GrepMatch[];
+  files?: GrepFileResult[];
   value?: WorkerResult["value"];
   worker?: Worker;
   terminal: boolean;
@@ -101,6 +102,7 @@ export class NodeWorkerPool implements WorkerPool {
           (message: {
             type: string;
             match?: GrepMatch;
+            file?: GrepFileResult;
             truncated?: boolean;
             skipped?: number;
             error?: string;
@@ -112,20 +114,17 @@ export class NodeWorkerPool implements WorkerPool {
               this.finish(job, { truncated: true, reason: "timeout" });
               return;
             }
+            let partial: unknown;
             if (message.type === "partial" && message.match) {
               job.matches.push(message.match);
-              try {
-                job.onPartial?.(structuredClone(message.match));
-              } catch {
-                /* observers cannot strand tasks */
-              }
+              partial = message.match;
+            } else if (message.type === "file" && message.file) {
+              job.files ??= [];
+              job.files.push(message.file);
+              partial = message.file;
             } else if (message.type === "checkpoint" && message.value) {
               job.value = message.value;
-              try {
-                job.onPartial?.(structuredClone(message.value));
-              } catch {
-                /* observers cannot strand tasks */
-              }
+              partial = message.value;
             } else if (message.type === "done")
               this.finish(job, {
                 truncated: message.truncated ?? false,
@@ -138,6 +137,12 @@ export class NodeWorkerPool implements WorkerPool {
                 error: message.error ?? "Worker task failed.",
                 ...(message.failure ? { failure: message.failure } : {}),
               });
+            if (partial !== undefined)
+              try {
+                job.onPartial?.(structuredClone(partial));
+              } catch {
+                /* observers cannot strand tasks */
+              }
           },
         );
         worker.on("error", () => {
@@ -156,7 +161,7 @@ export class NodeWorkerPool implements WorkerPool {
       }
     }
   }
-  private finish(job: Pending, result: Omit<WorkerResult, "matches">): void {
+  private finish(job: Pending, result: Omit<WorkerResult, "matches" | "files">): void {
     if (job.terminal) return;
     job.terminal = true;
     clearTimeout(job.timer);
@@ -168,7 +173,12 @@ export class NodeWorkerPool implements WorkerPool {
         await job.worker?.terminate();
       } finally {
         this.active.delete(job);
-        job.resolve({ matches: job.matches, ...(job.value ? { value: job.value } : {}), ...result });
+        job.resolve({
+          matches: job.matches,
+          ...(job.files ? { files: job.files } : {}),
+          ...(job.value ? { value: job.value } : {}),
+          ...result,
+        });
         this.pump();
       }
     };
