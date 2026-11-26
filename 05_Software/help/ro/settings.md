@@ -8,15 +8,15 @@
 | **Acces web** | Căutarea și citirea pe web pentru agent |
 | **Aspect și limbă** | Limba, tema și dimensiunile textului |
 | **Comenzi** | Shell-ul pentru comenzile agentului și terminalele noi |
-| **Permisiuni** | Acces complet pentru sarcinile delegate. Vezi [Permisiuni](permissions.md). |
-| **Notificări** | Alerte desktop pentru finalizarea turelor, aprobări și întrebări |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
-| **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
+| **Date și confidențialitate** | Mascarea secretelor, accesul complet pentru sarcinile delegate și notificările desktop |
 | **Despre** | Versiunea, runtime-ul, licența și componentele terțe |
 | **Dictare** | Modele Whisper locale și limba vorbită |
 
-## Notificări
+## Date și confidențialitate
+
+### Notificări
 
 La **Finalizarea unei ture** poți alege **Niciodată**, **În fundal** (implicit) sau **Întotdeauna**. VERA este în fundal când fereastra este minimizată, ascunsă sau nu este activă.
 
@@ -28,7 +28,7 @@ Apasă pe bannerul unei alerte cât timp rulează VERA pentru a deschide sesiune
 
 Pe Windows, alertele desktop necesită instalarea VERA. Versiunea ZIP portabilă folosește indicatorii sesiunilor și cardurile de aprobare și de întrebări din VERA. Pe Linux, alertele desktop necesită un serviciu de notificări desktop. În mediile compatibile, sistemul de operare decide dacă afișează alertele cât timp rulează VERA. Dacă alertele lipsesc, verifică setările de notificări ale sistemului pentru VERA și modul Nu deranja. Indicatorii sesiunilor și cardurile de aprobare și de întrebări rămân disponibile în aplicație.
 
-## Date și confidențialitate
+### Mascarea secretelor
 
 Alege dacă secretele stocate sunt înlocuite cu `[REDACTED]` în **Afișare**, **Rulări de programe**, **Agent și model** și **Artefacte și exporturi**. Afișarea și rulările sunt dezactivate implicit; agentul și modelul și artefactele și exporturile sunt activate. Sunt mascate doar secretele stocate cunoscute de VERA; alte texte sensibile nu sunt detectate automat. Erorile furnizorilor, testele de conexiune și jurnalele de diagnostic își păstrează protecția necondiționată.
 
@@ -37,6 +37,10 @@ Folosește **Salvează** sau **Anulează** în dreapta sus. Comutatoarele schimb
 În **Editează workbench-ul → Date și confidențialitate**, fiecare zonă are **Implicit**, **Activat** sau **Dezactivat**. Implicit arată valoarea curentă a aplicației și urmează schimbările ei; alegerile explicite aparțin workbench-ului și sunt copiate cu configurația sa. Alegerea Implicit cere confirmare dacă dezactivează Agent și model. Workbench-urile noi moștenesc valorile aplicației dacă nu alegi altfel. Workbench-urile doar în citire nu pot salva modificări.
 
 Dezactivarea mascării nu recuperează conținutul deja salvat ca `[REDACTED]`, inclusiv istoricul sesiunilor și artefactele. Citește-l sau recreează-l din sursa originală. Activarea mascării nu șterge istoricul brut salvat anterior.
+
+### Sarcini delegate
+
+Comutatorul **Permite acces complet pentru sarcinile delegate** cere o confirmare separată și se salvează când confirmi. Vezi [Permisiuni](permissions.md) pentru modurile de lucru.
 
 ## Aspect și limbă
 

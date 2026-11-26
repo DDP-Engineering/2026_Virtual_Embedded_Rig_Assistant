@@ -12,7 +12,7 @@ Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. V
 
 - **Neue Sitzung** startet eine Unterhaltung im geöffneten Workbench. Gibt es eine ungenutzte leere Sitzung, öffnet VERA diese, statt eine weitere anzulegen.
 - Die erste Nachricht wird zum Titel. Mit **Umbenennen** vergeben Sie jederzeit einen neuen Titel, auch während eines Durchlaufs.
-- **Sitzungen suchen** findet Sitzungen nach Titel und Nachrichteninhalt. Mit den Seitensteuerelementen unter langen Listen gelangen Sie zu weiteren Sitzungen.
+- Wählen Sie die Lupe **Sitzungen suchen** neben **Neue Sitzung**, um Sitzungen nach Titel und Nachrichteninhalt zu finden. Drücken Sie im Suchfeld **Esc** oder wählen Sie die Lupe erneut, um zur vollständigen Liste zurückzukehren. Mit den Seitensteuerelementen unter langen Listen gelangen Sie zu weiteren Sitzungen.
 - Jede Sitzungszeile zeigt den Zeitpunkt der letzten Aktivität und hat ein Menü mit **Markdown exportieren**, **JSON exportieren**, **Umbenennen**, **Nach oben verschieben**, **Nach unten verschieben**, **Archivieren** und **Löschen**.
 - Eine Sitzung zeigt ihren Zustand: **Bereit**, **Läuft**, **Wartet auf Freigabe** oder **Fehler**. Eine laufende Sitzung hat neben der Zeit ein drehendes Zeichen, eine auf Freigabe wartende einen Schild.
 
@@ -70,7 +70,7 @@ Wenn VERA eine Aufgabe delegiert, erscheint die untergeordnete Sitzung eingerüc
 
 Der übergeordnete Agent kann weitere Anweisungen im selben untergeordneten Chat senden und Modell sowie Denkstufe für spätere Durchläufe wählen. Der Verlauf kennzeichnet diese Nachrichten als **Anweisung des übergeordneten Agenten**. Während die untergeordnete Sitzung arbeitet, wartet eine zulässige Nachricht auf die nächste Modellanfrage. Ist eine Entscheidung erforderlich, nutze die Genehmigungskarte der untergeordneten Sitzung.
 
-Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Delegiert eine Sitzung im Bypass-Modus, startet die neue Sitzung in Automatisch bearbeiten, außer du aktivierst unter **Einstellungen > Berechtigungen** die Option **Vollzugriff für delegierte Aufgaben erlauben** und bestätigst. Die Option ist standardmäßig aus und gilt für künftige Starts in allen Workbenches; schaltest du sie aus, behalten bestehende Sitzungen ihren Modus. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat.
+Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Delegiert eine Sitzung im Bypass-Modus, startet die neue Sitzung in Automatisch bearbeiten, außer du aktivierst unter **Einstellungen > Daten & Datenschutz** die Option **Vollzugriff für delegierte Aufgaben erlauben** und bestätigst. Die Option ist standardmäßig aus und gilt für künftige Starts in allen Workbenches; schaltest du sie aus, behalten bestehende Sitzungen ihren Modus. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat.
 
 Lass in einer gemeinsam genutzten Arbeitskopie jeweils eine untergeordnete Sitzung fertig werden und überprüfe ihre Übergabe vor dem nächsten Start.
 

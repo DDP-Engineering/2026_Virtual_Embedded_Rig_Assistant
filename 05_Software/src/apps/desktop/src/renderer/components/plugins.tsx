@@ -8,13 +8,13 @@ import type {
   PluginReview,
   PluginSummary,
 } from "@vera/shared";
-import { configurationNeeds, pluginPlatform, pluginText } from "@vera/shared";
-import { useContext, useEffect, useId, useRef, useState } from "react";
+import { configurationNeeds, pluginOperations, pluginPlatform, pluginText } from "@vera/shared";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { observeProgramAction } from "../hooks/use-run-presentation.js";
 import { ErrorMessage } from "./error-message.js";
-import { HelpContext, helpLanguage, pluginHelpKey } from "./help.js";
+import { helpLanguage } from "./help.js";
 import {
   CatalogItem,
   CatalogSettings,
@@ -24,7 +24,13 @@ import {
   PluginDiscoveryFacts,
 } from "./plugin-catalog.js";
 import { type ConfigurationView, PluginConfiguration } from "./plugin-configuration.js";
-import { PluginDetails, reviewHelp, useRiskLabels } from "./plugin-contents.js";
+import {
+  PluginDetails,
+  PluginHelp,
+  PluginUpdateChanges,
+  reviewHelp,
+  useRiskLabels,
+} from "./plugin-contents.js";
 import { automaticProgram, RequiredPlugins, VendorGuide } from "./plugin-dependencies.js";
 import {
   catalogLibraryItems,
@@ -140,6 +146,7 @@ function Review({
   review,
   catalog,
   scoped,
+  withDependencies,
   installed,
   cancel,
 }: {
@@ -147,15 +154,31 @@ function Review({
   /** A catalog package: installed through the catalog with its tier. */
   catalog?: PluginCatalogReview | undefined;
   scoped?: { workbenchId: string; id: string } | undefined;
+  withDependencies: boolean;
   installed: () => void;
   cancel: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const labels = useLabels();
   const title = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const { manifest } = review;
+  const programs = Object.keys(manifest?.programs ?? {});
+  const risks = pluginOperations(manifest?.rules ?? []);
+  const confirmLabel = scoped
+    ? t("plugins.trust")
+    : withDependencies
+      ? t("plugins.catalog.installWithDependencies")
+      : t("plugins.install");
+  useEffect(() => {
+    const node = dialog.current;
+    node?.showModal();
+    cancelButton.current?.focus();
+    return () => node?.close();
+  }, []);
   async function install() {
     setBusy(true);
     setError(undefined);
@@ -170,24 +193,28 @@ function Review({
       setBusy(false);
     }
   }
-  const source = (
-    <dl className="plugin-facts">
-      <dt>{t("plugins.source.label")}</dt>
-      <dd>
-        <code>{review.path}</code>
-      </dd>
+  const digest = (
+    <>
       <dt>SHA-256</dt>
       <dd className="plugin-sha">
         <code>{review.sha256}</code>
       </dd>
-    </dl>
+    </>
   );
   return (
-    <section className="plugin-review" aria-labelledby={title} data-plugin-review>
+    <dialog
+      ref={dialog}
+      className="pinned-dialog plugin-review"
+      aria-labelledby={title}
+      data-plugin-review
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) cancel();
+      }}
+    >
       <header className="plugin-review-header">
         <div>
           <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
-          <p className="muted">{t("plugins.reviewIntro")}</p>
         </div>
         <div className="workbench-actions">
           <button
@@ -197,23 +224,34 @@ function Review({
             disabled={busy || review.issues.length > 0 || !manifest}
             onClick={() => void install()}
           >
-            {scoped ? t("plugins.trust") : t("plugins.install")}
+            {confirmLabel}
           </button>
-          <button type="button" data-action="plugin-review-cancel" disabled={busy} onClick={cancel}>
+          <button
+            ref={cancelButton}
+            type="button"
+            data-action="plugin-review-cancel"
+            disabled={busy}
+            onClick={cancel}
+          >
             {t("plugins.cancel")}
           </button>
         </div>
       </header>
       {error !== undefined && <ErrorMessage error={error} />}
-      {scoped && <p>{t("plugins.scopedTrustIntro")}</p>}
+      <p>{scoped ? t("plugins.scopedTrustIntro") : t("plugins.reviewInstallScope")}</p>
       {catalog && (
         <p data-catalog-review>
           {t("plugins.catalog.reviewFrom", {
             tier: catalog.tier === "official" ? labels.tier.official : labels.tier.community,
             version: catalog.version,
           })}
-          {review.installed && <> {t("plugins.catalog.reviewChanges")}</>}
         </p>
+      )}
+      <p className="muted plugin-sha">
+        {t("plugins.source.label")} <code>{catalog?.source ?? review.path}</code>
+      </p>
+      {catalog?.required && review.installed && !catalog.changes && (
+        <p>{t("plugins.catalog.reviewComparisonUnavailable")}</p>
       )}
       {review.installed && (
         <p role="status">{t("plugins.replaces", { version: review.installed.version ?? "?" })}</p>
@@ -224,17 +262,57 @@ function Review({
           <Issues issues={review.issues} />
         </div>
       )}
-      {manifest ? (
-        <PluginDetails
-          manifest={manifest}
-          composition={review.composition}
-          help={reviewHelp(review, i18n.language)}
-          facts={source}
-        />
-      ) : (
-        source
+      {manifest && (
+        <dl className="plugin-facts">
+          {!catalog && (
+            <>
+              <dt>{t("plugins.version")}</dt>
+              <dd>
+                {manifest.version} <MaturityBadge version={manifest.version} />
+              </dd>
+            </>
+          )}
+          {manifest.requires.length > 0 && (
+            <>
+              <dt>{t("plugins.requires")}</dt>
+              <dd>{manifest.requires.join(", ")}</dd>
+            </>
+          )}
+          {programs.length > 0 && (
+            <>
+              <dt>{t("plugins.programs")}</dt>
+              <dd>{programs.join(", ")}</dd>
+            </>
+          )}
+          {risks.length > 0 && (
+            <>
+              <dt>{t("plugins.operations.title")}</dt>
+              <dd className="plugin-review-risks">
+                {risks.map(({ risk }) => (
+                  <span key={risk} className="risk-badge" data-risk={risk}>
+                    {labels.risk[risk]}
+                  </span>
+                ))}
+              </dd>
+            </>
+          )}
+        </dl>
       )}
-    </section>
+      {catalog?.changes && <PluginUpdateChanges changes={catalog.changes} />}
+      <details className="plugin-review-facts">
+        <summary>{t("plugins.library.details")}</summary>
+        {manifest ? (
+          <PluginDetails
+            manifest={manifest}
+            composition={review.composition}
+            help={reviewHelp(review, i18n.language)}
+            facts={digest}
+          />
+        ) : (
+          <dl className="plugin-facts">{digest}</dl>
+        )}
+      </details>
+    </dialog>
   );
 }
 export function Programs({
@@ -323,7 +401,6 @@ function PluginCard({
   update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
   const { t, i18n } = useTranslation();
-  const openHelp = useContext(HelpContext);
   const labels = useLabels(),
     client = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -352,6 +429,9 @@ function PluginCard({
     };
   }, []);
   const healthy = plugin.issues.length === 0;
+  const hasPrograms = !plugin.manifest || Object.keys(plugin.manifest.programs).length > 0;
+  const required = plugin.manifest?.requires ?? [];
+  const hasDependencies = hasPrograms || required.length > 0;
   const queryKey = pluginProgramsKey(workbench?.id, plugin);
   const request = { id: plugin.id, ...(workbench ? { workbenchId: workbench.id } : {}) };
   const programs = useQuery({
@@ -363,11 +443,25 @@ function PluginCard({
     refetchOnWindowFocus: false,
   });
   const helpCode = helpLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const hasHelp = healthy && Boolean(plugin.composition?.help?.length);
   const help = useQuery({
     queryKey: ["help.read", "plugin", plugin.id, helpCode],
     queryFn: () => api.invoke("help.read", { plugin: plugin.id, language: helpCode }),
-    enabled: expanded && healthy && Boolean(plugin.composition?.help?.length),
+    enabled: expanded && hasHelp,
   });
+  const helpContent = hasHelp
+    ? (help.data?.content ??
+      (help.isError ? (
+        <>
+          <ErrorMessage error={help.error} />
+          <button type="button" onClick={() => void help.refetch()}>
+            {t("settings.retry")}
+          </button>
+        </>
+      ) : (
+        <p role="status">{t("home.loading")}</p>
+      )))
+    : undefined;
   const needs = configuration?.needs ?? [];
   const readiness = programReadiness(plugin, programs.data, programs.isError, needs);
   const settings = healthy ? plugin.manifest?.settings : undefined;
@@ -404,7 +498,7 @@ function PluginCard({
             ? programs.data.length
               ? t("plugins.dependencySummary", { ready, total: programs.data.length })
               : t("plugins.noPrograms")
-            : t("plugins.notChecked");
+            : undefined;
   async function perform(kind: NonNullable<typeof busy>, action: () => Promise<void>) {
     const generation = ++operation.current;
     setBusy(kind);
@@ -439,20 +533,20 @@ function PluginCard({
   // What only an installed plugin has: its dependency checks and its configuration.
   const installedSections = healthy && (
     <>
-      <section className="plugin-section" data-plugin-section="dependencies">
-        <h4>{t("plugins.dependencies.title")}</h4>
-        {plugin.manifest && <RequiredPlugins ids={plugin.manifest.requires} installed={installedIds} />}
-        {programs.data ? (
-          <Programs
-            statuses={programs.data}
-            archive={(program) => void dependencyAction("archive", program)}
-            busy={working}
-          />
-        ) : (
-          <p className="muted">{t("plugins.notChecked")}</p>
-        )}
-        {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
-      </section>
+      {(required.length > 0 || Boolean(programs.data?.length) || checkedAt) && (
+        <section className="plugin-section" data-plugin-section="dependencies">
+          <h4>{t("plugins.dependencies.title")}</h4>
+          <RequiredPlugins ids={required} installed={installedIds} />
+          {programs.data && programs.data.length > 0 && (
+            <Programs
+              statuses={programs.data}
+              archive={(program) => void dependencyAction("archive", program)}
+              busy={working}
+            />
+          )}
+          {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
+        </section>
+      )}
       {settings && configuration && Object.keys(settings).length > 0 && (
         <section
           className="plugin-section"
@@ -481,7 +575,7 @@ function PluginCard({
           <PluginRequirementBadges requirements={installedRequirements(plugin)} />
         </p>
         <div className="workbench-actions plugin-top-actions">
-          {healthy && (
+          {healthy && hasPrograms && (
             <>
               <button
                 type="button"
@@ -510,25 +604,7 @@ function PluginCard({
                     ? t("plugins.installed")
                     : t("plugins.installDependencies")}
               </button>
-              <button
-                type="button"
-                data-action="plugin-reinstall"
-                disabled={working || !reinstallable}
-                title={!programs.data ? t("plugins.checkFirst") : t("plugins.reinstallHint")}
-                onClick={() => void dependencyAction("reinstall")}
-              >
-                {busy === "reinstall" ? t("plugins.reinstalling") : t("plugins.reinstall")}
-              </button>
             </>
-          )}
-          {healthy && openHelp && plugin.composition?.help?.length && (
-            <button
-              type="button"
-              data-action="plugin-help"
-              onClick={() => openHelp(pluginHelpKey(plugin.id))}
-            >
-              {t("plugins.help")}
-            </button>
           )}
           {plugin.source === "workbench" && workbench && (
             <button
@@ -587,6 +663,24 @@ function PluginCard({
                   {t("plugins.export")}
                 </button>
               )}
+              {healthy && hasPrograms && (
+                <button
+                  type="button"
+                  data-action="plugin-reinstall"
+                  disabled={working || !reinstallable}
+                  title={!programs.data ? t("plugins.checkFirst") : t("plugins.reinstallHint")}
+                  onClick={(event) => {
+                    const menu = event.currentTarget.closest("details");
+                    if (menu) {
+                      menu.open = false;
+                      menu.querySelector("summary")?.focus();
+                    }
+                    void dependencyAction("reinstall");
+                  }}
+                >
+                  {busy === "reinstall" ? t("plugins.reinstalling") : t("plugins.reinstall")}
+                </button>
+              )}
               {plugin.source !== "workbench" && (
                 <button
                   type="button"
@@ -607,13 +701,6 @@ function PluginCard({
           </details>
         </div>
       </div>
-      {(name !== plugin.id || plugin.ecosystem) && (
-        <p className="muted">
-          {name !== plugin.id && <code>{plugin.id}</code>}
-          {name !== plugin.id && plugin.ecosystem && <span> · </span>}
-          {plugin.ecosystem && <span>{plugin.ecosystem}</span>}
-        </p>
-      )}
       {plugin.description && (
         <p className="plugin-row-description">
           {plugin.manifest ? pluginText(plugin.manifest, i18n.language).summary : plugin.description}
@@ -630,15 +717,19 @@ function PluginCard({
           {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
         </p>
       )}
-      {healthy && (
+      {healthy && (hasDependencies || (settings && Object.keys(settings).length > 0)) && (
         <PluginStatus
           readiness={readiness}
-          programs={summary}
-          dependencies={dependencyCheck(
-            programs.data,
-            programs.isError,
-            (plugin.manifest?.requires ?? []).filter((id) => !installedIds.has(id)),
-          )}
+          programs={hasPrograms ? summary : undefined}
+          dependencies={
+            hasDependencies
+              ? dependencyCheck(
+                  hasPrograms ? programs.data : [],
+                  programs.isError,
+                  required.filter((id) => !installedIds.has(id)),
+                )
+              : undefined
+          }
           configuration={configurationCheck(settings, configuration)}
           declared={Boolean(settings && Object.keys(settings).length)}
           configure={() => {
@@ -665,17 +756,25 @@ function PluginCard({
             {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
             {healthy && plugin.manifest ? (
               <PluginDetails
+                card
                 manifest={plugin.manifest}
                 composition={plugin.composition}
-                help={help.data?.content}
+                help={helpContent}
                 facts={<PluginDiscoveryFacts entry={discovery} />}
               >
                 {installedSections}
               </PluginDetails>
             ) : (
               <>
-                <PluginDiscoveryFacts entry={discovery} />
+                <dl className="plugin-facts">
+                  <dt>{t("plugins.id")}</dt>
+                  <dd>
+                    <code>{plugin.id}</code>
+                  </dd>
+                  <PluginDiscoveryFacts entry={discovery} />
+                </dl>
                 {installedSections}
+                {helpContent && <PluginHelp content={helpContent} />}
               </>
             )}
           </div>
@@ -797,7 +896,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       while (rest.length) {
         const [id = "", ...after] = rest;
         const reviewed = await api.invoke("plugins.catalogReview", { id });
-        if (reviewed.required && !run.current?.reviewed) {
+        if ((reviewed.required || run.current?.programs) && !run.current?.reviewed) {
           setQueue(after);
           setReview({ review: reviewed.review, catalog: reviewed });
           return;
@@ -972,29 +1071,32 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
             }}
           />
         )
-      ) : review ? (
-        <Review
-          review={review.review}
-          catalog={review.catalog}
-          scoped={review.scoped}
-          cancel={() => {
-            setReview(undefined);
-            setQueue([]);
-            run.current = undefined;
-          }}
-          installed={() => {
-            void client.resetQueries({ queryKey: ["plugin-programs"] });
-            client.removeQueries({ queryKey: ["plugin-programs"] });
-            if (!review.catalog && !review.scoped) changeLibrary({ status: "installed" });
-            if (review.catalog) run.current?.installed.push(review.catalog.id);
-            setReview(undefined);
-            void changed();
-            if (queue.length) void reviewCatalog(queue);
-            else void installPrograms();
-          }}
-        />
       ) : (
         <>
+          {review && (
+            <Review
+              key={review.review.sha256}
+              review={review.review}
+              catalog={review.catalog}
+              scoped={review.scoped}
+              withDependencies={Boolean(review.catalog && run.current?.programs)}
+              cancel={() => {
+                setReview(undefined);
+                setQueue([]);
+                run.current = undefined;
+              }}
+              installed={() => {
+                void client.resetQueries({ queryKey: ["plugin-programs"] });
+                client.removeQueries({ queryKey: ["plugin-programs"] });
+                if (!review.catalog && !review.scoped) changeLibrary({ status: "installed" });
+                if (review.catalog) run.current?.installed.push(review.catalog.id);
+                setReview(undefined);
+                void changed();
+                if (queue.length) void reviewCatalog(queue);
+                else void installPrograms();
+              }}
+            />
+          )}
           <section className="plugin-toolbar" aria-label={t("plugins.managementActions")}>
             <div className="workbench-actions">
               <button

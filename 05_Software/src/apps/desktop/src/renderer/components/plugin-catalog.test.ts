@@ -20,6 +20,12 @@ vi.mock("../api/index.js", () => ({
   api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}), getAppInfo: vi.fn() },
 }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+HTMLDialogElement.prototype.showModal = function () {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function () {
+  this.open = false;
+};
 let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
@@ -108,6 +114,7 @@ const reviewOf = (id: string, required: boolean, update = false, version = "1.0.
   id,
   version,
   tier: "official",
+  source: `https://example.com/catalog/${id}-${version}.zip`,
   required,
 });
 
@@ -115,6 +122,7 @@ function stub(options: {
   catalog: PluginCatalogView;
   installed?: PluginSummary[];
   required?: Record<string, boolean>;
+  changes?: PluginCatalogReview["changes"];
   plugins?: Record<string, string>;
   host?: { platform: string; arch: string };
   provision?: Record<string, PluginProgramStatus[]>;
@@ -139,12 +147,15 @@ function stub(options: {
         return options.catalog;
       case "plugins.catalogReview": {
         const id = request.id as string;
-        return reviewOf(
-          id,
-          options.required?.[id] ?? true,
-          Boolean(options.installed?.some((p) => p.id === id)),
-          options.catalog.plugins.find((plugin) => plugin.id === id)?.version,
-        );
+        return {
+          ...reviewOf(
+            id,
+            options.required?.[id] ?? true,
+            Boolean(options.installed?.some((p) => p.id === id)),
+            options.catalog.plugins.find((plugin) => plugin.id === id)?.version,
+          ),
+          ...(options.changes ? { changes: options.changes } : {}),
+        };
       }
       case "plugins.catalogPreview": {
         const id = request.id as string;
@@ -258,6 +269,19 @@ it("stops the queue when the first review is cancelled", async () => {
   expect(calls("plugins.catalogInstall")).toEqual([]);
 });
 
+// REQ-FUNC-9a7cd113
+it("installs a direct first catalog package with its verified review hash", async () => {
+  await i18n.changeLanguage("en");
+  const id = "analysis-skills";
+  stub({ catalog: view([entry(id)]), required: { [id]: false } });
+  await render();
+  await click(`[data-catalog-plugin="${id}"] [data-action="catalog-install"]`);
+  await vi.waitFor(() =>
+    expect(calls("plugins.catalogInstall")).toEqual([{ id, sha256: reviewOf(id, false).review.sha256 }]),
+  );
+  expect($("dialog[data-plugin-review]")).toBeNull();
+});
+
 // REQ-UX-c55a0fe1
 it("lists catalog plugins with tiers and installed states, and notes an unreachable catalog", async () => {
   await i18n.changeLanguage("en");
@@ -284,7 +308,7 @@ it("lists catalog plugins with tiers and installed states, and notes an unreacha
 });
 
 // REQ-UX-c55a0fe1
-it("opens the review screen for an update that needs one and installs other updates at once", async () => {
+it("shows changed rules for an update and installs unchanged rules directly", async () => {
   await i18n.changeLanguage("en");
   const plugins = esp32.map((plugin) =>
     ["serial-monitor", "esp32-esptool"].includes(plugin.id)
@@ -300,6 +324,15 @@ it("opens the review screen for an update that needs one and installs other upda
     catalog: view(plugins),
     installed: [installed("serial-monitor", "1.0.0"), installed("esp32-esptool", "1.0.0")],
     required: { "serial-monitor": true, "esp32-esptool": false },
+    changes: {
+      programs: [],
+      rules: [
+        {
+          before: { position: 1, rule: { match: "serial read", risk: "safe" } },
+          after: { position: 1, rule: { match: "serial send", risk: "device-write" } },
+        },
+      ],
+    },
   });
   await render();
   await click('[data-library-status="installed"]');
@@ -316,10 +349,45 @@ it("opens the review screen for an update that needs one and installs other upda
   await click('[data-library-status="all"]');
   await click('[data-plugin="serial-monitor"] [data-action="plugin-update"]');
   await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
-  expect($("[data-catalog-review]").textContent).toContain(i18n.t("plugins.catalog.reviewChanges"));
+  const ruleChanges = $("[data-plugin-update-changes] details") as HTMLDetailsElement;
+  const confirmation = $("[data-plugin-review]");
+  expect(confirmation.textContent).toContain(i18n.t("plugins.reviewInstallScope"));
+  expect(confirmation.textContent).toContain("https://example.com/catalog/serial-monitor-1.1.0.zip");
+  expect(confirmation.textContent).not.toContain("C:/data/plugins/catalog/serial-monitor.zip");
+  expect(confirmation.textContent).not.toContain(i18n.t("plugins.catalog.reviewComparisonUnavailable"));
+  expect(ruleChanges.open).toBe(false);
+  expect(ruleChanges.querySelector('[data-risk="safe"]')?.parentElement?.textContent).toContain(
+    "serial read",
+  );
+  expect(ruleChanges.querySelector('[data-risk="device-write"]')?.parentElement?.textContent).toContain(
+    "serial send",
+  );
   expect(calls("plugins.catalogInstall")).toHaveLength(1);
   await click('[data-action="plugin-install"]');
   await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(2));
+});
+
+it("explains when the installed copy could not be compared", async () => {
+  await i18n.changeLanguage("en");
+  const serial = entry("serial-monitor", {
+    version: "1.1.0",
+    installed: { version: "1.0.0", tier: "official" },
+    update: true,
+  });
+  stub({ catalog: view([serial]), installed: [installed("serial-monitor", "1.0.0")] });
+  await render();
+  await click('[data-library-status="installed"]');
+  await vi.waitFor(() =>
+    expect($('[data-plugin="serial-monitor"] [data-action="plugin-update"]')).not.toBeNull(),
+  );
+  await click('[data-plugin="serial-monitor"] [data-action="plugin-update"]');
+  await vi.waitFor(() =>
+    expect($("[data-plugin-review]")?.textContent).toContain(
+      i18n.t("plugins.catalog.reviewComparisonUnavailable"),
+    ),
+  );
+  expect($("[data-plugin-update-changes]")).toBeNull();
+  expect(calls("plugins.catalogInstall")).toEqual([]);
 });
 
 // REQ-UX-c55a0fe1 REQ-UX-28a74094
@@ -552,7 +620,6 @@ it.each(["en", "ro", "de"])(
     expect(ltspice.querySelector('[data-tier="official"]')?.textContent).toBe(
       i18n.t("plugins.tier.official"),
     );
-    expect(ltspice.textContent).toContain("esp32");
     expect(ltspice.textContent).toContain("Short ltspice.");
     expect(ltspice.textContent).not.toContain("About ltspice.");
     expect(warning("ltspice", "platform").textContent).toBe(
@@ -569,6 +636,11 @@ it.each(["en", "ro", "de"])(
     for (const id of ["esp32-esptool", "esp32-efuse", "serial-monitor"])
       expect(warning(id, "platform"), id).toBeNull();
     expect(warning("serial-monitor", "risk")).toBeNull();
+    await click(`${card("ltspice")} [data-action="plugin-expand"]`);
+    const about = `${card("ltspice")} [data-plugin-section="about"]`;
+    await click(`${about} > summary`);
+    expect($(about).textContent).toContain("esp32");
+    expect($(about).textContent).toContain("About ltspice.");
     // The review keeps the full description and the rules.
     await click(`${card("serial-monitor")} [data-action="catalog-install"]`);
     await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());

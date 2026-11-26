@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9a7cd113"
+
+title = "Install verified official skills packages directly"
+
+status = "active"
+
+requirement = """
+When the user selects Install for a new supported plugin containing valid skills and UTF-8 Markdown documentation only from a verified official catalog, with no programs, execution rules, required plugins or settings, VERA shall install the verified package directly using its reviewed SHA-256.
+"""
+
+verification = "Core catalog tests cover real Analysis skills from a verified official catalog and mandatory confirmation for community, extra content, invalid skill metadata or invalid UTF-8. Renderer test covers direct install with the exact reviewed hash and no confirmation."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-26
+updated = 2026-11-26

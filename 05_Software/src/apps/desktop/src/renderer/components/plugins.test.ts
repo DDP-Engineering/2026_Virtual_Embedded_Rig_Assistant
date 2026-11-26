@@ -8,11 +8,16 @@ import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import { useRunPresentation } from "../hooks/use-run-presentation.js";
 import i18n from "../i18n.js";
-import { HelpContext } from "./help.js";
 import { Plugins } from "./plugins.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+HTMLDialogElement.prototype.showModal = function () {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function () {
+  this.open = false;
+};
 let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
@@ -137,6 +142,8 @@ function stub(options: {
       case "plugins.install":
         state.installed = [...state.installed.filter((plugin) => plugin.id !== echo.id), echo];
         return echo;
+      case "help.read":
+        return { content: "# Echo usage" };
       // The catalog section is covered by plugin-catalog.test.ts; here it has nothing to offer.
       case "plugins.catalog":
         return { source: "none", plugins: [], packs: [] };
@@ -191,6 +198,22 @@ async function render(props: Parameters<typeof Plugins>[0] = { workbench }, priv
   });
   await click('[data-library-status="installed"]');
 }
+it("keeps the plugin library mounted beneath a compact installation confirmation", async () => {
+  await i18n.changeLanguage("en");
+  stub({ review });
+  await render();
+  await click('[data-action="plugin-install-folder"]');
+  const confirmation = $("dialog[data-plugin-review]");
+  expect(confirmation).not.toBeNull();
+  expect($("[data-library-status]")).not.toBeNull();
+  const details = confirmation.querySelector<HTMLDetailsElement>("details.plugin-review-facts");
+  expect(details?.open).toBe(false);
+  await click("details.plugin-review-facts > summary");
+  expect(details?.open).toBe(true);
+  expect(details?.textContent).toContain(review.sha256);
+  await click('[data-action="plugin-review-cancel"]');
+  expect(calls("plugins.install")).toHaveLength(0);
+});
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
 const click = async (selector: string) => {
   await vi.waitFor(() => expect($(selector)).not.toBeNull());
@@ -743,8 +766,10 @@ it("re-installs VERA's damaged program copy from the installed card", async () =
   await vi.waitFor(() => expect($('[data-program="tool"]')).not.toBeNull());
   expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.problem.sha256"));
   expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.dependencies.programFolder"));
-  expect(($('[data-action="plugin-reinstall"]') as HTMLButtonElement).disabled).toBe(false);
-  await click('[data-action="plugin-reinstall"]');
+  const more = '[data-plugin="echo-tools"] .plugin-more';
+  await click(`${more} > summary`);
+  expect(($(`${more} [data-action="plugin-reinstall"]`) as HTMLButtonElement).disabled).toBe(false);
+  await click(`${more} [data-action="plugin-reinstall"]`);
   await vi.waitFor(() => expect($('[data-program="tool"]').getAttribute("data-state")).toBe("ready"));
   expect(calls("plugins.reinstall").map(([, request]) => request)).toEqual([
     { id: "echo-tools", workbenchId: workbench.id },
@@ -956,8 +981,7 @@ it("is Ready only with ready programs and nothing to configure", async () => {
   const card = '[data-plugin="echo-tools"]';
   expect($(`${card} [data-plugin-status]`).getAttribute("data-plugin-status")).toBe("attention");
   expect(check(card, "dependencies").getAttribute("data-state")).toBe("unchecked");
-  expect(check(card, "configuration").getAttribute("data-state")).toBe("ready");
-  expect(check(card, "configuration").textContent).toContain(i18n.t("plugins.status.nothingToConfigure"));
+  expect(check(card, "dependencies").textContent).toContain(i18n.t("plugins.status.state.unchecked"));
   expect($(`${card} [data-action="status-configure"]`)).toBeNull();
   await click(`${card} [data-action="plugin-check"]`);
   await vi.waitFor(() =>
@@ -988,29 +1012,22 @@ it("names a missing vendor program as external and keeps its guide", async () =>
 });
 
 // REQ-UX-0d64586a
-it("opens a plugin's help from its row and shows no Help for a plugin without help", async () => {
+it("opens a plugin's localized help in its Details", async () => {
   await i18n.changeLanguage("en");
-  const helped = { ...echo, composition: { skills: [], files: [], help: ["en", "fr"] as ("en" | "fr")[] } };
-  stub({ installed: [helped, { ...echo, id: "plain-tools", name: "Plain tools" }], programs: [] });
-  const open = vi.fn();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  await act(async () => {
-    root.render(
-      createElement(
-        HelpContext.Provider,
-        { value: open },
-        createElement(QueryClientProvider, { client }, createElement(Plugins, { workbench })),
-      ),
-    );
+  const card = '[data-plugin="echo-tools"]';
+  stub({
+    installed: [
+      { ...echo, manifest: review.manifest, composition: { skills: [], files: [], help: ["en", "fr"] } },
+    ],
   });
-  await click('[data-library-status="installed"]');
-  await vi.waitFor(() => expect($('[data-plugin="plain-tools"]')).not.toBeNull());
-  expect($('[data-plugin="plain-tools"] [data-action="plugin-help"]')).toBeNull();
-  await click('[data-plugin="echo-tools"] [data-action="plugin-help"]');
-  expect(open).toHaveBeenCalledExactlyOnceWith("plugin/echo-tools");
+  await render();
+  await click(`${card} [data-action="plugin-expand"]`);
+  const help = `${card} details[data-plugin-section="help"]`;
+  expect(($(help) as HTMLDetailsElement).open).toBe(false);
+  await click(`${help} > summary`);
+  expect(($(help) as HTMLDetailsElement).open).toBe(true);
+  await vi.waitFor(() => expect($(help).textContent).toContain("Echo usage"));
+  expect(calls("help.read")).toEqual([["help.read", { plugin: "echo-tools", language: "en" }]]);
 });
 
 function privacyEvents() {

@@ -244,7 +244,7 @@ const installSchema = z.union([
       message: "Declare a managed download to prefer it.",
     }),
 ]);
-const programSchema = z
+export const programSchema = z
   .strictObject({
     install: installSchema,
     version: z.strictObject({
@@ -363,7 +363,7 @@ const programSchema = z
         message: "A launcher uses find without a download fallback to locate its executable.",
       });
   });
-const ruleSchema = z.strictObject({
+export const ruleSchema = z.strictObject({
   match: z
     .string()
     .min(1)
@@ -547,6 +547,8 @@ export const pluginReviewSchema = z.strictObject({
   manifest: pluginManifestSchema.optional(),
   /** Present whenever the manifest parses. */
   composition: pluginCompositionSchema.optional(),
+  /** A verified archive containing only the manifest, skill Markdown and documentation. */
+  skillsAndDocumentationOnly: z.literal(true).optional(),
   /** The package's help pages (`help/<language>.md`) by language, when it has any. */
   help: z.partialRecord(z.enum(["en", "ro", "de", "fr"]), z.string().max(256 * 1024)).optional(),
   installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),

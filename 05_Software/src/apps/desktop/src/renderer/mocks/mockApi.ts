@@ -1050,7 +1050,14 @@ export function createMockApi(
         const entry = catalogEntries.find((item) => item.id === id);
         if (!entry) throw veraError("NOT_FOUND");
         const review = mockPackage(`/mock/catalog/${id}.zip`);
-        value = { review, id, version: entry.version, tier: entry.tier, required: !installedPlugins.has(id) };
+        value = {
+          review,
+          id,
+          version: entry.version,
+          tier: entry.tier,
+          source: `/mock/bundled-plugins/${entry.url}`,
+          required: !installedPlugins.has(id),
+        };
         break;
       }
       case "plugins.catalogPreview": {

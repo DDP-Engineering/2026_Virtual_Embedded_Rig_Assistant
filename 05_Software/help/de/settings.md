@@ -8,15 +8,15 @@
 | **Webzugriff** | Websuche und Lesen von Webseiten für den Agenten |
 | **Darstellung und Sprache** | Sprache, Design und Textgrößen |
 | **Befehle** | Die Shell für Agentenbefehle und neue Terminals |
-| **Berechtigungen** | Vollzugriff für delegierte Aufgaben. Siehe [Berechtigungen](permissions.md). |
-| **Benachrichtigungen** | Desktop-Hinweise bei abgeschlossenen Durchläufen, Freigaben und Fragen |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
-| **Daten & Datenschutz** | Maskierungsstandards für vier Bereiche |
+| **Daten & Datenschutz** | Maskierung, Vollzugriff für delegierte Aufgaben und Desktop-Benachrichtigungen |
 | **Über** | Version, Laufzeit, Lizenz und Komponenten von Drittanbietern |
 | **Diktat** | Lokale Whisper-Modelle und gesprochene Sprache |
 
-## Benachrichtigungen
+## Daten & Datenschutz
+
+### Benachrichtigungen
 
 Unter **Abschluss eines Durchlaufs** stehen **Nie**, **Im Hintergrund** (Standard) und **Immer** zur Wahl. VERA ist im Hintergrund, wenn sein Fenster minimiert, ausgeblendet oder nicht fokussiert ist.
 
@@ -28,7 +28,7 @@ Klicke auf das Banner eines Hinweises, während VERA läuft, um die zugehörige 
 
 Unter Windows setzen Desktop-Hinweise eine installierte Version von VERA voraus. Die portable ZIP-Version nutzt die Sitzungsanzeigen, Freigabekarten und Fragekarten in VERA. Unter Linux benötigen Desktop-Hinweise einen Benachrichtigungsdienst. In unterstützten Umgebungen entscheidet das Betriebssystem, ob es Hinweise anzeigt, während VERA läuft. Wenn Hinweise ausbleiben, prüfe die Systembenachrichtigungen für VERA und den Modus „Nicht stören“. Die Sitzungsanzeigen, Freigabekarten und Fragekarten bleiben in VERA verfügbar.
 
-## Daten & Datenschutz
+### Maskierung gespeicherter Geheimnisse
 
 Wählen Sie, ob gespeicherte Geheimnisse in **Anzeige**, **Programmläufe**, **Agent und Modell** und **Artefakte und Exporte** durch `[REDACTED]` ersetzt werden. Anzeige und Programmläufe sind standardmäßig aus; Agent und Modell sowie Artefakte und Exporte sind ein. Nur VERA bekannte gespeicherte Geheimnisse werden maskiert; andere vertrauliche Texte werden nicht automatisch erkannt. Anbieterfehler, Verbindungstests und Diagnoseprotokolle bleiben immer geschützt.
 
@@ -37,6 +37,10 @@ Wählen Sie, ob gespeicherte Geheimnisse in **Anzeige**, **Programmläufe**, **A
 Unter **Workbench bearbeiten → Daten & Datenschutz** hat jeder Bereich **Standard**, **Ein** oder **Aus**. Standard zeigt den aktuellen App-Wert und folgt späteren Änderungen; ausdrückliche Werte gehören zum Workbench und werden mit seiner Konfiguration kopiert. Auch Standard fragt nach, wenn dadurch Agent und Modell ausgeschaltet wird. Neue Workbenches übernehmen ohne eigene Auswahl die App-Werte. Schreibgeschützte Workbenches können Änderungen nicht speichern.
 
 Ausschalten stellt bereits als `[REDACTED]` gespeicherte Inhalte einschließlich Sitzungsverlauf und Artefakten nicht wieder her. Lesen oder erstellen Sie diese aus der Originalquelle neu. Einschalten löscht keinen zuvor unmaskiert gespeicherten Verlauf.
+
+### Delegierte Aufgaben
+
+Der Schalter **Vollzugriff für delegierte Aufgaben erlauben** wird separat bestätigt und bei der Bestätigung gespeichert. Die verfügbaren Modi stehen unter [Berechtigungen](permissions.md).
 
 ## Darstellung und Sprache
 

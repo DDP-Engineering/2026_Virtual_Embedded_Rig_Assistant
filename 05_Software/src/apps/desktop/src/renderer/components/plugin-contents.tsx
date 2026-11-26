@@ -1,4 +1,5 @@
 import type {
+  PluginCatalogReview,
   PluginComposition,
   PluginManifest,
   PluginProgram,
@@ -7,7 +8,7 @@ import type {
   ProgramRule,
 } from "@vera/shared";
 import { classifyCommand, pluginOperations, pluginText, programCommandLine } from "@vera/shared";
-import { type ReactNode, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { helpLanguage } from "./help.js";
 import { MaturityBadge } from "./plugin-library-controls.js";
@@ -97,9 +98,11 @@ function InstallSource({ program }: { program: PluginProgram }) {
 export function PluginContents({
   manifest,
   composition,
+  card = false,
 }: {
   manifest: PluginManifest;
   composition?: PluginComposition | undefined;
+  card?: boolean;
 }) {
   const { t } = useTranslation();
   const risk = useRiskLabels();
@@ -109,32 +112,34 @@ export function PluginContents({
   const groups = pluginOperations(manifest.rules);
   return (
     <>
-      <section className="plugin-section" data-plugin-section="programs">
-        <h4>{t("plugins.programs")}</h4>
-        {programs.length === 0 ? (
-          <p data-no-programs>{t("plugins.composition.noPrograms")}</p>
-        ) : (
-          <ul className="plugin-review-list">
-            {programs.map(([name, program]) => (
-              <li key={name} data-program={name}>
-                <code>{name}</code> <InstallSource program={program} />
-                {program.version.range && (
-                  <span className="muted"> {t("plugins.range", { range: program.version.range })}</span>
-                )}
-                {program.subcommandHelp && (
-                  <SubcommandHelp
-                    name={name}
-                    help={program.subcommandHelp}
-                    optionSyntax={program.optionSyntax}
-                    rules={manifest.rules}
-                    labels={risk}
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {(!card || programs.length > 0) && (
+        <section className="plugin-section" data-plugin-section="programs">
+          <h4>{t("plugins.programs")}</h4>
+          {programs.length === 0 ? (
+            <p data-no-programs>{t("plugins.composition.noPrograms")}</p>
+          ) : (
+            <ul className="plugin-review-list">
+              {programs.map(([name, program]) => (
+                <li key={name} data-program={name}>
+                  <code>{name}</code> <InstallSource program={program} />
+                  {program.version.range && (
+                    <span className="muted"> {t("plugins.range", { range: program.version.range })}</span>
+                  )}
+                  {program.subcommandHelp && (
+                    <SubcommandHelp
+                      name={name}
+                      help={program.subcommandHelp}
+                      optionSyntax={program.optionSyntax}
+                      rules={manifest.rules}
+                      labels={risk}
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
       {skills.length > 0 && (
         <section className="plugin-section" data-plugin-section="skills">
           <h4>{t("plugins.composition.skills")}</h4>
@@ -172,32 +177,34 @@ export function PluginContents({
           </ul>
         </section>
       )}
-      <section className="plugin-section" data-plugin-section="operations" data-plugin-operations>
-        <h4>{t("plugins.operations.title")}</h4>
-        {groups.length === 0 && <p>{t("plugins.operations.none")}</p>}
-        {groups.map((group) => (
-          <details key={group.risk} className="plugin-operations" data-operations={group.risk}>
-            <summary>
-              <span className="risk-badge" data-risk={group.risk}>
-                {risk[group.risk]}
-              </span>{" "}
-              <span className="muted">{group.rules.length}</span>
-            </summary>
-            <ul className="plugin-review-list">
-              {group.rules.map((rule, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: rules keep manifest order and may repeat.
-                <li key={index} data-rule={rule.risk}>
-                  <code>{rule.match}</code>
-                  {rule.note && <span> {rule.note}</span>}
-                  {rule.timeout !== undefined && (
-                    <span className="muted"> {t("plugins.timeout", { seconds: rule.timeout })}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </details>
-        ))}
-      </section>
+      {(!card || groups.length > 0) && (
+        <section className="plugin-section" data-plugin-section="operations" data-plugin-operations>
+          <h4>{t("plugins.operations.title")}</h4>
+          {groups.length === 0 && <p>{t("plugins.operations.none")}</p>}
+          {groups.map((group) => (
+            <details key={group.risk} className="plugin-operations" data-operations={group.risk}>
+              <summary>
+                <span className="risk-badge" data-risk={group.risk}>
+                  {risk[group.risk]}
+                </span>{" "}
+                <span className="muted">{group.rules.length}</span>
+              </summary>
+              <ul className="plugin-review-list">
+                {group.rules.map((rule, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: rules keep manifest order and may repeat.
+                  <li key={index} data-rule={rule.risk}>
+                    <code>{rule.match}</code>
+                    {rule.note && <span> {rule.note}</span>}
+                    {rule.timeout !== undefined && (
+                      <span className="muted"> {t("plugins.timeout", { seconds: rule.timeout })}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </section>
+      )}
     </>
   );
 }
@@ -212,56 +219,165 @@ export function PluginDetails({
   help,
   facts,
   children,
+  card = false,
 }: {
   manifest: PluginManifest;
   composition?: PluginComposition | undefined;
   /** The plugin's help page in the interface language (English when it has no page in that language). */
-  help?: string | undefined;
-  /** More facts under the plugin's own, such as the catalog's activity and dates. */
+  help?: string | ReactElement | undefined;
+  /** Additional terms and definitions in the same list as the manifest facts. */
   facts?: ReactNode;
   children?: ReactNode;
+  /** The heading and dependency section on a library card already show the version and requirements. */
+  card?: boolean;
 }) {
   const { t, i18n } = useTranslation();
-  return (
-    <div className="plugin-details-body" data-plugin-contents>
-      <section className="plugin-section" data-plugin-section="description">
-        <h4>{t("plugins.details.description")}</h4>
-        <p>{pluginText(manifest, i18n.language).description}</p>
-      </section>
-      <section className="plugin-section" data-plugin-section="about">
-        <h4>{t("plugins.details.about")}</h4>
-        <dl className="plugin-facts">
-          <dt>{t("plugins.id")}</dt>
-          <dd>
-            <code>{manifest.id}</code>
-          </dd>
+  const { summary, description } = pluginText(manifest, i18n.language);
+  const about = (
+    <dl className="plugin-facts">
+      <dt>{t("plugins.id")}</dt>
+      <dd>
+        <code>{manifest.id}</code>
+      </dd>
+      {card ? (
+        <>
+          <dt>{t("plugins.library.ecosystem")}</dt>
+          <dd>{manifest.ecosystem}</dd>
+        </>
+      ) : (
+        <>
           <dt>{t("plugins.version")}</dt>
           <dd>
             {manifest.version} <MaturityBadge version={manifest.version} />
           </dd>
-          {manifest.license && (
-            <>
-              <dt>{t("plugins.details.license")}</dt>
-              <dd>{manifest.license}</dd>
-            </>
-          )}
-          <dt>{t("plugins.platforms")}</dt>
-          <dd>{manifest.platforms.join(", ")}</dd>
-          <dt>{t("plugins.requires")}</dt>
-          <dd>{manifest.requires.length ? manifest.requires.join(", ") : t("plugins.nothing")}</dd>
-        </dl>
-        {facts}
-      </section>
-      {children}
-      {help && (
-        <section className="plugin-section" data-plugin-section="help">
-          <h4>{t("plugins.help")}</h4>
-          <div className="plugin-help">
-            <Markdown text={help} />
-          </div>
-        </section>
+        </>
       )}
-      <PluginContents manifest={manifest} composition={composition} />
+      {manifest.license && (
+        <>
+          <dt>{t("plugins.details.license")}</dt>
+          <dd>{manifest.license}</dd>
+        </>
+      )}
+      <dt>{t("plugins.platforms")}</dt>
+      <dd>{manifest.platforms.join(", ")}</dd>
+      {!card && manifest.requires.length > 0 && (
+        <>
+          <dt>{t("plugins.requires")}</dt>
+          <dd>{manifest.requires.join(", ")}</dd>
+        </>
+      )}
+      {facts}
+    </dl>
+  );
+  return (
+    <div className="plugin-details-body" data-plugin-contents>
+      {card ? (
+        <details className="plugin-section" data-plugin-section="about">
+          <summary>{t("plugins.details.about")}</summary>
+          {description.trim() !== summary.trim() && <p data-plugin-section="description">{description}</p>}
+          {about}
+        </details>
+      ) : (
+        <>
+          <section className="plugin-section" data-plugin-section="description">
+            <h4>{t("plugins.details.description")}</h4>
+            <p>{description}</p>
+          </section>
+          <section className="plugin-section" data-plugin-section="about">
+            <h4>{t("plugins.details.about")}</h4>
+            {about}
+          </section>
+        </>
+      )}
+      {children}
+      {help && <PluginHelp content={help} />}
+      <PluginContents manifest={manifest} composition={composition} card={card} />
+    </div>
+  );
+}
+
+export function PluginHelp({ content }: { content: string | ReactElement }) {
+  const { t } = useTranslation();
+  return (
+    <details className="plugin-section" data-plugin-section="help">
+      <summary>{t("plugins.help")}</summary>
+      <div className="plugin-help">{typeof content === "string" ? <Markdown text={content} /> : content}</div>
+    </details>
+  );
+}
+
+/** The exact program and rule changes that made a catalog update require confirmation. */
+export function PluginUpdateChanges({ changes }: { changes: NonNullable<PluginCatalogReview["changes"]> }) {
+  const { t } = useTranslation();
+  const risks = useRiskLabels();
+  const program = (value: PluginProgram | undefined) =>
+    value ? (
+      <>
+        <InstallSource program={value} />
+        {value.version.range && <> {t("plugins.range", { range: value.version.range })}</>}
+        <details>
+          <summary>{t("plugins.library.details")}</summary>
+          <pre className="plugin-sha">{JSON.stringify(value, null, 2)}</pre>
+        </details>
+      </>
+    ) : (
+      t("plugins.reviewAbsent")
+    );
+  const rule = (value: NonNullable<PluginCatalogReview["changes"]>["rules"][number]["before"]) =>
+    value ? (
+      <>
+        <span>{t("plugins.reviewRulePosition", { position: value.position })}</span>{" "}
+        <span className="risk-badge" data-risk={value.rule.risk}>
+          {risks[value.rule.risk]}
+        </span>{" "}
+        <code>{value.rule.match}</code>
+        {value.rule.note && <> {value.rule.note}</>}
+        {value.rule.timeout !== undefined && <> {t("plugins.timeout", { seconds: value.rule.timeout })}</>}
+      </>
+    ) : (
+      t("plugins.reviewAbsent")
+    );
+  return (
+    <div className="plugin-update-changes" data-plugin-update-changes>
+      {changes.programs.length > 0 && (
+        <details>
+          <summary>
+            {t("plugins.reviewProgramChanges")} ({changes.programs.length})
+          </summary>
+          <ul className="plugin-review-list">
+            {changes.programs.map(({ name, before, after }) => (
+              <li key={name}>
+                <strong>{name}</strong>
+                <dl className="plugin-facts">
+                  <dt>{t("plugins.reviewBefore")}</dt>
+                  <dd>{program(before)}</dd>
+                  <dt>{t("plugins.reviewAfter")}</dt>
+                  <dd>{program(after)}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      {changes.rules.length > 0 && (
+        <details>
+          <summary>
+            {t("plugins.reviewRuleChanges")} ({changes.rules.length})
+          </summary>
+          <ul className="plugin-review-list">
+            {changes.rules.map(({ before, after }) => (
+              <li key={`${before?.position ?? "_"}:${after?.position ?? "_"}`}>
+                <dl className="plugin-facts">
+                  <dt>{t("plugins.reviewBefore")}</dt>
+                  <dd>{rule(before)}</dd>
+                  <dt>{t("plugins.reviewAfter")}</dt>
+                  <dd>{rule(after)}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

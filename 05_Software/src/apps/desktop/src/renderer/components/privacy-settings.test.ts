@@ -12,12 +12,17 @@ import { Settings } from "./settings.js";
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 vi.mock("./providers.js", () => ({ Providers: () => null }));
 vi.mock("./updates.js", () => ({ UpdatesPanel: () => null }));
+vi.mock("../api/index.js", async () => {
+  const { createMockApi } = await import("../mocks/mockApi.js");
+  return { api: createMockApi().api };
+});
 HTMLDialogElement.prototype.showModal = function () {
   this.setAttribute("open", "");
 };
 HTMLDialogElement.prototype.close = function () {
   this.removeAttribute("open");
 };
+const settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
 it("offers the four masking switches and clean top Save/Cancel actions", async () => {
   await i18n.changeLanguage("en");
   const container = document.createElement("div");
@@ -32,7 +37,7 @@ it("offers the four masking switches and clean top Save/Cancel actions", async (
           { client },
           createElement(Settings, {
             section: "data",
-            snapshot: { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") },
+            snapshot: { settings },
             info: undefined,
             saving: false,
             error: undefined,
@@ -59,9 +64,23 @@ it.each(["en", "ro", "de", "fr"])(
     document.body.append(container);
     const root = createRoot(container),
       update = vi.fn();
+    const client = new QueryClient();
     const user = userEvent.setup();
     const render = (privacy: Parameters<typeof PrivacySettings>[0]["privacy"] = undefined, saving = false) =>
-      act(async () => root.render(createElement(PrivacySettings, { privacy, saving, update })));
+      act(async () =>
+        root.render(
+          createElement(
+            QueryClientProvider,
+            { client },
+            createElement(PrivacySettings, {
+              privacy,
+              notifications: settings.notifications,
+              saving,
+              update,
+            }),
+          ),
+        ),
+      );
     const input = (area: string) =>
       container.querySelector<HTMLInputElement>(`[data-mask-area="${area}"] input`) as HTMLInputElement;
     const click = async (selector: string) =>
@@ -112,6 +131,7 @@ it.each(["en", "ro", "de", "fr"])(
     } finally {
       await act(async () => root.unmount());
       container.remove();
+      client.clear();
     }
   },
 );

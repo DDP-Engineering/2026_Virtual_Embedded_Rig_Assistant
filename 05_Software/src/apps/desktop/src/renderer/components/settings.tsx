@@ -1,6 +1,5 @@
 import type { AppInfo, SettingsPatch, SettingsSnapshot } from "@vera/shared";
 import {
-  Bell,
   Globe,
   Info,
   Keyboard,
@@ -19,8 +18,6 @@ import { CommandSettings } from "./command-settings.js";
 import { DictationSettings } from "./dictation-settings.js";
 import { ErrorMessage } from "./error-message.js";
 import { ShortcutsSettings } from "./keyboard-shortcuts.js";
-import { NotificationSettings } from "./notification-settings.js";
-import { PermissionSettings } from "./permission-settings.js";
 import { PrivacySettings } from "./privacy-settings.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
@@ -33,8 +30,6 @@ export function useSettingsSections() {
     { id: "web", icon: Globe, label: t("settings.webAccess") },
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "commands", icon: Server, label: t("settings.commands") },
-    { id: "permissions", icon: Shield, label: t("settings.permissions") },
-    { id: "notifications", icon: Bell, label: t("settings.notifications") },
     { id: "dictation", icon: Mic, label: t("settings.dictation") },
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
     { id: "updates", icon: RefreshCw, label: t("settings.updates") },
@@ -94,7 +89,6 @@ export function Settings({
         />
       )}
       {section === "web" && <WebAccessPanel dirtyChanged={dirtyChanged} />}
-      {section === "permissions" && <PermissionSettings disabled={disabled} />}
       {section === "commands" && (
         <CommandSettings
           shell={snapshot.settings.shell}
@@ -106,6 +100,7 @@ export function Settings({
       {section === "data" && (
         <PrivacySettings
           privacy={snapshot.settings.privacy}
+          notifications={snapshot.settings.notifications}
           saving={saving}
           update={update}
           dirtyChanged={dirtyChanged}
@@ -115,14 +110,6 @@ export function Settings({
         <AppearanceSettings
           settings={snapshot.settings}
           disabled={disabled}
-          update={update}
-          dirtyChanged={dirtyChanged}
-        />
-      )}
-      {section === "notifications" && (
-        <NotificationSettings
-          preferences={snapshot.settings.notifications}
-          saving={saving}
           update={update}
           dirtyChanged={dirtyChanged}
         />

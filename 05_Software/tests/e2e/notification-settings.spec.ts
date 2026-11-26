@@ -6,13 +6,14 @@ test("opens notification preferences by keyboard and keeps the draft through a f
 }, async ({ page, rendererUrl }) => {
   await page.goto(rendererUrl);
   await page.locator('[data-i18n="nav.settings"]').click();
-  for (const section of ["commands", "permissions", "notifications"]) {
+  for (const section of ["commands", "dictation", "shortcuts", "updates", "data"]) {
     await page.getByRole("tab", { selected: true }).press("ArrowDown");
     await expect(page.locator(`[data-section="${section}"]`)).toBeFocused();
   }
-  const tab = page.getByRole("tab", { name: "Notifications", exact: true });
+  const tab = page.getByRole("tab", { name: "Data & privacy", exact: true });
   await expect(tab).toBeFocused();
-  const panel = page.getByRole("tabpanel", { name: "Notifications" });
+  const panel = page.getByRole("tabpanel", { name: "Data & privacy" });
+  const displayMask = panel.locator('[data-mask-area="display"] input');
   const completion = panel.getByRole("combobox", { name: "Turn completion" });
   const approvals = panel.getByRole("switch", { name: "Approval requests in background" });
   const questions = panel.getByRole("switch", { name: "Question notifications" });
@@ -23,11 +24,15 @@ test("opens notification preferences by keyboard and keeps the draft through a f
     if (await panel.evaluate((element) => document.activeElement === element)) break;
   }
   await expect(panel).toBeFocused();
-  await page.keyboard.press("Tab");
+  for (let step = 0; step < 10; step++) {
+    await page.keyboard.press("Tab");
+    if (await completion.evaluate((element) => document.activeElement === element)) break;
+  }
   await expect(completion).toBeFocused();
   await expect(completion).toHaveValue("background");
   await expect(approvals).toBeChecked();
   await expect(questions).toBeChecked();
+  await expect(displayMask).not.toBeChecked();
   await expect(save).toBeDisabled();
   await expect(cancel).toBeDisabled();
 
@@ -41,10 +46,12 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await expect(questions).toBeFocused();
   await questions.press("Space");
   await expect(questions).not.toBeChecked();
+  await displayMask.check();
   await cancel.click();
   await expect(completion).toHaveValue("background");
   await expect(approvals).toBeChecked();
   await expect(questions).toBeChecked();
+  await expect(displayMask).not.toBeChecked();
 
   await page.evaluate(async () => {
     const modulePath = "/api/index.ts";
@@ -58,18 +65,24 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await completion.selectOption("never");
   await approvals.uncheck();
   await questions.uncheck();
+  await displayMask.check();
   await save.click();
   await expect(panel.getByRole("alert")).toBeVisible();
   await expect(completion).toHaveValue("never");
   await expect(approvals).not.toBeChecked();
   await expect(questions).not.toBeChecked();
+  await expect(displayMask).toBeChecked();
   expect(
     await page.evaluate(async () => {
       const modulePath = "/api/index.ts";
       const { api } = await import(modulePath);
-      return (await api.getSettings()).settings.notifications;
+      const { notifications, privacy } = (await api.getSettings()).settings;
+      return { notifications, display: privacy?.mask?.display };
     }),
-  ).toEqual({ turnCompletion: "background", approvalRequests: true, questionRequests: true });
+  ).toEqual({
+    notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
+    display: false,
+  });
   await expect(save).toBeEnabled();
   await saveSettings(page);
   await expect(panel.getByRole("alert")).toHaveCount(0);
@@ -78,6 +91,7 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await expect(completion).toHaveValue("never");
   await expect(approvals).not.toBeChecked();
   await expect(questions).not.toBeChecked();
+  await expect(displayMask).toBeChecked();
 
   await completion.selectOption("always");
   const updates = page.locator('[data-section="updates"]');
@@ -142,8 +156,8 @@ test("localizes the notification controls and choices in all four interface lang
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
     await saveSettings(page);
-    await page.getByRole("tab", { name: title, exact: true }).click();
-    const panel = page.getByRole("tabpanel", { name: title });
+    await page.locator('[data-section="data"]').click();
+    const panel = page.getByRole("tabpanel").getByRole("region", { name: title, exact: true });
     await expect(panel.getByRole("combobox", { name: completion }).getByRole("option")).toHaveText([
       never,
       background,

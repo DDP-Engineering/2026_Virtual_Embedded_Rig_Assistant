@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import {
   mergeWorkbench,
   type PluginSummary,
+  pluginManifestSchema,
   veraError,
   type WorkbenchSnapshot,
   workbenchPatchSchema,
@@ -94,7 +95,9 @@ function invokeImplementation() {
 }
 const calls = (channel: string) => vi.mocked(api.invoke).mock.calls.filter(([name]) => name === channel);
 const toggle = (id = "echo-tools") =>
-  container.querySelector<HTMLInputElement>(`[data-workbench-plugin="${id}"] input`);
+  container.querySelector<HTMLInputElement>(`[data-workbench-plugin="${id}"] [data-workbench-plugin-toggle]`);
+const details = (id = "echo-tools") =>
+  `[data-workbench-plugin="${id}"] [data-action="workbench-plugin-details"]`;
 
 it("isolates private filters between workbenches and restores each session view", async () => {
   stub(snapshot(), manyPlugins());
@@ -215,10 +218,12 @@ it.each(["save", "cancel"])(
     const network = () =>
       container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_network"]');
     expect(network()?.checked).toBe(false);
-    await click('[data-workbench-plugin="electrical-network"] input');
-    await click('[data-workbench-plugin="electrical-network"] input');
+    await click('[data-workbench-plugin="electrical-network"] [data-workbench-plugin-toggle]');
+    await click('[data-workbench-plugin="electrical-network"] [data-workbench-plugin-toggle]');
     expect(network()?.checked).toBe(false);
+    await click(details("electrical-network"));
     await click('[data-tool-toggle="electrical_network"]');
+    await click("[data-shared-capabilities] summary");
     await click('[data-tool-toggle="electrical_model"]');
     expect(calls("workbench.config.update")).toHaveLength(0);
     expect(wb.config.tools.disabled).toEqual([
@@ -306,6 +311,46 @@ it("allows readonly users to search and paginate all installed packages without 
   expect(wb.config.plugins.enabled).toEqual(["tool-00"]);
 });
 
+it("keeps the agent tools and declared programs in collapsed plugin details", async () => {
+  await i18n.changeLanguage("en");
+  const manifest = pluginManifestSchema.parse({
+    format: 1,
+    id: "wireshark-dumpcap",
+    version: "0.1.0",
+    name: "Wireshark (Dumpcap)",
+    summary: "Capture traffic.",
+    description: "Capture traffic from a local interface.",
+    ecosystem: "wireshark",
+    platforms: ["windows-x64"],
+    programs: {
+      dumpcap: {
+        install: { find: { windows: ["%PATH%"] } },
+        version: { args: ["--version"], match: "Dumpcap (.+)" },
+      },
+    },
+  });
+  const wb = snapshot([manifest.id]);
+  wb.config.tools.disabled = ["run_program", "wireshark_dumpcap_start"];
+  stub(wb, [{ id: manifest.id, name: manifest.name, manifest, tier: "official", issues: [], enabled: true }]);
+  await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close: vi.fn() }));
+  await click('[data-project-section="plugins"]');
+  await vi.waitFor(() => expect(toggle(manifest.id)?.checked).toBe(true));
+  const card = container.querySelector(`[data-workbench-plugin="${manifest.id}"]`);
+  const agentTool = card?.querySelector<HTMLInputElement>('[data-tool-toggle="wireshark_dumpcap_start"]');
+  expect(agentTool?.closest("[hidden]")).not.toBeNull();
+  expect(card?.querySelector("[data-workbench-configuration]")?.closest("[hidden]")).not.toBeNull();
+  await click(details(manifest.id));
+  expect(container.querySelector(details(manifest.id))?.getAttribute("aria-expanded")).toBe("true");
+  expect(card?.querySelector("[data-plugin-programs] code")?.textContent).toBe("dumpcap");
+  expect(card?.textContent).toContain(i18n.t("pluginCapabilities.executionDisabled"));
+  expect(agentTool?.checked).toBe(false);
+  await click(`[data-workbench-plugin="${manifest.id}"] [data-workbench-plugin-toggle]`);
+  expect(toggle(manifest.id)?.checked).toBe(false);
+  expect(agentTool?.checked).toBe(false);
+  expect(calls("plugins.check")).toHaveLength(0);
+  expect(calls("workbench.config.update")).toHaveLength(0);
+});
+
 it("uses passive readiness until an explicit check and never provisions just by opening configuration", async () => {
   const wb = snapshot();
   stub(wb);
@@ -318,7 +363,7 @@ it("uses passive readiness until an explicit check and never provisions just by 
   await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close: vi.fn() }));
   await click('[data-project-section="plugins"]');
   await vi.waitFor(() => expect(toggle()).not.toBeNull());
-  await click("[data-workbench-configuration] summary");
+  await click(details());
   expect(calls("plugins.programs")).toHaveLength(0);
   expect(calls("plugins.check")).toHaveLength(0);
   expect(calls("plugins.provision")).toHaveLength(0);
@@ -382,7 +427,7 @@ it("replaces stale ready with unavailable after an explicit check fails", async 
   await mount(createElement(WorkbenchEditor, { workbench: snapshot(), saved: vi.fn(), close: vi.fn() }));
   await click('[data-project-section="plugins"]');
   await vi.waitFor(() => expect(toggle()).not.toBeNull());
-  await click("[data-workbench-configuration] summary");
+  await click(details());
   await click('[data-action="plugin-check"]');
   await vi.waitFor(() => expect(container.querySelector('[data-readiness="ready"]')).not.toBeNull());
   failing = true;
@@ -721,10 +766,8 @@ it("refreshes checked workbench status and ignores a late archive presentation",
     });
   }
   await mount(createElement(PrivacyWorkbench));
-  await vi.waitFor(() =>
-    expect(container.querySelector("[data-workbench-configuration] summary")).not.toBeNull(),
-  );
-  await click("[data-workbench-configuration] summary");
+  await vi.waitFor(() => expect(container.querySelector(details())).not.toBeNull());
+  await click(details());
   expect(calls("plugins.programs")).toHaveLength(0);
   await click('[data-action="plugin-check"]');
   await vi.waitFor(() => expect(container.textContent).toContain("private-status"));

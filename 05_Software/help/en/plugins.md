@@ -1,13 +1,13 @@
 # Plugins
 
-Plugins let the agent drive the tools of your bench: flashing and debugging tools, serial monitors, bus analyzers, simulators, instruments. A plugin declares its programs, how VERA installs them, the risk level of each command, and skills that teach the agent to use them. Each installed plugin has its own help page in Help and on its card.
+Plugins let the agent drive the tools of your bench: flashing and debugging tools, serial monitors, bus analyzers, simulators, instruments. A plugin declares its programs, how VERA installs them, the risk level of each command, and skills that teach the agent to use them. Open **Details → Help** on the plugin card to read its instructions.
 
 ## Find and install a plugin
 
 1. On the **Plugins** page, select **Browse available plugins**. Filter by **Ecosystem**, **Activity**, **Provenance**, **Maturity**, **Requirements** or state, or search. **Requirements** keeps only plugins that have every requirement you check: **Skills only** (no programs), **Python script**, **Program VERA downloads**, **Program you install** and **Settings**.
 2. Open **Details** to see what the plugin needs, including required plugins and programs.
 3. Select **Install**, or **Install with dependencies** to also install the required plugins and the programs VERA can install itself.
-4. Check the review and confirm.
+4. If a confirmation opens, check the source, dependencies and risks, then confirm.
 
 A card warns when the plugin is not available for your platform or can write to a device or change it permanently. Versions below 1.0.0 are marked **Pre-release**. Each card also shows the plugin's requirements with the same labels.
 
@@ -17,7 +17,7 @@ A card warns when the plugin is not available for your platform or can write to 
 
 ## Review and trust
 
-Before installing, VERA shows a review: what the plugin contains (**Programs** and where they come from, **Skills**, **Profiles and data files**, **Documents**) and the **Operations**, the plugin's command rules grouped by risk level. Updates that change programs, sources or rules are reviewed again. If the plugin's files change after installation, VERA stops using it until you install it again.
+An official package that contains only skills and Markdown documentation and declares no dependencies or settings installs directly from the verified catalog. Other installations that require review show a confirmation over the library. Open **Details** for the full package and SHA-256. Changes to programs or command rules appear as before and after values on updates. VERA verifies the package in either flow. If the installed files change, VERA stops using the plugin until it is installed again.
 
 Plugins carry a tier:
 
@@ -38,7 +38,7 @@ Installing does not enable a plugin. Open **Edit workbench** → **Plugins**, ch
 
 **Tools** contains general VERA capabilities, including `run_program`, `run_command`, `program_output`, `program_stop` and terminal access. Plugin programs, including Git's dedicated integration, are listed with their plugin under **Plugins**. Their execution still requires the generic tool allowance and the existing command risk and session permission rules.
 
-**Allowed tools** on a plugin card controls its specialized capabilities, independently of the plugin checkbox. Electrical calculations and the industrial catalog require their named provider. `apply_candidate` requires official `kicad-layout`; `parts_search` requires official `parts-search`, web access and an enabled supplier set up in the plugin's Configuration on the Plugins page. The dependency state distinguishes a disabled, missing, unloadable or non-official package from an enabled dependency; enabled does not promise that external programs, supplier credentials or session permissions are ready. Use **Configure** to check program dependencies.
+On a plugin row, open **Details** to read its description and adjust its **Agent tools**. These checkboxes control individual tools independently of the plugin checkbox. `apply_candidate` requires official `kicad-layout`. `parts_search` requires official `parts-search`, Web access and a supplier you enable in the plugin’s **Configuration** on the Plugins page. **Programs and dependencies** shows the program list and lets you run **Check dependencies**.
 
 **Shared electrical / automation tools** appears when an electrical or automation package is installed. Enable a loadable provider to use those tools. Plugin-specific controls appear on installed provider cards. Workbench allowances persist after removal. If the workbench has no installed plugins, select **Browse available plugins** to open the global catalog.
 
@@ -46,12 +46,12 @@ Allowing a tool never installs or enables a plugin. Enabling a plugin never remo
 
 ## Dependencies
 
-The **Status** block of an installed plugin checks two things: **Dependencies** and **Configuration**. It shows **Ready** only when both are ready.
+The **Status** block of an installed plugin shows the checks that apply. It shows **Ready** when all applicable checks are ready.
 
-- **Check dependencies** looks for the programs; **Check all dependencies** does this for every plugin.
+- **Check dependencies** appears on cards that declare programs. **Check all dependencies** checks all installed plugins.
 - **Install dependencies** installs what VERA can install itself (Python packages, scripts and pinned downloads) into its own program folder. Each download is checked against its SHA-256.
 - Vendor programs such as KiCad, LTspice or STM32CubeProgrammer are **Managed externally**: install them with **Installation guide**, then check again.
-- **Re-install** downloads VERA's program copies again and replaces them.
+- **More actions → Re-install** downloads VERA’s program copies again and replaces them.
 - **Install from dependency archive…** installs a program from an archive you downloaded yourself; VERA checks it against the plugin's SHA-256.
 
 ## Parameters

@@ -23,6 +23,10 @@ list and load re-reads the files and recomputes the hash; nothing is cached. Ena
 in each workbench's `.vera/workbench.yaml`, written by `WorkbenchService.togglePlugin`. Desktop main
 composes one global store at `<userData>/plugins` and workbench-bound views.
 
+A clean review marks the package eligible for catalog skills-only admission when it contains a valid skill,
+all skill metadata is valid, and it declares no programs, rules, required plugins or settings. Files consist of
+the manifest and UTF-8 Markdown in recognized localized help pages, declared local documents or valid skill folders.
+
 A bound `PluginStore` discovers immediate `.vera/plugins/<id>` packages, including invalid entries,
 and combines them with global installations. Scoped ids reserve the name; a global/scoped collision
 lists `collision` and blocks both. Case aliases reserve names on Windows. Source paths refuse

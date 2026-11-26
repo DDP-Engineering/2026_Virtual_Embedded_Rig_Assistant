@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import userEvent from "@testing-library/user-event";
-import { type PluginSummary, pluginManifestSchema } from "@vera/shared";
+import type { PluginSummary } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -43,12 +43,11 @@ it.each(["en", "ro", "de", "fr"])(
       });
     await mount(render(plugin({ id: "kicad-layout", tier: "official" }), false));
     const state = () => container.querySelector("[data-capability-dependency]")?.textContent;
-    expect(state()).toContain("kicad-layout");
-    expect(state()).toContain(i18n.t("pluginCapabilities.disabled"));
+    expect(state()).toBe(i18n.t("pluginCapabilities.disabled"));
     const checkbox = () => container.querySelector<HTMLInputElement>("[data-tool-toggle]")!;
     expect(checkbox().checked).toBe(false);
     await act(async () => root.render(render(plugin({ id: "kicad-layout", tier: "official" }), true)));
-    expect(state()).toContain(i18n.t("pluginCapabilities.enabled"));
+    expect(state()).toBeUndefined();
     expect(checkbox().checked).toBe(false);
     expect(toggleTool).not.toHaveBeenCalled();
     checkbox().focus();
@@ -93,37 +92,4 @@ it("offers shared controls once a compatible package is installed and explains a
     root.render(render(["electrical-network"], [plugin({ issues: [{ code: "unavailable" }] })])),
   );
   expect(status()).toContain(i18n.t("pluginCapabilities.noProvider"));
-});
-
-it("keeps Git programs with their plugin while respecting generic execution restrictions", async () => {
-  await i18n.changeLanguage("en");
-  await mount(
-    createElement(WorkbenchPluginCapabilities, {
-      plugin: plugin({
-        id: "git",
-        manifest: pluginManifestSchema.parse({
-          format: 1,
-          id: "git",
-          version: "0.1.0",
-          name: "Git",
-          summary: "Version control.",
-          description: "Version control.",
-          ecosystem: "general",
-          platforms: ["linux-x64"],
-          programs: {
-            git: {
-              install: { find: { linux: ["$PATH"] } },
-              version: { args: ["--version"], match: "git version (.+)" },
-            },
-          },
-        }),
-      }),
-      selected: true,
-      disabledTools: ["run_program"],
-      toggleTool: vi.fn(),
-      locked: false,
-    }),
-  );
-  expect(container.querySelector("[data-plugin-programs] code")?.textContent).toBe("git");
-  expect(container.textContent).toContain(i18n.t("pluginCapabilities.executionDisabled"));
 });

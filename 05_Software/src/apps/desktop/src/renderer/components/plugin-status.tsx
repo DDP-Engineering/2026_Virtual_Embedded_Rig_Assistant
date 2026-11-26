@@ -67,9 +67,9 @@ export function PluginStatus({
   configure,
   readiness,
 }: {
-  dependencies: StatusCheck;
+  dependencies?: StatusCheck | undefined;
   /** The program summary: checking, n/m ready, no programs or not checked. */
-  programs: string;
+  programs: string | undefined;
   configuration: StatusCheck;
   /** The manifest declares parameters: Configure opens them. */
   declared: boolean;
@@ -89,15 +89,17 @@ export function PluginStatus({
     external: t("plugins.status.state.external"),
     unchecked: t("plugins.status.state.unchecked"),
   };
-  const open = { dependencies: dependencies.state, configuration: configuration.state };
-  const pending = (Object.keys(open) as (keyof typeof open)[]).filter((key) => open[key] !== "ready");
-  const names = dependencies.names.join(", ");
+  const pending = [
+    ...(dependencies && dependencies.state !== "ready" ? [label.dependencies] : []),
+    ...(declared && configuration.state !== "ready" ? [label.configuration] : []),
+  ];
+  const names = dependencies?.names.join(", ") ?? "";
   const dependencyText =
-    dependencies.state === "missing"
+    dependencies?.state === "missing"
       ? t("plugins.status.missingNames", { names })
-      : dependencies.state === "external"
+      : dependencies?.state === "external"
         ? t("plugins.status.externalNames", { names })
-        : dependencies.state === "unavailable"
+        : dependencies?.state === "unavailable"
           ? names
             ? t("plugins.status.unavailableNames", { names })
             : t("plugins.library.readinessUnavailable")
@@ -111,17 +113,15 @@ export function PluginStatus({
           ? configuration.names.length
             ? t("plugins.configuration.noWorkbench")
             : t("plugins.checking")
-          : declared
-            ? t("plugins.status.configured")
-            : t("plugins.status.nothingToConfigure");
-  const row = (key: keyof typeof open, text: string, action: ReactNode) => (
-    <li data-status-check={key} data-state={open[key]}>
+          : undefined;
+  const row = (key: keyof typeof label, check: StatusCheck, text: string | undefined, action?: ReactNode) => (
+    <li data-status-check={key} data-state={check.state}>
       <strong>{label[key]}</strong>
-      <span className="risk-badge" data-state={open[key]}>
-        {state[open[key]]}
+      <span className="risk-badge" data-state={check.state}>
+        {state[check.state]}
       </span>
-      <span className="muted">{text}</span>
-      <span className="workbench-actions">{action}</span>
+      {text && <span className="muted">{text}</span>}
+      {action && <span className="workbench-actions">{action}</span>}
     </li>
   );
   return (
@@ -133,20 +133,20 @@ export function PluginStatus({
     >
       <p role="status" data-status-summary>
         {pending.length
-          ? t("plugins.status.notReady", { checks: pending.map((key) => label[key]).join(", ") })
+          ? t("plugins.status.notReady", { checks: pending.join(", ") })
           : t("plugins.status.ready")}
       </p>
       <ul>
-        {row("dependencies", dependencyText, undefined)}
-        {row(
-          "configuration",
-          configurationText,
-          declared && (
+        {dependencies && row("dependencies", dependencies, dependencyText)}
+        {declared &&
+          row(
+            "configuration",
+            configuration,
+            configurationText,
             <button type="button" data-action="status-configure" onClick={configure}>
               {t("plugins.status.configure")}
-            </button>
-          ),
-        )}
+            </button>,
+          )}
       </ul>
     </section>
   );

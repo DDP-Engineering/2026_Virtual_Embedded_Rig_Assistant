@@ -301,7 +301,7 @@ it("checks all installed entries despite individual failures and updates passive
   await click('[data-plugin="plugin-00"] [data-action="plugin-expand"]');
   expect(calls("plugins.programs")).toHaveLength(0);
   expect(calls("plugins.check")).toHaveLength(0);
-  expect(host.textContent).toContain(i18n.t("plugins.notChecked"));
+  expect(host.textContent).toContain(i18n.t("plugins.status.state.unchecked"));
   await click('[data-action="plugin-check-all"]');
   await vi.waitFor(() => expect(calls("plugins.check")).toHaveLength(4));
   expect(host.textContent).toContain("plugin-01");
@@ -430,6 +430,8 @@ it("filters by every checked requirement, shows requirement badges and clears th
       (badge) => badge.dataset.pluginRequirement,
     ),
   ).toEqual(["skills", "settings"]);
+  expect($('[data-plugin="plugin-01"] [data-action="status-configure"]')).not.toBeNull();
+  expect($('[data-plugin="plugin-01"] [data-action="plugin-check"]')).toBeNull();
   await click('[data-library-requirement="settings"]');
   await click('[data-library-requirement="download"]');
   expect(ids()).toEqual(["plugin-07"]);
@@ -445,6 +447,8 @@ it("filters by every checked requirement, shows requirement badges and clears th
       (badge) => badge.textContent,
     ),
   ).toEqual(["Skills only"]);
+  expect(skillsOnly?.querySelector('[data-action="catalog-install"]')).not.toBeNull();
+  expect(skillsOnly?.querySelector('[data-action="catalog-install-all"]')).toBeNull();
 });
 
 // REQ-UX-05e0ed17

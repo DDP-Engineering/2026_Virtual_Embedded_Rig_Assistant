@@ -24,6 +24,7 @@ import {
   pluginIdSchema,
   pluginProgramNameSchema,
   pluginTierSchema,
+  SKILL_BYTES,
   type VeraError,
   validatePluginManifest,
   veraError,
@@ -32,6 +33,7 @@ import { unzipSync, zipSync } from "fflate";
 import { LineCounter, parseDocument } from "yaml";
 import { z } from "zod";
 import { parseSkill } from "../skills/catalog.js";
+import { validUtf8 } from "../tools/binary.js";
 
 /** install.json format 1, written next to the package files of an installed plugin. */
 export const pluginRecordSchema = z.strictObject({
@@ -232,6 +234,28 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
 
 const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
 const HELP_FILE = /^help\/(en|ro|de|fr)\.md$/;
+
+function skillsAndDocumentationOnly(files: Files, manifest: PluginManifest, composition: PluginComposition) {
+  if (
+    !composition.skills.length ||
+    composition.skills.some((skill) => !skill.description) ||
+    Object.keys(manifest.programs).length ||
+    manifest.rules.length ||
+    manifest.requires.length ||
+    Object.keys(manifest.settings ?? {}).length
+  )
+    return false;
+  const skills = new Set(composition.skills.map(({ name }) => name));
+  const docs = new Set(manifest.docs);
+  return [...files].every(([path, bytes]) => {
+    if (path === MANIFEST) return true;
+    if (!path.endsWith(".md") || !validUtf8(bytes) || bytes.includes(0)) return false;
+    if (SKILL_FILE.test(path) && bytes.length > SKILL_BYTES) return false;
+    if (HELP_FILE.test(path)) return true;
+    const skill = /^skills\/([^/]+)\//.exec(path)?.[1];
+    return skill === undefined ? docs.has(path) : skills.has(skill);
+  });
+}
 /**
  * The skills (each skills/<name>/SKILL.md with its front-matter description, none when it does not parse) and the
  * data files (outside plugin.yaml, skills/, scripts/ and the package-relative documents) of a package, in path order.
@@ -727,6 +751,12 @@ export class PluginStore {
       issues,
       ...(manifest ? { manifest } : {}),
       ...(composition ? { composition } : {}),
+      ...(manifest &&
+      composition &&
+      !issues.length &&
+      skillsAndDocumentationOnly(pkg.files, manifest, composition)
+        ? { skillsAndDocumentationOnly: true as const }
+        : {}),
       ...(Object.keys(help).length ? { help } : {}),
       ...(installed
         ? { installed: installed.version === undefined ? {} : { version: installed.version } }

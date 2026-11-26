@@ -270,7 +270,6 @@
     "mqttCredentials": "MQTT credentials",
     "wokwiTokens": "Wokwi tokens",
     "commands": "Commands",
-    "permissions": "Permissions",
     "delegatedFullAccess": "Allow Full Access for delegated tasks",
     "delegatedFullAccessWarning": "When a session in Bypass delegates a task, the new session can read and change files and run commands with your account’s permissions, without asking. When this is off, the new session starts in Auto-edit. This applies to future delegated launches across all workbenches.",
     "enableDelegatedFullAccess": "Enable",
@@ -1194,10 +1193,8 @@
     "openError": "Could not open the link. Try again."
   },
   "pluginCapabilities": {
-    "allowedTools": "Allowed tools",
+    "allowedTools": "Agent tools",
     "allowanceHelp": "Allowing a tool does not install or enable its plugin. Session permissions still apply. Save or Cancel applies to tool allowances and plugin selection together.",
-    "provider": "Requires plugin: {{id}}",
-    "enabled": "Plugin dependency enabled",
     "disabled": "Available after activation",
     "unloadable": "Unavailable: plugin missing or cannot be loaded",
     "officialOnly": "Unavailable: requires the official plugin",
@@ -1206,14 +1203,14 @@
     "ecosystemDependency": "Requires an enabled, loadable plugin in the electrical or automation ecosystem.",
     "activeProviders": "Enabled providers: {{providers}}",
     "noProvider": "Unavailable: no enabled, loadable electrical or automation plugin",
-    "programs": "Plugin programs",
+    "programs": "Programs and dependencies",
     "programHelp": "These programs belong to this plugin, including Git integration. Generic execution and monitoring allowances stay in Tools; command risk rules and session permissions still apply.",
     "executionDisabled": "Program execution disabled in Tools",
     "executionAllowed": "Requires run_program allowance and session approval rules"
   },
   "workbenchTools": {
     "ask_user": "Ask a clarification with choices and an optional recommended answer.",
-    "read": "Read text files or selected line ranges.",
+    "read": "Read text files and saved artifacts from the current session.",
     "view_image": "View a workbench image with a model that accepts images.",
     "list": "List files and subfolders in a directory.",
     "glob": "Find files by name or path patterns, such as **/*.cpp.",
@@ -1442,7 +1439,13 @@
     "uninstall": "Uninstall",
     "uninstallConfirm": "Uninstall {{name}}? Workbenches that enable it can no longer run its programs.",
     "reviewTitle": "Review {{name}}",
-    "reviewIntro": "Check what this plugin runs and how each command is rated before you install it.",
+    "reviewBefore": "Before",
+    "reviewInstallScope": "Installs to your VERA profile. Each workbench controls whether the plugin is enabled.",
+    "reviewRulePosition": "Position {{position}}",
+    "reviewAfter": "After",
+    "reviewAbsent": "None",
+    "reviewProgramChanges": "Program changes",
+    "reviewRuleChanges": "Command rule changes",
     "reviewIssues": "This package has errors and cannot be installed:",
     "replaces": "Installing replaces the installed version {{version}}.",
     "install": "Install",
@@ -1451,7 +1454,6 @@
     "version": "Version",
     "platforms": "Platforms",
     "requires": "Requires",
-    "nothing": "None",
     "maturity": {
       "preRelease": "Pre-release"
     },
@@ -1535,7 +1537,7 @@
       "update": "Update to {{version}}",
       "updateAvailable": "Update available: {{version}}",
       "reviewFrom": "From the catalog: {{tier}}, version {{version}}.",
-      "reviewChanges": "This update changes programs, install sources or rules; review them before installing.",
+      "reviewComparisonUnavailable": "VERA could not compare this package with the installed copy. Review it before replacing the plugin.",
       "installWithDependencies": "Install with dependencies"
     },
     "catalogError": {
@@ -1570,7 +1572,6 @@
     "moreActions": "More actions",
     "lastChecked": "Last checked: {{time}}",
     "managementActions": "Plugin management actions",
-    "description": "Description",
     "library": {
       "installed": "Installed",
       "search": "Search plugins",
@@ -1625,7 +1626,6 @@
         "design": "Design"
       }
     },
-    "configure": "Configure dependencies",
     "enabledSelection": "Enabled",
     "selectedCount": "Selected plugins: {{count}}",
     "reinstall": "Re-install",
@@ -1677,8 +1677,6 @@
       "missingNames": "Missing: {{names}}",
       "externalNames": "Install from the vendor: {{names}}",
       "unavailableNames": "Unavailable: {{names}}",
-      "configured": "Configured",
-      "nothingToConfigure": "Nothing to configure",
       "configurationFailed": "The configuration could not be checked.",
       "configure": "Configure",
       "state": {

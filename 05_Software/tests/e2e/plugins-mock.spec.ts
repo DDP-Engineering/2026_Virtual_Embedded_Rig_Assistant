@@ -149,7 +149,12 @@ test("installs through the review screen, enables the plugin and stops a run, wi
         await page.locator('[data-project-section="plugins"]').click();
         await expect(page.locator("[data-project-save]")).toBeDisabled();
         await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).toBeChecked();
-        await page.locator("[data-workbench-configuration] summary").click();
+        const pluginDetails = page.locator(
+          '[data-workbench-plugin="echo-tools"] [data-action="workbench-plugin-details"]',
+        );
+        await expect(page.locator("[data-workbench-configuration]")).toBeHidden();
+        await pluginDetails.press("Enter");
+        await expect(page.locator("[data-workbench-configuration]")).toBeVisible();
         expect(await overflow(page), `workbench plugins ${language}/${theme}/${scale}`).toEqual({
           page: false,
           elements: [],

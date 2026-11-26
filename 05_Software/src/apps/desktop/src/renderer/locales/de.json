@@ -270,7 +270,6 @@
     "mqttCredentials": "MQTT-Zugangsdaten",
     "wokwiTokens": "Wokwi-Tokens",
     "commands": "Befehle",
-    "permissions": "Berechtigungen",
     "delegatedFullAccess": "Vollzugriff für delegierte Aufgaben erlauben",
     "delegatedFullAccessWarning": "Wenn eine Sitzung im Bypass-Modus eine Aufgabe delegiert, kann die neue Sitzung mit deinen Kontoberechtigungen ohne Nachfrage Dateien lesen und ändern sowie Befehle ausführen. Ist die Option aus, startet die neue Sitzung in Automatisch bearbeiten. Das gilt für künftige delegierte Starts in allen Workbenches.",
     "enableDelegatedFullAccess": "Aktivieren",
@@ -1194,10 +1193,8 @@
     "openError": "Der Link konnte nicht geöffnet werden. Erneut versuchen."
   },
   "pluginCapabilities": {
-    "allowedTools": "Erlaubte Werkzeuge",
+    "allowedTools": "Werkzeuge für den Agenten",
     "allowanceHelp": "Ein erlaubtes Werkzeug installiert oder aktiviert kein Plugin. Sitzungsberechtigungen gelten weiterhin. Speichern oder Abbrechen gilt gemeinsam für Werkzeugfreigaben und Plugin-Auswahl.",
-    "provider": "Benötigtes Plugin: {{id}}",
-    "enabled": "Benötigtes Plugin aktiviert",
     "disabled": "Nach Aktivierung verfügbar",
     "unloadable": "Nicht verfügbar: Plugin fehlt oder kann nicht geladen werden",
     "officialOnly": "Nicht verfügbar: offizielles Plugin erforderlich",
@@ -1206,14 +1203,14 @@
     "ecosystemDependency": "Benötigt ein aktiviertes, ladbares Plugin des Elektro- oder Automatisierungsökosystems.",
     "activeProviders": "Aktivierte bereitstellende Plugins: {{providers}}",
     "noProvider": "Nicht verfügbar: kein aktiviertes, ladbares Elektro- oder Automatisierungsplugin",
-    "programs": "Plugin-Programme",
+    "programs": "Programme und Abhängigkeiten",
     "programHelp": "Diese Programme gehören zum Plugin, einschließlich der Git-Integration. Allgemeine Ausführungs- und Überwachungsfreigaben bleiben unter Werkzeuge; Risikoregeln und Sitzungsberechtigungen gelten weiterhin.",
     "executionDisabled": "Programmausführung unter Werkzeuge deaktiviert",
     "executionAllowed": "Benötigt run_program-Freigabe und die Genehmigungsregeln der Sitzung"
   },
   "workbenchTools": {
     "ask_user": "Stellt eine Rückfrage mit Auswahl und optionaler Empfehlung.",
-    "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
+    "read": "Textdateien und gespeicherte Artefakte der aktuellen Sitzung lesen.",
     "view_image": "Ein Workbench-Bild mit einem Modell betrachten, das Bilder akzeptiert.",
     "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",
     "glob": "Dateien anhand von Namens- oder Pfadmustern wie **/*.cpp finden.",
@@ -1442,7 +1439,13 @@
     "uninstall": "Deinstallieren",
     "uninstallConfirm": "{{name}} deinstallieren? Workbenches, die es aktivieren, können seine Programme nicht mehr ausführen.",
     "reviewTitle": "{{name}} prüfen",
-    "reviewIntro": "Prüfen Sie vor der Installation, was dieses Plugin ausführt und wie jeder Befehl eingestuft ist.",
+    "reviewBefore": "Vorher",
+    "reviewInstallScope": "Die Installation erfolgt in Ihrem VERA-Profil. In jeder Werkbank können Sie das Plugin separat aktivieren.",
+    "reviewRulePosition": "Position {{position}}",
+    "reviewAfter": "Nachher",
+    "reviewAbsent": "Keine",
+    "reviewProgramChanges": "Programmänderungen",
+    "reviewRuleChanges": "Änderungen an Befehlsregeln",
     "reviewIssues": "Dieses Paket hat Fehler und kann nicht installiert werden:",
     "replaces": "Die Installation ersetzt die installierte Version {{version}}.",
     "install": "Installieren",
@@ -1451,7 +1454,6 @@
     "version": "Version",
     "platforms": "Plattformen",
     "requires": "Benötigt",
-    "nothing": "Keine",
     "maturity": {
       "preRelease": "Vorabversion"
     },
@@ -1535,7 +1537,7 @@
       "update": "Auf {{version}} aktualisieren",
       "updateAvailable": "Update verfügbar: {{version}}",
       "reviewFrom": "Aus dem Katalog: {{tier}}, Version {{version}}.",
-      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation.",
+      "reviewComparisonUnavailable": "VERA konnte dieses Paket nicht mit der installierten Kopie vergleichen. Prüfen Sie das Paket vor dem Ersetzen des Plugins.",
       "installWithDependencies": "Mit Abhängigkeiten installieren"
     },
     "catalogError": {
@@ -1570,7 +1572,6 @@
     "moreActions": "Weitere Aktionen",
     "lastChecked": "Zuletzt geprüft: {{time}}",
     "managementActions": "Aktionen zur Pluginverwaltung",
-    "description": "Beschreibung",
     "library": {
       "installed": "Installiert",
       "search": "Plugins suchen",
@@ -1625,7 +1626,6 @@
         "design": "Entwurf"
       }
     },
-    "configure": "Abhängigkeiten konfigurieren",
     "enabledSelection": "Aktiviert",
     "selectedCount": "Ausgewählte Plugins: {{count}}",
     "reinstall": "Neu installieren",
@@ -1677,8 +1677,6 @@
       "missingNames": "Fehlt: {{names}}",
       "externalNames": "Beim Hersteller installieren: {{names}}",
       "unavailableNames": "Nicht verfügbar: {{names}}",
-      "configured": "Konfiguriert",
-      "nothingToConfigure": "Nichts zu konfigurieren",
       "configurationFailed": "Die Konfiguration konnte nicht geprüft werden.",
       "configure": "Konfigurieren",
       "state": {

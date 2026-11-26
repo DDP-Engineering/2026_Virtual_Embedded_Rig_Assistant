@@ -1,8 +1,18 @@
 // REQ-UX-4bea0001 REQ-UX-9a0489f1
 
+import { useQuery } from "@tanstack/react-query";
 import { type SessionSummary, visibleParent } from "@vera/shared";
-import { ChevronRight, CircleAlert, Ellipsis } from "lucide-react";
-import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronRight, CircleAlert, Ellipsis, Search } from "lucide-react";
+import {
+  Fragment,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSettingsSnapshot } from "../../hooks/use-preferences.js";
@@ -66,7 +76,7 @@ const urgency = ["awaiting_question", "awaiting_approval", "error", "running"] a
 
 export function SessionList({
   workbenchId,
-  sessions,
+  sessions: allSessions,
   active,
   select,
   openLinked,
@@ -77,10 +87,6 @@ export function SessionList({
   move,
   moveDisabled = false,
   disabled,
-  search = "",
-  searchChanged,
-  searching = false,
-  searchError,
 }: {
   /** Keeps the collapsed parents of this workbench across restarts. */
   workbenchId?: string | undefined;
@@ -98,12 +104,29 @@ export function SessionList({
   /** The order cannot be saved, for example while the user settings are read-only. */
   moveDisabled?: boolean;
   disabled: boolean;
-  search?: string;
-  searchChanged?: (query: string) => void;
-  searching?: boolean;
-  searchError?: unknown;
 }) {
   const { t, i18n } = useTranslation();
+  const searchId = useId();
+  const searchButton = useRef<HTMLButtonElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const sessionQuery = search.trim();
+  const filtering = searchOpen && !!workbenchId && !!sessionQuery;
+  const found = useQuery({
+    queryKey: ["session.search", workbenchId, sessionQuery],
+    queryFn: () => api.invoke("session.search", { query: sessionQuery, workbenchId }),
+    enabled: filtering,
+  });
+  const sessions = filtering ? (found.data ?? []) : allSessions;
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearch("");
+    searchButton.current?.focus();
+  }
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language, {
@@ -192,7 +215,7 @@ export function SessionList({
     setCollapsed(next);
     if (!workbenchId) return;
     // A full list drops the ids of deleted sessions; search results are partial and keep them.
-    const kept = search.trim() ? [...next] : [...next].filter((id) => sessions.some((s) => s.id === id));
+    const kept = filtering ? [...next] : [...next].filter((id) => sessions.some((s) => s.id === id));
     try {
       localStorage.setItem(treeKey(workbenchId), JSON.stringify(kept));
     } catch {}
@@ -281,7 +304,7 @@ export function SessionList({
     const date = dateFormatter.format(new Date(s.updatedAt));
     const sessionStatus = rowStatus(s);
     // Search results and archived sessions keep their order.
-    const movable = !!move && !s.archived && !search.trim();
+    const movable = !!move && !s.archived && !filtering;
     const siblings = movable ? siblingsOf(s) : [];
     const index = siblings.indexOf(s);
     const attention = !open
@@ -524,25 +547,48 @@ export function SessionList({
   };
   return (
     <section ref={section} className="session-list" aria-label={t("chat.sessions")}>
-      <button ref={newButton} type="button" data-action="new-session" disabled={disabled} onClick={create}>
-        {t("chat.new")}
-      </button>
-      {searchChanged && (
-        <label>
-          {t("chat.searchSessions")}
-          <input
-            type="search"
-            value={search}
-            maxLength={1000}
-            onChange={(e) => searchChanged(e.target.value)}
-          />
-        </label>
+      <div className="session-list-toolbar">
+        <button ref={newButton} type="button" data-action="new-session" disabled={disabled} onClick={create}>
+          {t("chat.new")}
+        </button>
+        {workbenchId && (
+          <button
+            ref={searchButton}
+            type="button"
+            className="session-search-toggle"
+            aria-label={t("chat.searchSessions")}
+            title={t("chat.searchSessions")}
+            aria-expanded={searchOpen}
+            aria-controls={searchId}
+            onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+          >
+            <Search aria-hidden="true" />
+          </button>
+        )}
+      </div>
+      {workbenchId && (
+        <input
+          ref={searchInput}
+          id={searchId}
+          className="session-search-input"
+          type="search"
+          hidden={!searchOpen}
+          aria-label={t("chat.searchSessions")}
+          placeholder={t("chat.searchSessions")}
+          value={search}
+          maxLength={1000}
+          onChange={(event) => setSearch(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            event.stopPropagation();
+            closeSearch();
+          }}
+        />
       )}
-      {searching && <p role="status">{t("home.loading")}</p>}
-      {searchError != null && <ErrorMessage error={searchError} />}
-      {!!search.trim() && !searching && searchError == null && sessions.length === 0 && (
-        <p role="status">{t("chat.noSessions")}</p>
-      )}
+      {filtering && found.isPending && <p role="status">{t("home.loading")}</p>}
+      {filtering && found.isError && <ErrorMessage error={found.error} />}
+      {filtering && found.isSuccess && sessions.length === 0 && <p role="status">{t("chat.noSessions")}</p>}
       {listedPage.rows.map((s) => renderBranch(s, listedTree))}
       <Pager {...listedPage.pager} />
       {archivedSessions.length > 0 && (

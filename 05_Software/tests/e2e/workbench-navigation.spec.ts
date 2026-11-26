@@ -116,13 +116,35 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   await revised.locator('[data-action="new-session"]').click();
   await expect(page.locator(".session-workspace")).toBeVisible();
   const firstSession = await revised.locator("[data-session]").first().getAttribute("data-session");
+  const searchToggle = revised.getByRole("button", { name: "Search sessions" });
+  const searchField = revised.getByRole("searchbox", { name: "Search sessions" });
+  await expect(searchToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(searchField).toBeHidden();
+  await searchToggle.press("Enter");
+  await expect(searchToggle).toHaveAttribute("aria-expanded", "true");
+  await expect(searchField).toBeFocused();
+  await searchField.fill("no session has this title");
+  await expect(revised.getByText("No matching sessions", { exact: true })).toBeVisible();
+  await searchField.press("Escape");
+  await expect(searchField).toBeHidden();
+  await expect(searchToggle).toBeFocused();
+  await expect(revised.locator(`[data-session="${firstSession}"]`)).toBeVisible();
+  await searchToggle.click();
+  await expect(searchField).toHaveValue("");
+  await searchField.fill("no session has this title");
+  await expect(revised.getByText("No matching sessions", { exact: true })).toBeVisible();
   const other = page.locator("[data-workbench-entry]").filter({ hasText: "VERA-DEMO-01" });
   await other.locator(".workbench-group-name").click();
+  await expect(other.getByRole("button", { name: "Search sessions" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
   await other.locator('[data-action="new-session"]').click();
   const otherSession = await other.locator("[data-session]").first().getAttribute("data-session");
   expect(otherSession).not.toBe(firstSession);
   await revised.locator(".workbench-group-name").click();
   await expect(page.locator('[data-workbench="active"]')).toBeVisible();
+  await expect(searchToggle).toHaveAttribute("aria-expanded", "false");
   await expect(revised.locator(`[data-session="${firstSession}"]`)).toBeVisible();
   await expect(page.locator("[data-overview-session] time").first()).toHaveAttribute("datetime", /T/);
   const count = await page.locator("[data-overview-session]").count();

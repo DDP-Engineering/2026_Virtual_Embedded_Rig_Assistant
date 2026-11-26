@@ -446,7 +446,7 @@ test("native desktop authorizes two sequential Full Access children, reuses one 
     const storedPolicy = join(root, "profile", "delegated-full-access.json");
     const openLaunchSettings = async () => {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator("#settings-tab-permissions").click();
+      await page.locator("#settings-tab-data").click();
     };
     const returnToChat = async (sessionId: string) => {
       await page.locator('[data-action="leave-settings"]').click();

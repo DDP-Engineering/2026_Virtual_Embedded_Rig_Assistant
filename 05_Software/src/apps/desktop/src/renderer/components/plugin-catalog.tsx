@@ -212,7 +212,12 @@ export function CatalogItem({
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
-  const dependencies = <CatalogDependencies entry={plugin} platform={platform} installed={installed} />;
+  const hasDependencies = plugin.requires.length > 0 || plugin.dependencies.length > 0;
+  const dependencies = hasDependencies && (
+    <section className="plugin-section" data-plugin-section="dependencies">
+      <CatalogDependencies entry={plugin} platform={platform} installed={installed} />
+    </section>
+  );
   const unsupported = platform !== undefined && !plugin.platforms.includes(platform);
   const risky = plugin.risk === "device-write" || plugin.risk === "irreversible";
   return (
@@ -241,14 +246,16 @@ export function CatalogItem({
               >
                 {t("plugins.catalog.installAction")}
               </button>
-              <button
-                type="button"
-                data-action="catalog-install-all"
-                disabled={busy}
-                onClick={() => install(plugin.id, true)}
-              >
-                {t("plugins.catalog.installWithDependencies")}
-              </button>
+              {hasDependencies && (
+                <button
+                  type="button"
+                  data-action="catalog-install-all"
+                  disabled={busy}
+                  onClick={() => install(plugin.id, true)}
+                >
+                  {t("plugins.catalog.installWithDependencies")}
+                </button>
+              )}
             </>
           )}
           {plugin.update && (
@@ -263,16 +270,6 @@ export function CatalogItem({
           )}
         </div>
       </div>
-      <p className="muted">
-        <code>{plugin.id}</code>
-        <span> · {plugin.ecosystem}</span>
-        {plugin.requires.length > 0 && (
-          <span>
-            {" "}
-            · {t("plugins.requires")}: {plugin.requires.join(", ")}
-          </span>
-        )}
-      </p>
       <p>{pluginText(plugin, i18n.language).summary}</p>
       {unsupported && (
         <p role="note" data-catalog-warning="platform">
@@ -307,19 +304,26 @@ export function CatalogItem({
             {preview.isError && <ErrorMessage error={preview.error} />}
             {preview.data?.manifest ? (
               <PluginDetails
+                card
                 manifest={preview.data.manifest}
                 composition={preview.data.composition}
                 help={reviewHelp(preview.data, i18n.language)}
                 facts={<PluginDiscoveryFacts entry={plugin} />}
               >
-                <section className="plugin-section" data-plugin-section="dependencies">
-                  {dependencies}
-                </section>
+                {dependencies}
               </PluginDetails>
             ) : (
               <>
                 {preview.isPending && <p className="muted">{t("plugins.details.loading")}</p>}
-                <PluginDiscoveryFacts entry={plugin} />
+                <dl className="plugin-facts">
+                  <dt>{t("plugins.id")}</dt>
+                  <dd>
+                    <code>{plugin.id}</code>
+                  </dd>
+                  <dt>{t("plugins.library.ecosystem")}</dt>
+                  <dd>{plugin.ecosystem}</dd>
+                  <PluginDiscoveryFacts entry={plugin} />
+                </dl>
                 {dependencies}
               </>
             )}
@@ -335,7 +339,7 @@ export function PluginDiscoveryFacts({ entry }: { entry?: CatalogPlugin | undefi
   const { t } = useTranslation();
   const activities = pluginActivityLabels(t);
   return (
-    <dl className="plugin-facts plugin-discovery">
+    <>
       <dt>{t("plugins.library.activity")}</dt>
       <dd>
         {entry?.activities.length
@@ -346,7 +350,7 @@ export function PluginDiscoveryFacts({ entry }: { entry?: CatalogPlugin | undefi
       <dd>{entry?.addedAt ?? t("plugins.library.dateUnavailable")}</dd>
       <dt>{t("plugins.library.updatedAt")}</dt>
       <dd>{entry?.updatedAt ?? t("plugins.library.dateUnavailable")}</dd>
-    </dl>
+    </>
   );
 }
 

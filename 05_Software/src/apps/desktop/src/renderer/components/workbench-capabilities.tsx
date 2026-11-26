@@ -9,7 +9,6 @@ import {
   pluginToolProviders,
 } from "@vera/shared";
 import { useTranslation } from "react-i18next";
-import { Pager, usePaged } from "./pager.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
 export interface CapabilityControls {
@@ -36,48 +35,24 @@ export function WorkbenchPluginCapabilities({
         ? t("pluginCapabilities.noProvider")
         : !selected
           ? t("pluginCapabilities.disabled")
-          : t("pluginCapabilities.enabled");
-  const programs = Object.keys(plugin.manifest?.programs ?? {});
-  const { rows, pager } = usePaged(programs);
+          : undefined;
+  if (names.length === 0) return null;
   return (
-    <>
-      {names.length > 0 && (
-        <fieldset className="workbench-capabilities" title={t("pluginCapabilities.allowanceHelp")}>
-          <legend>{t("pluginCapabilities.allowedTools")}</legend>
-          <p data-capability-dependency={plugin.id}>
-            {t("pluginCapabilities.provider", { id: plugin.id })} · {state}
-          </p>
-          {names.includes("parts_search") && (
-            <p className="muted">{t("pluginCapabilities.partsRequirements")}</p>
-          )}
-          <WorkbenchTools
-            names={names}
-            disabled={controls.disabledTools}
-            toggle={controls.toggleTool}
-            locked={controls.locked}
-          />
-        </fieldset>
+    <fieldset className="workbench-capabilities" title={t("pluginCapabilities.allowanceHelp")}>
+      <legend>{t("pluginCapabilities.allowedTools")}</legend>
+      {state && (
+        <p className="muted" data-capability-dependency={plugin.id}>
+          {state}
+        </p>
       )}
-      {programs.length > 0 && (
-        <details data-plugin-programs title={t("pluginCapabilities.programHelp")}>
-          <summary>{t("pluginCapabilities.programs")}</summary>
-          <p>
-            {state} ·{" "}
-            {controls.disabledTools.includes("run_program")
-              ? t("pluginCapabilities.executionDisabled")
-              : t("pluginCapabilities.executionAllowed")}
-          </p>
-          <ul>
-            {rows.map((name) => (
-              <li key={name}>
-                <code>{name}</code>
-              </li>
-            ))}
-          </ul>
-          <Pager {...pager} />
-        </details>
-      )}
-    </>
+      {names.includes("parts_search") && <p className="muted">{t("pluginCapabilities.partsRequirements")}</p>}
+      <WorkbenchTools
+        names={names}
+        disabled={controls.disabledTools}
+        toggle={controls.toggleTool}
+        locked={controls.locked}
+      />
+    </fieldset>
   );
 }
 
@@ -92,12 +67,12 @@ export function WorkbenchSharedCapabilities({
   const active = providers.filter((plugin) => enabled.includes(plugin.id) && !plugin.issues.length);
   if (!providers.length) return null;
   return (
-    <fieldset
+    <details
       className="workbench-capabilities"
       data-shared-capabilities
       title={t("pluginCapabilities.allowanceHelp")}
     >
-      <legend>{t("pluginCapabilities.shared")}</legend>
+      <summary>{t("pluginCapabilities.shared")}</summary>
       <p>{t("pluginCapabilities.ecosystemDependency")}</p>
       <p data-shared-dependency>
         {active.length
@@ -112,6 +87,6 @@ export function WorkbenchSharedCapabilities({
         toggle={controls.toggleTool}
         locked={controls.locked}
       />
-    </fieldset>
+    </details>
   );
 }

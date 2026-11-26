@@ -67,6 +67,62 @@ test("compact composer grows, caps, shrinks and keeps context on demand at deskt
   expect(errors).toEqual([]);
 });
 
+test("keeps composer controls in place when the provider rejects a reasoning change", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.setViewportSize({ width: 1024, height: 720 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Reasoning layout");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  const current = page.locator('[data-session][aria-current="page"]');
+  await expect(current).toBeVisible();
+  const sessionId = await current.getAttribute("data-session");
+  await page.evaluate(async (id) => {
+    const modulePath = "/api/index.ts";
+    const { api } = await import(modulePath);
+    const invoke = api.invoke.bind(api);
+    const details = { modelRef: "openai/layout-test", options: ["low", "high"], selected: null };
+    let failed = false;
+    api.invoke = async (channel: string, request: unknown) => {
+      if (channel === "session.reasoning.get") return details;
+      if (channel === "session.reasoning.set") {
+        if (!failed) {
+          failed = true;
+          throw { code: "PROVIDER", messageKey: "errors.PROVIDER" };
+        }
+        return { ...details, selected: (request as { reasoning: string }).reasoning };
+      }
+      return invoke(channel, request);
+    };
+    await api.invoke("session.model.set", { sessionId: id, modelRef: details.modelRef });
+  }, sessionId);
+
+  const model = page.locator("[data-model-picker]");
+  const reasoning = page.locator("[data-reasoning-picker]");
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  const message = page.getByRole("textbox", { name: "Message", exact: true });
+  const notice = page.getByRole("alert").filter({ hasText: "The provider could not complete the request." });
+  await expect(reasoning).toBeEnabled();
+  await message.fill("Keep this draft");
+  const controls = [model, reasoning, send];
+  const positions = () => Promise.all(controls.map((control) => control.boundingBox()));
+  const before = await positions();
+  await reasoning.selectOption("high");
+  await expect(notice).toBeVisible();
+  await expect(model).toBeEnabled();
+  await expect(reasoning).toBeEnabled();
+  expect(await positions()).toEqual(before);
+  const noticeBounds = await notice.boundingBox();
+  const messageBounds = await message.boundingBox();
+  expect(noticeBounds && messageBounds && noticeBounds.y + noticeBounds.height <= messageBounds.y).toBe(true);
+  await expect(message).toHaveValue("Keep this draft");
+  await reasoning.selectOption("high");
+  await expect(reasoning).toHaveValue("high");
+  await expect(notice).toBeHidden();
+});
+
 test("native session exposes live tools/context and durable sidebar archive without replacing history", async () => {
   test.setTimeout(60000);
   const root = await mkdtemp(join(tmpdir(), "vera-session-workspace-"));

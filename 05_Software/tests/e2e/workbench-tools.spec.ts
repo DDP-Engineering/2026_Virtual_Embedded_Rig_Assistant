@@ -108,8 +108,13 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="plugins"]').click();
     await expect(page.locator("[data-shared-capabilities]")).toBeVisible();
+    await expect(page.locator("[data-shared-dependency]")).toBeHidden();
+    await page.locator("[data-shared-capabilities] summary").click();
     await expect(page.locator("[data-shared-dependency]")).toContainText("Unavailable");
     await page.locator('[data-tool-toggle="electrical_model_change"]').uncheck();
+    await page
+      .locator('[data-workbench-plugin="kicad-layout"] [data-action="workbench-plugin-details"]')
+      .click();
     const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
     await candidate.focus();
     await page.keyboard.press("Space");
@@ -164,6 +169,10 @@ test("native tool checkbox configuration persists, cancels drafts and translates
         expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(viewport.height + 1);
         await expect(page.locator("[data-project-save]")).toBeVisible();
         await page.locator('[data-project-section="plugins"]').click();
+        await page.locator("[data-shared-capabilities] summary").click();
+        await page
+          .locator('[data-workbench-plugin="kicad-layout"] [data-action="workbench-plugin-details"]')
+          .click();
         await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
         const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
         await candidate.scrollIntoViewIfNeeded();
@@ -196,6 +205,10 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-tool-toggle="write"]').check();
     await page.locator('[data-tool-toggle="decode_register"]').check();
     await page.locator('[data-project-section="plugins"]').click();
+    await page.locator("[data-shared-capabilities] summary").click();
+    await page
+      .locator('[data-workbench-plugin="kicad-layout"] [data-action="workbench-plugin-details"]')
+      .click();
     await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="electrical_model_change"]').check();
     await expect(page.locator('[data-tool-toggle="apply_candidate"]')).not.toBeChecked();

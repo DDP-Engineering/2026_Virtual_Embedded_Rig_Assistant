@@ -175,6 +175,7 @@ const reviewOf = (id: string): PluginCatalogReview => ({
   id,
   version: "1.0.0",
   tier: "official",
+  source: `https://example.com/catalog/${id}-1.0.0.zip`,
   required: true,
 });
 function stub(options: {

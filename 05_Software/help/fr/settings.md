@@ -8,15 +8,15 @@
 | **Accès web** | Recherche et lecture sur le web pour l’agent |
 | **Apparence et langue** | Langue, thème et tailles de texte |
 | **Commandes** | Le shell des commandes de l’agent et des nouveaux terminaux |
-| **Autorisations** | Accès complet pour les tâches déléguées. Voir [Autorisations](permissions.md). |
-| **Notifications** | Alertes du bureau à la fin d’un tour, pour les approbations et les questions |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |
-| **Données et confidentialité** | Valeurs de masquage par défaut pour quatre domaines |
+| **Données et confidentialité** | Masquage des secrets, accès complet pour les tâches déléguées et notifications du bureau |
 | **À propos** | Version, environnement d’exécution, licence et composants tiers |
 | **Dictée** | Modèles Whisper locaux et langue parlée |
 
-## Notifications
+## Données et confidentialité
+
+### Notifications
 
 **Fin d’un tour** propose **Jamais**, **En arrière-plan** (par défaut) et **Toujours**. VERA est en arrière-plan lorsque sa fenêtre est réduite, masquée ou inactive.
 
@@ -28,7 +28,7 @@ Cliquez sur la bannière d’une alerte pendant que VERA fonctionne pour ouvrir 
 
 Sous Windows, les alertes du bureau nécessitent une version installée de VERA. La version ZIP portable utilise les indicateurs de session, les cartes d’approbation et les cartes de questions dans VERA. Sous Linux, les alertes du bureau nécessitent un service de notifications du bureau. Dans les environnements compatibles, le système décide si les alertes s’affichent pendant que VERA fonctionne. Si elles n’apparaissent pas, vérifiez les notifications système pour VERA et le mode Ne pas déranger. Les indicateurs de session, les cartes d’approbation et les cartes de questions restent disponibles dans VERA.
 
-## Données et confidentialité
+### Masquage des secrets enregistrés
 
 Choisissez si les secrets enregistrés sont remplacés par `[REDACTED]` dans **Affichage**, **Exécutions de programmes**, **Agent et modèle** et **Artefacts et exports**. L’affichage et les exécutions sont désactivés par défaut ; l’agent et le modèle ainsi que les artefacts et exports sont activés. Seuls les secrets enregistrés connus de VERA sont masqués ; les autres textes sensibles ne sont pas détectés automatiquement. Les erreurs des fournisseurs, les tests de connexion et les journaux de diagnostic restent toujours protégés.
 
@@ -37,6 +37,10 @@ Utilisez **Enregistrer** ou **Annuler** en haut à droite. Les commutateurs ne m
 Dans **Modifier le banc → Données et confidentialité**, chaque domaine propose **Par défaut**, **Activé** ou **Désactivé**. Par défaut affiche la valeur actuelle de l’application et suit ses changements ; les choix explicites appartiennent au banc et voyagent avec sa configuration. Par défaut demande aussi confirmation si ce choix désactive Agent et modèle. Les nouveaux bancs héritent des valeurs de l’application sans choix explicite. Les bancs en lecture seule ne peuvent pas enregistrer de modifications.
 
 Désactiver le masquage ne restaure pas les contenus déjà enregistrés sous `[REDACTED]`, y compris l’historique des sessions et les artefacts. Relisez ou recréez-les à partir de la source d’origine. Activer le masquage n’efface pas l’historique brut enregistré auparavant.
+
+### Tâches déléguées
+
+L’option **Autoriser l’accès complet pour les tâches déléguées** est enregistrée dès sa confirmation séparée. Consultez [Autorisations](permissions.md) pour les modes disponibles.
 
 ## Apparence et langue
 

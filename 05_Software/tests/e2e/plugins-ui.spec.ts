@@ -475,7 +475,9 @@ test("workbench plugin draft save and cancel persist independently with empty ne
     await expect(page.locator('[data-workbench="active"]')).toContainText("A");
     expect((await config(a)).plugins.enabled).toEqual([]);
     const selected = await editPlugins(page);
-    await page.locator("[data-workbench-configuration] summary").click();
+    await page
+      .locator('[data-workbench-plugin="echo-tools"] [data-action="workbench-plugin-details"]')
+      .click();
     await expect(page.locator('[data-readiness="unchecked"]')).toBeVisible();
     await page.locator('[data-workbench-configuration] [data-action="plugin-check"]').click();
     await expect(page.locator('[data-readiness="needs"]')).toBeVisible();

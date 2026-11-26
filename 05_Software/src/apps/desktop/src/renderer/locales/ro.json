@@ -270,7 +270,6 @@
     "mqttCredentials": "Credențiale MQTT",
     "wokwiTokens": "Tokenuri Wokwi",
     "commands": "Comenzi",
-    "permissions": "Permisiuni",
     "delegatedFullAccess": "Permite acces complet pentru sarcinile delegate",
     "delegatedFullAccessWarning": "Când o sesiune în Bypass deleagă o sarcină, noua sesiune poate citi și modifica fișiere și executa comenzi cu permisiunile contului tău, fără să întrebe. Când setarea este oprită, noua sesiune pornește în Editare automată. Setarea se aplică lansărilor delegate viitoare din toate workbench-urile.",
     "enableDelegatedFullAccess": "Activează",
@@ -1194,10 +1193,8 @@
     "openError": "Linkul nu a putut fi deschis. Încearcă din nou."
   },
   "pluginCapabilities": {
-    "allowedTools": "Instrumente permise",
+    "allowedTools": "Instrumentele agentului",
     "allowanceHelp": "Permiterea unui instrument nu instalează și nu activează plugin-ul. Se aplică în continuare permisiunile sesiunii. Salvează sau Anulează se aplică împreună instrumentelor și selecției plugin-urilor.",
-    "provider": "Necesită plugin-ul: {{id}}",
-    "enabled": "Plugin-ul necesar este activat",
     "disabled": "Disponibil după activare",
     "unloadable": "Indisponibil: plugin-ul lipsește sau nu poate fi încărcat",
     "officialOnly": "Indisponibil: necesită plugin-ul oficial",
@@ -1206,14 +1203,14 @@
     "ecosystemDependency": "Necesită un plugin activat, care poate fi încărcat, din ecosistemul electric sau de automatizări.",
     "activeProviders": "Plugin-uri furnizoare activate: {{providers}}",
     "noProvider": "Indisponibil: niciun plugin electric sau de automatizări activat nu poate fi încărcat",
-    "programs": "Programele plugin-ului",
+    "programs": "Programe și dependențe",
     "programHelp": "Aceste programe aparțin plugin-ului, inclusiv integrarea Git. Permisiunile generale de execuție și monitorizare rămân în Instrumente; se aplică regulile de risc și permisiunile sesiunii.",
     "executionDisabled": "Execuția programelor este dezactivată în Instrumente",
     "executionAllowed": "Necesită permisiunea run_program și regulile de aprobare ale sesiunii"
   },
   "workbenchTools": {
     "ask_user": "Cere o clarificare cu variante și un răspuns recomandat opțional.",
-    "read": "Citește fișiere text sau intervale de linii.",
+    "read": "Citește fișiere text și artefacte salvate în sesiunea curentă.",
     "view_image": "Vezi o imagine din workbench cu un model care acceptă imagini.",
     "list": "Listează fișierele și subfolderele unui director.",
     "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
@@ -1442,7 +1439,13 @@
     "uninstall": "Dezinstalează",
     "uninstallConfirm": "Dezinstalezi {{name}}? Workbench-urile care îl activează nu îi mai pot rula programele.",
     "reviewTitle": "Verifică {{name}}",
-    "reviewIntro": "Verifică ce rulează acest plugin și cum este evaluată fiecare comandă înainte de a-l instala.",
+    "reviewBefore": "Înainte",
+    "reviewInstallScope": "Se instalează în profilul VERA. Fiecare banc de lucru stabilește dacă pluginul este activ.",
+    "reviewRulePosition": "Poziția {{position}}",
+    "reviewAfter": "După",
+    "reviewAbsent": "Niciunul",
+    "reviewProgramChanges": "Modificări ale programelor",
+    "reviewRuleChanges": "Modificări ale regulilor de comandă",
     "reviewIssues": "Acest pachet are erori și nu poate fi instalat:",
     "replaces": "Instalarea înlocuiește versiunea instalată {{version}}.",
     "install": "Instalează",
@@ -1451,7 +1454,6 @@
     "version": "Versiune",
     "platforms": "Platforme",
     "requires": "Necesită",
-    "nothing": "Nimic",
     "maturity": {
       "preRelease": "Pre-lansare"
     },
@@ -1535,7 +1537,7 @@
       "update": "Actualizează la {{version}}",
       "updateAvailable": "Actualizare disponibilă: {{version}}",
       "reviewFrom": "Din catalog: {{tier}}, versiunea {{version}}.",
-      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare.",
+      "reviewComparisonUnavailable": "VERA nu a putut compara acest pachet cu cel instalat. Verifică pachetul înainte de a înlocui pluginul.",
       "installWithDependencies": "Instalează cu dependențe"
     },
     "catalogError": {
@@ -1570,7 +1572,6 @@
     "moreActions": "Mai multe acțiuni",
     "lastChecked": "Ultima verificare: {{time}}",
     "managementActions": "Acțiuni de administrare a pluginurilor",
-    "description": "Descriere",
     "library": {
       "installed": "Instalate",
       "search": "Caută pluginuri",
@@ -1625,7 +1626,6 @@
         "design": "Proiectare"
       }
     },
-    "configure": "Configurează dependențele",
     "enabledSelection": "Activate",
     "selectedCount": "Pluginuri selectate: {{count}}",
     "reinstall": "Reinstalează",
@@ -1677,8 +1677,6 @@
       "missingNames": "Lipsesc: {{names}}",
       "externalNames": "Instalează de la producător: {{names}}",
       "unavailableNames": "Indisponibile: {{names}}",
-      "configured": "Configurat",
-      "nothingToConfigure": "Nimic de configurat",
       "configurationFailed": "Configurarea nu a putut fi verificată.",
       "configure": "Configurează",
       "state": {

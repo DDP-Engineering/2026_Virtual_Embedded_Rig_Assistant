@@ -6,7 +6,7 @@ title = "Plugin status block with two checks"
 
 status = "active"
 
-requirement = "The Plugins page shall show on each installed plugin card without issues one status block with a Dependencies and a Configuration check, each with its state, Configure on the Configuration check when the plugin declares parameters, and shall show Ready only when both checks are ready, otherwise naming each check that is not ready."
+requirement = "An installed plugin card without issues shall show applicable checks in one status block. Dependencies applies to required plugins or programs. Configuration and its Configure action apply to plugins that declare parameters. The block shows Ready when all applicable checks are ready and names checks that need attention otherwise."
 
 verification = "Renderer page test: a plugin with ready programs and no parameters shows Ready; mqtt-tools with a missing broker credential shows Dependencies ready, Configuration missing naming broker-credential and a summary naming Configuration; Configure opens the card's details on the Configuration section; en, ro and de texts."
 
@@ -20,4 +20,4 @@ priority = "normal"
 rationale = ""
 
 created = 2026-11-15
-updated = 2026-11-15
+updated = 2026-11-26

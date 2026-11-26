@@ -6,7 +6,7 @@ title = "Install the reviewed plugin"
 
 status = "active"
 
-requirement = "When the user confirms Install on the review screen, the Plugins page shall install the reviewed package with its reviewed SHA-256 and return to the list showing the plugin, or keep the review screen open with the translated error when the install fails."
+requirement = "When the user confirms the plugin install, the Plugins page shall install the verified package with the confirmed SHA-256 and refresh the library, or keep the confirmation open with the translated install error."
 
 verification = "Component test and both e2e runs: Install calls plugins.install with the path and the reviewed sha256 and the list shows Echo tools; a mock install answering CONFLICT keeps the review screen with the conflict message."
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-26

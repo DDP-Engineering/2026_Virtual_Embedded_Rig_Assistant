@@ -30,6 +30,10 @@ timeout per rule). The risk labels are the approval prompt's `approval.risk.*`. 
 (`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second) with session, plugin, state and date filters and sorting, shows a log (`runs.log`) and
 stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds WorkbenchPlugins: installed packages are draft checkboxes saved through workbench.create or workbench.config.update with plugins.enabled. New workbenches default to none; existing choices are retained. Missing/invalid selected entries can be removed; invalid or untrusted packages cannot be newly selected. Read-only/pending forms disable controls; list failures show retry and do not clear the draft. Cancel performs no activation write. The global manager has no enable switches and points to Edit workbench → Plugins. Scoped package trust remains a separate action.
 
+Workbench plugin rows show the activation checkbox and actionable readiness. Details group package facts,
+agent tool allowances, and explicit program checks and setup. Shared electrical and automation tools have
+their own collapsed section.
+
 The global library is projected by `renderer/components/plugin-library.ts` and rendered by
 `plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
 folder/ZIP imports, check-all, refresh and updates precede the library: filters and state buttons on the left, one list on the right.
@@ -55,7 +59,11 @@ is known and not in the entry's `platforms`, and a `data-catalog-warning="risk"`
 without `hint` as a `dependency` issue) with `requires` (`plugin-dependencies.tsx` `CatalogDependencies`): each required
 plugin with whether it is installed, each program as automatic (into VERA's program folder: pip requirement, script
 path, the host's download with its declared `bytes` and SHA-256) or manual (range and vendor guide), before any package
-download. Install with dependencies (`data-action="catalog-install-all"`) runs the same review queue as Install, then
+download. When confirmation is required, a modal above the library summarizes the package origin, where it is
+installed or trusted, requirements and operation risks. Details disclose the complete package review and hash.
+Updates with program or rule changes expose both definitions. An unreadable installed copy is identified separately.
+Eligible official skills packages install directly using the reviewed hash. Install with dependencies
+(`data-action="catalog-install-all"`) requests confirmation and then calls
 `plugins.provision` for each plugin it installed, one at a time, and shows a `data-install-results` block (the
 Programs list per plugin, the not-ready ones with problem and guide, Check again = `plugins.check`). The expanded
 installed card lists the manifest's required plugins and, per checked program, `data-automatic` and the found `path`

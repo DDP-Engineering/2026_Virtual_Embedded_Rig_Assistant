@@ -12,7 +12,7 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 
 - **New session** starts a conversation in the open workbench. If an unused empty session exists, VERA opens that one instead of creating another.
 - The first message becomes the title. Use **Rename** at any time, including during a turn.
-- **Search sessions** finds sessions by title and message text. Use the page controls below long lists to see more sessions.
+- Select the **Search sessions** magnifier next to **New session** to find sessions by title and message text. Press **Esc** in the search field or select the magnifier again to restore the full list. Use the page controls below long lists to see more sessions.
 - Each session row shows the time of its last activity and has a menu with **Export Markdown**, **Export JSON**, **Rename**, **Move up**, **Move down**, **Archive** and **Delete**.
 - A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**. A running session has a turning mark beside its time, and a session awaiting approval a shield.
 
@@ -70,7 +70,7 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
 
-A new child starts in the parent’s current permission mode. A Bypass parent’s child starts in Auto-edit unless you enable **Allow Full Access for delegated tasks** in **Settings > Permissions** and confirm. The setting starts off and applies to future launches across your workbenches; turning it off keeps the modes of sessions already created. After launch, choose each session’s mode separately in its composer. To reduce a child’s access, change its mode in its own chat.
+A new child starts in the parent’s current permission mode. A Bypass parent’s child starts in Auto-edit unless you enable **Allow Full Access for delegated tasks** in **Settings > Data & privacy** and confirm. The setting starts off and applies to future launches across your workbenches; turning it off keeps the modes of sessions already created. After launch, choose each session’s mode separately in its composer. To reduce a child’s access, change its mode in its own chat.
 
 In a shared checkout, let one implementation child finish and verify its handover before starting the next.
 

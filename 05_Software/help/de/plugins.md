@@ -1,13 +1,13 @@
 # Plugins
 
-Mit Plugins steuert der Agent die Werkzeuge an Ihrem Laborplatz: Flash- und Debug-Werkzeuge, serielle Monitore, Busanalysatoren, Simulatoren, Messgeräte. Ein Plugin deklariert seine Programme, wie VERA sie installiert, die Risikostufe jedes Befehls und Skills, die dem Agenten deren Verwendung beibringen. Jedes installierte Plugin hat eine eigene Hilfeseite in der Hilfe und auf seiner Karte.
+Mit Plugins steuert der Agent die Werkzeuge an Ihrem Laborplatz: Flash- und Debug-Werkzeuge, serielle Monitore, Busanalysatoren, Simulatoren, Messgeräte. Ein Plugin deklariert seine Programme, wie VERA sie installiert, die Risikostufe jedes Befehls und Skills, die dem Agenten deren Verwendung beibringen. Öffnen Sie auf der Plugin-Karte **Details → Hilfe**, um die Anleitung zu lesen.
 
 ## Ein Plugin finden und installieren
 
 1. Wählen Sie auf der Seite **Plugins** die Option **Verfügbare Plugins entdecken**. Filtern Sie nach **Ökosystem**, **Tätigkeit**, **Herkunft**, **Reife**, **Voraussetzungen** oder Zustand, oder suchen Sie. **Voraussetzungen** zeigt nur Plugins mit allen angehakten Voraussetzungen: **Nur Skills** (ohne Programme), **Python-Skript**, **Von VERA geladenes Programm**, **Selbst installiertes Programm** und **Einstellungen**.
 2. Öffnen Sie **Details**, um zu sehen, was das Plugin benötigt, einschließlich erforderlicher Plugins und Programme.
 3. Wählen Sie **Installieren** oder **Mit Abhängigkeiten installieren**, um auch die erforderlichen Plugins und die Programme zu installieren, die VERA selbst installieren kann.
-4. Prüfen Sie die Übersicht und bestätigen Sie.
+4. Erscheint eine Bestätigung, prüfen Sie Quelle, Abhängigkeiten und Risiken und bestätigen Sie.
 
 Eine Karte warnt, wenn das Plugin für Ihre Plattform nicht verfügbar ist oder auf ein Gerät schreiben bzw. es dauerhaft verändern kann. Versionen unter 1.0.0 sind als **Vorabversion** gekennzeichnet. Jede Karte zeigt außerdem die Voraussetzungen des Plugins mit denselben Bezeichnungen.
 
@@ -17,7 +17,7 @@ Eine Karte warnt, wenn das Plugin für Ihre Plattform nicht verfügbar ist oder 
 
 ## Prüfung und Vertrauen
 
-Vor der Installation zeigt VERA eine Prüfübersicht: was das Plugin enthält (**Programme** und ihre Herkunft, **Skills**, **Profile und Datendateien**, **Dokumente**), und die **Operationen**, also die Befehlsregeln des Plugins, gruppiert nach Risikostufe. Updates, die Programme, Quellen oder Regeln ändern, werden erneut geprüft. Ändern sich die Dateien des Plugins nach der Installation, verwendet VERA es nicht mehr, bis Sie es erneut installieren.
+Offizielle Pakete aus dem geprüften Katalog werden direkt installiert, wenn sie nur Skills und Markdown-Dokumentation enthalten und keine Abhängigkeiten oder Einstellungen deklarieren. Falls eine Prüfung erforderlich ist, erscheint die Bestätigung über der Bibliothek. **Details** zeigt den vollständigen Inhalt und die SHA-256-Prüfsumme. Bei Updates stehen Änderungen an Programmen und Befehlsregeln als Vorher-Nachher-Werte bereit. VERA prüft das Paket in beiden Fällen. Werden installierte Dateien geändert, verwendet VERA das Plugin erst nach einer Neuinstallation wieder.
 
 Plugins haben eine Vertrauensstufe:
 
@@ -38,7 +38,7 @@ Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench 
 
 **Werkzeuge** enthält allgemeine VERA-Funktionen, darunter `run_program`, `run_command`, `program_output`, `program_stop` und Terminalzugriff. Plugin-Programme einschließlich der eigenen Git-Integration stehen beim Plugin unter **Plugins**. Die Ausführung benötigt weiterhin die allgemeine Werkzeugfreigabe, Befehlsrisikoregeln und Sitzungsberechtigungen.
 
-**Erlaubte Werkzeuge** auf einer Plugin-Karte steuert spezialisierte Funktionen unabhängig vom Plugin-Kontrollkästchen. Elektroberechnungen und Industriekatalog benötigen das genannte Plugin. `apply_candidate` benötigt das offizielle `kicad-layout`; `parts_search` benötigt das offizielle `parts-search`, Webzugriff und einen aktivierten Anbieter in der Konfiguration des Plugins auf der Seite Plugins. Der Abhängigkeitsstatus unterscheidet deaktivierte, fehlende, nicht ladbare oder inoffizielle Pakete von aktivierten Abhängigkeiten; aktiviert garantiert keine einsatzbereiten externen Programme, Anbieter-Zugangsdaten oder Sitzungsberechtigungen. Prüfen Sie Programmabhängigkeiten unter **Konfigurieren**.
+Öffnen Sie beim Plugin **Details** für die Beschreibung und die **Werkzeuge für den Agenten**. Diese Kontrollkästchen steuern einzelne Werkzeuge unabhängig von der Plugin-Auswahl. `apply_candidate` benötigt das offizielle `kicad-layout`. `parts_search` benötigt das offizielle `parts-search`, Webzugriff und einen Anbieter, den Sie in der **Konfiguration** auf der Plugins-Seite aktivieren. Unter **Programme und Abhängigkeiten** sehen Sie die Programme und können **Abhängigkeiten prüfen** wählen.
 
 **Gemeinsame Elektro- / Automatisierungswerkzeuge** erscheint, sobald ein Elektro- oder Automatisierungspaket installiert ist. Aktiviere ein ladbares Plugin, um diese Werkzeuge zu nutzen. Pluginspezifische Werkzeuge stehen auf den Karten installierter Pakete. Die Freigaben der Workbench bleiben bei einer Deinstallation gespeichert. Bei leerer Liste führt **Verfügbare Plugins entdecken** zum globalen Katalog.
 
@@ -46,12 +46,12 @@ Eine Werkzeugfreigabe installiert oder aktiviert kein Plugin. Plugin-Aktivierung
 
 ## Abhängigkeiten
 
-Der Block **Status** eines installierten Plugins prüft zwei Dinge: **Abhängigkeiten** und **Konfiguration**. Er zeigt **Bereit** nur, wenn beide bereit sind.
+Der Block **Status** eines installierten Plugins zeigt die zutreffenden Prüfungen. Er zeigt **Bereit**, wenn alle zutreffenden Prüfungen abgeschlossen sind.
 
-- **Abhängigkeiten prüfen** sucht nach den Programmen; **Alle Abhängigkeiten prüfen** tut dies für jedes Plugin.
+- **Abhängigkeiten prüfen** erscheint bei Plugins, die Programme deklarieren. **Alle Abhängigkeiten prüfen** prüft alle installierten Plugins.
 - **Abhängigkeiten installieren** installiert, was VERA selbst installieren kann (Python-Pakete, Skripte und Downloads mit fester Version), in seinen eigenen Programmordner. Jeder Download wird anhand seines SHA-256 geprüft.
 - Herstellerprogramme wie KiCad, LTspice oder STM32CubeProgrammer sind **Extern verwaltet**: Installieren Sie sie mithilfe der **Installationsanleitung** und prüfen Sie dann erneut.
-- **Neu installieren** lädt die Programmkopien von VERA erneut herunter und ersetzt sie.
+- **Weitere Aktionen → Neu installieren** lädt die Programmkopien von VERA erneut herunter und ersetzt sie.
 - **Aus Abhängigkeitsarchiv installieren…** installiert ein Programm aus einem Archiv, das Sie selbst heruntergeladen haben; VERA prüft es anhand des SHA-256 des Plugins.
 
 ## Parameter

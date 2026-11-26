@@ -6,11 +6,11 @@ title = "Decide when a catalog install needs a review"
 
 status = "active"
 
-requirement = "When the catalog reviews a plugin, it shall mark the review required when the plugin is not installed, the installed plugin has an issue, or the new manifest's programs or rules differ from the installed manifest's, and not required otherwise."
+requirement = "When the catalog reviews a plugin, it shall mark confirmation required for first installs outside REQ-FUNC-9a7cd113, when the installed plugin has an issue, or when the new manifest's programs or rules differ from the installed manifest's. For updates with changed programs or rules, it shall return their before and after definitions."
 
-verification = "Core catalog test: a first install is required; an update that changes only the description is not required; an update that changes one rule's risk, or one program's install source, is required."
+verification = "Core catalog tests cover conventional first installs, description-only updates and confirmation with before and after definitions when a rule's risk or a program's install source changes."
 
-affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
 
 linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/tests/e2e/plugins-catalog.spec.ts"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-26

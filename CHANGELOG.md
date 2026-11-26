@@ -8,6 +8,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Open session search on demand from a magnifier next to New session.
+- Move delegated access and desktop notification settings to Data & privacy.
+- Simplify plugin cards, group help under Details, and keep dependency actions on applicable cards.
+- Install verified official skills-only plugins directly and show a compact confirmation when needed.
+- Simplify workbench plugin selection and group agent tools and program setup in Details.
 - analysis-skills 0.4.0: Route firmware analysis by intent and build manual plans from saved comparisons.
 - Read verified text artifacts by reference in their owning session.
 - Speed up paged reads of large files while retaining line counts and file verification.
@@ -15,6 +20,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Fixed
 
 - analysis-skills 0.4.1: Save exact tool-issued line citations in firmware reports and manual test plans.
+- Keep the chat controls in place when the provider returns a reasoning error.
 - Continue file and artifact reads from the last line delivered when a page is shortened.
 - Return unchanged file writes and edits without approval or rewriting.
 - Limit diff calculation time while keeping large file changes available for approval.

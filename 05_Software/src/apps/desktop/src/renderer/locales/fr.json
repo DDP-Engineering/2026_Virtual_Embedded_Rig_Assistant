@@ -270,7 +270,6 @@
     "mqttCredentials": "Identifiants MQTT",
     "wokwiTokens": "Jetons Wokwi",
     "commands": "Commandes",
-    "permissions": "Autorisations",
     "delegatedFullAccess": "Autoriser l’accès complet pour les tâches déléguées",
     "delegatedFullAccessWarning": "Quand une session en mode Bypass délègue une tâche, la nouvelle session peut lire et modifier des fichiers et exécuter des commandes avec les droits de votre compte, sans demander. Si l’option est désactivée, la nouvelle session démarre en Modification auto. Cela concerne les prochains lancements délégués dans tous les bancs de travail.",
     "enableDelegatedFullAccess": "Activer",
@@ -1194,10 +1193,8 @@
     "openError": "Impossible d’ouvrir le lien. Réessayez."
   },
   "pluginCapabilities": {
-    "allowedTools": "Outils autorisés",
+    "allowedTools": "Outils de l’agent",
     "allowanceHelp": "Autoriser un outil n’installe ni n’active son plugin. Les autorisations de session restent applicables. Enregistrer ou Annuler s’applique aux outils et à la sélection des plugins ensemble.",
-    "provider": "Plugin requis : {{id}}",
-    "enabled": "Plugin requis activé",
     "disabled": "Disponible après activation",
     "unloadable": "Indisponible : plugin absent ou impossible à charger",
     "officialOnly": "Indisponible : plugin officiel requis",
@@ -1206,14 +1203,14 @@
     "ecosystemDependency": "Nécessite un plugin activé et chargeable de l’écosystème électrique ou d’automatisation.",
     "activeProviders": "Plugins fournisseurs activés : {{providers}}",
     "noProvider": "Indisponible : aucun plugin électrique ou d’automatisation activé et chargeable",
-    "programs": "Programmes du plugin",
+    "programs": "Programmes et dépendances",
     "programHelp": "Ces programmes appartiennent au plugin, y compris l’intégration Git. Les autorisations générales d’exécution et de suivi restent dans Outils ; les règles de risque et autorisations de session s’appliquent toujours.",
     "executionDisabled": "Exécution des programmes désactivée dans Outils",
     "executionAllowed": "Nécessite l’autorisation run_program et les règles d’approbation de la session"
   },
   "workbenchTools": {
     "ask_user": "Pose une question avec des choix et une recommandation facultative.",
-    "read": "Lire des fichiers texte ou des plages de lignes choisies.",
+    "read": "Lire les fichiers texte et les artefacts enregistrés dans la session en cours.",
     "view_image": "Examiner une image du banc de travail avec un modèle compatible.",
     "list": "Lister les fichiers et sous-dossiers d’un répertoire.",
     "glob": "Trouver des fichiers par motifs de nom ou de chemin, comme **/*.cpp.",
@@ -1442,7 +1439,13 @@
     "uninstall": "Désinstaller",
     "uninstallConfirm": "Désinstaller {{name}} ? Les bancs de travail qui l’activent ne pourront plus exécuter ses programmes.",
     "reviewTitle": "Examiner {{name}}",
-    "reviewIntro": "Vérifiez ce que ce plugin exécute et comment chaque commande est classée avant de l’installer.",
+    "reviewBefore": "Avant",
+    "reviewInstallScope": "Le plugin s’installe dans votre profil VERA. Son activation se règle dans chaque atelier.",
+    "reviewRulePosition": "Position {{position}}",
+    "reviewAfter": "Après",
+    "reviewAbsent": "Aucun",
+    "reviewProgramChanges": "Modifications des programmes",
+    "reviewRuleChanges": "Modifications des règles de commande",
     "reviewIssues": "Ce paquet contient des erreurs et ne peut pas être installé :",
     "replaces": "L’installation remplace la version installée {{version}}.",
     "install": "Installer",
@@ -1451,7 +1454,6 @@
     "version": "Version",
     "platforms": "Plateformes",
     "requires": "Nécessite",
-    "nothing": "Aucun",
     "maturity": {
       "preRelease": "Préversion"
     },
@@ -1535,7 +1537,7 @@
       "update": "Mettre à jour vers {{version}}",
       "updateAvailable": "Mise à jour disponible : {{version}}",
       "reviewFrom": "Depuis le catalogue : {{tier}}, version {{version}}.",
-      "reviewChanges": "Cette mise à jour modifie des programmes, des sources d’installation ou des règles ; examinez-les avant d’installer.",
+      "reviewComparisonUnavailable": "VERA n’a pas pu comparer ce paquet à la copie installée. Vérifiez-le avant de remplacer le plugin.",
       "installWithDependencies": "Installer avec les dépendances"
     },
     "catalogError": {
@@ -1570,7 +1572,6 @@
     "moreActions": "Plus d’actions",
     "lastChecked": "Dernière vérification : {{time}}",
     "managementActions": "Actions de gestion des plugins",
-    "description": "Description",
     "library": {
       "installed": "Installés",
       "search": "Rechercher des plugins",
@@ -1625,7 +1626,6 @@
         "design": "Conception"
       }
     },
-    "configure": "Configurer les dépendances",
     "enabledSelection": "Activés",
     "selectedCount": "Plugins sélectionnés : {{count}}",
     "reinstall": "Réinstaller",
@@ -1677,8 +1677,6 @@
       "missingNames": "Manquants : {{names}}",
       "externalNames": "À installer depuis le fabricant : {{names}}",
       "unavailableNames": "Indisponibles : {{names}}",
-      "configured": "Configuré",
-      "nothingToConfigure": "Rien à configurer",
       "configurationFailed": "La configuration n’a pas pu être vérifiée.",
       "configure": "Configurer",
       "state": {

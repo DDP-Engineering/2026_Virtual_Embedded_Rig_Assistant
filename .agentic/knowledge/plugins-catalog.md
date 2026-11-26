@@ -90,8 +90,11 @@ are classified, with dates omitted until a publication record is established.
 - Catalog reviews and installs run one at a time per `PluginCatalog`, since they share the kept-zip folder. The catalog
   URL form saves only after the settings have loaded: its patch replaces the whole `plugins` object (index, proxy).
 - `npm run prepare:plugins` builds a private CLI bundle in `node_modules/.cache` and never rewrites `src/apps/cli/dist`.
-- A catalog review is required for a plugin that is not installed, an installed plugin with an issue, or a manifest
-  whose `programs` or `rules` (canonical JSON) differ from the installed one; otherwise the page installs at once.
+- A catalog review always verifies the bytes. First installs need user confirmation except for supported, verified
+  official packages containing only skills and Markdown documentation with no programs, rules, required plugins or
+  settings (REQ-FUNC-9a7cd113). Updates need confirmation if the installed plugin has an issue or its `programs` or
+  `rules` (canonical JSON) change. The review result carries the package origin and changed definitions for
+  comparison. It aligns unchanged rules and identifies the positions of rule moves, additions, edits and removals.
 - Catalog checks run at start and every resolved interval (default 24 h) only while a catalog location is set and
   the update mode is not Off; a changed interval restarts the wait without a check (REQ-FUNC-ce542246);
   they read the index only and never install. Install selected reviews the checked groups' plugins that are not

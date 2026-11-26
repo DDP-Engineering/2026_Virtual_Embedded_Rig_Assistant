@@ -2345,6 +2345,28 @@ legend {
 .workbench-group .session-list {
   padding: 0.5rem 0 0.5rem 1rem;
 }
+.session-list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem;
+}
+.session-search-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 2.5rem;
+  padding: 0.3rem;
+}
+.session-search-toggle[aria-expanded="true"] {
+  background: var(--accent);
+}
+.session-search-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.session-search-input {
+  min-width: 0;
+  width: 100%;
+}
 /* The editor is a page: it fills the remaining page height and scrolls its sections internally. */
 .workbench-editor,
 .workbench-create {
@@ -2386,7 +2408,20 @@ legend {
   justify-content: space-between;
   gap: 1rem;
 }
-:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"] {
+.data-settings-group {
+  display: grid;
+  justify-items: start;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border);
+  padding-block-start: 1rem;
+}
+.data-settings-group h3 {
+  margin: 0;
+}
+.data-settings-group select {
+  max-width: 100%;
+}
+:is([data-privacy-controls], .data-settings-group) input[role="switch"] {
   appearance: none;
   flex-shrink: 0;
   width: 2.6rem;
@@ -2397,7 +2432,7 @@ legend {
   border-radius: 1rem;
   background: var(--muted);
 }
-:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]::before {
+:is([data-privacy-controls], .data-settings-group) input[role="switch"]::before {
   content: "";
   display: block;
   width: 1.05rem;
@@ -2405,10 +2440,10 @@ legend {
   border-radius: 50%;
   background: var(--foreground);
 }
-:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]:checked {
+:is([data-privacy-controls], .data-settings-group) input[role="switch"]:checked {
   background: var(--primary);
 }
-:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]:checked::before {
+:is([data-privacy-controls], .data-settings-group) input[role="switch"]:checked::before {
   transform: translateX(1.1rem);
   background: var(--primary-foreground);
 }
@@ -3084,6 +3119,23 @@ legend {
   outline-offset: 0;
   border-radius: 0.5rem;
 }
+.composer-reasoning-notice:not(:empty) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  margin-block-end: 0.5rem;
+  border-inline-start: 0.2rem solid var(--destructive);
+  border-radius: 0.45rem;
+  background: var(--muted);
+  font-size: 0.9rem;
+}
+.composer-reasoning-notice p {
+  flex: 1 1 14rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 .composer-controls {
   justify-content: start;
   align-items: center;
@@ -3575,10 +3627,31 @@ legend {
 }
 /* Plugins page and review screen (REQ-UX-28503c97, REQ-UX-e6056763). */
 .plugins-page,
-.plugin-review {
+.plugin-review[open] {
   display: grid;
   gap: 0.75rem;
   min-width: 0;
+}
+.plugin-review {
+  width: min(46rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.plugin-review > p {
+  margin: 0;
+}
+.plugin-review-risks,
+.plugin-update-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+}
+.plugin-update-changes {
+  flex-direction: column;
+}
+.plugin-review summary {
+  cursor: pointer;
 }
 .plugin-list,
 .plugin-review-list,
@@ -3778,10 +3851,17 @@ legend {
   border-top: none;
   padding-top: 0.25rem;
 }
-.plugin-section > h4 {
+.plugin-section > h4,
+.plugin-section > summary {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+}
+.plugin-section > summary {
+  cursor: pointer;
+}
+.plugin-section > summary + * {
+  margin-block-start: 0.45rem;
 }
 .plugin-help {
   padding: 0.6rem 0.8rem;
@@ -4082,28 +4162,76 @@ legend {
   overflow-wrap: anywhere;
 }
 
-[data-workbench-plugins] .workbench-tool-option > span {
+.workbench-plugin-row,
+.workbench-plugin-selection {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.6rem;
-}
-[data-workbench-plugins] .workbench-tool-option {
   align-items: center;
-  padding: 0.6rem;
+  gap: 0.65rem;
+  min-width: 0;
 }
-[data-workbench-plugins] .risk-badge {
+.workbench-plugin-row {
+  flex-wrap: wrap;
+}
+.workbench-plugin-selection {
+  flex: 1 1 auto;
+  cursor: pointer;
+}
+.workbench-plugin-selection input {
   flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--primary);
+}
+.workbench-plugin-row > button {
+  margin-inline-start: auto;
+  padding: 0.25rem 0.65rem;
+}
+.workbench-plugin-details:not([hidden]) {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 0.0625rem solid var(--border);
 }
 .workbench-capabilities {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-[data-workbench-plugins] .workbench-capabilities .workbench-tool-option > span {
-  display: grid;
+fieldset.workbench-capabilities {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
-[data-plugin-programs] {
-  overflow-wrap: anywhere;
+.workbench-capabilities legend,
+[data-workbench-configuration] h4 {
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
+}
+.workbench-capabilities .workbench-tools > ul {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.workbench-capabilities .workbench-tools .workbench-tool-option {
+  border: 0;
+  padding: 0.35rem 0;
+}
+[data-shared-capabilities] {
+  padding: 0.65rem 0.75rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.5rem;
+}
+[data-workbench-configuration] {
+  display: grid;
+  gap: 0.4rem;
+}
+.workbench-plugin-programs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* Context tab: the workbench file is collapsible, wraps its text and scrolls when wider or longer. */

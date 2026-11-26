@@ -1,10 +1,9 @@
 // REQ-UX-e07790cb REQ-UX-e5d617d7 REQ-UX-69b54580
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginSummary } from "@vera/shared";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
-import { observeProgramAction } from "../hooks/use-run-presentation.js";
 import { ErrorMessage } from "./error-message.js";
 import { catalogKey } from "./plugin-catalog.js";
 import {
@@ -13,6 +12,7 @@ import {
   type LibraryState,
   matchesLibraryFilters,
   matchesLibraryStatus,
+  type ProgramReadiness,
   pluginProgramsKey,
   sortLibraryItems,
 } from "./plugin-library.js";
@@ -21,12 +21,13 @@ import {
   PluginLibraryPagination,
   pluginActivityLabels,
 } from "./plugin-library-controls.js";
-import { Issues, Programs } from "./plugins.js";
+import { Issues } from "./plugins.js";
 import {
   type CapabilityControls,
   WorkbenchPluginCapabilities,
   WorkbenchSharedCapabilities,
 } from "./workbench-capabilities.js";
+import { WorkbenchPluginSetup } from "./workbench-plugin-setup.js";
 
 /** Selection edits only the configuration draft; its owner saves or cancels it. */
 export function WorkbenchPlugins(
@@ -120,18 +121,6 @@ function WorkbenchPluginLibrary({
     if (query.data && !catalog.isPending && page !== state.page)
       setState((current) => ({ ...current, page }));
   }, [query.data, catalog.isPending, page, state.page]);
-  const readiness = {
-    unchecked: t("plugins.notChecked"),
-    ready: t("plugins.state.ready"),
-    needs: t("plugins.library.needsConfiguration"),
-    unavailable: t("plugins.library.readinessUnavailable"),
-  };
-  const tierLabels = {
-    official: t("plugins.tier.official"),
-    community: t("plugins.tier.community"),
-    local: t("plugins.tier.local"),
-    trial: t("plugins.tier.trial"),
-  };
   const emptyState = query.isSuccess && installed.length === 0 && (
     <div className="plugin-library-empty">
       <p>{t("plugins.none")}</p>
@@ -182,53 +171,19 @@ function WorkbenchPluginLibrary({
           {results.slice((page - 1) * state.pageSize, page * state.pageSize).map((item) => {
             const plugin = item.plugin;
             if (!plugin) return null;
-            const selected = enabled.includes(plugin.id);
             return (
-              <li className="plugin-card" key={item.key} data-workbench-plugin={plugin.id}>
-                <label className="workbench-tool-option">
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    disabled={readOnly || disabled || (!selected && plugin.issues.length > 0)}
-                    onChange={(event) => {
-                      if (!readOnly && !disabled) toggle(plugin.id, event.currentTarget.checked);
-                    }}
-                  />
-                  <span>
-                    <strong>{plugin.name ?? plugin.id}</strong>
-                    {plugin.version && <span className="muted"> {plugin.version}</span>}
-                    {plugin.tier && <span className="risk-badge">{tierLabels[plugin.tier]}</span>}
-                  </span>
-                </label>
-                <p className="muted" data-readiness={item.readiness}>
-                  {readiness[item.readiness]}
-                </p>
-                {plugin.source === "workbench" && <p className="muted">{t("plugins.workbenchSource")}</p>}
-                {plugin.description && (
-                  <details className="workbench-plugin-description">
-                    <summary>{t("plugins.description")}</summary>
-                    <p>{plugin.description}</p>
-                  </details>
-                )}
-                {installedIds.has(plugin.id) && (
-                  <WorkbenchPluginCapabilities
-                    plugin={plugin}
-                    selected={selected}
-                    disabledTools={disabledTools}
-                    toggleTool={toggleTool}
-                    locked={readOnly || disabled}
-                  />
-                )}
-                {plugin.issues.length ? (
-                  <Issues issues={plugin.issues} />
-                ) : (
-                  <WorkbenchPluginSetup
-                    plugin={plugin}
-                    workbenchId={workbenchId}
-                    locked={readOnly || disabled}
-                  />
-                )}
-              </li>
+              <WorkbenchPluginCard
+                key={item.key}
+                plugin={plugin}
+                selected={enabled.includes(plugin.id)}
+                installed={installedIds.has(plugin.id)}
+                readiness={item.readiness}
+                workbenchId={workbenchId}
+                toggle={toggle}
+                disabledTools={disabledTools}
+                toggleTool={toggleTool}
+                locked={readOnly || disabled}
+              />
             );
           })}
         </ul>
@@ -252,99 +207,103 @@ function WorkbenchPluginLibrary({
   );
 }
 
-function WorkbenchPluginSetup({
+function WorkbenchPluginCard({
   plugin,
+  selected,
+  installed,
+  readiness,
   workbenchId,
-  locked,
-}: {
+  toggle,
+  ...controls
+}: CapabilityControls & {
   plugin: PluginSummary;
+  selected: boolean;
+  installed: boolean;
+  readiness: ProgramReadiness;
   workbenchId: string | undefined;
-  locked: boolean;
+  toggle: (id: string, selected: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const client = useQueryClient();
-  const live = useRef(true);
-  useEffect(() => {
-    live.current = true;
-    return () => {
-      live.current = false;
-    };
-  }, []);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>();
-  const queryKey = pluginProgramsKey(workbenchId, plugin);
-  const request = { id: plugin.id, ...(workbenchId ? { workbenchId } : {}) };
-  const programs = useQuery({
-    queryKey,
-    queryFn: () => api.invoke("plugins.programs", request),
-    enabled: false,
-    staleTime: Infinity,
-  });
-  const installable =
-    !programs.isError &&
-    programs.data?.some(
-      (status) =>
-        status.kind !== "find" &&
-        (!status.external || status.downloadAvailable) &&
-        status.problem !== "platform" &&
-        status.problem !== "uv" &&
-        (status.state === "missing" ||
-          (status.state === "unavailable" && ["version", "range"].includes(status.problem ?? "")) ||
-          status.downloadAvailable),
-    );
-  async function act(kind: "check" | "provision" | "archive", program?: string) {
-    if (locked || busy) return;
-    setBusy(true);
-    setError(undefined);
-    try {
-      await observeProgramAction(client, queryKey, request, () =>
-        kind === "archive"
-          ? api.invoke("plugins.installArchive", {
-              ...request,
-              program: program ?? "",
-              sha256: plugin.sha256 ?? "",
-            })
-          : kind === "check"
-            ? api.invoke("plugins.check", request)
-            : api.invoke("plugins.provision", request),
-      );
-    } catch (failure) {
-      if (live.current) setError(failure);
-    } finally {
-      if (live.current) setBusy(false);
-    }
-  }
+  const nameId = useId();
+  const buttonId = useId();
+  const detailsId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const hasPrograms = !plugin.manifest || Object.keys(plugin.manifest.programs).length > 0;
+  const required = plugin.manifest?.requires ?? [];
+  const status = {
+    unchecked: t("plugins.notChecked"),
+    ready: t("plugins.state.ready"),
+    needs: t("plugins.library.needsConfiguration"),
+    unavailable: t("plugins.library.readinessUnavailable"),
+  }[readiness];
+  const tier = {
+    official: t("plugins.tier.official"),
+    community: t("plugins.tier.community"),
+    local: t("plugins.tier.local"),
+    trial: t("plugins.tier.trial"),
+  };
   return (
-    <details data-workbench-configuration>
-      <summary>{t("plugins.configure")}</summary>
-      {error !== undefined && <ErrorMessage error={error} />}
-      <div className="plugin-card-actions">
+    <li className="plugin-card workbench-plugin-card" data-workbench-plugin={plugin.id}>
+      <div className="workbench-plugin-row">
+        <label className="workbench-plugin-selection">
+          <input
+            type="checkbox"
+            data-workbench-plugin-toggle
+            checked={selected}
+            disabled={controls.locked || (!selected && plugin.issues.length > 0)}
+            onChange={(event) => toggle(plugin.id, event.currentTarget.checked)}
+          />
+          <strong id={nameId}>{plugin.name ?? plugin.id}</strong>
+        </label>
+        {(readiness === "needs" || readiness === "unavailable") && (
+          <span className="muted" data-readiness={readiness}>
+            {status}
+          </span>
+        )}
         <button
           type="button"
-          data-action="plugin-check"
-          disabled={locked || busy}
-          onClick={() => void act("check")}
+          id={buttonId}
+          data-action="workbench-plugin-details"
+          aria-expanded={expanded}
+          aria-controls={detailsId}
+          aria-labelledby={`${buttonId} ${nameId}`}
+          onClick={() => setExpanded((value) => !value)}
         >
-          {busy ? t("plugins.checking") : t("plugins.checkDependencies")}
-        </button>
-        <button
-          type="button"
-          data-action="plugin-provision"
-          disabled={locked || busy || !installable}
-          onClick={() => void act("provision")}
-        >
-          {t("plugins.installDependencies")}
+          {t("plugins.library.details")}
         </button>
       </div>
-      {programs.data ? (
-        <Programs
-          statuses={programs.data}
-          busy={busy}
-          {...(!locked ? { archive: (name: string) => void act("archive", name) } : {})}
-        />
-      ) : (
-        <p>{t("plugins.checkFirst")}</p>
-      )}
-    </details>
+      <div id={detailsId} className="workbench-plugin-details" hidden={!expanded}>
+        {(plugin.version || plugin.tier) && (
+          <div className="plugin-heading">
+            {plugin.version && (
+              <span className="muted">
+                {t("plugins.version")} {plugin.version}
+              </span>
+            )}
+            {plugin.tier && <span className="risk-badge">{tier[plugin.tier]}</span>}
+          </div>
+        )}
+        {plugin.description && <p>{plugin.description}</p>}
+        {plugin.source === "workbench" && <p className="muted">{t("plugins.workbenchSource")}</p>}
+        {required.length > 0 && (
+          <dl className="plugin-facts">
+            <dt>{t("plugins.requires")}</dt>
+            <dd>{required.join(", ")}</dd>
+          </dl>
+        )}
+        {plugin.issues.length > 0 && <Issues issues={plugin.issues} />}
+        {installed && <WorkbenchPluginCapabilities plugin={plugin} selected={selected} {...controls} />}
+        {!plugin.issues.length && hasPrograms && (
+          <WorkbenchPluginSetup
+            plugin={plugin}
+            workbenchId={workbenchId}
+            locked={controls.locked}
+            executionAllowed={!controls.disabledTools.includes("run_program")}
+            readiness={readiness}
+            status={status}
+          />
+        )}
+      </div>
+    </li>
   );
 }

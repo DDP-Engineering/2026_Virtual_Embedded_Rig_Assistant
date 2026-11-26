@@ -195,11 +195,14 @@ test("search results get no move items or shortcut, and row menu triggers take A
   const bench = await api.invoke("workbench.create", { folder: "/mock/order-search", name: "Order search" });
   const first = await api.invoke("session.create", { workbenchId: bench.config.id });
   const second = await api.invoke("session.create", { workbenchId: bench.config.id });
+  await api.invoke("session.rename", { sessionId: first.id, title: "Matching first" });
+  await api.invoke("session.rename", { sessionId: second.id, title: "Matching second" });
   const user = userEvent.setup();
   const keys = (key: string) => user.keyboard(`{Alt>}{Shift>}{${key}}{/Shift}{/Alt}`);
   const move = vi.fn(async () => true);
-  const list = (search: string) =>
+  await mount(
     createElement(SessionList, {
+      workbenchId: bench.config.id,
       sessions: [first, second],
       select: vi.fn(),
       create: vi.fn(),
@@ -208,10 +211,13 @@ test("search results get no move items or shortcut, and row menu triggers take A
       archive: vi.fn(),
       move,
       disabled: false,
-      search,
-      searchChanged: vi.fn(),
-    });
-  await mount(list("x"));
+    }),
+  );
+  const search = container.querySelector<HTMLButtonElement>(".session-search-toggle") as HTMLButtonElement;
+  await act(async () => user.click(search));
+  await act(async () => user.keyboard("Matching"));
+  await settle();
+  expect(container.querySelectorAll("[data-session]")).toHaveLength(2);
   expect(container.querySelector('[data-action^="move-session"]')).toBeNull();
   (container.querySelector(`[data-session="${second.id}"]`) as HTMLButtonElement).focus();
   await act(async () => keys("ArrowUp"));
@@ -223,10 +229,8 @@ test("search results get no move items or shortcut, and row menu triggers take A
   summary().focus();
   await act(async () => keys("ArrowUp"));
   expect(move).not.toHaveBeenCalled();
-  await act(async () => root.unmount());
-  container.remove();
   // Without a search, the row's menu trigger moves it too.
-  await mount(list(""));
+  await act(async () => user.click(search));
   summary().focus();
   await act(async () => keys("ArrowUp"));
   expect(move).toHaveBeenCalledWith(second.id, -1);
@@ -1886,12 +1890,12 @@ test("confirms and saves the global delegated Full Access setting", async () => 
   await api.invoke("session.mode.set", { sessionId: session.id, mode: "bypass", acknowledged: true });
   await mount();
   await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
-  const permissions = await vi.waitFor(() => {
-    const node = container.querySelector<HTMLButtonElement>("#settings-tab-permissions");
+  const data = await vi.waitFor(() => {
+    const node = container.querySelector<HTMLButtonElement>("#settings-tab-data");
     expect(node).toBeTruthy();
     return node;
   });
-  await act(async () => permissions?.click());
+  await act(async () => data?.click());
   const toggle = () => container.querySelector<HTMLInputElement>("#delegated-full-access");
   await vi.waitFor(() => expect(toggle()?.disabled).toBe(false));
   expect(toggle()?.checked).toBe(false);

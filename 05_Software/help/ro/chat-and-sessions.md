@@ -12,7 +12,7 @@ O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salveaz
 
 - **Sesiune nouă** pornește o conversație în workbench-ul deschis. Dacă există o sesiune goală nefolosită, VERA o deschide pe aceea în loc să creeze alta.
 - Primul mesaj devine titlul. Folosește **Redenumește** oricând, inclusiv în timpul unei ture.
-- **Caută sesiuni** găsește sesiuni după titlu și textul mesajelor. Folosește comenzile de paginare de sub listele lungi pentru a vedea mai multe sesiuni.
+- Apasă lupa **Caută sesiuni** de lângă **Sesiune nouă** pentru a căuta după titlu și textul mesajelor. Apasă **Esc** în câmpul de căutare sau apasă din nou lupa pentru a reveni la lista completă. Folosește comenzile de paginare de sub listele lungi pentru a vedea mai multe sesiuni.
 - Fiecare rând de sesiune afișează ora ultimei activități și are un meniu cu **Exportă Markdown**, **Exportă JSON**, **Redenumește**, **Mută mai sus**, **Mută mai jos**, **Arhivează** și **Șterge**.
 - O sesiune își afișează starea: **Inactiv**, **În lucru**, **Așteaptă aprobare** sau **Eroare**. O sesiune în lucru are un semn care se rotește lângă oră, iar una care așteaptă aprobare un scut.
 
@@ -70,7 +70,7 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
 
-O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. Copilul unei sesiuni părinte în Bypass pornește în Editare automată, cu excepția cazului în care activezi **Permite acces complet pentru sarcinile delegate** în **Setări > Permisiuni** și confirmi. Setarea este oprită implicit și se aplică lansărilor viitoare din toate workbench-urile; dacă o oprești, sesiunile existente își păstrează modul. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei.
+O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. Copilul unei sesiuni părinte în Bypass pornește în Editare automată, cu excepția cazului în care activezi **Permite acces complet pentru sarcinile delegate** în **Setări > Date și confidențialitate** și confirmi. Setarea este oprită implicit și se aplică lansărilor viitoare din toate workbench-urile; dacă o oprești, sesiunile existente își păstrează modul. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei.
 
 Într-o copie de lucru partajată, lasă o sesiune copil să termine implementarea și verifică predarea înainte de a porni următoarea.
 

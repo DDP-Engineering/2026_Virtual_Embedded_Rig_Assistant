@@ -2,6 +2,41 @@ version: Unreleased
 date: null
 entries:
   - category: improved
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Open session search from the magnifier next to New session.
+      ro: Deschide căutarea sesiunilor cu lupa de lângă Sesiune nouă.
+      de: Die Lupe neben Neue Sitzung öffnet die Sitzungssuche.
+      fr: Ouvrez la recherche de sessions avec la loupe à côté de Nouvelle session.
+  - category: improved
+    topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
+    text:
+      en: Manage delegated access and desktop notifications in Data & privacy.
+      ro: Găsești accesul pentru sarcini delegate și notificările în Date și confidențialitate.
+      de: Delegierten Zugriff und Desktop-Benachrichtigungen unter Daten & Datenschutz verwalten.
+      fr: Gérez l’accès délégué et les notifications dans Données et confidentialité.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Plugin cards show relevant actions, with help in Details and reinstallation in More actions.
+      ro: Cardurile arată acțiunile utile, cu ajutor în Detalii și reinstalare în Mai multe acțiuni.
+      de: Plugin-Karten zeigen passende Aktionen, Hilfe in Details und Neuinstallation unter Weitere Aktionen.
+      fr: L’aide est dans Détails et la réinstallation dans Plus d’actions.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Install verified official skills directly, with a compact confirmation for other packages.
+      ro: Instalează direct skill-urile oficiale verificate, cu o confirmare scurtă pentru alte pachete.
+      de: Geprüfte offizielle Skills direkt installieren und andere Pakete kompakt bestätigen.
+      fr: Installez directement les compétences officielles vérifiées et confirmez les autres paquets.
+  - category: improved
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Toggle plugins in a compact workbench list and open Details for agent tools and setup.
+      ro: Activează pluginurile din lista compactă a bancului de lucru. Opțiunile sunt în Detalii.
+      de: Plugins kompakt in der Werkbank auswählen und Werkzeuge unter Details einstellen.
+      fr: Activez les plugins dans une liste compacte et réglez leurs outils dans Détails.
+  - category: improved
     topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
     text:
       en: Turn a saved firmware comparison into a manual test plan with per-case readiness.
@@ -15,6 +50,13 @@ entries:
       ro: Rapoartele și planurile salvate folosesc referințele exacte furnizate de instrumente.
       de: Firmware-Berichte und Testpläne speichern die genauen Zeilenverweise der Werkzeuge.
       fr: Les rapports et plans enregistrés gardent les références de lignes exactes des outils.
+  - category: fixed
+    topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
+    text:
+      en: Provider errors for reasoning appear above the chat controls.
+      ro: Erorile furnizorului pentru reasoning apar deasupra comenzilor conversației.
+      de: Anbieterfehler zum Reasoning erscheinen über den Chat-Steuerelementen.
+      fr: Les erreurs du fournisseur liées au raisonnement apparaissent au-dessus des commandes du chat.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

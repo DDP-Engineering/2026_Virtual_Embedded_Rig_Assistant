@@ -180,14 +180,6 @@ export function App() {
     enabled: !!benchId,
     refetchInterval: 2000,
   });
-  // Sidebar search over titles and message text of this workbench's sessions.
-  const [sessionSearch, setSessionSearch] = useState("");
-  const sessionQuery = sessionSearch.trim();
-  const found = useQuery({
-    queryKey: ["session.search", benchId, sessionQuery],
-    queryFn: () => api.invoke("session.search", { query: sessionQuery, workbenchId: benchId }),
-    enabled: !!benchId && !!sessionQuery,
-  });
   const changed = useCallback(() => {
     void client.invalidateQueries({ queryKey: ["session.list"] });
     void client.invalidateQueries({ queryKey: ["session.search"] });
@@ -736,11 +728,7 @@ export function App() {
             key={benchId}
             workbenchId={benchId}
             openLinked={selectLinkedSession}
-            sessions={sessionQuery ? (found.data ?? []) : (sessions.data ?? [])}
-            search={sessionSearch}
-            searchChanged={setSessionSearch}
-            searching={!!sessionQuery && found.isPending}
-            searchError={sessionQuery ? found.error : undefined}
+            sessions={sessions.data ?? []}
             active={activeSession}
             select={select}
             create={create}

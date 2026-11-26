@@ -12,7 +12,7 @@ Une session est une conversation avec l’agent au sein d’un banc de travail. 
 
 - **Nouvelle session** démarre une conversation dans le banc de travail ouvert. S’il existe une session vide inutilisée, VERA l’ouvre au lieu d’en créer une autre.
 - Le premier message devient le titre. Utilisez **Renommer** à tout moment, y compris pendant un tour.
-- **Rechercher des sessions** trouve les sessions par titre et par texte des messages. Utilisez les commandes de pagination sous les listes longues pour voir les autres sessions.
+- Sélectionnez la loupe **Rechercher des sessions** à côté de **Nouvelle session** pour chercher par titre et par texte des messages. Appuyez sur **Échap** dans le champ de recherche ou sélectionnez de nouveau la loupe pour retrouver la liste complète. Utilisez les commandes de pagination sous les listes longues pour voir les autres sessions.
 - Chaque ligne de session indique l’heure de sa dernière activité et possède un menu avec **Exporter en Markdown**, **Exporter en JSON**, **Renommer**, **Monter**, **Descendre**, **Archiver** et **Supprimer**.
 - Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**. Une session en cours porte une marque qui tourne près de l’heure, et une session en attente d’approbation un bouclier.
 
@@ -70,7 +70,7 @@ Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** 
 
 L’agent parent peut envoyer d’autres instructions dans la même conversation enfant et choisir son modèle et son niveau de raisonnement pour les tours suivants. Le fil identifie ces messages comme **Instruction de l’agent parent**. Si la session enfant travaille déjà, une instruction admissible attend la prochaine requête au modèle. Utilisez la carte d’approbation de la session enfant lorsqu’une décision de l’utilisateur est requise.
 
-Une nouvelle session enfant démarre avec le mode d’autorisation actuel de la session parente. L’enfant d’une session parente en mode Bypass démarre en Modification auto, sauf si vous activez **Autoriser l’accès complet pour les tâches déléguées** dans **Paramètres > Autorisations** et confirmez. L’option est désactivée par défaut et concerne les prochains lancements dans tous les bancs de travail ; si vous la désactivez, les sessions existantes gardent leur mode. Après le lancement, choisissez séparément le mode de chaque session dans sa zone de saisie. Réduisez l’accès d’une session enfant dans son propre chat.
+Une nouvelle session enfant démarre avec le mode d’autorisation actuel de la session parente. L’enfant d’une session parente en mode Bypass démarre en Modification auto, sauf si vous activez **Autoriser l’accès complet pour les tâches déléguées** dans **Paramètres > Données et confidentialité** et confirmez. L’option est désactivée par défaut et concerne les prochains lancements dans tous les bancs de travail ; si vous la désactivez, les sessions existantes gardent leur mode. Après le lancement, choisissez séparément le mode de chaque session dans sa zone de saisie. Réduisez l’accès d’une session enfant dans son propre chat.
 
 Dans une copie de travail partagée, attendez qu’une session enfant termine son travail et vérifiez sa livraison avant de lancer la suivante.
 

@@ -38,15 +38,23 @@ type Manifest = Record<string, unknown> & {
   programs: Record<string, never>;
 };
 /** A small real two-plugin catalog; full official inventory is verified by packaging tests. */
-async function release(edit: (manifest: Manifest) => void = () => {}) {
+async function release(
+  edit: (manifest: Manifest) => void = () => {},
+  analysis?: "skills" | "extra" | "community" | "invalid skill" | "invalid Markdown",
+) {
   const source = await temp("source");
-  for (const id of ["serial-monitor", "esp32-esptool"])
-    await cp(join(official, id), join(source, id), { recursive: true });
+  const ids = ["serial-monitor", "esp32-esptool", ...(analysis ? ["analysis-skills"] : [])];
+  for (const id of ids) await cp(join(official, id), join(source, id), { recursive: true });
+  if (analysis === "extra") await writeFile(join(source, "analysis-skills", "extra.txt"), "Extra data");
+  if (analysis === "invalid skill")
+    await writeFile(join(source, "analysis-skills", "skills", "test-planner", "SKILL.md"), "# Invalid skill");
+  if (analysis === "invalid Markdown")
+    await writeFile(join(source, "analysis-skills", "README.md"), Buffer.from([0xff]));
   await writeFile(
     join(source, "catalog.yaml"),
     stringify({
       format: 1,
-      official: ["serial-monitor", "esp32-esptool"],
+      official: ids.filter((id) => analysis !== "community" || id !== "analysis-skills"),
       reviewed: [{ plugin: "serial-monitor", match: "serial send --help" }],
       metadata: {
         "serial-monitor": {
@@ -260,6 +268,7 @@ it("installs a reviewed catalog plugin with its tier and the catalog source, onc
     id: "serial-monitor",
     version: "0.2.2",
     tier: "official",
+    source: `${url}/serial-monitor-0.2.2.zip`,
     required: true,
   });
   expect(reviewed.review.manifest?.id).toBe("serial-monitor");
@@ -418,7 +427,18 @@ it("requires a review for a first install and for updates that change programs o
     (manifest.rules[0] as { risk: string }).risk = "device-read";
   });
   await catalog.view({ refresh: true });
-  expect((await catalog.review("serial-monitor")).required).toBe(true);
+  const rules = await catalog.review("serial-monitor");
+  expect(rules).toMatchObject({
+    required: true,
+    changes: {
+      rules: [
+        {
+          before: { position: 1, rule: { risk: "safe" } },
+          after: { position: 1, rule: { risk: "device-read" } },
+        },
+      ],
+    },
+  });
 
   state.folder = await release((manifest) => {
     manifest.version = "1.0.2";
@@ -427,8 +447,73 @@ it("requires a review for a first install and for updates that change programs o
     if (name) (programs[name] as { install: unknown }).install = { pip: "pyserial-tools" };
   });
   await catalog.view({ refresh: true });
-  expect((await catalog.review("serial-monitor")).required).toBe(true);
+  const programs = await catalog.review("serial-monitor");
+  expect(programs).toMatchObject({
+    required: true,
+    changes: { programs: [{ after: { install: { pip: "pyserial-tools" } } }] },
+  });
 });
+
+it.each(["inserted", "moved"] as const)("reports only the %s rule in a catalog update", async (change) => {
+  const { state, url } = await host();
+  const { catalog, store } = await fixture({ location: url });
+  await store.install(join(official, "serial-monitor"));
+  const added = { match: "serial sample *", risk: "safe" };
+  state.folder = await release((manifest) => {
+    manifest.version = "1.0.2";
+    if (change === "inserted") manifest.rules.unshift(added);
+    else {
+      const first = manifest.rules.shift();
+      if (!first) throw new Error("The fixture has no rule to move.");
+      manifest.rules.splice(1, 0, first);
+    }
+  });
+  const reviewed = await catalog.review("serial-monitor");
+  expect(reviewed.required).toBe(true);
+  const [difference] = reviewed.changes?.rules ?? [];
+  expect(reviewed.changes?.rules).toHaveLength(1);
+  if (change === "inserted") {
+    expect(difference).toEqual({ after: { position: 1, rule: added } });
+  } else {
+    expect(difference?.before?.rule).toEqual(difference?.after?.rule);
+    expect(difference?.before?.position).not.toBe(difference?.after?.position);
+  }
+});
+
+it("requires confirmation without claiming differences when the installed package is damaged", async () => {
+  const { state, url } = await host();
+  const { catalog, data, store } = await fixture({ location: url });
+  await store.install(join(official, "serial-monitor"));
+  await writeFile(join(data, "plugins", "installed", "serial-monitor", "scripts", "serial_monitor.py"), "");
+  state.folder = await release((manifest) => {
+    manifest.version = "1.0.2";
+    manifest.description = "A clearer description.";
+  });
+  const reviewed = await catalog.review("serial-monitor");
+  expect(reviewed.required).toBe(true);
+  expect(reviewed.review.installed?.version).toBe("0.2.2");
+  expect(reviewed.changes).toBeUndefined();
+});
+
+it("installs verified official Analysis skills directly using the reviewed hash", async () => {
+  const { state, url } = await host();
+  state.folder = await release(undefined, "skills");
+  const { catalog, store } = await fixture({ location: url });
+  const verified = await catalog.review("analysis-skills");
+  expect(verified.required).toBe(false);
+  await catalog.install("analysis-skills", verified.review.sha256);
+  expect((await store.load("analysis-skills")).record.sha256).toBe(verified.review.sha256);
+});
+
+it.each(["extra", "community", "invalid skill", "invalid Markdown"] as const)(
+  "requires confirmation for the %s Analysis skills package",
+  async (kind) => {
+    const { state, url } = await host();
+    state.folder = await release(undefined, kind);
+    const { catalog } = await fixture({ location: url });
+    expect((await catalog.review("analysis-skills")).required).toBe(true);
+  },
+);
 
 // REQ-FUNC-ce542246
 it("marks installed plugins with a higher catalog version as updates without fetching any zip", async () => {

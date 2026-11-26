@@ -8,15 +8,15 @@
 | **Web access** | Web search and reading for the agent |
 | **Appearance and language** | Language, theme and text sizes |
 | **Commands** | The shell for agent commands and new terminals |
-| **Permissions** | Full Access for delegated tasks. See [Permissions](permissions.md). |
-| **Notifications** | Desktop alerts for turn completion, approvals and questions |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |
-| **Data & privacy** | Masking defaults for four areas |
+| **Data & privacy** | Secret masking, delegated Full Access and desktop notifications |
 | **About** | Version, runtime, license and third-party components |
 | **Dictation** | Local Whisper models and spoken language |
 
-## Notifications
+## Data & privacy
+
+### Notifications
 
 **Turn completion** offers **Never**, **In background** (the default) and **Always**. VERA is in the background when its window is minimized, hidden or unfocused.
 
@@ -28,7 +28,7 @@ Click a notification banner while VERA is running to open its session. VERA asks
 
 On Windows, desktop alerts require an installed copy of VERA. The portable ZIP uses the session indicators, approval cards and question cards in VERA. On Linux, desktop alerts require a desktop notification service. Where desktop alerts are supported, the operating system controls whether they appear while VERA is running. If alerts are missing, check VERA’s system notification settings and Do Not Disturb. The in-app session indicators, approval cards and question cards remain available.
 
-## Data & privacy
+### Masking stored secrets
 
 Choose whether stored secrets are replaced with `[REDACTED]` in **Display**, **Program runs**, **Agent and model**, and **Artifacts and exports**. Display and Program runs are off by default; Agent and model and Artifacts and exports are on. Only stored secrets known to VERA are masked; other sensitive text is not detected automatically. Provider errors, connection tests and diagnostic logs keep their unconditional protection.
 
@@ -37,6 +37,10 @@ Use **Save** or **Cancel** at the top right. A switch changes only the draft unt
 Under **Edit workbench → Data & privacy**, each area has **Default**, **On** or **Off**. Default shows the current app value and follows later app changes; explicit choices belong to that workbench and travel with its configuration. Choosing Default also asks for confirmation if it turns Agent and model off. New workbenches inherit the app values unless you choose otherwise. Read-only workbenches cannot save changes.
 
 Disabling masking cannot recover content already saved as `[REDACTED]`, including session history and artifacts. Read or recreate it from the original source. Previously saved raw history is not erased by enabling masking.
+
+### Delegated tasks
+
+The **Allow Full Access for delegated tasks** switch uses a separate confirmation and saves when you confirm. See [Permissions](permissions.md) for permission modes.
 
 ## Appearance and language
 

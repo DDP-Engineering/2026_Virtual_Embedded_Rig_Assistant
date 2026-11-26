@@ -218,6 +218,7 @@ it("validates the catalog view, review and install channels and the catalog app 
     id: "serial-monitor",
     version: "1.0.1",
     tier: "official",
+    source: "https://example.com/catalog/serial-monitor-1.0.1.zip",
     required: false,
   };
   expect(channels["plugins.catalogReview"].response.parse(review)).toEqual(review);

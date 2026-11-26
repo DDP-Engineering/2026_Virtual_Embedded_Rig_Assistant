@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SessionState } from "@vera/shared";
 import { Brain } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
@@ -12,11 +13,13 @@ export function ReasoningPicker({
   state,
   disabled,
   catalogVersion,
+  noticeHost,
 }: {
   sessionId: string;
   state: Pick<SessionState, "modelRef" | "reasoning">;
   disabled: boolean;
   catalogVersion: number;
+  noticeHost: HTMLDivElement | null;
 }) {
   const { t } = useTranslation();
   const client = useQueryClient();
@@ -54,9 +57,11 @@ export function ReasoningPicker({
     max: t("chat.reasoningMax"),
     ultra: t("chat.reasoningUltra"),
   };
-  if (metadata.error) return <ErrorMessage error={metadata.error} />;
+  const error = metadata.error ?? failure;
+  const notice =
+    error != null && noticeHost ? createPortal(<ErrorMessage error={error} />, noticeHost) : null;
   const details = metadata.data;
-  if (!details?.options.length) return null;
+  if (!details?.options.length) return notice;
   return (
     <>
       <label className="composer-reasoning" title={t("chat.reasoningLevel")}>
@@ -65,7 +70,7 @@ export function ReasoningPicker({
         <select
           data-reasoning-picker
           value={details.selected ?? ""}
-          disabled={disabled || saving}
+          disabled={disabled || saving || metadata.isError}
           onChange={(event) => {
             const reasoning = event.currentTarget.value || null;
             const modelRef = details.modelRef;
@@ -92,7 +97,7 @@ export function ReasoningPicker({
           ))}
         </select>
       </label>
-      {failure !== undefined && <ErrorMessage error={failure} />}
+      {notice}
     </>
   );
 }

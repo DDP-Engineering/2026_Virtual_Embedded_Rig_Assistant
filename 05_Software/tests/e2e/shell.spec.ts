@@ -459,7 +459,7 @@ test("validated settings update survives an application restart", async () => {
       )
       .toBe(1);
     await page.locator('[data-i18n="nav.settings"]').click();
-    await page.locator('[data-section="notifications"]').click();
+    await page.locator('[data-section="data"]').click();
     await page.locator("#notification-turn-completion").selectOption("always");
     await page.locator("#notification-approval-requests").uncheck();
     await page.locator("#notification-question-requests").uncheck();
@@ -482,7 +482,7 @@ test("validated settings update survives an application restart", async () => {
     expect(stored.settings.installationId).toBe(first.settings.installationId);
     expect(JSON.parse(readFileSync(join(userData, "settings.json"), "utf8"))).toEqual(saved.settings);
     await restarted.locator('[data-i18n="nav.settings"]').click();
-    await restarted.locator('[data-section="notifications"]').click();
+    await restarted.locator('[data-section="data"]').click();
     await expect(restarted.locator("#notification-turn-completion")).toHaveValue("always");
     await expect(restarted.locator("#notification-approval-requests")).not.toBeChecked();
     await expect(restarted.locator("#notification-question-requests")).not.toBeChecked();

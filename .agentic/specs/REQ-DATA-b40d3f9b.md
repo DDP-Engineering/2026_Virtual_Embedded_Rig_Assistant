@@ -207,9 +207,11 @@ both remote and bundled views, including when installed state/update markers are
   first issue code) and the zip is removed.
 - **Downgrade.** A review or install of an entry whose version is lower than the installed plugin's is
   refused with CONFLICT `plugins.catalogError.downgrade`.
-- **Review decision.** The review result carries `required: true` when the plugin is not installed, the
-  installed plugin has an issue, or the canonical JSON (keys sorted) of the manifest's `programs` or
-  `rules` differs from the installed manifest's; otherwise `false`.
+- **Review decision.** A first install requires confirmation unless it qualifies under REQ-FUNC-9a7cd113.
+  An update requires confirmation when the installed plugin has an issue or the canonical JSON (keys
+  sorted) of the manifest's `programs` or `rules` differs from the installed manifest's. The result
+  includes the verified archive's URL or bundled file path and the before and after definitions of changed
+  programs or rules. Rule differences include positions and align unchanged rules across insertions and removals.
 - **Install.** `plugins.catalogInstall {id, sha256}` re-hashes the kept zip of the current entry
   (CONFLICT when it is missing or differs), installs it bound to the reviewed integrity `sha256`
   (existing CONFLICT) with `tier` from the entry and `source {kind: catalog, path: <zip URL, or the bundled zip's file path>}`, then

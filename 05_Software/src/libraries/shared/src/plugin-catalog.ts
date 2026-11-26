@@ -4,8 +4,11 @@ import {
   pluginIdSchema,
   pluginInstalledSchema,
   pluginManifestSchema,
+  pluginProgramNameSchema,
   pluginReviewSchema,
   pluginRiskSchema,
+  programSchema,
+  ruleSchema,
 } from "./plugins.js";
 
 /** Limits of a catalog index (spec REQ-DATA-b40d3f9b §4) and its packs (§1.1). */
@@ -227,12 +230,36 @@ export const pluginCatalogViewSchema = z.strictObject({
 });
 export type PluginCatalogView = z.infer<typeof pluginCatalogViewSchema>;
 /** A downloaded, verified catalog package: the store's review plus whether the user must see it. */
+const positionedRuleSchema = z.strictObject({ position: z.number().int().min(1).max(512), rule: ruleSchema });
+
 export const pluginCatalogReviewSchema = z.strictObject({
   review: pluginReviewSchema,
   id: pluginIdSchema,
   version: manifest.version,
   tier: catalogTierSchema,
+  source: z.string().min(1).max(4096),
   required: z.boolean(),
+  changes: z
+    .strictObject({
+      programs: z
+        .array(
+          z.strictObject({
+            name: pluginProgramNameSchema,
+            before: programSchema.optional(),
+            after: programSchema.optional(),
+          }),
+        )
+        .max(128),
+      rules: z
+        .array(
+          z.strictObject({
+            before: positionedRuleSchema.optional(),
+            after: positionedRuleSchema.optional(),
+          }),
+        )
+        .max(1024),
+    })
+    .optional(),
 });
 export type PluginCatalogReview = z.infer<typeof pluginCatalogReviewSchema>;
 export const pluginCatalogRequestSchema = z.strictObject({ refresh: z.boolean() });

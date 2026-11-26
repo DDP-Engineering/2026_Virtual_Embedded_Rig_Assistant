@@ -15,9 +15,12 @@ import {
   type PluginInstalled,
   type PluginManifest,
   type PluginReview,
+  pluginPlatform,
   type VeraError,
   veraError,
+  veraErrorSchema,
 } from "@vera/shared";
+import { diffArrays } from "diff";
 import { type PluginStore, previewPluginZip } from "./store.js";
 
 export interface PluginCatalogOptions {
@@ -78,6 +81,37 @@ function canonical(value: unknown): string {
       : item,
   );
 }
+
+function packageSource(origin: Origin, entry: CatalogEntry): string {
+  return origin.kind === "remote" ? `${origin.url}${entry.url}` : join(origin.folder, entry.url);
+}
+
+/** Align unchanged rules first. Pair moves by definition, then edits by pattern. */
+function ruleChanges(before: PluginManifest["rules"], after: PluginManifest["rules"]) {
+  const positioned = (rules: PluginManifest["rules"]) =>
+    rules.map((rule, index) => ({ value: { position: index + 1, rule }, key: canonical(rule) }));
+  const diff = diffArrays(positioned(before), positioned(after), { comparator: (a, b) => a.key === b.key });
+  const removed = diff.filter((hunk) => hunk.removed).flatMap((hunk) => hunk.value);
+  const added = diff.filter((hunk) => hunk.added).flatMap((hunk) => hunk.value);
+  const pairs = new Map<number, (typeof added)[number]["value"]>();
+  for (const keyOf of [
+    (entry: (typeof added)[number]) => entry.key,
+    (entry: (typeof added)[number]) => entry.value.rule.match,
+  ]) {
+    for (const entry of removed) {
+      if (pairs.has(entry.value.position)) continue;
+      const index = added.findIndex((candidate) => keyOf(candidate) === keyOf(entry));
+      if (index < 0) continue;
+      const [matched] = added.splice(index, 1);
+      if (matched) pairs.set(entry.value.position, matched.value);
+    }
+  }
+  return [
+    ...removed.map(({ value }) => ({ before: value, after: pairs.get(value.position) })),
+    ...added.map(({ value }) => ({ after: value })),
+  ];
+}
+
 /** Where a response finally came from must still be https, or http on this computer. */
 function securelyServed(url: string): boolean {
   try {
@@ -297,18 +331,37 @@ export class PluginCatalog {
   private kept(entry: CatalogEntry): string {
     return join(this.options.root, `${entry.sha256}.zip`);
   }
-  /** The first install, a broken installed plugin, or changed programs or rules (install sources included). */
-  private async required(id: string, manifest: PluginManifest): Promise<boolean> {
+  /** Only validated official skills and documentation can skip a first-install confirmation. */
+  private async reviewPolicy(
+    entry: CatalogEntry,
+    review: PluginReview,
+    manifest: PluginManifest,
+  ): Promise<Pick<PluginCatalogReview, "required" | "changes">> {
     let previous: PluginManifest;
     try {
-      previous = (await this.options.store.load(id)).manifest;
-    } catch {
-      return true;
+      previous = (await this.options.store.load(entry.id)).manifest;
+    } catch (error) {
+      const platform = pluginPlatform(process.platform, process.arch);
+      const direct =
+        veraErrorSchema.safeParse(error).data?.code === "NOT_FOUND" &&
+        !review.installed &&
+        entry.tier === "official" &&
+        review.skillsAndDocumentationOnly === true &&
+        platform !== undefined &&
+        entry.platforms.includes(platform) &&
+        manifest.platforms.includes(platform);
+      return { required: !direct };
     }
-    return (
-      canonical(previous.programs) !== canonical(manifest.programs) ||
-      canonical(previous.rules) !== canonical(manifest.rules)
-    );
+    const names = new Set([...Object.keys(previous.programs), ...Object.keys(manifest.programs)]);
+    const programs = [...names].flatMap((name) => {
+      const before = Object.hasOwn(previous.programs, name) ? previous.programs[name] : undefined;
+      const after = Object.hasOwn(manifest.programs, name) ? manifest.programs[name] : undefined;
+      return canonical(before) === canonical(after) ? [] : [{ name, before, after }];
+    });
+    const rules = ruleChanges(previous.rules, manifest.rules);
+    return programs.length || rules.length
+      ? { required: true, changes: { programs, rules } }
+      : { required: false };
   }
 
   /**
@@ -370,7 +423,8 @@ export class PluginCatalog {
         id: entry.id,
         version: entry.version,
         tier: entry.tier,
-        required: await this.required(entry.id, manifest),
+        source: packageSource(origin, entry),
+        ...(await this.reviewPolicy(entry, review, manifest)),
       };
     } catch (error) {
       await rm(zip, { force: true });
@@ -397,8 +451,10 @@ export class PluginCatalog {
         throw veraError("CONFLICT");
       }
       if (bytes.length !== entry.bytes || sha256(bytes) !== entry.sha256) throw veraError("CONFLICT");
-      const url = origin.kind === "remote" ? `${origin.url}${entry.url}` : join(origin.folder, entry.url);
-      return await this.options.store.install(zip, sha, { tier: entry.tier, url });
+      return await this.options.store.install(zip, sha, {
+        tier: entry.tier,
+        url: packageSource(origin, entry),
+      });
     } finally {
       await rm(zip, { force: true });
     }

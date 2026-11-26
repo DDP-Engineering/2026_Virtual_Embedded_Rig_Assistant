@@ -6,7 +6,7 @@ import { ErrorMessage } from "./error-message.js";
 
 const policyKey = ["app.settings.delegatedFullAccess"];
 
-export function PermissionSettings({ disabled }: { disabled: boolean }) {
+export function DelegatedAccessSetting({ disabled }: { disabled: boolean }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const policy = useQuery({
@@ -56,8 +56,7 @@ export function PermissionSettings({ disabled }: { disabled: boolean }) {
   }
 
   return (
-    <section className="surface" data-settings-section="permissions">
-      <h2 tabIndex={-1}>{t("settings.permissions")}</h2>
+    <div className="data-settings-group">
       <label className="flex items-center gap-2">
         <input
           id="delegated-full-access"
@@ -107,6 +106,6 @@ export function PermissionSettings({ disabled }: { disabled: boolean }) {
           </footer>
         </dialog>
       )}
-    </section>
+    </div>
   );
 }

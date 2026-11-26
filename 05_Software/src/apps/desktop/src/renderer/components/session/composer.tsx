@@ -98,6 +98,7 @@ export function Composer({
   const [matches, setMatches] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
+  const [reasoningNotice, setReasoningNotice] = useState<HTMLDivElement | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const selection = useRef<{ revision: number; caret: number }>(undefined);
@@ -298,6 +299,7 @@ export function Composer({
       )}
       {imageDraft?.error !== undefined && <ErrorMessage error={imageDraft.error} />}
       {imageDraft?.full && <p role="alert">{t("chat.imagesLimit", { count: MAX_MESSAGE_IMAGES })}</p>}
+      <div ref={setReasoningNotice} className="composer-reasoning-notice" />
       <form
         onDragOver={(event) => {
           if (event.dataTransfer.types.some((type) => type === WORKBENCH_IMAGE_DRAG || type === "Files")) {
@@ -428,6 +430,7 @@ export function Composer({
               state={state}
               disabled={disabled}
               catalogVersion={subscriptionModels.dataUpdatedAt + providers.dataUpdatedAt}
+              noticeHost={reasoningNotice}
             />
           )}
           <PermissionPicker
