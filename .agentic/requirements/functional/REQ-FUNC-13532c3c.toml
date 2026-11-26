@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-13532c3c"
+
+title = "Read named artifacts from the current agent session"
+
+status = "active"
+
+requirement = """
+When an agent reads an exact artifact reference, VERA shall return bounded text and the verified hash from the current session's named artifact or refuse invalid, missing, inaccessible or modified evidence.
+"""
+
+verification = "Reopen the saved session, read a bounded window and verify its citation; another session and changed bytes cannot disclose the report."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/read.ts", "05_Software/src/libraries/core/src/artifacts/store.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/artifacts.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-26
+updated = 2026-11-26

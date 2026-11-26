@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b4f70e7e"
+
+title = "Advertise the analysis skill by the requested outcome"
+
+status = "active"
+
+requirement = """
+When VERA advertises firmware analysis skills, the skill metadata shall distinguish comparison of captured runs from preparation of manual test cases and exclude execution requests from the planner's advertised triggers.
+"""
+
+verification = "Check installed skill metadata and probe comparison, manual planning and execution-only intent."
+
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/evaluators/analysis-skills/"]
+
+linked_tests = ["05_Software/tests/plugins/analysis-skills.test.ts", "05_Software/tests/tooling/eval-analysis-skills.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-26
+updated = 2026-11-26

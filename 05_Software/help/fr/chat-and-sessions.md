@@ -116,6 +116,9 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 
 Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans un onglet à côté du Chat.
 
+Pour demander à l’agent de réutiliser un artefact texte enregistré, donnez sa référence exacte
+`artifact:...` dans la même session. Vous pouvez le faire après avoir rouvert la session.
+
 ## Onglets ouverts
 
 Choisissez **Rouvrir le dernier onglet fermé** à côté du chat pour retrouver un document ou une comparaison de la session en cours. Faites un clic droit et choisissez **Épingler l’onglet** pour le garder près du chat lors d’une fermeture groupée. Choisissez **Rechercher dans les onglets ouverts** pour filtrer par titre ou chemin, puis sélectionnez un résultat avec la souris ou avec les flèches et Entrée.

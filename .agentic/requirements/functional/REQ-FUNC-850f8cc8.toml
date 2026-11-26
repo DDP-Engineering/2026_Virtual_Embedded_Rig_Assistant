@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-850f8cc8"
+
+title = "Expose grounded observations and individual test readiness"
+
+status = "active"
+
+requirement = """
+When firmware evidence is incomplete or uneven, the analysis skills shall present sourced observations separately from unsupported verdicts and identify readiness and missing evidence for each planned case.
+"""
+
+verification = "Inspect templates and run a synthetic report-to-plan probe with a sourced criterion and a requested measurement with no sourced threshold."
+
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/evaluators/analysis-skills/"]
+
+linked_tests = ["05_Software/tests/plugins/analysis-skills.test.ts", "05_Software/tests/tooling/eval-analysis-skills.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-26
+updated = 2026-11-26

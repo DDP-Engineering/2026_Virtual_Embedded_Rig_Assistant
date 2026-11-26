@@ -6,6 +6,15 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Changed
+
+- analysis-skills 0.4.0: Route firmware analysis by intent and build manual plans from saved comparisons.
+- Read verified text artifacts by reference in their owning session.
+
+### Fixed
+
+- analysis-skills 0.4.1: Save exact tool-issued line citations in firmware reports and manual test plans.
+
 ## [0.4.0] - 2026-11-26
 
 ### Added

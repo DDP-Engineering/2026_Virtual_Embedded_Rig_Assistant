@@ -2,6 +2,10 @@
 
 ## Scope and sources
 
+- Main observed difference (cite its evidence):
+- Acceptance outcome, or why acceptance cannot be evaluated:
+- Missing evidence and the next decision it would enable:
+
 Baseline/candidate identities, firmware versions and known image hashes; captured log paths, profiles,
 source SHA-256 and exact refs. Include inspected notes/documents and unavailable evidence.
 

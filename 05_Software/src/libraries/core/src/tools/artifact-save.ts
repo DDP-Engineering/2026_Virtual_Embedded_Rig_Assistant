@@ -1,5 +1,6 @@
 import { ARTIFACT_MAX_BYTES, validArtifactName } from "@vera/shared";
 import { z } from "zod";
+import { exactIssuedLineCitations } from "../agent/citations.js";
 import type { ToolDefinition } from "./context.js";
 
 export const artifactSaveTool: ToolDefinition = {
@@ -22,15 +23,31 @@ export const artifactSaveTool: ToolDefinition = {
       ),
     description: z.string().optional(),
     overwrite: z.boolean().optional(),
+    exactLineRefs: z
+      .boolean()
+      .optional()
+      .describe(
+        "Replace covered line subranges with the narrowest issued window from this turn. Leave other references unchanged.",
+      ),
   }),
   async execute(ctx, raw, signal) {
     if (!ctx.artifacts) throw Error("Session artifact storage is unavailable.");
+    const { exactLineRefs, ...args } = artifactSaveTool.params.parse(raw) as {
+      name: string;
+      content: string;
+      description?: string;
+      overwrite?: boolean;
+      exactLineRefs?: boolean;
+    };
     try {
-      return await ctx.artifacts.store.save(
-        ctx.artifacts,
-        raw as { name: string; content: string; description?: string; overwrite?: boolean },
-        signal,
-      );
+      if (exactLineRefs && args.content.includes("[[")) {
+        const issued = ctx.artifacts.issuedCitationRefs?.();
+        if (issued?.size) {
+          const normalized = exactIssuedLineCitations(args.content, issued);
+          if (Buffer.byteLength(normalized, "utf8") <= ARTIFACT_MAX_BYTES) args.content = normalized;
+        }
+      }
+      return await ctx.artifacts.store.save(ctx.artifacts, args, signal);
     } catch (error) {
       if (error instanceof Error) throw error;
       const code = (error as { code?: string }).code;

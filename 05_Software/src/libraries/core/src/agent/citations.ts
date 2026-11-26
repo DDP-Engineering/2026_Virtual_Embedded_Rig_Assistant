@@ -12,6 +12,44 @@ function refs(value: unknown, out: Set<string>): void {
       refs(child, out);
     }
 }
+
+/** Collect references from successful structured tool results, never from prose. */
+export function addIssuedCitationRefs(message: Message, issued: Set<string>): void {
+  if (message.role !== "toolResult" || message.isError || message.toolName === "wireshark_capture") return;
+  for (const block of message.content) {
+    if (block.type !== "text") continue;
+    try {
+      const value: unknown = JSON.parse(block.text);
+      refs(value, issued);
+      if (message.toolName === "decode_register") {
+        const decoded = decodeRegisterResultSchema.safeParse(value);
+        if (decoded.success) for (const ref of decoded.data.sourceRefs) issued.add(ref);
+      }
+    } catch {
+      // Unstructured text cannot issue references.
+    }
+  }
+}
+
+/** Keep exact citations and replace covered subranges with the narrowest tool-issued line window. */
+export function exactIssuedLineCitations(content: string, issued: ReadonlySet<string>): string {
+  const windows = [...issued]
+    .flatMap((ref) => {
+      const range = parseRef(ref);
+      return range?.kind === "lines" ? [{ ...range, ref }] : [];
+    })
+    .sort((a, b) => a.end - a.start - (b.end - b.start) || a.start - b.start);
+  if (!windows.length) return content;
+  return content.replace(/\[\[([^\]\r\n]*)(\]\])?/g, (citation, ref: string, close: string | undefined) => {
+    if (!close) return citation;
+    const range = parseRef(ref);
+    if (range?.kind !== "lines" || issued.has(ref)) return citation;
+    const window = windows.find(
+      (item) => item.path === range.path && item.start <= range.start && item.end >= range.end,
+    );
+    return window ? `[[${window.ref}]]` : citation;
+  });
+}
 /**
  * A tool issued `ref` itself, or `ref` is a line range inside a line window issued for the same file: the
  * model read those lines and may cite only the part it used.
@@ -84,21 +122,7 @@ export async function validateCitations(
           } catch {
             /* plain text issues no refs */
           }
-  for (const message of messages)
-    if (message.role === "toolResult" && !message.isError && message.toolName !== "wireshark_capture")
-      for (const block of message.content)
-        if (block.type === "text") {
-          try {
-            const value: unknown = JSON.parse(block.text);
-            refs(value, issued);
-            if (message.toolName === "decode_register") {
-              const decoded = decodeRegisterResultSchema.safeParse(value);
-              if (decoded.success) for (const ref of decoded.data.sourceRefs) issued.add(ref);
-            }
-          } catch {
-            /* refs originate structured tool fields */
-          }
-        }
+  for (const message of messages) addIssuedCitationRefs(message, issued);
   const found = [
     ...new Set(Array.from(text.matchAll(/\[\[([^\]]+)\]\]/g), (match) => match[0].slice(2, -2))),
   ];

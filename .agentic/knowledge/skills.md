@@ -91,8 +91,10 @@ The official analysis-skills plugin supplies firmware-comparator and test-planne
 loaded comparison/manual-plan templates. Test-planner selects one to five sourced manual cases,
 requires identified target and sourced setup/criterion for ready_for_review, keeps numeric gaps
 observation-only/blocked, names enabled plugin operations only as optional future steps, and saves
-unique bounded session artifacts with at most three attempts and no overwrite. Model semantics
-are not tested automatically; source and ZIP loading are.
+unique bounded session artifacts with at most three attempts and no overwrite. Drafts show readiness
+per case. The planner can reopen the exact comparison artifact in the owning session and recheck
+its cited sources. Source and ZIP loading have functional coverage. The optional Analysis Skills
+evaluator measures skill choice and the report handoff through the live gateways.
 REQ-FUNC-c0400001..7, REQ-SEC-c0400008..9 and REQ-DATA-c040000a..b govern that procedure.
 
 REQ-FUNC-e728c8bf metadata/discovery; REQ-FUNC-f06e9051 content admission;

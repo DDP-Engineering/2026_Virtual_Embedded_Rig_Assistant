@@ -48,7 +48,7 @@ import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
-import { issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
+import { addIssuedCitationRefs, issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
 import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths } from "../agent/message-images.js";
@@ -1633,6 +1633,7 @@ export class SessionService {
     const id = row.id;
     let processing = Promise.resolve();
     const networkCaptureContexts = new Map<string, CaptureNavigationContext>();
+    const artifactCitationResults: Message[] = [];
     let failed = false;
     const durable = async () => {
       await this.ready;
@@ -1749,6 +1750,11 @@ export class SessionService {
       ctx.artifacts = {
         store: this.artifacts,
         sessionId: id,
+        issuedCitationRefs: () => {
+          const refs = new Set<string>();
+          for (const result of artifactCitationResults) addIssuedCitationRefs(result, refs);
+          return refs;
+        },
         queue: this.writeQueue,
         now: () => this.now(),
         assertWritable: () => {
@@ -2156,6 +2162,8 @@ export class SessionService {
     let admitting = !!staged;
     let admissionError: { cause: unknown } | undefined;
     const off = runtime.onEvent((event) => {
+      if (ctx.artifacts && event.type === "tool.done" && event.ok && !event.aborted && event.message)
+        artifactCitationResults.push(event.message);
       if (review && (event.type === "message.user" || event.type === "turn.started")) {
         if (
           !echoes.delete(event.type) ||
@@ -2217,6 +2225,7 @@ export class SessionService {
     const discard = () => {
       if (discarded) return;
       discarded = true;
+      artifactCitationResults.length = 0;
       failed = true;
       turn.failed = true;
       this.active.delete(id);
@@ -2269,6 +2278,7 @@ export class SessionService {
           return result;
         })
         .finally(() => {
+          artifactCitationResults.length = 0;
           if (discarded) return;
           this.active.delete(id);
           // The turn has ended; a background compaction after it takes no slot (RULING-005 of TASK-d3a3049f).

@@ -8,7 +8,7 @@
 
 ## Readiness
 
-`ready_for_review` or `blocked`:
+Overall readiness (ready_for_review / blocked):
 Missing evidence / questions:
 Identified target and sourced setup/criterion for every case are required for ready_for_review.
 Observation-only cases keep readiness blocked. No tests have been executed by this plan.
@@ -26,6 +26,8 @@ Include a baseline control when evidence identifies one. Label repeat counts as 
 
 ### TP-01 — case title
 
+- Case readiness (ready_for_review / observation-only / blocked):
+- Missing evidence or question (if applicable):
 - Rationale (evidence → risk → inclusion):
 - Setup and prerequisites (sources):
 - Manual steps:

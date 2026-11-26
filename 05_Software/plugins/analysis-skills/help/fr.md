@@ -1,4 +1,4 @@
-# Compétences d’analyse
+# Analyse de firmware et planification des tests
 
 Le plugin Compétences d’analyse donne à l’agent deux procédures pour travailler sur des éléments que vous avez déjà capturés. La compétence `firmware-comparator` compare une exécution de firmware de référence et une exécution candidate à partir de leurs journaux, des conditions d’exécution documentées, des notes de version et d’un critère d’acceptation, puis enregistre un rapport de comparaison sourcé dans la session. La compétence `test-planner` transforme une modification de firmware, une défaillance capturée ou un objectif en un à cinq cas de test manuels, avec préparation, étapes et critères d’acceptation sourcés ainsi qu’un tableau de résultats, et enregistre le plan dans la session. Aucune des deux compétences ne flashe, ne capture, ne compile ni n’exécute de test.
 
@@ -14,6 +14,11 @@ Le plugin Compétences d’analyse donne à l’agent deux procédures pour trav
 - « Lesquelles de ces exécutions diffèrent, et qu’est-ce qui a changé entre elles ? Demandez-moi si plusieurs exécutions correspondent. »
 - « Planifiez jusqu’à trois tests manuels pour la modification du timing I2C de la version 1.1.0. »
 - « Transformez le rapport de comparaison en plan de test avec un contrôle de référence. »
+
+Après avoir rouvert le chat, indiquez la référence exacte `artifact:...` dans la même session.
+Le plan indique l’état de chaque cas. Avec un montage documenté et un seuil d’acceptation inconnu,
+le cas précise la mesure à relever et reste une observation.
+Les citations enregistrées reprennent la plus petite plage renvoyée par un outil qui couvre les lignes citées.
 
 Quand plusieurs exécutions correspondent, l’agent vous demande de choisir ; il ne prend jamais la plus récente sans le dire. Une carte, une révision, une préparation ou un critère manquant laisse le rapport ou le plan marqué comme bloqué, et l’agent vous demande les informations manquantes. Une limite numérique qu’aucune source n’indique n’est jamais inventée.
 

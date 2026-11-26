@@ -11,6 +11,13 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 ## Public interface
 
 - artifact_save(name,content,description?,overwrite?) is session class and sequential, returns {ref:"artifact:<name>",bytes}; asks no approval, including read-only session permission mode. Disabled names and explicitly injected host policies remain effective; read-only workbench mutation is denied.
+- When `artifact_save` receives `exactLineRefs:true`, it keeps exact line citations and replaces
+  covered subranges with the narrowest line window issued by a successful tool in the current turn.
+  The save uses in-memory tool results. Uncovered references remain as written. Artifact hashes describe the saved text.
+- The agent's read tool accepts an exact `artifact:<name>` from its current session. It resolves by
+  session and name, verifies stored bytes, returns the SHA-256 and uses the configured text and line
+  limits. Pagination reports a next offset and marks clipped lines. Ordinary workbench file access
+  continues to refuse the managed storage path.
 - ArtifactsRepository get/named/list/save uses schema1 session FK and unique(session_id,name); overwrite preserves art_ULID. List sorts UTC creation time/id ascending; rows retain MIME/bytes/SHA256/description/time.
 - ArtifactStore save enters the shared WriteQueue, saves exclusive0600 same-folder temp/fsync/rename and commits metadata plus artifact.saved. Synchronous failure compensates filesystem bytes atomically under retained ownership before publication; committed notification failure preserves saved bytes. verified reads bounded ordinary files, compares stable inode/time/size, UTF8 and stored hash; missing returns NOT_FOUND, mismatched bytes CONFLICT. exists validates a session/name for citations. removeSession uses ordinary canonical ancestors and removes only the named session folder.
 - Shared formatArtifactRef/parseArtifactRef/validArtifactName and strict ArtifactSummary/Content schemas have no host imports. Portable1..100 ASCII name characters exclude dot/dotdot, trailing dot and device stems;5MiB means5*1024*1024 UTF8 bytes.

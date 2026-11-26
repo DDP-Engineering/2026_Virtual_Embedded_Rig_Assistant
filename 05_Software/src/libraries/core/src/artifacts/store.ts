@@ -32,6 +32,7 @@ import type { WriteQueue } from "../workbench/write-queue.js";
 
 export interface ArtifactHost {
   sessionId: string;
+  issuedCitationRefs?: () => ReadonlySet<string>;
   store: ArtifactStore;
   queue: WriteQueue;
   now(): string;
@@ -163,11 +164,15 @@ export class ArtifactStore {
       throw error;
     }
   }
-  exists(sessionId: string, name: string): boolean {
+  openNamed(sessionId: string, name: string): ArtifactContent {
     const row = this.repository.named(sessionId, name);
-    if (!row) return false;
+    if (!row) throw veraError("NOT_FOUND");
+    return this.verified(row.id).artifact;
+  }
+
+  exists(sessionId: string, name: string): boolean {
     try {
-      this.verified(row.id);
+      this.openNamed(sessionId, name);
       return true;
     } catch {
       return false;

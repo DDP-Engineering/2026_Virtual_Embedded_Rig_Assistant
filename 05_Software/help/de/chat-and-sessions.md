@@ -112,6 +112,9 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 
 ## Der rechte Bereich
 
+Geben Sie die genaue Referenz `artifact:...` in derselben Sitzung an, damit der Agent ein
+gespeichertes Textartefakt erneut verwendet. Das funktioniert auch nach dem erneuten Öffnen der Sitzung.
+
 **Rechten Bereich ein- oder ausblenden** zeigt Tabs für die geöffnete Sitzung: **Anweisungen und Skills** (Workbench-Anweisungen und verfügbare Skills), **Dateien**, **Änderungen**, **Artefakte** (Textergebnisse, die der Agent gespeichert hat, mit **Exportieren** und **Im Ordner anzeigen**), **Plan** (die Aufgabenliste des Agenten) und **Läufe** (Programmläufe von Plugins).
 
 Wählen Sie unter **Änderungen** eine Bearbeitung, um ihren Diff neben Chat zu öffnen.

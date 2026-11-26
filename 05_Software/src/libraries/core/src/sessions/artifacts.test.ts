@@ -47,6 +47,104 @@ function save(args: Record<string, unknown>) {
   return { name: "artifact_save", args };
 }
 
+it("normalizes covered citations to the smallest issued window only when requested", async () => {
+  let script = "save";
+  const { service, root } = await setup(
+    [
+      { name: "read", args: { path: "criterion.md" } },
+      { name: "read", args: { path: "criterion.md", offset: 2, limit: 3 } },
+      save({
+        name: "strict.md",
+        content:
+          "Unfinished [[criterion.md#L3-L3\nSettled [[criterion.md#L3-L3]] and [[criterion.md#L1-L5]].",
+        exactLineRefs: true,
+      }),
+      save({ name: "unsupported.md", content: "[[criterion.md#L5-L6]]", exactLineRefs: true }),
+      save({ name: "literal.md", content: "[[criterion.md#L3-L3]]" }),
+    ],
+    { model: () => `replay/${script}` },
+  );
+  await writeFile(join(root, "criterion.md"), "one\ntwo\nthree\nfour\nfive\n");
+  const session = service.create(null, "read-only");
+  service.send(session.id, "Save checked references");
+  await service.waitIdle(session.id);
+  const artifacts = service.listArtifacts(session.id);
+  const strict = artifacts.find(({ name }) => name === "strict.md");
+  const literal = artifacts.find(({ name }) => name === "literal.md");
+  const unsupported = artifacts.find(({ name }) => name === "unsupported.md");
+  expect(strict).toBeDefined();
+  expect(literal).toBeDefined();
+  expect((await service.openArtifact(strict?.artifactId ?? "")).content).toBe(
+    "Unfinished [[criterion.md#L3-L3\nSettled [[criterion.md#L2-L4]] and [[criterion.md#L1-L5]].",
+  );
+  expect((await service.openArtifact(literal?.artifactId ?? "")).content).toBe("[[criterion.md#L3-L3]]");
+  expect((await service.openArtifact(unsupported?.artifactId ?? "")).content).toBe("[[criterion.md#L5-L6]]");
+  await writeFile(
+    join(root, "scripts/stale.jsonl"),
+    [
+      { toolCalls: [save({ name: "stale.md", content: "[[criterion.md#L3-L3]]", exactLineRefs: true })] },
+      { text: "Finished." },
+    ]
+      .map((step) => JSON.stringify(step))
+      .join("\n"),
+  );
+  script = "stale";
+  service.send(session.id, "Save without reopening the source");
+  await service.waitIdle(session.id);
+  const stale = service.listArtifacts(session.id).find(({ name }) => name === "stale.md");
+  expect((await service.openArtifact(stale?.artifactId ?? "")).content).toBe("[[criterion.md#L3-L3]]");
+});
+
+it("reads verified artifact lines after reopening, only in the owning session", async () => {
+  const ref = "artifact:comparison.md";
+  const { service, root, handle, host } = await setup([
+    save({ name: "comparison.md", content: "Scope\r\nObserved I2C timeout\nEvidence pending\n" }),
+  ]);
+  const session = service.create(null, "read-only");
+  service.send(session.id, "Save comparison");
+  await service.waitIdle(session.id);
+  const [artifact] = service.listArtifacts(session.id);
+  expect(artifact).toBeDefined();
+  await service.close();
+  await writeFile(
+    join(root, "scripts/read.jsonl"),
+    [
+      { toolCalls: [{ name: "read", args: { path: ref, offset: 2, limit: 1 } }] },
+      { text: `Evidence [[${ref}]].` },
+    ]
+      .map((step) => JSON.stringify(step))
+      .join("\n"),
+  );
+  const reopened = new core.SessionService({ ...host, model: () => "replay/read" });
+  cleanup.push(() => reopened.close());
+  await reopened.waitReady();
+  const lastCall = () =>
+    handle.db.prepare("SELECT status,result_json FROM tool_calls ORDER BY rowid DESC LIMIT 1").get() as {
+      status: string;
+      result_json: string;
+    };
+  async function read(id: string) {
+    reopened.send(id, "Read the saved report");
+    await reopened.waitIdle(id);
+    return lastCall();
+  }
+  const saved = await read(session.id);
+  expect(saved.status).toBe("ok");
+  expect(saved.result_json).toContain("2: Observed I2C timeout");
+  expect(saved.result_json).toContain(artifact?.sha256);
+  expect(saved.result_json).toContain("nextOffset");
+  expect(saved.result_json).not.toContain("Evidence pending");
+  expect(reopened.get(session.id).snapshot.items.at(-1)).toMatchObject({
+    citations: [{ ref, valid: true }],
+  });
+  const other = reopened.create(null, "read-only");
+  expect(await read(other.id)).toMatchObject({ status: "error" });
+  await writeFile(join(root, ".vera/artifacts", session.id, "comparison.md"), "tampered");
+  const changed = await read(session.id);
+  expect(changed.status).toBe("error");
+  expect(changed.result_json).not.toContain("tampered");
+});
+
 it("saves the script output, metadata/event and valid/missing citations without approval in ask and read-only session modes", async () => {
   for (const mode of ["ask", "read-only"] as const) {
     const { service, root, handle, host } = await setup();

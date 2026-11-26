@@ -28,12 +28,14 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 - `git` 0.3.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/plugins/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
 
-- `analysis-skills` 0.3.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
+- `analysis-skills` 0.4.1, Firmware Analysis & Test Planning, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
   through source plugin. It compares explicit captured runs with parse_log, documented conditions,
   release notes and criterion evidence, saves a session artifact and never operates hardware/tests.
   Test-planner adds a six-section sourced manual plan with one to five targeted cases and a baseline
-  control when available; missing target/setup/criteria blocks readiness. Plugin commands are
+  control when available. It can read a saved comparison in the same session, reports case readiness
+  individually and keeps the overall readiness blocked when evidence is missing. Both skills request
+  exact issued line citations when saving an artifact. Plugin commands are
   optional future instructions with risk levels, and todo records preparation, not measurements.
   Folder and bundled-catalog zip installation are covered by analysis-skills.test.ts and
   prepare-plugins.test.ts.

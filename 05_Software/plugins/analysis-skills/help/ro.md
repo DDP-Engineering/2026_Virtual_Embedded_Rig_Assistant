@@ -1,4 +1,4 @@
-# Skill-uri de analiză
+# Analiză firmware și planificarea testelor
 
 Skill-urile de analiză îi oferă agentului două proceduri pentru lucrul cu dovezi pe care le-ai capturat deja. Skill-ul `firmware-comparator` compară o rulare de firmware de referință cu una candidată pe baza logurilor, a condițiilor de rulare documentate, a notelor de lansare și a unui criteriu de acceptare și salvează în sesiune un raport de comparație cu surse citate. Skill-ul `test-planner` transformă o modificare de firmware, o defecțiune capturată sau un obiectiv în unul până la cinci cazuri de test manuale, cu pregătire, pași și criterii de acceptare susținute de surse și un tabel de rezultate, și salvează planul în sesiune. Niciunul dintre skill-uri nu programează, nu capturează, nu compilează și nu rulează vreun test.
 
@@ -14,6 +14,11 @@ Skill-urile de analiză îi oferă agentului două proceduri pentru lucrul cu do
 - „Care dintre aceste rulări diferă și ce s-a schimbat între ele? Întreabă-mă dacă se potrivesc mai multe rulări.”
 - „Planifică cel mult trei teste manuale pentru modificarea de timing I2C din versiunea 1.1.0.”
 - „Transformă raportul de comparație într-un plan de test cu un control de referință.”
+
+Pentru a folosi un raport după redeschiderea conversației, indică referința exactă `artifact:...`
+în aceeași sesiune. Planul arată starea fiecărui caz. Dacă pregătirea este documentată, dar lipsește
+limita de acceptare, cazul spune ce să măsori și rămâne doar pentru observație.
+Citările salvate folosesc referința exactă din cel mai mic interval returnat care acoperă liniile citate.
 
 Când se potrivesc mai multe rulări, agentul îți cere să alegi; nu o alege niciodată în tăcere pe cea mai nouă. Dacă lipsește placa, revizia, pregătirea sau criteriul, raportul sau planul rămâne marcat ca blocat, iar agentul îți cere faptele care lipsesc. O limită numerică pe care nu o declară nicio sursă nu este niciodată inventată.
 

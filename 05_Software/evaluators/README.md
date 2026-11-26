@@ -10,6 +10,7 @@ Run the commands from `05_Software` with the local Node.js: `python ../02_Tools/
 
 | Family | Folder | Command | Measures | Status |
 |---|---|---|---|---|
+| analysis-skills | [analysis-skills/](analysis-skills/README.md) | `npm run eval:analysis-skills` | Firmware skill routing and saved report handoff | Live LM Studio and ChatGPT subscription probes. |
 | compaction | [compaction/](compaction/README.md) | `npm run eval:compaction` | What a long session keeps after VERA compacts its history | Compacted, decisions retained, planted instruction, invented values. |
 | grounding | [grounding/](grounding/README.md) | `npm run eval:grounding` | Document answers: facts, citations on target, language, abstention, fabricated values | Proposed thresholds (accuracy, target, fabrication, abstention). |
 | models | [models/](models/README.md) | `npm run eval:models` | One model's fit for VERA's agent loop; `matrix` compares models | Verdict: recommended, degraded or unsuitable. |

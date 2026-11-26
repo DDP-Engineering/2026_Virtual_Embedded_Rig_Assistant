@@ -37,7 +37,12 @@ it("installs the official skills-only source and loads the body and seven-sectio
       plugins: async () => [{ id: "analysis-skills", folder: plugin.folder }],
     });
     expect(await catalog.list()).toContainEqual(
-      expect.objectContaining({ name: "firmware-comparator", source: "plugin", plugin: "analysis-skills" }),
+      expect.objectContaining({
+        name: "firmware-comparator",
+        source: "plugin",
+        plugin: "analysis-skills",
+        description: expect.stringContaining("Compare two already captured firmware runs"),
+      }),
     );
     const signal = new AbortController().signal;
     const body = await catalog.load("firmware-comparator", undefined, signal);
@@ -47,9 +52,10 @@ it("installs the official skills-only source and loads the body and seven-sectio
     expect(template).toMatchObject({ name: "firmware-comparator", file: "templates/comparison.md" });
     const headings = String(template.text).match(/^## .+$/gm);
     expect(headings).toEqual(sections.map((section) => `## ${section}`));
-    expect(await catalog.list()).toContainEqual(
-      expect.objectContaining({ name: "test-planner", source: "plugin", plugin: "analysis-skills" }),
-    );
+    const planner = (await catalog.list()).find((skill) => skill.name === "test-planner");
+    expect(planner).toMatchObject({ source: "plugin", plugin: "analysis-skills" });
+    expect(planner?.description).toContain("Plan manual firmware tests");
+    expect(planner?.description).not.toMatch(/choose, run or flash tests/);
     expect(await catalog.load("test-planner", undefined, signal)).toMatchObject({
       name: "test-planner",
       text: expect.stringContaining("observation-only"),
@@ -67,6 +73,8 @@ it("installs the official skills-only source and loads the body and seven-sectio
     );
     for (const field of [
       "TP-01",
+      "Case readiness",
+      "Missing evidence",
       "Rationale",
       "Setup",
       "Manual steps",

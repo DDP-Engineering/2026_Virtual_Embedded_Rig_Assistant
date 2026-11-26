@@ -1,6 +1,6 @@
 ---
 name: firmware-comparator
-description: Compare two captured firmware runs for changes or regressions using cited logs, run conditions, release notes and an acceptance criterion; save a comparison report without operating hardware.
+description: Compare two already captured firmware runs or logs for differences or regressions. Use for an A/B comparison of a baseline and a candidate. Cite observations and save a comparison report. For a manual test plan, use test-planner.
 ---
 # Firmware comparator
 
@@ -73,17 +73,27 @@ arguments once; a source conflict, timeout or disabled tool remains a limitation
    passing a no-ERROR condition requires a complete scan and the required ready event. A blocked
    condition outside the criterion's scope or insufficient evidence means not evaluable. If there
    is no criterion, retain the Criterion section and say no criterion was found; invent no verdict.
-10. Fill all seven template sections. Separate facts from hypotheses and give a check that could
+10. Fill all seven template sections. Start with the most useful sourced differences, whether
+    acceptance is evaluable, and the missing fact or measurement that would change the decision.
+    With partial or unmatched evidence, keep supported observations scoped to their respective runs.
+    Separate facts from hypotheses and give a check that could
     reject each hypothesis. Order recommended checks with reasons; these are recommendations, not
     executed tests or approval. If the user wants a plan, recommend the separate `test-planner`
     capability only; do not offer to load/call it unless it is actually available in the skill index.
-11. Save with `artifact_save`, content containing the complete report. Derive
+11. Before saving, check every citation against an exact `ref` field returned by a successful
+    tool. Cite the entire returned reference, including its original line range. For example, if
+    `read` returns `docs/runs.md#L1-L9`, cite `[[docs/runs.md#L1-L9]]` even if the fact is on
+    line 4. To cite a smaller window, ask `read` for that window and copy its returned ref.
+    Save the complete report with `artifact_save` and `"exactLineRefs":true` on every attempt.
+    Saving replaces any covered subrange with the smallest issued window. Derive
     `firmware-comparison-<baseline>-<candidate>.md` from the selected run names, replace characters
     outside ASCII `[A-Za-z0-9._-]` with `_`, and shorten the run tokens to keep the whole filename
     at most100 characters, including `.md` and any suffix. Do not set `overwrite` (even on collision).
     For a name collision add a short suffix such as `-2` then `-3`, shortening tokens again if needed.
     Make at most **three total save attempts**. After three failures return the complete report in
     chat with the actual save error. Report successful storage only after the tool confirms it.
+    Include the exact returned artifact ref in the reply as `[[ref]]` so the user can request a
+    plan from this comparison later in the same session.
 
 ## Trust and limitations
 
