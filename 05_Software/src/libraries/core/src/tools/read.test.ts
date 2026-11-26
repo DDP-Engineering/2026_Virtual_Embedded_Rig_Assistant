@@ -138,6 +138,25 @@ it("refuses binaries and PDFs and records no failed fingerprint", async () => {
   ).rejects.toThrow(/read_doc/);
   expect(ctx.lastReads.size).toBe(0);
 });
+it("counts mixed line endings when a CRLF crosses a read block boundary", async () => {
+  const path = "mixed.txt";
+  const data = `${"x".repeat(65535)}\r\nalpha\rbeta\ngamma\r\n\r\nlast`;
+  await writeFile(join(root, path), data);
+  const ctx = context();
+  const signal = new AbortController().signal;
+  const page = await api.readTool.execute(ctx, { path, offset: 2, limit: 4 }, signal);
+  expect(page).toMatchObject({
+    text: "2: alpha\n3: beta\n4: gamma\n5: ",
+    totalLines: 6,
+    nextOffset: 6,
+    ref: "mixed.txt#L2-L5",
+  });
+  expect(await api.readTool.execute(ctx, { path, offset: 6 }, signal)).toMatchObject({
+    text: "6: last",
+    truncated: false,
+  });
+  expect([...ctx.lastReads.values()][0]?.sha256).toBe(createHash("sha256").update(data).digest("hex"));
+});
 it("reads the full log of a command run, the only readable file under .vera", async () => {
   await mkdir(join(root, ".vera/runs"), { recursive: true });
   await writeFile(join(root, ".vera/runs/run_01ABC.log"), "first error\n");

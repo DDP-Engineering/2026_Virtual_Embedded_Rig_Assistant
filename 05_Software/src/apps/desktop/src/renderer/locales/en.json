@@ -124,6 +124,7 @@
     "exitCode": "Exit code: {{code}}",
     "resultCount": "Results: {{count}}",
     "changedLines": "Lines: +{{added}} / −{{removed}}",
+    "historyPending": "File saved. Change history pending.",
     "folder": "Folder: {{path}}",
     "moreInTechnical": "The complete result is available in Technical details.",
     "technical": "Technical details",

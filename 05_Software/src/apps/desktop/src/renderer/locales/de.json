@@ -124,6 +124,7 @@
     "exitCode": "Exitcode: {{code}}",
     "resultCount": "Ergebnisse: {{count}}",
     "changedLines": "Zeilen: +{{added}} / −{{removed}}",
+    "historyPending": "Datei gespeichert. Eintrag im Änderungsverlauf steht aus.",
     "folder": "Ordner: {{path}}",
     "moreInTechnical": "Das vollständige Ergebnis ist unter Technische Details verfügbar.",
     "technical": "Technische Details",

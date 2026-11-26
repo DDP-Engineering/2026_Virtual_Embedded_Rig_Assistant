@@ -99,27 +99,32 @@ async function scanWindow(
       current = "";
       hasContent = false;
     };
-    const consume = (text: string) => {
-      for (const char of text) {
-        if (char === "\n" && previousCR) {
-          previousCR = false;
-          continue;
+    const retain = (text: string, start: number, end: number) => {
+      if (start === end) return;
+      hasContent = true;
+      if (clipped || !wanted()) return;
+      for (const char of text.slice(start, end)) {
+        const bytes = Buffer.byteLength(char);
+        if (sourceBytes + bytes > maxSourceBytes || outputCharacters + current.length >= maxChars - 20) {
+          clipped = true;
+          break;
         }
-        previousCR = false;
-        if (char === "\n" || char === "\r") {
-          endLine();
-          previousCR = char === "\r";
-        } else {
-          hasContent = true;
-          if (wanted()) {
-            const bytes = Buffer.byteLength(char);
-            if (sourceBytes + bytes <= maxSourceBytes && outputCharacters + current.length < maxChars - 20) {
-              current += char;
-              sourceBytes += bytes;
-            } else clipped = true;
-          }
-        }
+        current += char;
+        sourceBytes += bytes;
       }
+    };
+    const newline = /\r\n|[\r\n]/g;
+    const consume = (text: string) => {
+      if (!text.length) return;
+      let start = previousCR && text.startsWith("\n") ? 1 : 0;
+      previousCR = text.endsWith("\r");
+      newline.lastIndex = start;
+      for (let match = newline.exec(text); match; match = newline.exec(text)) {
+        retain(text, start, match.index);
+        endLine();
+        start = newline.lastIndex;
+      }
+      retain(text, start, text.length);
     };
     for (;;) {
       signal.throwIfAborted();

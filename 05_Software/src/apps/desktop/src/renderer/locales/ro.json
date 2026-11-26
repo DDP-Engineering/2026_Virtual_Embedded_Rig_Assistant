@@ -124,6 +124,7 @@
     "exitCode": "Cod de ieșire: {{code}}",
     "resultCount": "Rezultate: {{count}}",
     "changedLines": "Linii: +{{added}} / −{{removed}}",
+    "historyPending": "Fișier salvat. Modificarea nu a fost încă înregistrată în istoric.",
     "folder": "Folder: {{path}}",
     "moreInTechnical": "Rezultatul complet este disponibil în Detalii tehnice.",
     "technical": "Detalii tehnice",

@@ -153,6 +153,24 @@ it("hard rejects read-only mode with default and injected policies", async () =>
   }
 });
 
+it("reports a saved file when recording the change history fails", async () => {
+  const { service, root, handle } = await setup();
+  handle.db.exec(
+    "CREATE TRIGGER fail_applied BEFORE UPDATE OF status ON changes WHEN NEW.status='applied' BEGIN SELECT RAISE(FAIL,'recording unavailable'); END",
+  );
+  const session = service.create(null, "auto-edit");
+  service.send(session.id, "edit");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(await readFile(join(root, "file.txt"), "utf8")).toBe("new\n");
+  expect(handle.db.prepare("SELECT status FROM changes").get()).toEqual({ status: "pending" });
+  expect(
+    handle.db.prepare("SELECT status,result_json FROM tool_calls WHERE name='edit'").get(),
+  ).toMatchObject({
+    status: "ok",
+    result_json: expect.stringContaining('\\"historyPending\\":true'),
+  });
+});
+
 it("denies prepared changes without rows and contains permission errors through the host scrubber", async () => {
   const { service, root, handle, host } = await setup({
     allow: ({ tool }) => {

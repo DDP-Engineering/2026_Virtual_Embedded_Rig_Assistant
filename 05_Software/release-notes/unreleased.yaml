@@ -36,3 +36,24 @@ entries:
       ro: Modificările mari pot fi aprobate și când previzualizarea durează prea mult.
       de: Große Änderungen bleiben auch bei zu langer Vorschau-Berechnung freigabefähig.
       fr: Les modifications restent approuvables si le calcul de l’aperçu prend trop de temps.
+  - category: improved
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Pages from large text files load faster.
+      ro: Paginile din fișierele text mari se încarcă mai repede.
+      de: Seiten aus großen Textdateien laden schneller.
+      fr: Les pages des gros fichiers texte se chargent plus vite.
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: VERA reports a saved file even when the change history is pending.
+      ro: VERA confirmă salvarea fișierului chiar dacă modificarea nu apare încă în istoric.
+      de: VERA bestätigt die gespeicherte Datei auch bei ausstehendem Verlaufseintrag.
+      fr: VERA indique que le fichier est enregistré même si l’historique reste en attente.
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: VERA identifies UTF-16 text when the file encoding prevents editing.
+      ro: VERA identifică textul UTF-16 când această codare împiedică editarea.
+      de: VERA erkennt UTF-16-Text, wenn diese Kodierung eine Bearbeitung verhindert.
+      fr: VERA identifie le texte UTF-16 lorsque cet encodage empêche la modification.

@@ -10,6 +10,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 - analysis-skills 0.4.0: Route firmware analysis by intent and build manual plans from saved comparisons.
 - Read verified text artifacts by reference in their owning session.
+- Speed up paged reads of large files while retaining line counts and file verification.
 
 ### Fixed
 
@@ -17,6 +18,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Continue file and artifact reads from the last line delivered when a page is shortened.
 - Return unchanged file writes and edits without approval or rewriting.
 - Limit diff calculation time while keeping large file changes available for approval.
+- Report when a file was saved and the change history is still pending.
+- Identify UTF-16 as an unsupported editing encoding in file write errors.
 
 ## [0.4.0] - 2026-11-26
 

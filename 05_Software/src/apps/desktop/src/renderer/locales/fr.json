@@ -124,6 +124,7 @@
     "exitCode": "Code de sortie : {{code}}",
     "resultCount": "Résultats : {{count}}",
     "changedLines": "Lignes : +{{added}} / −{{removed}}",
+    "historyPending": "Fichier enregistré. Mise à jour de l’historique en attente.",
     "folder": "Dossier : {{path}}",
     "moreInTechnical": "Le résultat complet est disponible dans Détails techniques.",
     "technical": "Détails techniques",

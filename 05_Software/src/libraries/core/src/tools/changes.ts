@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { ProgramChangeRequest } from "../plugins/program-request.js";
 import { type GuardedPath, PathGuard } from "../workbench/path-guard.js";
 import type { WriteQueue } from "../workbench/write-queue.js";
-import { isBinary } from "./binary.js";
+import { isBinary, utf16Bom } from "./binary.js";
 import type { ToolContext } from "./context.js";
 import { toolPathGuard } from "./context.js";
 
@@ -150,6 +150,8 @@ export async function prepareChange(
       tool === "write" ? "Read the file before overwriting it." : "Read the file before editing it.",
     );
   if (before !== null && ctx.lastReads.get(target.key)?.sha256 !== beforeSha256) throw conflict();
+  if (before !== null && utf16Bom(before))
+    throw Error("This file is UTF-16. The write and edit tools do not modify UTF-16 files.");
   if (before !== null && isBinary(before)) throw Error("Cannot change a binary file with text tools.");
   let replacements = 0;
   let output: string;
@@ -337,10 +339,12 @@ export function commitChange(options: CommitOptions): PreparedChange["apply"] {
             : undefined;
         currentGuard?.assertAuthorized();
         const file = await open(temporary, "wx", 0o600);
+        let mtimeMs: number;
         try {
           await file.writeFile(after);
           if (mode !== undefined) await file.chmod(mode);
           await file.sync();
+          mtimeMs = (await file.stat()).mtimeMs;
         } finally {
           await file.close();
         }
@@ -348,21 +352,24 @@ export function commitChange(options: CommitOptions): PreparedChange["apply"] {
         currentGuard?.assertAuthorized();
         await rename(temporary, target.absolute);
         renamed = true;
-        const publish = host.db.transaction(() => {
-          host.assertWritable?.();
-          host.db.prepare("UPDATE changes SET status='applied' WHERE id=?").run(id);
-          return host.recorded({
-            type: "change.recorded",
-            changeId: id,
-            path: changePath,
-            added,
-            removed,
-          });
-        })();
-        ctx.lastReads.set(target.key, {
-          sha256: afterSha256,
-          mtimeMs: (await stat(target.absolute)).mtimeMs,
-        });
+        ctx.lastReads.set(target.key, { sha256: afterSha256, mtimeMs });
+        let publish: (() => void) | undefined;
+        try {
+          publish = host.db.transaction(() => {
+            host.assertWritable?.();
+            host.db.prepare("UPDATE changes SET status='applied' WHERE id=?").run(id);
+            return host.recorded({
+              type: "change.recorded",
+              changeId: id,
+              path: changePath,
+              added,
+              removed,
+            });
+          })();
+        } catch {
+          // The pending row lets recovery reconcile the history after the committed rename.
+          return { ...result, historyPending: true };
+        }
         publish?.();
         return result;
       } finally {

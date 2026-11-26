@@ -207,6 +207,20 @@ it("shows returned search counts, change counts and readable errors without inve
   expect(container.querySelector(".tool-activity-body > pre")?.textContent).toBe("File not found");
 });
 
+it("shows that a file was saved even while change history is pending", async () => {
+  await render(
+    tool({
+      name: "edit",
+      args: { path: "main.cpp" },
+      summary: JSON.stringify({ added: 1, removed: 1, historyPending: true }),
+    }),
+  );
+  expect(container.querySelector(".tool-activity-caption")?.textContent).toBe(
+    "File saved. Change history pending.",
+  );
+  expect(container.querySelector("[data-tool-status]")?.getAttribute("data-tool-status")).toBe("ok");
+});
+
 it("keeps unfamiliar, malformed and oversized results available in technical details", async () => {
   for (const summary of ['{"unfinished":', JSON.stringify({ opaque: [1, 2] }), "x".repeat(70000)]) {
     await render(tool({ name: "unknown_extension", args: null, summary }));

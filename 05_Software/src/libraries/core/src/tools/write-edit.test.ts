@@ -236,6 +236,24 @@ it("rejects outside/ignored paths and project metadata", async () => {
     await expect(api.prepareChange(ctx, "write", { path, content: "new" }, signal())).rejects.toThrow();
   }
 });
+it.each(["LE", "BE"])(
+  "reports UTF-16%s as an unsupported write encoding after reading it",
+  async (endian) => {
+    const file = join(root, "file.txt");
+    const bytes = Buffer.from("\ufeffalpha\r\nbeta\r\n", "utf16le");
+    if (endian === "BE") bytes.swap16();
+    await writeFile(file, bytes);
+    const ctx = context();
+    expect(await api.readTool.execute(ctx, { path: "file.txt" }, signal())).toMatchObject({
+      text: "1: alpha\n2: beta",
+    });
+    await expect(edit(ctx, "beta", "gamma")).rejects.toThrow(/UTF-16.*write and edit/i);
+    await expect(
+      api.writeTool.execute(ctx, { path: "file.txt", content: "updated" }, signal()),
+    ).rejects.toThrow(/UTF-16.*write and edit/i);
+    expect(await readFile(file)).toEqual(bytes);
+  },
+);
 it("applies only one of two prepared same-version edits and never recalculates", async () => {
   await writeFile(join(root, "file.txt"), "old\n");
   const queue = new api.WriteQueue();
@@ -318,8 +336,12 @@ it("checks again after pending insertion and resolves rename/recording failures 
   storage.db.exec(
     "CREATE TRIGGER fail_applied BEFORE UPDATE OF status ON changes WHEN NEW.status='applied' BEGIN SELECT RAISE(FAIL,'recording unavailable'); END",
   );
-  await expect(edit(ctx, "external", "new")).rejects.toThrow(/recording unavailable/);
+  await expect(edit(ctx, "external", "new")).resolves.toMatchObject({
+    historyPending: true,
+    replacements: 1,
+  });
   expect(await readFile(join(root, "file.txt"), "utf8")).toBe("new");
+  expect([...ctx.lastReads.values()][0]?.sha256).toBe(hash("new"));
   expect(storage.db.prepare("SELECT status FROM changes ORDER BY id DESC LIMIT 1").get()).toEqual({
     status: "pending",
   });

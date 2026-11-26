@@ -172,7 +172,7 @@ export const ToolDetails = memo(function ToolDetails({
   const plan =
     item.name === "todo" && item.status === "ok" ? todoItemsSchema.safeParse(result?.items) : undefined;
   const { rows, pager } = usePaged(Array.isArray(results) ? results : []);
-  const caption = plan?.success
+  let caption = plan?.success
     ? plan.data.length
       ? t("toolActivity.planSteps", { count: plan.data.length })
       : t("toolActivity.planCleared")
@@ -185,6 +185,7 @@ export const ToolDetails = memo(function ToolDetails({
           : number(result?.added) !== undefined && number(result?.removed) !== undefined
             ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
             : undefined;
+  if (item.status === "ok" && result?.historyPending === true) caption = t("toolActivity.historyPending");
   const browserFailure = action >= 27 ? browserFailureCodeSchema.safeParse(result?.code).data : undefined;
   const usage = item.documentSearch?.usage;
   const fallback = usage?.mode === "keyword" ? usage.fallbackReason : undefined;
