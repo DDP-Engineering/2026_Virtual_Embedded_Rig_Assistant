@@ -99,3 +99,17 @@ entries:
       ro: VERA identifică textul UTF-16 când această codare împiedică editarea.
       de: VERA erkennt UTF-16-Text, wenn diese Kodierung eine Bearbeitung verhindert.
       fr: VERA identifie le texte UTF-16 lorsque cet encodage empêche la modification.
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: File searches report missing locations and apply filters to a directly selected file.
+      ro: Căutarea semnalează căile inexistente și aplică filtrul și unui fișier indicat direct.
+      de: Die Suche meldet fehlende Pfade und filtert auch direkt ausgewählte Dateien.
+      fr: La recherche signale les chemins absents et filtre aussi un fichier choisi directement.
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: File searches keep other results when a file disappears, and Stop cancels the scan.
+      ro: Căutarea păstrează celelalte rezultate dacă un fișier dispare. Stop oprește scanarea.
+      de: Die Suche behält Ergebnisse bei gelöschten Dateien. Stopp beendet den Scan.
+      fr: La recherche garde les autres résultats si un fichier disparaît. Arrêter coupe le scan.

@@ -1,8 +1,10 @@
-import { lstat, readdir } from "node:fs/promises";
+import type { Dirent } from "node:fs";
+import { lstat, opendir } from "node:fs/promises";
 import { z } from "zod";
 import type { GuardedPath } from "../workbench/path-guard.js";
 import type { ToolDefinition } from "./context.js";
 import { toolPathGuard } from "./context.js";
+import { entryDisappeared, resolveDiscoveryPath } from "./discovery.js";
 
 /** Entries collected at most; the tool result cap cuts the returned list far below this. */
 const LISTED = 5000;
@@ -18,13 +20,25 @@ export const listTool: ToolDefinition = {
   async execute(ctx, raw, signal) {
     const args = listTool.params.parse(raw) as { path?: string; depth?: number };
     const guard = await toolPathGuard(ctx, true);
-    const base = await guard.resolve(args.path ?? ".");
+    const { target: base, info } = await resolveDiscoveryPath(guard, args.path ?? ".", signal);
+    if (!info.isDirectory()) throw Error("List path must be a directory.");
     const entries: { name: string; type: "file" | "directory"; bytes: number }[] = [];
-    const walk = async (path: string, depth: number) => {
-      const folder = await guard.resolve(path);
-      for (const item of (await readdir(folder.absolute, { withFileTypes: true })).sort((a, b) =>
-        a.name.localeCompare(b.name),
-      )) {
+    const walk = async (path: string, depth: number, top = false) => {
+      signal.throwIfAborted();
+      const items: Dirent[] = [];
+      try {
+        const folder = top ? base : await guard.resolve(path);
+        const directory = await opendir(folder.absolute, { bufferSize: 256 });
+        for await (const item of directory) {
+          signal.throwIfAborted();
+          items.push(item);
+        }
+      } catch (error) {
+        if (!top && entryDisappeared(error)) return;
+        throw error;
+      }
+      signal.throwIfAborted();
+      for (const item of items.sort((a, b) => a.name.localeCompare(b.name))) {
         if (entries.length >= LISTED) return;
         signal.throwIfAborted();
         if (item.isSymbolicLink() || (!item.isFile() && !item.isDirectory())) continue;
@@ -35,17 +49,21 @@ export const listTool: ToolDefinition = {
         } catch {
           continue;
         }
-        const info = await lstat(target.absolute);
-        if (info.isSymbolicLink()) continue;
+        const info = await lstat(target.absolute).catch((error) => {
+          if (entryDisappeared(error)) return undefined;
+          throw error;
+        });
+        if (!info || (!info.isFile() && !info.isDirectory())) continue;
         entries.push({
           name: target.relative,
-          type: item.isDirectory() ? "directory" : "file",
-          bytes: item.isDirectory() ? 0 : info.size,
+          type: info.isDirectory() ? "directory" : "file",
+          bytes: info.isDirectory() ? 0 : info.size,
         });
-        if (item.isDirectory() && depth > 1) await walk(target.relative, depth - 1);
+        if (info.isDirectory() && depth > 1) await walk(target.relative, depth - 1);
       }
     };
-    await walk(base.relative, args.depth ?? 1);
+    await walk(base.relative, args.depth ?? 1, true);
+    signal.throwIfAborted();
     guard.assertAuthorized();
     return { entries, ...(entries.length >= LISTED ? { truncated: true } : {}) };
   },

@@ -5,7 +5,11 @@ import { type ToolDefinition, toolExcludedRoots, toolLimit, toolPathGuard } from
 export const grepParams = z.strictObject({
   pattern: z.string().min(1).describe("JavaScript regular expression, matched per line."),
   path: z.string().min(1).optional().describe("Folder or single file to search; default is the workbench."),
-  glob: z.string().min(1).optional().describe("File name filter, for example *.log or src/**/*.c."),
+  glob: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("File name filter, including when path selects one file. Examples are *.log and src/**/*.c."),
   ignoreCase: z.boolean().optional(),
   context: z.number().int().min(0).max(5).optional().describe("Lines shown before and after each match."),
   output: z

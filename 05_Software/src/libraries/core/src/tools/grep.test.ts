@@ -61,6 +61,13 @@ it("runs all grep options inside a worker with ignored/binary/oversized skips an
   expect(await call({ pattern: "Hello", path: "docs/notes.txt" })).toMatchObject({
     matches: [{ path: "docs/notes.txt", line: 2 }],
   });
+  expect(await call({ pattern: "Hello", path: "docs/notes.txt", glob: "*.log" })).toMatchObject({
+    matches: [],
+    truncated: false,
+  });
+  await expect(call({ pattern: "Hello", path: "docs/missing" })).rejects.toThrow(
+    /search path does not exist/i,
+  );
   expect(await call({ pattern: "hello", path: "docs", ignoreCase: true })).toMatchObject({ skippedFiles: 2 });
   // A bare name pattern reaches files below the top level.
   expect(await call({ pattern: "Hello", glob: "*.txt", output: "files" })).toMatchObject({

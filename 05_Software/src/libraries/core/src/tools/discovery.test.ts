@@ -1,10 +1,14 @@
-import { mkdir, mkdtemp, rm, symlink, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, opendir, rm, symlink, unlink, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { glob } from "tinyglobby";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as api from "../index.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { discoverFiles } from "./discovery.js";
+
+vi.mock("tinyglobby", { spy: true });
+vi.mock("node:fs/promises", { spy: true });
 
 let root: string;
 let outside: string;
@@ -24,8 +28,87 @@ beforeEach(async () => {
   await symlink(outside, join(root, "escape"), process.platform === "win32" ? "junction" : "dir");
 });
 afterEach(async () => {
+  vi.restoreAllMocks();
   await rm(root, { recursive: true, force: true });
   await rm(outside, { recursive: true, force: true });
+});
+it("rejects missing search paths and a file passed to list", async () => {
+  const ctx = api.createToolContext(root);
+  await expect(api.listTool.execute(ctx, { path: "missing" }, signal())).rejects.toThrow(
+    /search path does not exist/i,
+  );
+  await expect(api.listTool.execute(ctx, { path: "docs/old.md" }, signal())).rejects.toThrow(
+    /list path must be a directory/i,
+  );
+  for (const path of ["missing", "docs/old.md/nested"])
+    await expect(api.globTool.execute(ctx, { path, pattern: "*.md" }, signal())).rejects.toThrow(
+      /search path does not exist/i,
+    );
+  expect(await api.globTool.execute(ctx, { path: "docs", pattern: "*.csv" }, signal())).toEqual({
+    paths: [],
+    truncated: false,
+  });
+});
+
+it("applies the glob to an explicitly selected file", async () => {
+  const ctx = api.createToolContext(root);
+  const call = (pattern: string) => api.globTool.execute(ctx, { path: "docs/old.md", pattern }, signal());
+  expect(await call("*.csv")).toMatchObject({ paths: [] });
+  expect(await call("*.md")).toMatchObject({ paths: ["docs/old.md"] });
+  expect(await call("docs/*.md")).toMatchObject({ paths: ["docs/old.md"] });
+  expect(await call("elsewhere/*.md")).toMatchObject({ paths: [] });
+  await expect(call("../*.md")).rejects.toThrow(/glob must stay/i);
+});
+
+it.each([api.listTool, api.globTool])(
+  "keeps other entries when a file disappears during $name",
+  async (tool) => {
+    const relative = "docs/old.md";
+    const resolve = PathGuard.prototype.resolve;
+    vi.spyOn(PathGuard.prototype, "resolve").mockImplementation(async function (this: PathGuard, path) {
+      const target = await resolve.call(this, path);
+      if (path === relative) await unlink(target.absolute);
+      return target;
+    });
+    const ctx = api.createToolContext(root);
+    const result = await tool.execute(
+      ctx,
+      tool.name === "list" ? { path: "docs" } : { path: "docs", pattern: "*.md" },
+      signal(),
+    );
+    if (tool.name === "list") {
+      expect(result.entries).toContainEqual({ name: "docs/new.md", type: "file", bytes: 3 });
+      expect(result.entries).not.toContainEqual(expect.objectContaining({ name: relative }));
+    } else expect(result.paths).toEqual(["docs/new.md"]);
+  },
+);
+
+it("forwards Stop to the glob crawler and rejects an empty partial result", async () => {
+  const stop = new AbortController();
+  const crawl = vi
+    .mocked(glob)
+    .mockClear()
+    .mockImplementationOnce(async (...args: unknown[]) => {
+      expect(args[1]).toMatchObject({ signal: stop.signal });
+      stop.abort();
+      return [];
+    });
+  await expect(
+    api.globTool.execute(api.createToolContext(root), { pattern: "*.csv" }, stop.signal),
+  ).rejects.toMatchObject({ name: "AbortError" });
+  expect(crawl).toHaveBeenCalledOnce();
+});
+
+it("closes the list directory iterator when Stop is requested during enumeration", async () => {
+  const stop = new AbortController();
+  const directory = await opendir(join(root, "docs"));
+  vi.mocked(opendir).mockImplementationOnce(async () => {
+    stop.abort();
+    return directory;
+  });
+  const work = api.listTool.execute(api.createToolContext(root), { path: "docs" }, stop.signal);
+  await expect(work).rejects.toMatchObject({ name: "AbortError" });
+  await expect(directory.read()).rejects.toMatchObject({ code: "ERR_DIR_CLOSED" });
 });
 it("lists default depth and depths1 to3 with ignores and confined ordinary entries", async () => {
   expect(api.listTool).toBeDefined();

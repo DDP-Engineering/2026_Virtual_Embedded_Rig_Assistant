@@ -26,6 +26,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Limit diff calculation time while keeping large file changes available for approval.
 - Report when a file was saved and the change history is still pending.
 - Identify UTF-16 as an unsupported editing encoding in file write errors.
+- Report missing search locations and apply filename filters to explicitly selected files.
+- Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 
 ## [0.4.0] - 2026-11-26
 
