@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
@@ -9,7 +9,12 @@ const cleanup: (() => Promise<void>)[] = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0).reverse()) await close();
 });
-async function setup(permissions?: core.PermissionEngine) {
+async function setup(
+  permissions?: core.PermissionEngine,
+  writes: { name: string; args: Record<string, unknown> }[] = [
+    { name: "edit", args: { path: "file.txt", oldString: "old", newString: "new" } },
+  ],
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-edit-session-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, ".vera"));
@@ -19,7 +24,7 @@ async function setup(permissions?: core.PermissionEngine) {
     join(root, "scripts/edit.jsonl"),
     [
       { match: "edit", toolCalls: [{ name: "read", args: { path: "file.txt" } }] },
-      { toolCalls: [{ name: "edit", args: { path: "file.txt", oldString: "old", newString: "new" } }] },
+      { toolCalls: writes },
       { text: "Done" },
     ]
       .map((x) => JSON.stringify(x))
@@ -44,6 +49,32 @@ async function setup(permissions?: core.PermissionEngine) {
   cleanup.push(() => service.close());
   return { root, handle, gateway, host, service, queue };
 }
+it("completes unchanged writes and edits in Ask without approval, rewriting or a change record", async () => {
+  const { service, root, handle } = await setup(undefined, [
+    { name: "write", args: { path: "file.txt", content: "old\n" } },
+    { name: "edit", args: { path: "file.txt", oldString: "old", newString: "old" } },
+  ]);
+  const path = join(root, "file.txt");
+  await utimes(path, 1_700_000_000, 1_700_000_000);
+  const before = await stat(path);
+  const session = service.create(null, "ask");
+  service.send(session.id, "edit");
+  await expect.poll(() => service.list()[0]?.status).toBe("idle");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(await readFile(path, "utf8")).toBe("old\n");
+  expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+  expect(handle.db.prepare("SELECT * FROM approvals").all()).toEqual([]);
+  expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
+  const outcomes = handle.db
+    .prepare("SELECT status,result_json FROM tool_calls WHERE name IN ('write','edit')")
+    .all();
+  expect(outcomes).toEqual(
+    Array.from({ length: 2 }, () => ({
+      status: "ok",
+      result_json: expect.stringContaining('\\"unchanged\\":true'),
+    })),
+  );
+});
 it("executes replay read/edit with exact prepared permission metadata, changes row and persisted event", async () => {
   const requests: core.ChangeRequest[] = [];
   const { service, root, handle } = await setup({

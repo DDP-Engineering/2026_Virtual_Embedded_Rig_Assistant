@@ -640,6 +640,7 @@
     "card": "Freigabe einer Änderung",
     "bytes": "{{count}} Bytes",
     "diff": "Unified Diff",
+    "diffUnavailable": "Keine Vorschau der Änderungen verfügbar.",
     "approved": "Genehmigt",
     "denied": "Abgelehnt",
     "aborted": "Abgebrochen",

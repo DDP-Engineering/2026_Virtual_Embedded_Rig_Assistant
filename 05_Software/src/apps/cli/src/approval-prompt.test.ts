@@ -48,6 +48,18 @@ it("prompt abort and EOF release waits safely", async () => {
   ended.end();
   expect(await eof).toEqual({ decision: "denied" });
 });
+it("explains a missing diff preview while allowing approval", async () => {
+  const input = new PassThrough();
+  const output = new PassThrough();
+  let text = "";
+  output.on("data", (chunk) => {
+    text += chunk.toString();
+  });
+  const pending = promptApproval({ ...request, diff: "" }, new AbortController().signal, input, output);
+  input.write("A\n");
+  expect(await pending).toEqual({ decision: "approved" });
+  expect(text).toContain("Diff preview unavailable.");
+});
 it("approval flags accept exactly all/none and reject duplicate or invalid choices", () => {
   const base = [
     "run",

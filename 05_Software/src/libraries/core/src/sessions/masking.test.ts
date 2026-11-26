@@ -14,8 +14,25 @@ import {
 import type { LlmRequest } from "../llm/gateway.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { readTool } from "../tools/read.js";
+import { maskToolOutput } from "./masking.js";
 
 const secret = "fixture-mqtt-private-password-283";
+it("updates read pagination if masking expands the serialized page", () => {
+  const value = Array.from({ length: 200 }, (_, index) => `${index + 1}: ${"stub".repeat(10)}`).join("\n");
+  const masked = maskToolOutput(
+    "read",
+    JSON.stringify({ text: value, totalLines: 200, ref: "input.txt#L1-L200" }),
+    (text) => text.replaceAll("stub", "[REDACTED]"),
+    10_000,
+  );
+  const page = JSON.parse(masked) as { text: string; nextOffset: number; ref: string };
+  const lines = page.text.split("\n");
+  expect(masked.length).toBeLessThanOrEqual(10_000);
+  expect(lines.at(-1)).toBe(`${lines.length}: ${"[REDACTED]".repeat(10)}`);
+  expect(page.nextOffset).toBe(lines.length + 1);
+  expect(page.ref).toBe(`input.txt#L1-L${lines.length}`);
+});
+
 const cleanups: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const close of cleanups.splice(0).reverse()) await close();

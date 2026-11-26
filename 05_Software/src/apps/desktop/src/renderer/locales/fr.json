@@ -640,6 +640,7 @@
     "card": "Approbation de modification",
     "bytes": "{{count}} octets",
     "diff": "Diff unifié",
+    "diffUnavailable": "L’aperçu des différences est indisponible.",
     "approved": "Approuvé",
     "denied": "Refusé",
     "aborted": "Abandonné",

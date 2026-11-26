@@ -131,6 +131,7 @@ export function capToolResult(
   value: Record<string, unknown>,
   protectedStrings: readonly string[] = [],
   limit = TOOL_RESULT_CAP,
+  numberedRead = false,
 ) {
   const result = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
   let text = JSON.stringify(result);
@@ -164,6 +165,24 @@ export function capToolResult(
         break;
       }
       const item = best.owner[best.key];
+      if (numberedRead && best.owner === result && best.key === "text" && typeof item === "string") {
+        const prefix = resultPrefix(item, Math.floor(item.length / 2), tokens);
+        const boundary = item[prefix.length] === "\n" ? prefix.length : prefix.lastIndexOf("\n");
+        const page = boundary < 0 ? prefix.replace(/[\uD800-\uDBFF]$/, "") : prefix.slice(0, boundary);
+        result.text = page;
+        if (boundary < 0) result.lineClipped = true;
+        else delete result.lineClipped;
+        const last = /^([0-9]+): /.exec(page.slice(page.lastIndexOf("\n") + 1));
+        if (last && typeof result.totalLines === "number") {
+          const end = Number(last[1]);
+          if (end < result.totalLines) result.nextOffset = end + 1;
+          else delete result.nextOffset;
+          const ref = typeof result.ref === "string" ? parseLineRef(result.ref) : undefined;
+          if (ref) result.ref = formatLineRef({ ...ref, end });
+        }
+        text = JSON.stringify(result);
+        continue;
+      }
       best.owner[best.key] = Array.isArray(item)
         ? item.slice(0, Math.floor(item.length / 2))
         : `${resultPrefix(String(item), Math.floor(String(item).length / 2), tokens)}\n[truncated]`;
@@ -220,6 +239,7 @@ export class ToolRegistry {
       value,
       delegationNames.has(name) ? ctx.delegation?.resultSecrets() : undefined,
       toolLimit(ctx, "toolResultChars"),
+      name === "read",
     );
   }
   specs(disabled: readonly string[] = []) {

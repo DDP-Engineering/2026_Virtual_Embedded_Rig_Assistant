@@ -50,7 +50,7 @@ function describe(request: ApprovalRequest): string {
     ].join("\n");
   return request.tool === "web_download" && request.download
     ? `\n${request.tool} ${JSON.stringify(request.path)}\nSource: ${request.download.url}\nMaximum: ${request.download.maxBytes} bytes\n`
-    : `\n${request.tool} ${JSON.stringify(request.path)} (${request.bytes} bytes)\n${request.diff}\n`;
+    : `\n${request.tool} ${JSON.stringify(request.path)} (${request.bytes} bytes)\n${request.diff || "Diff preview unavailable."}\n`;
 }
 export function promptApproval(
   request: ApprovalRequest,

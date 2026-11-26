@@ -1856,7 +1856,7 @@ export class SessionService {
             prepared.delete(tool.name);
             if (!change) throw Error("Prepared change permission is missing.");
             try {
-              if (!permissions) this.approvals.consume(change.request);
+              if (!change.unchanged && !permissions) this.approvals.consume(change.request);
               const result = await change.apply(signal);
               const text = JSON.stringify(result);
               return text;
@@ -2075,6 +2075,11 @@ export class SessionService {
             signal,
             this.host.disabledTools,
           );
+          if (change.unchanged) {
+            signal.throwIfAborted();
+            prepared.set(tool.name, change);
+            return "approved";
+          }
           const exact = JSON.stringify(change.request);
           if (this.host.scrub && this.host.scrub(exact) !== exact)
             throw Error(

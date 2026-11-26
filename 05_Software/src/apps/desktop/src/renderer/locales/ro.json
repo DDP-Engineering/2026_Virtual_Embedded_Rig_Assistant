@@ -640,6 +640,7 @@
     "card": "Aprobarea modificării",
     "bytes": "{{count}} octeți",
     "diff": "Diferențe unificate",
+    "diffUnavailable": "Previzualizarea diferențelor nu este disponibilă.",
     "approved": "Aprobat",
     "denied": "Refuzat",
     "aborted": "Anulat",

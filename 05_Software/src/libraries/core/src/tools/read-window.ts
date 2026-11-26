@@ -79,6 +79,7 @@ async function scanWindow(
     let outputCharacters = 0;
     let sourceBytes = 0;
     let clipped = false;
+    let lineClipped = false;
     let retentionEnded = false;
     const wanted = () => !retentionEnded && totalLines + 1 >= offset && totalLines + 1 < offset + limit;
     const endLine = () => {
@@ -88,7 +89,8 @@ async function scanWindow(
         const available = maxChars - outputCharacters - prefix.length - 1;
         if (available >= 0) {
           const text = current.slice(0, available);
-          if (text.length < current.length) clipped = true;
+          lineClipped = clipped || text.length < current.length;
+          clipped = lineClipped;
           selected.push({ line: totalLines, text });
           outputCharacters += prefix.length + text.length + 1;
         } else clipped = true;
@@ -163,6 +165,7 @@ async function scanWindow(
       selected,
       totalLines,
       truncated: clipped || offset - 1 + limit < totalLines,
+      lineClipped,
       sha256: hash.digest("hex"),
       mtimeMs: after.mtimeMs,
       modified: after.mtime.toISOString(),

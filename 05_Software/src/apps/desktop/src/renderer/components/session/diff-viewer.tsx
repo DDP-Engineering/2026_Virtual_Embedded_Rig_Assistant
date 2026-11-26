@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 
 export function DiffViewer({ diff, identity }: { diff: string; identity: string }) {
   const { t } = useTranslation();
+  if (!diff) return <p role="status">{t("approval.diffUnavailable")}</p>;
   return (
     // biome-ignore lint/a11y/noNoninteractiveTabindex: Named diff region receives keyboard scrolling.
     <section className="approval-diff" aria-label={t("approval.diff")} tabIndex={0}>

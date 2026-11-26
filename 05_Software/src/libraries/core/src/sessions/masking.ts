@@ -46,7 +46,17 @@ export function maskToolOutput(
   if (name === "wireshark_capture" || name === "wireshark_import" || name === "wireshark_derive")
     return maskCaptureOutput(text, scrub, limit);
   const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
-  if (!result) return scrub(text);
+  if (!result) {
+    const masked = scrub(text);
+    if (name === "read" && masked.length > limit) {
+      try {
+        return capToolResult(JSON.parse(masked), [], limit, true).text;
+      } catch {
+        // Older tool messages can contain unstructured text.
+      }
+    }
+    return masked;
+  }
   const { coverage, usage, ...rest } = result;
   const masked = maskValue(rest, scrub) as Record<string, unknown>;
   return capToolResult({ ...masked, coverage, usage }).text;

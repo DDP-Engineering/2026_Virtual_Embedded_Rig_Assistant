@@ -95,6 +95,25 @@ it("normalizes covered citations to the smallest issued window only when request
   expect((await service.openArtifact(stale?.artifactId ?? "")).content).toBe("[[criterion.md#L3-L3]]");
 });
 
+it("continues escaped artifact pages from the last complete delivered line", async () => {
+  const line = '"'.repeat(200);
+  const ref = "artifact:report.md";
+  const { service, handle } = await setup([
+    save({ name: "report.md", content: Array.from({ length: 200 }, () => line).join("\n") }),
+    { name: "read", args: { path: ref } },
+  ]);
+  const session = service.create(null, "read-only");
+  service.send(session.id, "Save and read a report");
+  await service.waitIdle(session.id);
+  const { result_json } = handle.db
+    .prepare("SELECT result_json FROM tool_calls WHERE name='read' AND status='ok'")
+    .get() as { result_json: string };
+  const result = JSON.parse(JSON.parse(result_json).content[0].text);
+  const visible = result.text.split("\n");
+  expect(visible.at(-1)).toBe(`${visible.length}: ${line}`);
+  expect(result).toMatchObject({ ref, nextOffset: visible.length + 1, truncated: true });
+});
+
 it("reads verified artifact lines after reopening, only in the owning session", async () => {
   const ref = "artifact:comparison.md";
   const { service, root, handle, host } = await setup([

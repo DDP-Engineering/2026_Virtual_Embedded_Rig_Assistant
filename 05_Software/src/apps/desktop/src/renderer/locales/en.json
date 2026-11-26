@@ -640,6 +640,7 @@
     "card": "Change approval",
     "bytes": "{{count}} bytes",
     "diff": "Unified diff",
+    "diffUnavailable": "Diff preview unavailable.",
     "approved": "Approved",
     "denied": "Denied",
     "aborted": "Aborted",

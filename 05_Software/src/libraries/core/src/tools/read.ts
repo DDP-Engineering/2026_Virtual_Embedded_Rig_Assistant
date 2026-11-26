@@ -54,7 +54,7 @@ export const readTool: ToolDefinition = {
   name: "read",
   class: "read",
   description:
-    "Read numbered text lines from a workbench file or an exact artifact:<name> reference in the current session. Artifact reads return a verified SHA-256; compare it across pages. Use read_doc for PDFs.",
+    "Read numbered text from a workbench file or exact current-session artifact:<name>. Continue at nextOffset when present; lineClipped means the last line is partial. Artifact reads return a verified SHA-256. Use read_doc for PDFs.",
   params: z.strictObject({
     path: z
       .string()
@@ -87,7 +87,9 @@ export const readTool: ToolDefinition = {
         "Use read_doc to read PDF documents. A PDF that read_doc reports as not indexed cannot be read yet: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
       );
     const file = await readWindow(guard, args.path, offset, limit, signal, { maxChars });
-    const end = file.selected.at(-1)?.line;
+    const deferClippedLine = file.lineClipped && file.selected.length > 1;
+    const selected = deferClippedLine ? file.selected.slice(0, -1) : file.selected;
+    const end = selected.at(-1)?.line;
     const ref =
       end && (!isAbsolute(file.target.relative) || parseLineRef(`${file.target.relative}#L${offset}-L${end}`))
         ? formatLineRef({ path: file.target.relative, start: offset, end })
@@ -95,10 +97,12 @@ export const readTool: ToolDefinition = {
     guard.assertAuthorized();
     ctx.lastReads.set(file.target.key, { sha256: file.sha256, mtimeMs: file.mtimeMs });
     return {
-      text: file.selected.map((line) => `${line.line}: ${line.text}`).join("\n"),
+      text: selected.map((line) => `${line.line}: ${line.text}`).join("\n"),
       ...(isAbsolute(file.target.relative) ? { path: file.target.relative } : {}),
       totalLines: file.totalLines,
       truncated: file.truncated,
+      ...(file.lineClipped && !deferClippedLine ? { lineClipped: true } : {}),
+      ...(end !== undefined && end < file.totalLines ? { nextOffset: end + 1 } : {}),
       ...(ref ? { ref } : {}),
     };
   },

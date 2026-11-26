@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 import { chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as api from "../index.js";
 
 let root: string;
@@ -132,17 +132,36 @@ it("requires a fresh read for overwrite and refreshes the fingerprint after a wr
   ctx.change.callId = crypto.randomUUID();
   expect(await edit(ctx, "new", "next")).toMatchObject({ replacements: 1, added: 1, removed: 1 });
 });
-it("applies a change whose diff is too large and records a placeholder instead of the diff", async () => {
+it("applies a change whose diff is too large and leaves its preview unavailable", async () => {
   const content = Array.from({ length: 4001 }, (_, line) => `line ${line}`).join("\n");
-  const placeholder = "The file differs in more than 4000 lines.\n";
   const ctx = context();
   const prepared = await api.writeTool.prepare?.(ctx, { path: "big.txt", content }, signal());
-  expect(prepared?.request).toMatchObject({ diff: placeholder });
+  expect(prepared?.request).toMatchObject({ diff: "" });
   expect(await api.writeTool.execute(ctx, { path: "big.txt", content }, signal())).toMatchObject({
     created: true,
   });
   expect(await readFile(join(root, "big.txt"), "utf8")).toBe(content);
-  expect(storage.db.prepare("SELECT diff FROM changes").get()).toEqual({ diff: placeholder });
+  expect(storage.db.prepare("SELECT diff FROM changes").get()).toEqual({ diff: "" });
+});
+it("preserves the prepared write when diff calculation runs out of time", async () => {
+  const ctx = context();
+  await writeFile(join(root, "file.txt"), "old\n");
+  await read(ctx);
+  let time = 0;
+  const clock = vi.spyOn(Date, "now").mockImplementation(() => (time += 101));
+  try {
+    const change = await api.prepareChange(
+      ctx,
+      "write",
+      { path: "file.txt", content: "updated\n" },
+      signal(),
+    );
+    expect(change.request).toMatchObject({ diff: "" });
+    await expect(change.apply(signal())).resolves.toMatchObject({ bytes: 8, created: false });
+    expect(await readFile(join(root, "file.txt"), "utf8")).toBe("updated\n");
+  } finally {
+    clock.mockRestore();
+  }
 });
 it("requires exactly one match unless replaceAll and rejects empty and zero matches", async () => {
   await writeFile(join(root, "file.txt"), "one\none\n");

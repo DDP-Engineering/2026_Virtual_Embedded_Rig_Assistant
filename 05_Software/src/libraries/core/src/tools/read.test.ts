@@ -55,6 +55,7 @@ it("reads numbered offset/limit lines with canonical refs and independent sessio
     text: "2: Banc ă",
     totalLines: 3,
     truncated: true,
+    nextOffset: 3,
     ref: "docs/notes.md#L2-L2",
   });
   const guarded = await (await api.PathGuard.create(root)).resolve("docs/notes.md");
@@ -118,7 +119,7 @@ it("handles empty files, offset beyond end, line limit and byte ceiling", async 
     await api.readTool.execute(ctx, { path: "large.txt", offset: 2, limit: 1 }, new AbortController().signal),
   ).toMatchObject({ text: "2: last line", totalLines: 2, truncated: false, ref: "large.txt#L2-L2" });
   const large = await api.readTool.execute(ctx, { path: "large.txt" }, new AbortController().signal);
-  expect(large.truncated).toBe(true);
+  expect(large).toMatchObject({ truncated: true, lineClipped: true, nextOffset: 2 });
   expect(large.ref).toBe("large.txt#L1-L1");
   expect(JSON.stringify(large).length).toBeLessThanOrEqual(32000);
   const target = await (await api.PathGuard.create(root)).resolve("large.txt");
@@ -162,16 +163,47 @@ it.skipIf(process.platform === "win32")("refuses a FIFO without opening it", asy
 });
 it("registry capping of escaped numbered text retains the exact visible line range", async () => {
   const ctx = context();
-  await writeFile(join(root, "quotes.txt"), Array.from({ length: 200 }, () => '"'.repeat(200)).join("\n"));
-  const outcome = await new api.ToolRegistry().execute(
-    ctx,
-    "read",
-    { path: "quotes.txt" },
-    new AbortController().signal,
-  );
-  const result = JSON.parse(outcome.text) as { ref: string; text: string; truncated: boolean };
+  const line = '"'.repeat(200);
+  await writeFile(join(root, "quotes.txt"), Array.from({ length: 200 }, () => line).join("\n"));
+  const registry = new api.ToolRegistry();
+  const signal = new AbortController().signal;
+  const outcome = await registry.execute(ctx, "read", { path: "quotes.txt" }, signal);
+  const result = JSON.parse(outcome.text) as {
+    ref: string;
+    text: string;
+    truncated: boolean;
+    nextOffset: number;
+  };
   expect(outcome.text.length).toBeLessThanOrEqual(32000);
   expect(result.truncated).toBe(true);
-  const last = [...result.text.matchAll(/(?:^|\n)(\d+): /g)].at(-1);
-  expect(result.ref).toBe(`quotes.txt#L1-L${Number(last?.[1])}`);
+  const lines = result.text.split("\n");
+  expect(lines.at(-1)).toBe(`${lines.length}: ${line}`);
+  expect(result.ref).toBe(`quotes.txt#L1-L${lines.length}`);
+  expect(result.nextOffset).toBe(lines.length + 1);
+  const next = await registry.execute(
+    ctx,
+    "read",
+    { path: "quotes.txt", offset: result.nextOffset, limit: 1 },
+    signal,
+  );
+  expect(JSON.parse(next.text)).toMatchObject({ text: `${lines.length + 1}: ${line}` });
+});
+
+it("marks a partial first line and continues at the second line when serialized text is too long", async () => {
+  const path = "wide-escaped.txt";
+  await writeFile(join(root, path), `${'"'.repeat(24000)}\ntail\n`);
+  const outcome = await new api.ToolRegistry().execute(
+    context(),
+    "read",
+    { path },
+    new AbortController().signal,
+  );
+  expect(outcome.text.length).toBeLessThanOrEqual(32000);
+  expect(JSON.parse(outcome.text)).toMatchObject({
+    text: expect.stringMatching(/^1: "+$/),
+    lineClipped: true,
+    nextOffset: 2,
+    ref: `${path}#L1-L1`,
+    truncated: true,
+  });
 });

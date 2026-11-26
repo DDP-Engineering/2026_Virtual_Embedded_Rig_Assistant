@@ -14,6 +14,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Fixed
 
 - analysis-skills 0.4.1: Save exact tool-issued line citations in firmware reports and manual test plans.
+- Continue file and artifact reads from the last line delivered when a page is shortened.
+- Return unchanged file writes and edits without approval or rewriting.
+- Limit diff calculation time while keeping large file changes available for approval.
 
 ## [0.4.0] - 2026-11-26
 

@@ -17,6 +17,32 @@ afterEach(async () => {
   container?.remove();
 });
 
+it("shows an unavailable diff preview and keeps approval available", async () => {
+  await i18n.changeLanguage("en");
+  const approval: SessionState["approvals"][number] = {
+    approvalId: "apv",
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool: "write",
+    path: "file.txt",
+    diff: "",
+    bytes: 2000,
+    decision: null,
+  };
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+  );
+  expect(container.querySelector('[role="status"]')?.textContent).toBe(i18n.t("approval.diffUnavailable"));
+  expect(
+    [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === i18n.t("approval.approve"),
+    )?.disabled,
+  ).toBe(false);
+});
+
 it.each(["en", "ro", "de", "fr"])("sends only an explicit chosen user prefix in %s", async (language) => {
   await i18n.changeLanguage(language);
   const approval = {
