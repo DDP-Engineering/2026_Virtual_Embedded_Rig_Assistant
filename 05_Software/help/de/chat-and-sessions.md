@@ -70,6 +70,8 @@ Wenn VERA eine Aufgabe delegiert, erscheint die untergeordnete Sitzung eingerüc
 
 Der übergeordnete Agent kann weitere Anweisungen im selben untergeordneten Chat senden und Modell sowie Denkstufe für spätere Durchläufe wählen. Der Verlauf kennzeichnet diese Nachrichten als **Anweisung des übergeordneten Agenten**. Während die untergeordnete Sitzung arbeitet, wartet eine zulässige Nachricht auf die nächste Modellanfrage. Ist eine Entscheidung erforderlich, nutze die Genehmigungskarte der untergeordneten Sitzung.
 
+Der übergeordnete Agent kann prüfen, ob eine Anweisung noch wartet und welcher Durchlauf sie erhalten hat. Wird die untergeordnete Sitzung vor der Zustellung angehalten, kann die Anweisung im nächsten Durchlauf ankommen. Beim Anhalten fordert VERA auch das Beenden ihrer Hintergrundprogramme an, einschließlich der Programme aus früheren Durchläufen.
+
 Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Delegiert eine Sitzung im Bypass-Modus, startet die neue Sitzung in Automatisch bearbeiten, außer du aktivierst unter **Einstellungen > Daten & Datenschutz** die Option **Vollzugriff für delegierte Aufgaben erlauben** und bestätigst. Die Option ist standardmäßig aus und gilt für künftige Starts in allen Workbenches; schaltest du sie aus, behalten bestehende Sitzungen ihren Modus. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat.
 
 Lass in einer gemeinsam genutzten Arbeitskopie jeweils eine untergeordnete Sitzung fertig werden und überprüfe ihre Übergabe vor dem nächsten Start.

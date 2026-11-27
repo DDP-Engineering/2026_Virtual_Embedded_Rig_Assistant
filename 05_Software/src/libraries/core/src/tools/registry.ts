@@ -141,16 +141,19 @@ function resultSuffix(text: string, limit: number, tokens: readonly string[]): s
   return text.slice(cut).replace(/^[\uDC00-\uDFFF]/, "");
 }
 
-function webExcerpt(content: string, budget: number, tokens: readonly string[]): string {
-  if (JSON.stringify(content).length - 2 <= budget) return content;
+function jsonExcerpt(content: string, budget: number, tokens: readonly string[], side: "start" | "end") {
+  if (content.length <= budget && JSON.stringify(content).length - 2 <= budget) return content;
   let low = 0;
   let high = Math.min(content.length, budget);
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if (JSON.stringify(content.slice(0, middle)).length - 2 <= budget) low = middle;
+    const excerpt = side === "start" ? content.slice(0, middle) : content.slice(-middle);
+    if (JSON.stringify(excerpt).length - 2 <= budget) low = middle;
     else high = middle - 1;
   }
-  return resultPrefix(content, low, tokens).replace(/[\uD800-\uDBFF]$/, "");
+  return side === "start"
+    ? resultPrefix(content, low, tokens).replace(/[\uD800-\uDBFF]$/, "")
+    : resultSuffix(content, low, tokens);
 }
 
 /** Reserve space for complete citations before distributing the remaining budget to excerpts. */
@@ -181,14 +184,26 @@ function capWebResult(result: Record<string, unknown>, limit: number, tokens: re
     return '{"truncated":true,"isError":true,"error":"The web citation exceeds the tool result limit."}';
   let remaining = limit - metadata.length;
   for (const [index, source] of sources.entries()) {
-    source.content = webExcerpt(
+    source.content = jsonExcerpt(
       excerpts[index] ?? "",
       Math.floor(remaining / (sources.length - index)),
       tokens,
+      "start",
     );
     remaining -= JSON.stringify(source.content).length - 2;
   }
   return JSON.stringify(result);
+}
+
+function capDelegatedReply(result: Record<string, unknown>, limit: number, tokens: readonly string[]) {
+  const reply = result.reply;
+  if (typeof reply !== "string") return undefined;
+  const marker = "\n[truncated]\n";
+  const budget = limit - JSON.stringify({ ...result, reply: marker }).length;
+  if (budget < 0) return undefined;
+  const head = jsonExcerpt(reply, Math.floor(budget / 2), tokens, "start");
+  const tail = jsonExcerpt(reply, budget - (JSON.stringify(head).length - 2), tokens, "end");
+  return JSON.stringify({ ...result, reply: `${head}${marker}${tail}` });
 }
 
 export function capToolResult(
@@ -209,6 +224,10 @@ export function capToolResult(
     if (toolName === "web_search" || toolName === "web_read") {
       const web = capWebResult(result, limit, tokens);
       if (web !== undefined) return { text: web, truncated };
+    }
+    if (toolName === "session_status" || toolName === "session_wait") {
+      const reply = capDelegatedReply(result, limit, tokens);
+      if (reply !== undefined) return { text: reply, truncated };
     }
     const tailKey =
       toolName === "terminal_read"

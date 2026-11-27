@@ -69,6 +69,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Shorten long session artifact descriptions while still saving the full artifact content.
 - Stop turns without waiting for workbench preparation and retain question replies that exceed the text limits.
 - Keep plan steps valid after masking and let the agent read the complete saved plan in pages.
+- Track delivery of queued delegated instructions and read status without replaying the full child conversation.
+- Keep the opening and conclusion when shortening delegated replies and clarify the scope of delegated Stop.
 
 ## [0.4.0] - 2026-11-26
 

@@ -70,6 +70,8 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
 
+Agentul părinte poate verifica dacă o instrucțiune este încă în coadă și în ce tură a primit-o sesiunea copil. Dacă oprești sesiunea copil înainte de livrare, instrucțiunea poate fi preluată în tura următoare. Oprirea cere și închiderea programelor de fundal ale sesiunii copil, inclusiv a celor pornite în ture anterioare.
+
 O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. Copilul unei sesiuni părinte în Bypass pornește în Editare automată, cu excepția cazului în care activezi **Permite acces complet pentru sarcinile delegate** în **Setări > Date și confidențialitate** și confirmi. Setarea este oprită implicit și se aplică lansărilor viitoare din toate workbench-urile; dacă o oprești, sesiunile existente își păstrează modul. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei.
 
 Într-o copie de lucru partajată, lasă o sesiune copil să termine implementarea și verifică predarea înainte de a porni următoarea.

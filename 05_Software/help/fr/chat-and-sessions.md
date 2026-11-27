@@ -70,6 +70,8 @@ Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** 
 
 L’agent parent peut envoyer d’autres instructions dans la même conversation enfant et choisir son modèle et son niveau de raisonnement pour les tours suivants. Le fil identifie ces messages comme **Instruction de l’agent parent**. Si la session enfant travaille déjà, une instruction admissible attend la prochaine requête au modèle. Utilisez la carte d’approbation de la session enfant lorsqu’une décision de l’utilisateur est requise.
 
+L’agent parent peut vérifier si une instruction est encore en attente et quel tour l’a reçue. Si vous arrêtez la session enfant avant la livraison, l’instruction peut être reçue au tour suivant. VERA demande aussi l’arrêt des programmes en arrière-plan de la session enfant, y compris ceux lancés lors de tours précédents.
+
 Une nouvelle session enfant démarre avec le mode d’autorisation actuel de la session parente. L’enfant d’une session parente en mode Bypass démarre en Modification auto, sauf si vous activez **Autoriser l’accès complet pour les tâches déléguées** dans **Paramètres > Données et confidentialité** et confirmez. L’option est désactivée par défaut et concerne les prochains lancements dans tous les bancs de travail ; si vous la désactivez, les sessions existantes gardent leur mode. Après le lancement, choisissez séparément le mode de chaque session dans sa zone de saisie. Réduisez l’accès d’une session enfant dans son propre chat.
 
 Dans une copie de travail partagée, attendez qu’une session enfant termine son travail et vérifiez sa livraison avant de lancer la suivante.

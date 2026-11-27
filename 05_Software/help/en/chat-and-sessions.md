@@ -70,6 +70,8 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
 
+The parent agent can check whether a follow-up is still queued and which child turn received it. If you stop the child before delivery, the queued instruction can carry over to the next turn. Stopping the child also requests an end to its background programs, including runs from earlier turns.
+
 A new child starts in the parent’s current permission mode. A Bypass parent’s child starts in Auto-edit unless you enable **Allow Full Access for delegated tasks** in **Settings > Data & privacy** and confirm. The setting starts off and applies to future launches across your workbenches; turning it off keeps the modes of sessions already created. After launch, choose each session’s mode separately in its composer. To reduce a child’s access, change its mode in its own chat.
 
 In a shared checkout, let one implementation child finish and verify its handover before starting the next.

@@ -11,10 +11,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Open session search from the magnifier next to New session.
-      ro: Deschide căutarea sesiunilor cu lupa de lângă Sesiune nouă.
-      de: Die Lupe neben Neue Sitzung öffnet die Sitzungssuche.
-      fr: Ouvrez la recherche de sessions avec la loupe à côté de Nouvelle session.
+      en: Search beside New session. Delegation tracks delivery and keeps the end of long replies.
+      ro: Caută lângă Sesiune nouă. Agentul urmărește livrarea și păstrează finalul răspunsului delegat.
+      de: Suche neben Neue Sitzung. Delegation verfolgt die Zustellung und behält das Antwortende.
+      fr: Loupe près de Nouvelle session. La délégation suit la livraison et garde la fin des réponses.
   - category: improved
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:

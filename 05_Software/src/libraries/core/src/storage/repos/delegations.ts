@@ -1,4 +1,4 @@
-import { stopReasonSchema } from "@vera/shared";
+import { type SessionEvent, stopReasonSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
 
 interface DelegationRequestRow {
@@ -81,9 +81,47 @@ export class DelegationsRepository {
 
   start(id: string, turnId: string) {
     return this.db
-      .prepare(`SELECT json_extract(payload_json,'$.messageId') AS messageId FROM events
+      .prepare(`SELECT seq, json_extract(payload_json,'$.messageId') AS messageId FROM events
         WHERE session_id=? AND type='turn.started' AND json_extract(payload_json,'$.turnId')=?`)
-      .get(id, turnId) as { messageId: string | null } | undefined;
+      .get(id, turnId) as { seq: number; messageId: string | null } | undefined;
+  }
+
+  /** Read status events within the addressed turn's sequence range. */
+  turnEvents(id: string, turnId: string, fromSeq: number, throughSeq: number): SessionEvent[] {
+    const terminal = this.db
+      .prepare(`SELECT MAX(seq) AS seq FROM events WHERE session_id=?
+        AND type IN ('session.interrupted','turn.done') AND json_extract(payload_json,'$.turnId')=?`)
+      .get(id, turnId) as { seq: number | null };
+    const rows = this.db
+      .prepare(`SELECT payload_json FROM events WHERE session_id=? AND seq BETWEEN ? AND ?
+        AND type IN ('turn.started','turn.done','session.interrupted','tool.started',
+          'approval.requested','approval.decided','message.done') ORDER BY seq`)
+      .all(id, fromSeq, terminal.seq ?? throughSeq) as { payload_json: string }[];
+    return rows.map((row) => JSON.parse(row.payload_json) as SessionEvent);
+  }
+
+  /** Track an instruction from its originating parent, including delivery in a later turn. */
+  messageDelivery(id: string, parentId: string, messageId: string) {
+    const message = this.db
+      .prepare(`SELECT seq,type FROM events WHERE session_id=? AND type IN ('message.user','message.queued')
+        AND json_extract(payload_json,'$.messageId')=? AND json_extract(payload_json,'$.parentSessionId')=?`)
+      .get(id, messageId, parentId) as { seq: number; type: "message.user" | "message.queued" } | undefined;
+    if (!message) return undefined;
+    const delivery =
+      message.type === "message.queued"
+        ? (this.db
+            .prepare(`SELECT seq FROM events WHERE session_id=? AND seq>? AND type='message.delivered'
+              AND EXISTS (SELECT 1 FROM json_each(payload_json,'$.messageIds') WHERE value=?)
+              ORDER BY seq LIMIT 1`)
+            .get(id, message.seq, messageId) as { seq: number } | undefined)
+        : undefined;
+    if (message.type === "message.queued" && !delivery) return { messageId, delivery: "queued" as const };
+    const turn = this.db
+      .prepare(`SELECT json_extract(payload_json,'$.turnId') AS turnId FROM events
+        WHERE session_id=? AND type='turn.started' AND ${delivery ? "seq<=? ORDER BY seq DESC" : "seq>? ORDER BY seq"}
+        LIMIT 1`)
+      .get(id, delivery?.seq ?? message.seq) as { turnId: string } | undefined;
+    return { messageId, delivery: "delivered" as const, deliveredTurnId: turn?.turnId };
   }
 
   /** Read latest outcomes through the turn indexes without replaying child transcripts. */

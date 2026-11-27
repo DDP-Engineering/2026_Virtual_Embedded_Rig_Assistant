@@ -196,6 +196,28 @@ it.each(["run_command", "run_program", "program_output", "program_stop"])(
   },
 );
 
+it.each(["session_status", "session_wait"])(
+  "keeps both reply ends in %s without cutting through known credentials",
+  (name) => {
+    const marker = "\n[truncated]\n";
+    const opening = "H".repeat(55);
+    const conclusion = "T".repeat(55);
+    const secret = "credential-very-long";
+    const value = {
+      status: "completed",
+      reply: `${opening}${secret}${'"'.repeat(300)}${secret}${conclusion}`,
+    };
+    const limit = JSON.stringify({ ...value, reply: marker, truncated: true }).length + 120;
+    const result = api.capToolResult(value, [secret], limit, name);
+    expect(result.text.length).toBeLessThanOrEqual(limit);
+    expect(JSON.parse(result.text)).toEqual({
+      status: "completed",
+      reply: `${opening}${marker}${conclusion}`,
+      truncated: true,
+    });
+  },
+);
+
 it("contains serialization failures and honors explicit tool error results", async () => {
   const cycle: Record<string, unknown> = {};
   cycle.self = cycle;
