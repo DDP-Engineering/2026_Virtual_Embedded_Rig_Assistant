@@ -193,6 +193,7 @@ const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR",
 /** The desktop session variables a program that opens windows needs (manifest `gui: true`), and only such a program. */
 export const DISPLAY_VARIABLES = ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"] as const;
 const RUN_FILE = /^([0-9A-HJKMNP-TV-Z]{26})\.(?:log|json)$/;
+const PRUNE_BATCH_SIZE = 8;
 const RUN_RECORD = /^[0-9A-HJKMNP-TV-Z]{26}\.json$/;
 /** Runs the Runs list returns, newest first. */
 const LISTED = 50;
@@ -1271,11 +1272,21 @@ export class ProgramRunner {
   async prune(folder: string): Promise<void> {
     this.refreshLimits();
     const names = await readdir(folder);
-    const ids = [...new Set(names.flatMap((name) => RUN_FILE.exec(name)?.[1] ?? []))].sort();
-    for (const id of ids.slice(0, Math.max(0, ids.length - this.settings.logsKept)))
-      if (!this.active.has(id))
-        for (const name of [`${id}.log`, `${id}.json`])
-          if (names.includes(name)) await rm(join(folder, name), { force: true }).catch(() => {});
+    const ids = [...new Set(names.flatMap((name) => RUN_FILE.exec(name)?.[1] ?? []))];
+    const excess = ids.length - this.settings.logsKept;
+    if (excess <= 0) return;
+    ids.sort();
+    const files = new Set(names);
+    for (let index = 0; index < excess; index += PRUNE_BATCH_SIZE) {
+      const batch = ids.slice(index, Math.min(index + PRUNE_BATCH_SIZE, excess));
+      await Promise.all(
+        batch
+          .filter((id) => !this.active.has(id))
+          .flatMap((id) => [`${id}.log`, `${id}.json`])
+          .filter((name) => files.has(name))
+          .map((name) => rm(join(folder, name), { force: true }).catch(() => {})),
+      );
+    }
   }
 
   /**

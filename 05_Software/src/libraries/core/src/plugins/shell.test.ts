@@ -47,6 +47,21 @@ describe("platform shell resolution", () => {
       ),
     ).toEqual({ executable: `/bin/${name}`, kind: name });
   });
+  it.each(["", "pwsh.exe"])("probes only the needed Windows shell for selection %j", async (configured) => {
+    const host = {
+      platform: "win32",
+      env: { Path: "C:\\Tools", ProgramFiles: "C:\\Program Files" },
+    };
+    const available = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
+    const probes: string[] = [];
+    await expect(
+      resolveCommandShell(host, configured, async (path) => {
+        probes.push(path);
+        return path === available;
+      }),
+    ).resolves.toEqual({ executable: available, kind: "powershell" });
+    expect(probes).toEqual(["C:\\Tools\\pwsh.exe", available]);
+  });
   it("honors explicit shells, refuses unavailable selections and ignores relative PATH entries", async () => {
     const host = { platform: "linux", env: { PATH: ".:/bin" } };
     expect(await resolveCommandShell(host, "/custom/zsh", find(["/custom/zsh"]))).toEqual({

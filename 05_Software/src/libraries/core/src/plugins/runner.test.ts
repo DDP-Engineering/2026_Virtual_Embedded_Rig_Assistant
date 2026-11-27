@@ -653,6 +653,23 @@ describe("run records, list, log and stop (spec REQ-DATA-f563074f)", () => {
     expect(names).toContain(`${ids[2]}.json`);
   });
 
+  it("prunes multiple batches without deleting active runs or unrelated files", async () => {
+    const id = (value: number) => String(value).padStart(26, "0");
+    runner = make({ host, clock: { sleep: async () => {} }, logsKept: 2, id: () => id(1) });
+    const active = await runner.start(request({ background: true }));
+    const folder = join(root, ".vera", "runs");
+    const names = Array.from({ length: 12 }, (_, index) => id(index + 2)).flatMap((runId) => [
+      `${runId}.log`,
+      `${runId}.json`,
+    ]);
+    await Promise.all([...names, "keep.txt"].map((name) => writeFile(join(folder, name), "")));
+    await runner.prune(folder);
+    expect((await readdir(folder)).sort()).toEqual(
+      [`${active.id}.log`, `${active.id}.json`, ...names.slice(-4), "keep.txt"].sort(),
+    );
+    expect(active.read().running).toBe(true);
+  });
+
   // REQ-FUNC-dd50ebed REQ-FUNC-ddcd96b8 REQ-FUNC-1e7d6449
   it("reads the host's background, log count and log size limits at each start", async () => {
     const limits = { backgroundPrograms: 2, runLogsKept: 2, runLogBytes: 10 };

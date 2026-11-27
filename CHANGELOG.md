@@ -20,6 +20,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Verify document reads with bounded memory and reuse locator checks within each message.
 - Reduce document search work on large indexes by applying filters before loading fragments and vectors.
 - Return keyword results when hybrid document search reaches the time limit for semantic ranking.
+- Start commands faster with focused Windows shell lookup and batched pruning of old run logs.
 
 ### Fixed
 

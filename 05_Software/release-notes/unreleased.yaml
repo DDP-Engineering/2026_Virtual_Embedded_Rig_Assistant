@@ -81,10 +81,10 @@ entries:
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Pages from large text files load faster.
-      ro: Paginile din fișierele text mari se încarcă mai repede.
-      de: Seiten aus großen Textdateien laden schneller.
-      fr: Les pages des gros fichiers texte se chargent plus vite.
+      en: Reading large text files and listing or searching large directories takes less time.
+      ro: Citirea fișierelor text mari și listarea sau căutarea în directoare mari durează mai puțin.
+      de: Große Textdateien lesen und große Ordner auflisten oder durchsuchen geht schneller.
+      fr: Lire les gros fichiers texte et parcourir ou rechercher dans de grands dossiers est plus rapide.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -114,12 +114,12 @@ entries:
       de: Ausgabe bleibt bei Abbruch erhalten. Start-/Stoppfehler und Zeitüberschreitungen werden gemeldet.
       fr: La sortie garde sa fin après annulation. Les échecs et les délais dépassés sont signalés.
   - category: improved
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: Listing and searching large directories takes less time.
-      ro: Listarea și căutarea în directoare mari durează mai puțin.
-      de: Das Auflisten und Durchsuchen großer Ordner dauert kürzer.
-      fr: L’affichage et la recherche dans les grands dossiers sont plus rapides.
+      en: Short commands start faster, even after reducing how many run logs are kept.
+      ro: Comenzile scurte pornesc mai repede și după reducerea numărului de jurnale păstrate.
+      de: Kurze Befehle starten auch nach dem Senken der Protokollanzahl schneller.
+      fr: Les commandes courtes démarrent plus vite, même après réduction du nombre de journaux.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
