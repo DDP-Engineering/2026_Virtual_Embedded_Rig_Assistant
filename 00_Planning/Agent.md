@@ -108,7 +108,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `grep` | read | JavaScript regex search in a worker | 500 matches; skips binary and files over 5 MB; 10 s |
 | `parse_log` | read | Counts and cited events of an `esp-idf`, `zephyr`, `iso` or pattern log | 50 MiB; 10 s; 200 events |
 | `decode_register` | read | Exact field decode of a register value (8–64 bit) against a JSON definition | 1 MiB; reads no device |
-| `search_docs`, `read_doc` | read | Document index search and read ([Workbench.md](Workbench.md)) | `k` 1–20; 12 000 characters per part |
+| `search_docs`, `read_doc` | read | Document index search and read ([Workbench.md](Workbench.md)) | `k` 1–20; 12 000 characters per part; a read returns the page or line count, the next heading and, without a heading, all headings |
 | `load_skill` | read | An enabled skill or a file in its folder | enabled skills |
 | `help` | read | VERA's and enabled plugins' help, ref `help:<page>` | — |
 | `web_search` | read | Web search through Exa, Tavily or Brave | 1–8 sources (5), 3 500 characters each; 30 s |
@@ -121,7 +121,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `todo` | session | Replaces the session Plan | 50 items, 200 characters |
 | `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed |
 | `run_program` | program | Declared plugin program with an argument array, no shell | plugin risk rules and timeout |
-| `program_output`, `program_stop` | read | New output or stop of a background run | `waitMs` ≤ 30 000, `until` regex |
+| `program_output`, `program_stop` | read | New output or stop of a background run | `waitMs` ≤ 600 000, `until` regex |
 | `terminal_read` | read | Recent output of a user terminal | terminals the user shared |
 | `plugin_validate` | read | Validates a plugin draft folder | installs nothing |
 | `plugin_install` | program | Installs a reviewed draft as trial | always asks, also in Bypass |
@@ -129,7 +129,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `electrical_model`, `electrical_model_change` | read, write | Read or change the electrical model | electrical or automation plugin |
 | `industrial_catalog` | read | Reads `electrical-automation-catalogs/<id>.json` | its plugin |
 | `electrical_network`, `protection_coordination`, `motor_drives`, `power_quality`, `lighting_design` | write | Calculation storing one new result | each with its own plugin |
-| `session_launch`, `_send`, `_configure`, `_status`, `_wait`, `_stop` | session | Delegated child sessions | wait ≤ 30 s |
+| `session_launch`, `_send`, `_configure`, `_status`, `_wait`, `_stop` | session | Delegated child sessions | wait ≤ 600 s |
 
 Background runs outlive the tool call and stop with the session, the app or the Bypass mode that
 started them. Commands inherit the user's environment without provider keys or stored credentials.

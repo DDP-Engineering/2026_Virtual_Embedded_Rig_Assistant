@@ -1,8 +1,10 @@
+import { lstat } from "node:fs/promises";
 import { isAbsolute } from "node:path";
 import { advancedSettings, formatLineRef, parseArtifactRef, parseLineRef, veraError } from "@vera/shared";
 import { z } from "zod";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolLimit, toolPathGuard } from "./context.js";
+import { entryDisappeared } from "./discovery.js";
 import { readWindow } from "./read-window.js";
 
 function readArtifact(
@@ -86,7 +88,22 @@ export const readTool: ToolDefinition = {
       throw Error(
         "Use read_doc to read PDF documents. A PDF that read_doc reports as not indexed cannot be read yet: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
       );
-    const file = await readWindow(guard, args.path, offset, limit, signal, { maxChars, allowGrowth: true });
+    // A missing path or a folder gets its own sentence: the system error names neither, and carries the
+    // absolute path of the workbench.
+    const missing = () => Error(`File not found: ${args.path}. Check the path with list or glob.`);
+    const entry = await lstat(target.absolute).catch((error) => {
+      if (entryDisappeared(error)) throw missing();
+      throw error;
+    });
+    if (entry.isDirectory()) throw Error(`${args.path} is a folder. Use list to see its entries.`);
+    const file = await readWindow(guard, args.path, offset, limit, signal, {
+      maxChars,
+      allowGrowth: true,
+    }).catch((error) => {
+      // Deleted between the check and the read.
+      if (entryDisappeared(error)) throw missing();
+      throw error;
+    });
     const deferClippedLine = file.lineClipped && file.selected.length > 1;
     const selected = deferClippedLine ? file.selected.slice(0, -1) : file.selected;
     const end = selected.at(-1)?.line;

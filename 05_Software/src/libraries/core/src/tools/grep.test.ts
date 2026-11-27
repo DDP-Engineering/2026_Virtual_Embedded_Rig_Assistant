@@ -226,4 +226,18 @@ it("skips a large binary file from its first bytes and still searches a large te
     new AbortController().signal,
   );
   expect(result).toMatchObject({ matches: [{ path: "notes.txt", line: 4001 }], skippedFiles: 1 });
+  // Named directly, the same file is not "no matches": the search says why it could not look.
+  const named = (path: string, maxFileBytes?: number) =>
+    api.grepTool.execute(
+      {
+        ...api.createToolContext(root, pool),
+        ...(maxFileBytes ? { advanced: () => maxFileBytes as never } : {}),
+      },
+      { pattern: "hit", path },
+      new AbortController().signal,
+    );
+  await expect(named("firmware.o")).rejects.toThrow("This file is binary");
+  await writeFile(join(root, "capture.log"), `${"I (1) boot: line\n".repeat(140000)}hit\n`);
+  await expect(named("capture.log", 1)).rejects.toThrow(/above the 1 MB grep limit.*read/);
+  expect(await named("notes.txt")).toMatchObject({ matches: [{ line: 4001 }] });
 });

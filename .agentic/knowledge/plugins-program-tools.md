@@ -60,7 +60,7 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   executableArgs, programVersion, args, cwd, risk, confirm, notes, files[{arg, path, sha256}]}`; `programApproval(request)` -> event payload.
 - Agent tools (core `program-tools.ts`): `run_program {program, args?, cwd?, timeout? 1..3600 s,
   background?}` -> foreground `{exitCode, durationMs, risk, output, truncated, log, timedOut?, stopped?,
-  signal?, error?}` or background `{handle, risk, log}`; `program_output {handle, waitMs? 0..30000,
+  signal?, error?}` or background `{handle, risk, log}`; `program_output {handle, waitMs? 0..600000,
   until? 1..512}` -> `{output, truncated, running, exitCode?, timedOut?, error?, matched?}`; `program_stop {handle}` ->
   `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. `ProgramResolver.resolve(plugin,
   program)` -> `{executable, prefix?, launcher?, env?, version?}` or undefined; `unresolvedPrograms`; `ProgramHost`;

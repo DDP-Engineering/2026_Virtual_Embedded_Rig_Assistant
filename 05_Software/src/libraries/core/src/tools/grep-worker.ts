@@ -4,7 +4,7 @@ import { formatLineRef, parseLineRef } from "@vera/shared";
 import type { GrepFileResult, GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary, utf16Bom, validUtf8 } from "./binary.js";
-import { discoverFilePaths, inspectDiscoveredFile } from "./discovery.js";
+import { discoverFilePaths, inspectDiscoveredFile, resolveDiscoveryPath } from "./discovery.js";
 import { readFilePrefix, readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
 import { LogFailure } from "./log-failure.js";
@@ -58,20 +58,33 @@ async function execute(task: WorkerTask) {
     const content = !args.output || args.output === "content";
     const reportedFiles = content ? undefined : new Set<string>();
     const maxFileBytes = task.maxFileBytes ?? 5 * 1024 * 1024;
-    // Whether a candidate is searched, counted as unsearched (`skip`) or dropped. A larger file is
-    // classified from its first bytes, so object files, images and archives are never read whole.
+    // A search of one named file that cannot be searched is an answer the model must not read as "no
+    // matches": it says why, and what to use instead. In a folder search such files are only counted.
+    const namedFile =
+      args.path !== undefined &&
+      paths.length === 1 &&
+      (await resolveDiscoveryPath(guard, args.path, signal)).info.isFile();
+    const megabytes = (bytes: number) => `${Math.round((bytes / (1024 * 1024)) * 10) / 10} MB`;
+    const unsearchable = (reason: "large" | "binary", size: number) =>
+      Error(
+        reason === "large"
+          ? `This file is ${megabytes(size)}, above the ${megabytes(maxFileBytes)} grep limit. Read it in pages with read (offset and limit), or use parse_log for a log.`
+          : "This file is binary; grep searches text files.",
+      );
+    // Whether a candidate is searched, counted as unsearched (`skip` names why) or dropped. A larger file
+    // is classified from its first bytes, so object files, images and archives are never read whole.
     const classify = async (candidate: string) => {
       const file = await inspectDiscoveredFile(guard, candidate, signal);
       if (!file) return undefined;
-      if (file.size > maxFileBytes) return { file, skip: true };
+      if (file.size > maxFileBytes) return { file, skip: "large" as const };
       if (file.size > SNIFF_BYTES)
         try {
           const prefix = await readFilePrefix(file.absolute, SNIFF_BYTES, signal);
-          if (!utf16Bom(prefix) && isBinary(prefix)) return { file, skip: true };
+          if (!utf16Bom(prefix) && isBinary(prefix)) return { file, skip: "binary" as const };
         } catch {
-          return { file, skip: true };
+          return { file, skip: "unreadable" as const };
         }
-      return { file, skip: false };
+      return { file, skip: undefined };
     };
     // Classification runs a batch at a time, as file discovery does: a build folder is mostly files to
     // skip, and one at a time their checks alone approached the task deadline. Results keep path order.
@@ -81,6 +94,7 @@ async function execute(task: WorkerTask) {
         const index = start + offset;
         if (!item || reportedFiles?.has(item.file.path)) continue;
         if (item.skip) {
+          if (namedFile && item.skip !== "unreadable") throw unsearchable(item.skip, item.file.size);
           skipped++;
           continue;
         }
@@ -98,6 +112,7 @@ async function execute(task: WorkerTask) {
         if (reportedFiles?.has(path)) continue;
         const bom = utf16Bom(bytes);
         if (!bom && isBinary(bytes)) {
+          if (namedFile) throw unsearchable("binary", file.size);
           skipped++;
           continue;
         }

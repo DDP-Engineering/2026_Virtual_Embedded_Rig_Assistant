@@ -158,6 +158,16 @@ it("counts mixed line endings when a CRLF crosses a read block boundary", async 
   });
   expect([...ctx.lastReads.values()][0]?.sha256).toBe(createHash("sha256").update(data).digest("hex"));
 });
+it("names a missing file and a folder instead of passing on the system error", async () => {
+  const signal = new AbortController().signal;
+  const missing = api.readTool.execute(context(), { path: "docs/missing.c" }, signal);
+  await expect(missing).rejects.toThrow("File not found: docs/missing.c. Check the path with list or glob.");
+  // The system message would carry the absolute path of the workbench.
+  await expect(missing).rejects.not.toThrow(root);
+  await expect(api.readTool.execute(context(), { path: "docs" }, signal)).rejects.toThrow(
+    "docs is a folder. Use list to see its entries.",
+  );
+});
 it("reads a log that is appended to while it is read, as it was when opened", async () => {
   const path = join(root, "serial.log");
   await writeFile(path, "boot\nready\n");

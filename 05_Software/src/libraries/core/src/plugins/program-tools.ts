@@ -99,6 +99,11 @@ export interface ProgramContext {
 const MAX_HANDLES = 32;
 const TAIL = 12_000;
 const POLL_MS = 50;
+/**
+ * The longest one program_output call waits: ten minutes, the default ceiling of a foreground run. A shorter
+ * cap made the agent poll a long build with a full model request every half minute.
+ */
+const MAX_WAIT_MS = 600_000;
 const UNTIL_MS = 100;
 // biome-ignore lint/suspicious/noTemplateCurlyInString: a manifest placeholder, replaced literally.
 const PLUGIN_DIR = "${pluginDir}";
@@ -626,14 +631,14 @@ function untilMatcher(source: string): (text: string) => boolean {
 }
 const outputParams = z.strictObject({
   handle: handleSchema,
-  waitMs: z.number().int().min(0).max(30_000).optional(),
+  waitMs: z.number().int().min(0).max(MAX_WAIT_MS).optional(),
   until: z.string().min(1).max(512).optional(),
 });
 export const programOutputTool: ToolDefinition = {
   name: "program_output",
   class: "read",
   description:
-    "Read a background run's output since the last delivered read and whether it is running. Finished runs report exitCode and include timedOut or a startup error when applicable. waitMs (at most 30000) waits for completion or, with until (a regular expression), a matching output.",
+    "Read a background run's output since the last delivered read and whether it is running. Finished runs report exitCode and include timedOut or a startup error when applicable. waitMs (at most 600000) waits for completion or, with until (a regular expression), a matching output.",
   params: outputParams,
   async execute(ctx, raw, signal, _callId, deferPublish) {
     const args = outputParams.parse(raw);
