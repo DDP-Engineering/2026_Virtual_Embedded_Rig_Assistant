@@ -449,3 +449,70 @@ describe("file binding (REQ-SEC-f98d4fd3)", () => {
     expect(() => t.gate.consume(same)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
   });
 });
+
+describe("program commands allowed for the workbench", () => {
+  const signal = () => new AbortController().signal;
+  it("runs a granted device-write command by mode in Auto-edit and still asks for every other one", async () => {
+    const t = await setup("auto-edit");
+    const first = t.gate.request(await t.prepare(["write", "build/app.bin"]), signal());
+    expect(await settled(first)).toBe("pending");
+    const requested = t.pending();
+    const grant = (commandPrefix: string) =>
+      t.gate.commandPrefix({
+        sessionId: "ses_1",
+        approvalId: requested.approvalId,
+        requestSha256: requested.requestSha256,
+        decision: "approved",
+        commandPrefix,
+      });
+    // The grant names the pending command's own leading words.
+    expect(grant("tool write")).toBe("tool write");
+    expect(grant("tool")).toBe("tool");
+    expect(() => grant("tool burn")).toThrow();
+    expect(() => grant("other write")).toThrow();
+    decide(t);
+    expect(await first).toBe("approved");
+
+    t.setPrefixes(["tool write", "tool burn"]);
+    const again = await t.prepare(["write", "build/app.bin"]);
+    expect(await t.gate.request(again, signal())).toBe("approved");
+    expect(t.rows().at(-1)).toMatchObject({ decision: "approved", decided_by: "mode" });
+    t.gate.consume(again);
+
+    // An irreversible command keeps its typed word and cannot be granted.
+    const burn = t.gate.request(await t.prepare(["burn", "key.bin"]), signal());
+    expect(await settled(burn)).toBe("pending");
+    const burning = t.pending();
+    expect(() =>
+      t.gate.commandPrefix({
+        sessionId: "ses_1",
+        approvalId: burning.approvalId,
+        requestSha256: burning.requestSha256,
+        decision: "approved",
+        confirmation: "burn",
+        commandPrefix: "tool burn",
+      }),
+    ).toThrow();
+    decide(t, { confirmation: "burn" });
+    expect(await burn).toBe("approved");
+
+    // A trial plugin and Ask mode ask each time.
+    const trial = t.gate.request(await t.prepare(["write", "build/app.bin"], true), signal());
+    expect(await settled(trial)).toBe("pending");
+    decide(t);
+    await trial;
+    t.setMode("ask");
+    const asked = t.gate.request(await t.prepare(["write", "build/app.bin"]), signal());
+    expect(await settled(asked)).toBe("pending");
+    decide(t);
+    await asked;
+  });
+  it("no longer starts a run whose grant was removed after the mode approved it", async () => {
+    const t = await setup("auto-edit");
+    t.setPrefixes(["tool write"]);
+    const request = await t.prepare(["write", "build/app.bin"]);
+    expect(await t.gate.request(request, signal())).toBe("approved");
+    t.setPrefixes([]);
+    expect(() => t.gate.consume(request)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+  });
+});

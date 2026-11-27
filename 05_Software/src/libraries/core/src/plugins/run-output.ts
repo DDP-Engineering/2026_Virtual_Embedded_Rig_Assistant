@@ -47,25 +47,43 @@ export class OutputDecoder {
   }
 }
 
-/** The last `limit` characters of the output, never starting inside a surrogate pair, and the total. */
+/**
+ * At most `limit` characters of the output, and the total. A longer output keeps its beginning too: the
+ * header of a history or a diff says what the rest is, as the end of a build says why it failed.
+ */
 export class TailBuffer {
   private buffer = "";
+  private head = "";
   private count = 0;
   private readThrough = 0;
-  constructor(readonly limit: number) {}
+  private readonly headLimit: number;
+  constructor(readonly limit: number) {
+    // A small buffer (a test, a status line) has no room for two ends and the line between them.
+    this.headLimit = limit >= 2000 ? Math.floor(limit / 4) : 0;
+  }
 
   get total(): number {
     return this.count;
   }
 
   push(text: string): void {
+    if (this.head.length < this.headLimit) this.head += text.slice(0, this.headLimit - this.head.length);
     this.count += text.length;
     this.buffer += text;
     if (this.buffer.length > this.limit * 2) this.buffer = this.buffer.slice(-this.limit);
   }
 
+  /** The whole output when it fits, else whole first lines, a line counting what is left out, and the end. */
   text(): string {
-    return this.suffix(this.limit);
+    if (this.count <= this.limit || !this.headLimit) return this.suffix(this.limit);
+    const line = this.head.lastIndexOf("\n");
+    let start = line > 0 ? this.head.slice(0, line + 1) : this.head;
+    const last = start.charCodeAt(start.length - 1);
+    if (last >= 0xd800 && last <= 0xdbff) start = start.slice(0, -1);
+    const note = (omitted: number) => `[${omitted} characters omitted here; the log has all of them]\n`;
+    const end = this.suffix(this.limit - start.length - note(this.count).length - 1);
+    const omitted = this.count - start.length - end.length;
+    return `${start}${start.endsWith("\n") ? "" : "\n"}${note(omitted)}${end}`;
   }
 
   /** A deferred read acknowledges only the output present in this snapshot. */

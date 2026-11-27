@@ -678,6 +678,7 @@
     "registry": "Declared in",
     "typeToConfirm": "This change is permanent. Type {{word}} to confirm.",
     "confirmMismatch": "The typed word does not match. Type the word shown on the card.",
+    "preview": "This commit records",
     "alwaysAllow": "Always allow",
     "commandPrefix": "Command prefix",
     "allowedCommands": "Allowed commands",

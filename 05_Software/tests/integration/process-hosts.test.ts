@@ -130,7 +130,8 @@ describe.each(["cli", "desktop"] as const)("%s process host", (name) => {
 
   it("caps the result while the log keeps the full output", async () => {
     const result = await runner.run(request({ ECHO_MODE: "flood", ECHO_COUNT: "50000" }));
-    expect(result.output).toHaveLength(12_000);
+    expect(result.output.length).toBeLessThanOrEqual(12_000);
+    expect(result.output).toContain("characters omitted here; the log has all of them]");
     expect(result.output.endsWith("END")).toBe(true);
     expect(result.truncated).toBe(true);
     expect(await readFile(join(workbench, result.log), "utf8")).toHaveLength(50_000);

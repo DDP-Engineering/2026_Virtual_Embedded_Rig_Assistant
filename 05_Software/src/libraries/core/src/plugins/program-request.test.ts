@@ -4,6 +4,7 @@ import { hostname, networkInterfaces, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { requestSha256 } from "../agent/approvals.js";
+import { PathGuard } from "../workbench/path-guard.js";
 import { plugin } from "./program-fixtures.test-support.js";
 import {
   findProgram,
@@ -133,6 +134,37 @@ describe("prepareProgramRequest", () => {
     expect(request.files).toEqual(
       [0, 1, 2, 3].map((arg) => ({ arg, path: "build/app.bin", sha256: sha("image") })),
     );
+  });
+  it("runs in a folder added to the workbench and binds its files, and refuses any other outside folder", async () => {
+    const root = await bench();
+    const added = await mkdtemp(join(tmpdir(), "vera-program-added-"));
+    const elsewhere = await mkdtemp(join(tmpdir(), "vera-program-elsewhere-"));
+    roots.push(added, elsewhere);
+    await writeFile(join(added, "lib.bin"), "library");
+    await writeFile(join(elsewhere, "other.bin"), "other");
+    const pathGuard = await PathGuard.create(root, root, "workbench", undefined, [], [added]);
+    const request = await prepareProgramRequest(
+      input(root, ["write-flash", "0x0", "lib.bin", join(root, "build/app.bin")], { cwd: added, pathGuard }),
+    );
+    expect(request.cwd).toBe((await pathGuard.resolve(added)).relative);
+    expect(request.files.map((file) => file.sha256)).toEqual([sha("library"), sha("image")]);
+    expect(request.files[1]?.path).toBe("build/app.bin");
+    await verifyProgramFiles(request, undefined, [], pathGuard);
+    await writeFile(join(added, "lib.bin"), "changed");
+    await expect(verifyProgramFiles(request, undefined, [], pathGuard)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(
+      prepareProgramRequest(input(root, ["write-flash", join(elsewhere, "other.bin")], { pathGuard })),
+    ).rejects.toMatchObject({ code: "DENIED", params: { reason: "outside", index: 1 } });
+    await expect(
+      prepareProgramRequest(input(root, ["version"], { cwd: elsewhere, pathGuard })),
+    ).rejects.toThrow();
+    // A folder that does not exist is refused with the reason, not with a file system error.
+    await expect(prepareProgramRequest(input(root, ["version"], { cwd: "missing" }))).rejects.toMatchObject({
+      code: "DENIED",
+      params: { cwd: "missing" },
+    });
   });
   it("stops on abort", async () => {
     const root = await bench();

@@ -70,6 +70,11 @@ interface ProgramRequestBase {
   readonly resources?: readonly ProgramResource[];
   readonly registry?: { readonly path: string; readonly sha256: string; readonly lookup?: string };
   /**
+   * What the command will record, read from its program when the request is prepared (the files of a Git
+   * commit). The approval covers it: a different list at the start of the run voids the approval.
+   */
+  readonly preview?: string;
+  /**
    * A HIL plan run (`hil run`): every operation, file and reservation the approval covers beyond the call's own
    * arguments (spec REQ-DATA-5f714098 §5). Hashed with the request; not part of the approval event.
    */
@@ -234,7 +239,9 @@ async function namedPath(
   try {
     await guard.assertNotExcluded(isAbsolute(path) ? path : resolve(cwd, path));
     path = await realpath(isAbsolute(path) ? path : resolve(cwd, path));
-    if (!inside(guard.root, path) && guard.scope === "workbench") {
+    // A folder the user added to the workbench is in scope, as it is for the file tools.
+    const granted = guard.additionalRoots.some((root) => inside(root.canonical, path));
+    if (!inside(guard.root, path) && !granted && guard.scope === "workbench") {
       const info = await lstat(path);
       if (info.isFile() || info.isDirectory()) throw denied({ reason: "outside", index });
       return undefined;
@@ -341,11 +348,11 @@ export async function verifyProgramFiles(
  */
 export async function prepareProgramRequest(input: ProgramRequestInput): Promise<ProgramChangeRequest> {
   input.signal?.throwIfAborted();
-  const refusal = programArgumentRefusal(input.args);
-  if (refusal) throw denied(refusal);
   if (!declares(input.plugin, input.program)) throw denied({ reason: "undeclared" });
   const { manifest, record } = input.plugin;
   const declared = manifest.programs[input.program];
+  const refusal = programArgumentRefusal(input.args, declared?.optionSyntax);
+  if (refusal) throw denied(refusal);
   const classification = classifyCommand(
     manifest.rules,
     input.program,
@@ -357,7 +364,8 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
     input.pathGuard ??
     (await PathGuard.create(input.workbench, input.workbench, "workbench", undefined, input.excludedRoots));
   const directory = await guard.resolve(input.cwd ?? ".");
-  if (!(await lstat(directory.absolute)).isDirectory()) throw denied({ cwd: input.cwd ?? "." });
+  const folder = await lstat(directory.absolute).catch(() => undefined);
+  if (!folder?.isDirectory()) throw denied({ cwd: input.cwd ?? "." });
   const cwd = directory.relative;
   const platform = input.platform ?? process.platform;
   const files: ProgramFile[] = [];
@@ -410,6 +418,7 @@ export function programApproval(request: ProgramChangeRequest): ProgramApproval 
     confirm: request.confirm,
     notes: [...request.notes],
     files: request.files.map((file) => ({ ...file })),
+    ...(request.preview ? { preview: request.preview } : {}),
     ...(request.directories
       ? { directories: request.directories.map((directory) => ({ ...directory })) }
       : {}),

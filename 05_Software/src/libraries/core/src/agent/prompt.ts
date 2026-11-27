@@ -10,6 +10,8 @@ export interface PromptEnvironment {
   /** The current session mode, independently of the workbench default. */
   permissionMode: WorkbenchConfig["agent"]["permission_mode"];
   indexedDocuments: number;
+  /** The branch checked out in the workbench's Git repository, when it is in one. */
+  gitBranch?: string | undefined;
 }
 
 /** One enabled program of the `<programs>` block. */
@@ -115,6 +117,7 @@ export function buildSystemPrompt({
       `- VERA version: ${env.veraVersion}`,
       `- Permission mode: ${env.permissionMode}`,
       `- Indexed documents: ${env.indexedDocuments}`,
+      ...(env.gitBranch ? [`- Git branch: ${env.gitBranch}`] : []),
     ].join("\n"),
   );
   const text = blocks.join("\n\n");

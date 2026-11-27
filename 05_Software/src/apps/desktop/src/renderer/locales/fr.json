@@ -678,6 +678,7 @@
     "registry": "Déclaré dans",
     "typeToConfirm": "Cette modification est définitive. Tapez {{word}} pour confirmer.",
     "confirmMismatch": "Le mot saisi ne correspond pas. Tapez le mot affiché sur la carte.",
+    "preview": "Ce commit enregistre",
     "alwaysAllow": "Toujours autoriser",
     "commandPrefix": "Préfixe de commande",
     "allowedCommands": "Commandes autorisées",

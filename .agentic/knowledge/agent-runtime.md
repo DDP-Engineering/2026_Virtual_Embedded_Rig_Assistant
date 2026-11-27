@@ -106,3 +106,4 @@ REQ-FUNC-63733e2c queued steering admission; REQ-FUNC-e5b6a1c9 bounded whole-his
 ## Files
 
 Under05_Software/src/libraries/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts; package.json/src/index.ts. core/src/llm/replay.ts emits argument deltas.
+- The prompt's Environment block carries `Git branch` when the workbench lies in a Git repository: `gitHead(folder)` (core `workbench/git-head.ts`) reads the HEAD file up the folder tree, follows the pointer file of a worktree or submodule and runs no Git process; a detached HEAD reads `detached at <hash>`. Desktop and CLI hosts pass it as `env.gitBranch`.

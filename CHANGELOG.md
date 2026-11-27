@@ -8,11 +8,18 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- git 0.4.0: Add skills to exchange with a remote, find the commit behind a regression and name a release.
+- Show the files a Git commit records on its approval card.
+- Offer Always allow in Auto-edit for plugin program commands such as `git commit`.
+- Tell the agent the Git branch of the workbench.
 - Configure chat image count and file size in Advanced settings, with a clear message for provider size refusals.
 - Let the agent find saved artifacts in the current session with `artifact_list`.
 
 ### Changed
 
+- Return the beginning and the end of a long program output, not only its end.
+- Run plugin programs in folders added to the workbench.
+- git 0.4.0: Let clone, fetch, pull, push and submodule updates run 30 minutes and end a stalled HTTP transfer after one.
 - Let `view_image` open the pictures `read` can: in folders added to the workbench and, in Bypass, anywhere.
 - Open session search on demand from a magnifier next to New session.
 - Move delegated access and desktop notification settings to Data & privacy.
@@ -35,6 +42,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- git 0.4.0: Run `log -5`, `remote get-url`, `submodule status` and reading a configuration key without approval.
+- git 0.4.0: Accept `@{u}` revisions and commit messages with a body.
+- git 0.4.0: Ask for approval, not a typed word, for `checkout -b` and `restore --staged`, and for the command's name instead of `<discard>`.
+- Name a missing working directory in the `run_program` error.
 - Show TIFF and BMP pictures and pictures cut short with `view_image`, and name a format it cannot show.
 - analysis-skills 0.4.1: Save exact tool-issued line citations in firmware reports and manual test plans.
 - Keep the chat controls in place when the provider returns a reasoning error.

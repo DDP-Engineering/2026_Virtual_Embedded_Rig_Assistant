@@ -6,6 +6,7 @@ import {
   type PermissionMode,
   type ProgramPolicy,
   programPolicy,
+  programPrefixMatches,
   type SessionEvent,
   veraError,
 } from "@vera/shared";
@@ -58,8 +59,22 @@ function policyOf(
         : "user";
   if (request.tool !== "run_program") return undefined;
   const policy = programPolicy(mode, request.risk, request.trial);
-  return request.explicitUserApproval && (policy === "run" || policy === "mode") ? "user" : policy;
+  if (request.explicitUserApproval) return policy === "run" || policy === "mode" ? "user" : policy;
+  // A command the user allowed for this workbench runs in Auto-edit as a device read does. Irreversible
+  // commands keep their typed word, and a trial plugin and a test plan are approved each time.
+  return policy === "user" &&
+    mode === "auto-edit" &&
+    grantable(request) &&
+    prefixes.some((prefix) => programPrefixMatches(request.program, request.args, prefix))
+    ? "mode"
+    : policy;
 }
+const grantable = (request: ChangeRequest) =>
+  request.tool === "run_program" &&
+  !request.trial &&
+  !request.explicitUserApproval &&
+  !request.plan &&
+  !request.resources;
 interface Pending {
   request: ChangeRequest;
   digest: string;
@@ -169,15 +184,23 @@ export class ApprovalGate {
   /** Validate an explicit user grant against the still-pending exact command before persistence. */
   commandPrefix(input: ApprovalDecision): string {
     const entry = this.validateDecision(input);
+    const request = entry.request;
+    const prefix = input.commandPrefix as string;
+    const matches =
+      request.tool === "run_command"
+        ? commandPrefixMatches(request.args[0] ?? "", prefix)
+        : request.tool === "run_program" &&
+          grantable(request) &&
+          programPolicy("ask", request.risk, request.trial) === "user" &&
+          programPrefixMatches(request.program, request.args, prefix);
     if (
       input.decision !== "approved" ||
       input.switchToAutoEdit ||
-      entry.request.tool !== "run_command" ||
       !commandPrefixSchema.safeParse(input.commandPrefix).success ||
-      !commandPrefixMatches(entry.request.args[0] ?? "", input.commandPrefix as string)
+      !matches
     )
       throw veraError("INVALID");
-    return input.commandPrefix as string;
+    return prefix;
   }
   private policy(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
     return policyOf(request, mode, this.host.commandPrefixes?.());

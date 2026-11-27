@@ -1,16 +1,18 @@
 /** Git has case-sensitive options, per-command arity and executable aliases. Never normalise raw argv. */
 const reads = new Set(
-  "status log diff show blame shortlog describe rev-parse rev-list ls-files ls-tree cat-file grep reflog merge-base name-rev version help".split(
+  "status log diff show blame shortlog describe rev-parse rev-list ls-files ls-tree cat-file grep reflog merge-base name-rev show-ref check-ignore count-objects for-each-ref version help".split(
     " ",
   ),
 );
 const writes = new Set(
-  "add commit switch merge rebase cherry-pick revert reset mv rm apply am stash init fetch pull clone ls-remote push branch tag remote gc maintenance worktree notes update-ref symbolic-ref update-index read-tree write-tree hash-object pack-objects unpack-objects index-pack multi-pack-index prune repack rerere replace sparse-checkout submodule archive bundle format-patch request-pull range-diff fsck count-objects verify-pack verify-commit verify-tag check-attr check-ignore check-mailmap for-each-ref for-each-repo show-ref prune-packed reflog".split(
+  "add commit switch merge rebase cherry-pick revert reset mv rm apply am stash init fetch pull clone ls-remote push branch tag remote gc maintenance worktree notes update-ref symbolic-ref update-index read-tree write-tree hash-object pack-objects unpack-objects index-pack multi-pack-index prune repack rerere replace sparse-checkout submodule archive bundle format-patch request-pull range-diff fsck verify-pack verify-commit verify-tag check-attr check-mailmap for-each-repo prune-packed reflog bisect".split(
     " ",
   ),
 );
 const forbidden =
-  /^(?:config|bisect|filter-branch|filter-repo|mergetool|difftool|gui|citool|daemon|instaweb|send-email|credential.*|hook)$/;
+  /^(?:config|filter-branch|filter-repo|mergetool|difftool|gui|citool|daemon|instaweb|send-email|credential.*|hook)$/;
+/** Commands where a bare `-<number>` is a count or a context size, as in `log -5`. */
+const counted = new Set("log show rev-list reflog shortlog grep".split(" "));
 const globals = new Set(
   "-P --no-pager --no-optional-locks --no-replace-objects --literal-pathspecs --glob-pathspecs --noglob-pathspecs --icase-pathspecs --no-lazy-fetch".split(
     " ",
@@ -113,7 +115,7 @@ const perCommand: Readonly<Record<string, Option[]>> = {
   ],
   grep: [
     ...descriptors(
-      "cached no-index untracked no-exclude-standard recurse-submodules text binary-files textconv ignore-case invert-match word-regexp extended-regexp basic-regexp fixed-strings perl-regexp line-number column full-name files-with-matches name-only files-without-match null count only-matching heading break all-match and or not quiet no-textconv no-ext-grep ext-grep",
+      "recursive cached no-index untracked no-exclude-standard recurse-submodules text binary-files textconv ignore-case invert-match word-regexp extended-regexp basic-regexp fixed-strings perl-regexp line-number column full-name files-with-matches name-only files-without-match null count only-matching heading break all-match and or not quiet no-textconv no-ext-grep ext-grep",
     ),
     ...descriptors("regexp file max-depth max-count after-context before-context context threads", "value"),
   ],
@@ -140,7 +142,16 @@ const perCommand: Readonly<Record<string, Option[]>> = {
     ...descriptors("sort format points-at color", "value"),
     ...descriptors("delete force", "flag", "<write>"),
   ],
-  remote: descriptors("verbose"),
+  remote: descriptors("verbose push all"),
+  restore: [...descriptors("staged worktree quiet"), ...descriptors("source", "value")],
+  submodule: descriptors("recursive cached quiet"),
+  worktree: descriptors("porcelain verbose"),
+  "show-ref": [
+    ...descriptors("head heads branches tags dereference verify exists quiet"),
+    ...descriptors("hash abbrev", "optional"),
+  ],
+  "check-ignore": descriptors("verbose non-matching no-index quiet null"),
+  "count-objects": descriptors("verbose human-readable"),
 };
 
 // Case-sensitive aliases and their value roles. An attached value consumes the remainder of a bundle.
@@ -235,7 +246,13 @@ const short: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     h: "help",
   },
   remote: { v: "verbose", h: "help" },
+  submodule: { q: "quiet" },
+  worktree: { v: "verbose", z: "null" },
+  "show-ref": { d: "dereference", s: "hash", q: "quiet" },
+  "check-ignore": { v: "verbose", n: "non-matching", q: "quiet", z: "null" },
+  "count-objects": { v: "verbose", H: "human-readable" },
   grep: {
+    r: "recursive",
     O: "open-files-in-pager",
     o: "only-matching",
     n: "line-number",
@@ -296,8 +313,8 @@ const short: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   "ls-remote": { u: "upload-pack", q: "quiet" },
   reset: { p: "patch", q: "quiet" },
   stash: { p: "patch", q: "quiet" },
-  checkout: { p: "patch", f: "force" },
-  restore: { p: "patch" },
+  checkout: { p: "patch", f: "force", b: "create", B: "force-create", q: "quiet", t: "track" },
+  restore: { p: "patch", S: "staged", W: "worktree", s: "source", q: "quiet" },
   commit: {
     p: "patch",
     i: "include",
@@ -367,13 +384,50 @@ function options(command: string, read = reads.has(command)): Option[] {
     result.push(...descriptors("no-edit"));
   if (command === "pull") result.push(...descriptors("rebase", "optional"));
   if (command === "reset") result.push(...descriptors("hard", "optional", "<discard>"));
-  if (command === "switch") result.push(...descriptors("force discard-changes", "flag", "<discard>"));
+  if (["switch", "checkout"].includes(command))
+    result.push(...descriptors("force discard-changes", "flag", "<discard>"));
   if (command === "push")
     result.push(
       ...descriptors("force force-with-lease force-if-includes delete mirror prune", "optional", "<discard>"),
     );
   if (command === "gc") result.push(...descriptors("prune", "optional", "<discard>"));
   return result;
+}
+
+/**
+ * Reading one key runs nothing, and a missing identity stops the first commit: `config <key>`,
+ * `config --get <key>` and `config get <key>` list, and setting user.name or user.email writes. Every other
+ * form stays unavailable, because a configuration value can name a program for Git to run.
+ */
+function configArguments(rest: readonly string[]): string[] {
+  const flags = rest.filter((arg) => arg.startsWith("-"));
+  const operands = rest.filter((arg) => !arg.startsWith("-"));
+  const scoped = (allowed: readonly string[]) =>
+    flags.every((flag) => ["--local", "--global", ...allowed].includes(flag));
+  const key = (text: string | undefined) => !!text && /^[A-Za-z][\w-]*(?:\..+)?\.[A-Za-z][\w-]*$/.test(text);
+  const getting = flags.includes("--get");
+  if (operands[0] === "get" && scoped([]) && operands.length === 2 && key(operands[1]))
+    return ["config", "<list>"];
+  if (scoped(["--get"]) && operands.length === 1 && key(operands[0])) return ["config", "<list>"];
+  const [name, value] = operands[0] === "set" ? operands.slice(1) : operands;
+  const identity = /^user\.(?:name|email)$/i.test(name ?? "");
+  if (
+    !getting &&
+    scoped([]) &&
+    identity &&
+    value !== undefined &&
+    operands.length === (operands[0] === "set" ? 3 : 2)
+  )
+    return ["config", "<write>"];
+  return ["<execute>"];
+}
+
+/** Marking commits and moving between them is a change; `bisect run` and the viewers start programs. */
+function bisectArguments(rest: readonly string[]): string[] {
+  const action = rest[0] ?? "";
+  if (["log", "terms"].includes(action)) return ["bisect", "<list>"];
+  if (["start", "good", "bad", "new", "old", "skip", "reset"].includes(action)) return ["bisect", "<write>"];
+  return ["<execute>"];
 }
 
 /** Command position shared by risk projection and fixed execution guards. Unknown globals fail closed. */
@@ -409,6 +463,23 @@ export function gitExecutionArguments(args: readonly string[]): string[] {
   return [...args.slice(0, insertion), "--no-ext-diff", ...args.slice(insertion)];
 }
 
+/**
+ * The read command that lists what a `git commit` call would record: the staged files, with `-a` every
+ * changed tracked file, with paths after `--` those paths. Undefined for every other command.
+ */
+export function gitCommitPreviewArguments(args: readonly string[]): string[] | undefined {
+  const commandIndex = gitCommandIndex(args);
+  if (commandIndex === null || args[commandIndex] !== "commit") return undefined;
+  const rest = args.slice(commandIndex + 1);
+  const end = rest.indexOf("--");
+  const options = end < 0 ? rest : rest.slice(0, end);
+  const paths = end < 0 ? [] : rest.slice(end + 1);
+  const all = options.some((arg) => arg === "--all" || /^-[A-Za-z]*a[A-Za-z]*$/.test(arg));
+  const stat = ["diff", "--no-ext-diff", "--no-textconv", "--stat=100", "--stat-count=40"];
+  if (paths.length) return [...stat, "HEAD", "--", ...paths];
+  return all ? [...stat, "HEAD"] : [...stat, "--cached"];
+}
+
 /** Project only the roles needed by declarative rules. Approval arguments remain the original argv. */
 export function gitRuleArguments(args: readonly string[]): string[] {
   const commandIndex = gitCommandIndex(args);
@@ -418,6 +489,8 @@ export function gitRuleArguments(args: readonly string[]): string[] {
   const subcommand = args[index];
   if (["--version", "-v"].includes(command)) command = "version";
   if (["--help", "-h"].includes(command)) command = "help";
+  if (command === "config") return configArguments(args.slice(index));
+  if (command === "bisect") return bisectArguments(args.slice(index));
   if (
     forbidden.test(command) ||
     (!reads.has(command) && !writes.has(command) && !["clean", "restore", "checkout"].includes(command))
@@ -476,6 +549,7 @@ export function gitRuleArguments(args: readonly string[]): string[] {
       operands.push(arg);
       continue;
     }
+    if (/^-\d+$/.test(arg) && (counted.has(command) || stashRead)) continue;
     if (arg.startsWith("--")) {
       const equals = arg.indexOf("=");
       const name = arg.slice(2, equals < 0 ? undefined : equals);
@@ -543,7 +617,16 @@ export function gitRuleArguments(args: readonly string[]): string[] {
     result.push("<list>");
   if (command === "tag" && (!operands.length || flags.has("list") || flags.has("lines")))
     result.push("<list>");
-  if (command === "remote" && !operands.length) result.push("<list>");
+  if (command === "remote" && (!operands.length || operands[0] === "get-url")) result.push("<list>");
+  if (command === "worktree" && operands[0] === "list") result.push("<list>");
+  if (command === "submodule") {
+    if (!operands.length || operands[0] === "status") result.push("<list>");
+    else roles.add("<write>");
+  }
+  // Creating a branch and unstaging a path lose nothing; every other form can overwrite work.
+  if (command === "clean") roles.add("<discard>");
+  if (command === "checkout" && !(flags.has("create") && !ended)) roles.add("<discard>");
+  if (command === "restore" && !(flags.has("staged") && !flags.has("worktree"))) roles.add("<discard>");
   if (command === "push" && operands.some((operand) => operand.startsWith("+") || /^\+?:.+/.test(operand)))
     roles.add("<discard>");
   return [...result, ...roles];

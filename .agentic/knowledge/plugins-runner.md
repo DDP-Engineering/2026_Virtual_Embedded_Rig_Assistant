@@ -65,8 +65,10 @@ its canonical path before the preflight and again before spawning. Ordinary prog
   2 s (`closeGraceMs`) after the program exited, when a descendant still holds them (pipes destroyed).
   `NodeProcessHost` turns a synchronous spawn throw (EINVAL, NUL argument) into a start error.
 - Output: one UTF-8 decoder (U+FFFD for invalid bytes) and one ANSI stripper per stream; escapes
-  split across chunks are held back up to 4096 characters. The result carries the last 12 000
-  characters; `.vera/runs/<ULID>.log` keeps all of it, plus a line naming a start error. After a run
+  split across chunks are held back up to 4096 characters. The result carries at most 12 000
+  characters (`TailBuffer.text()`: the whole output, or its first whole lines within a quarter of the
+  limit, a line counting the omitted characters and the end; a buffer under 2 000 characters stays a
+  pure tail; `read()` for background output is unchanged); `.vera/runs/<ULID>.log` keeps all of it, plus a line naming a start error. After a run
   opens its log, ULID-named logs beyond the newest 200 are deleted, except logs of unfinished runs;
   a log that cannot be deleted is skipped and never blocks the run.
 - At most 4 unfinished background runs per session (BUSY `{limit}`). A run naming a serial port

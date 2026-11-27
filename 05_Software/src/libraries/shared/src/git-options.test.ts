@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { gitExecutionArguments, gitRuleArguments } from "./git-options.js";
+import { gitCommitPreviewArguments, gitExecutionArguments, gitRuleArguments } from "./git-options.js";
 
 it("places fixed diff guards at actual command boundaries, preserving raw values and delimiters", () => {
   const cases = [
@@ -68,4 +68,21 @@ it("does not turn stash push path operands into safe listing subcommands", () =>
     ["-P", "stash", "show", "--", "list"],
   ])
     expect(gitRuleArguments(raw)).toContain("<list>");
+});
+
+it("reads what a commit records from the index, the tracked changes or the named paths", () => {
+  const stat = ["diff", "--no-ext-diff", "--no-textconv", "--stat=100", "--stat-count=40"];
+  expect(gitCommitPreviewArguments(["commit", "-m", "Fix"])).toEqual([...stat, "--cached"]);
+  expect(gitCommitPreviewArguments(["-P", "commit", "--amend", "--no-edit"])).toEqual([...stat, "--cached"]);
+  expect(gitCommitPreviewArguments(["commit", "-am", "Fix"])).toEqual([...stat, "HEAD"]);
+  expect(gitCommitPreviewArguments(["commit", "--all", "-m", "Fix"])).toEqual([...stat, "HEAD"]);
+  expect(gitCommitPreviewArguments(["commit", "-m", "Fix", "--", "src/a.c", "-a"])).toEqual([
+    ...stat,
+    "HEAD",
+    "--",
+    "src/a.c",
+    "-a",
+  ]);
+  for (const other of [["status"], ["add", "--", "commit"], ["-c", "x=y", "commit", "-m", "Fix"], []])
+    expect(gitCommitPreviewArguments(other)).toBeUndefined();
 });

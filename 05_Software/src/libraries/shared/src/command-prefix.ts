@@ -105,6 +105,27 @@ export function commandPrefixMatches(command: string, prefix: string): boolean {
   return !!words(command) && !!words(prefix) && (command === prefix || command.startsWith(`${prefix} `));
 }
 
+/**
+ * The prefixes a declared program's command offers: the program and its leading plain words, as in
+ * `git commit` for `git commit -m "..."`. An option ends them, so no value or message becomes a grant.
+ */
+export function programPrefixes(program: string, args: readonly string[]): string[] {
+  const tokens = [program];
+  for (const arg of args) {
+    if (arg.startsWith("-") || tokens.length === 4) break;
+    tokens.push(arg);
+  }
+  return tokens
+    .map((_word, index) => tokens.slice(0, index + 1).join(" "))
+    .filter((prefix) => !!words(prefix));
+}
+
+/** Whether a stored prefix names this program and its leading arguments, word for word. */
+export function programPrefixMatches(program: string, args: readonly string[], prefix: string): boolean {
+  const tokens = words(prefix);
+  return !!tokens && tokens.every((word, index) => word === (index === 0 ? program : args[index - 1]));
+}
+
 export const commandPrefixSchema = z
   .string()
   .min(1)

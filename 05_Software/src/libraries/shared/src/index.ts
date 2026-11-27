@@ -19,7 +19,7 @@ export { providerRetryAfterSchema } from "./errors.js";
 export * from "./events.js";
 export * from "./git-diff.js";
 export * from "./git-history.js";
-export { gitExecutionArguments } from "./git-options.js";
+export { gitCommitPreviewArguments, gitExecutionArguments } from "./git-options.js";
 export * from "./git-status.js";
 export * from "./help.js";
 export * from "./hil-plan.js";

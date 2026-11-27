@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { commandPrefixes, commandPrefixMatches } from "./command-prefix.js";
+import {
+  commandPrefixes,
+  commandPrefixMatches,
+  programPrefixes,
+  programPrefixMatches,
+} from "./command-prefix.js";
 import { channels } from "./ipc.js";
 import { workbenchPatchSchema, workbenchSchema } from "./workbench.js";
 
@@ -204,4 +209,30 @@ it("saves everyday build commands, where -e, -C and a dotted tool name are not i
     expect(commandPrefixes(command).at(-1)).toBe(command);
   for (const command of ["python -c print", "node -e x", "git -c alias.x=bad x", "sed -e 1e", "npm.cmd test"])
     expect(commandPrefixes(command)).toEqual([]);
+});
+
+describe("program prefixes", () => {
+  it("offers the program and its leading plain words, never an option or its value", () => {
+    expect(programPrefixes("git", ["commit", "-m", "Fix it"])).toEqual(["git", "git commit"]);
+    expect(programPrefixes("git", ["push", "origin", "main"])).toEqual([
+      "git",
+      "git push",
+      "git push origin",
+      "git push origin main",
+    ]);
+    expect(programPrefixes("git", ["-P", "log"])).toEqual(["git"]);
+    expect(programPrefixes("idf.py", ["build"])).toEqual(["idf.py", "idf.py build"]);
+    // A word the shell policy never grants is not offered for a program either.
+    expect(programPrefixes("git", ["clean", "-n"])).toEqual(["git"]);
+  });
+  it("matches whole leading arguments, whatever the later ones hold", () => {
+    expect(programPrefixMatches("git", ["commit", "-m", 'It\'s "quoted"\n\nwith a body'], "git commit")).toBe(
+      true,
+    );
+    expect(programPrefixMatches("git", ["add", "--", "a.c"], "git")).toBe(true);
+    expect(programPrefixMatches("git", ["commit-graph", "write"], "git commit")).toBe(false);
+    expect(programPrefixMatches("git", ["commit"], "git commit -m")).toBe(false);
+    expect(programPrefixMatches("gitk", ["commit"], "git commit")).toBe(false);
+    expect(programPrefixMatches("git", ["commit"], "git commit; rm x")).toBe(false);
+  });
 });

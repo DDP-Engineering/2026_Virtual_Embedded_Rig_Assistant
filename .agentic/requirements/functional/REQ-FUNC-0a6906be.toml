@@ -6,7 +6,7 @@ title = "Allow outside program working directories only in Bypass"
 
 status = "active"
 
-requirement = "When run_program names an absolute outside working directory, VERA shall accept it only through the host Bypass path policy and refuse it in Read-only, Ask and Auto-edit."
+requirement = "When run_program names an absolute outside working directory, VERA shall accept a folder added to the workbench in every mode and any other outside directory only through the host Bypass path policy, refusing it in Read-only, Ask and Auto-edit."
 
 verification = "Run the same outside cwd through every mode; only Bypass spawns there; file cwd and application data fail before spawn."
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-16
-updated = 2026-11-16
+updated = 2026-11-27

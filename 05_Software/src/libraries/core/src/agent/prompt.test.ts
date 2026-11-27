@@ -173,9 +173,15 @@ describe("system prompt", () => {
       "Environment:\n- Date (UTC): 2026-10-11\n- OS family: linux\n- VERA version: 1.2.3\n- Permission mode: ask\n- Indexed documents: 0",
     );
     expect(now).toHaveBeenCalledTimes(1);
+    // The branch is one more environment line, present only inside a repository.
+    expect(first.text).not.toContain("Git branch");
+    expect(prompt.buildSystemPrompt({ ...args, env: { ...env, gitBranch: "feature/adc" } }).text).toContain(
+      "- Indexed documents: 0\n- Git branch: feature/adc",
+    );
+    now.mockClear();
     now.mockReturnValue(new Date("2026-10-12T00:01:00Z"));
     expect(prompt.buildSystemPrompt({ ...args, env }).text).toContain("- Date (UTC): 2026-10-12");
-    expect(now).toHaveBeenCalledTimes(2);
+    expect(now).toHaveBeenCalledTimes(1);
   });
 
   it("exposes the final character size including Unicode and marker without mutating input", () => {

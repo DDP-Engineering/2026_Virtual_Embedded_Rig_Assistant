@@ -3,6 +3,7 @@ import {
   type PluginRisk,
   type ProgramApproval,
   programCommandLine,
+  programPrefixes,
   type SessionState,
 } from "@vera/shared";
 import type { TFunction } from "i18next";
@@ -62,6 +63,14 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
             <li key={`${index}:${note}`}>{note}</li>
           ))}
         </ul>
+      )}
+      {program.preview && (
+        <>
+          <p className="muted">{t("approval.preview")}</p>
+          <pre className="approval-command" data-approval-preview>
+            {program.preview}
+          </pre>
+        </>
       )}
       {program.files.length > 0 && (
         <ul className="approval-files" aria-label={t("approval.files")}>
@@ -162,8 +171,19 @@ export function ApprovalCard({
   const field = useId();
   const locked = disabled || pending || !!approval.decision || !sessionId;
   const program = approval.program;
-  const prefixes =
-    canSavePrefix && approval.tool === "run_command" ? commandPrefixes(program?.args[0] ?? "") : [];
+  // A plugin program offers the same grant for a command that only needs approval: never for one that
+  // needs the typed word, a trial plugin or a test plan.
+  const prefixes = !canSavePrefix
+    ? []
+    : approval.tool === "run_command"
+      ? commandPrefixes(program?.args[0] ?? "")
+      : approval.tool === "run_program" &&
+          program?.risk === "device-write" &&
+          !program.trial &&
+          !program.explicitUserApproval &&
+          !program.resources
+        ? programPrefixes(program.program, program.args)
+        : [];
   const [chosenPrefix, setChosenPrefix] = useState<string>();
   const prefix = prefixes.includes(chosenPrefix ?? "") ? chosenPrefix : prefixes.at(-1);
   // A pending irreversible program command always needs the typed word; core checks it.

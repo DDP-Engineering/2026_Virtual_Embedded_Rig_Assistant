@@ -45,6 +45,27 @@ describe("TailBuffer", () => {
     expect(tail.total).toBe(8);
   });
 
+  it("keeps whole first lines and the end of an output longer than the limit", () => {
+    const tail = new TailBuffer(4000);
+    const lines = Array.from(
+      { length: 400 },
+      (_, index) => `line ${String(index + 1).padStart(3, "0")} of the history`,
+    );
+    for (const line of lines) tail.push(`${line}\n`);
+    const text = tail.text();
+    expect(text.length).toBeLessThanOrEqual(4000);
+    expect(text.startsWith("line 001 of the history\nline 002 of the history\n")).toBe(true);
+    expect(text.endsWith("line 400 of the history\n")).toBe(true);
+    const note = /\n\[(\d+) characters omitted here; the log has all of them\]\n/.exec(text);
+    // The beginning ends at a line break: no line is shown cut before the note.
+    expect(text.slice(0, (note?.index ?? 0) + 1)).toMatch(/of the history\n$/);
+    expect(tail.total).toBe(lines.join("\n").length + 1);
+    expect(Number(note?.[1])).toBe(tail.total - (text.length - (note?.[0].length ?? 0) + 1));
+    // An output that fits is returned as it is.
+    const short = new TailBuffer(4000);
+    short.push("one\ntwo\n");
+    expect(short.text()).toBe("one\ntwo\n");
+  });
   it("never starts with a lone low surrogate", () => {
     const tail = new TailBuffer(2);
     tail.push("a😀");

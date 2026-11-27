@@ -156,7 +156,7 @@ describe("run_program foreground (REQ-FUNC-bce7d786)", () => {
     expect(typeof value.durationMs).toBe("number");
     expect(consumed).toHaveLength(1);
   });
-  it("keeps the last 12 000 characters of a long output", async () => {
+  it("keeps both ends of a long output within 12 000 characters", async () => {
     const prepared = await prepare({ program: "echo", args: ["version"] });
     const result = prepared.apply(signal());
     const process = await spawned(1);
@@ -164,7 +164,10 @@ describe("run_program foreground (REQ-FUNC-bce7d786)", () => {
     process.finish({ code: 0, signal: null });
     const value = await result;
     expect(value).toMatchObject({ truncated: true });
-    expect(String(value.output)).toHaveLength(12_000);
+    expect(String(value.output).length).toBeLessThanOrEqual(12_000);
+    expect(String(value.output)).toMatch(
+      /^x{3000}\n\[\d+ characters omitted here; the log has all of them\]\nx+$/,
+    );
   });
 });
 

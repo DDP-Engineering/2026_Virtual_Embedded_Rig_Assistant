@@ -1,6 +1,6 @@
 format: 1
 id: git
-version: 0.3.0
+version: 0.4.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Git
 summary: Read the workbench Git history freely; commit, branch and contact remotes with approval.
@@ -27,16 +27,19 @@ programs:
         linux: ["$PATH", "/usr/bin/git"]
       hint: Install Git for Windows or your distribution's git package.
     version: { args: [--version], match: 'git version (\d+\.\d+\.\d+)', range: ">=2.40" }
-    prefix: [-c, core.fsmonitor=false, -c, "core.hooksPath=${pluginDir}/no-hooks", -c, core.pager=cat, -c, diff.external=, -c, core.quotePath=false, -c, protocol.ext.allow=never]
+    prefix: [-c, core.fsmonitor=false, -c, "core.hooksPath=${pluginDir}/no-hooks", -c, core.pager=cat, -c, diff.external=, -c, core.quotePath=false, -c, protocol.ext.allow=never, -c, http.lowSpeedLimit=1000, -c, http.lowSpeedTime=60]
     env: { GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: never, GIT_PAGER: cat, PAGER: cat, GIT_EDITOR: ":", GIT_SEQUENCE_EDITOR: ":", GIT_OPTIONAL_LOCKS: "0" }
     timeout: 60
 # Git syntax projects risk roles and inserts fixed execution-only read guards; approvals retain raw argv.
 # Unknown options on known commands require approval. Unknown command names may be executable aliases.
 rules:
-  - { match: "git {version,help,status,log,diff,show,blame,shortlog,describe,rev-parse,rev-list,ls-files,ls-tree,cat-file,grep,reflog,merge-base,name-rev} *", risk: safe }
-  - { match: "git {branch,tag,remote,stash} <list> *", risk: safe, note: Lists repository state without changing it. }
-  - { match: "git {add,commit,switch,merge,rebase,cherry-pick,revert,reset,mv,rm,apply,am,init,fetch,pull,clone,ls-remote,push,gc,submodule} *", risk: device-write, note: Changes stored state or contacts a remote. Tracked .vera configuration and skills can change. }
+  - { match: "git {version,help,status,log,diff,show,blame,shortlog,describe,rev-parse,rev-list,ls-files,ls-tree,cat-file,grep,reflog,merge-base,name-rev,show-ref,check-ignore,count-objects,for-each-ref} *", risk: safe }
+  - { match: "git {branch,tag,remote,stash,submodule,worktree,config,bisect} <list> *", risk: safe, note: Lists repository state without changing it. }
+  - { match: "git {add,commit,switch,checkout,restore,merge,rebase,cherry-pick,revert,reset,mv,rm,apply,am,init,fetch,pull,clone,ls-remote,push,gc} *", risk: device-write, note: Changes stored state or contacts a remote. Tracked .vera configuration and skills can change. }
   - { match: "git * <write> *", risk: device-write, note: Changes repository state or writes command output; listing flags never lower this risk. }
-  - { match: "git {clean,restore,checkout} *", risk: irreversible, note: Can discard work or delete untracked files. Prefer switch for branches and reset -- path to unstage. }
+  # A transfer may run long while it makes progress; the fixed low-speed limit ends a stalled HTTP one.
+  - { match: "git {fetch,pull,clone,push} *", risk: device-write, timeout: 1800 }
+  - { match: "git submodule * <write> *", risk: device-write, timeout: 1800 }
+  - { match: "git {clean,restore,checkout} * <discard> *", risk: irreversible, note: Can discard work or delete untracked files. Use checkout -b or switch for branches and restore --staged to unstage. }
   - { match: "git * <discard> *", risk: irreversible, note: Discards work or can delete or rewrite history including a force or deletion push. }
-  - { match: "git * <execute> *", risk: blocked, note: "Configuration overrides, executable aliases or helpers, interactive commands and explicit program execution are unavailable. Use cwd to select the repository." }
+  - { match: "git * <execute> *", risk: blocked, note: "Configuration changes other than user.name and user.email, executable aliases or helpers, interactive commands and explicit program execution are unavailable. Use cwd to select the repository." }

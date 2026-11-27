@@ -120,6 +120,7 @@ export { prepareWiresharkFrame } from "./wireshark/desktop.js";
 export { officialDumpcapPlugin } from "./wireshark/live-native.js";
 export { CaptureError, captureProfileEnvironment } from "./wireshark/native.js";
 export { officialCapturePlugin } from "./wireshark/service.js";
+export * from "./workbench/git-head.js";
 export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";
 export * from "./workbench/ignore.js";
 export * from "./workbench/path-guard.js";

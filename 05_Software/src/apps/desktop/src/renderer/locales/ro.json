@@ -678,6 +678,7 @@
     "registry": "Declarate în",
     "typeToConfirm": "Această modificare este permanentă. Tastează {{word}} pentru a confirma.",
     "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastează cuvântul afișat pe card.",
+    "preview": "Acest commit înregistrează",
     "alwaysAllow": "Permite întotdeauna",
     "commandPrefix": "Prefix de comandă",
     "allowedCommands": "Comenzi permise",

@@ -153,7 +153,7 @@ The **Bookmarks** tab of the right panel lists this conversation's bookmarks in 
 
 ## Shell commands
 
-Use non-interactive flags: agent stdin is closed. Foreground commands return an exit code, the last 12,000 output characters and a full log in `.vera/runs`. Background commands return a handle; the agent polls `program_output`, using `until` for a readiness line, and ends them with `program_stop`. They survive a completed tool turn and stop with the session, app or the Bypass mode that started them. The local Runs view follows the Program runs secret-masking policy; local run logs keep the original output. The child inherits user environment variables without VERA provider keys or stored credential values. Commands are limited to 4,096 characters.
+Use non-interactive flags: agent stdin is closed. Foreground commands return an exit code, at most 12,000 output characters (the beginning and the end of a longer output) and a full log in `.vera/runs`. Background commands return a handle; the agent polls `program_output`, using `until` for a readiness line, and ends them with `program_stop`. They survive a completed tool turn and stop with the session, app or the Bypass mode that started them. The local Runs view follows the Program runs secret-masking policy; local run logs keep the original output. The child inherits user environment variables without VERA provider keys or stored credential values. Commands are limited to 4,096 characters.
 
 Command approvals and saved command prefixes are described in [Permissions](permissions.md); folders outside the workbench in [Workbenches](workbenches.md).
 

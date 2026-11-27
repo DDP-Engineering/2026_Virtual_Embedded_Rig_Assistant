@@ -128,7 +128,7 @@ it("keeps the longest accepted command in the run list and refuses commands exce
   expect(runCommandTool.params.safeParse({ command: "x".repeat(4097) }).success).toBe(false);
 });
 
-it("returns foreground exit, tail and complete log, inheriting only the host-filtered environment", async () => {
+it("returns foreground exit, both ends of a long output and the complete log, inheriting only the host-filtered environment", async () => {
   const call = await prepare({ command: "echo 'hello; $HOME'", cwd: "cwd" });
   const result = call.apply(signal());
   await vi.waitFor(() => expect(host.programs).toHaveLength(1));
@@ -139,7 +139,11 @@ it("returns foreground exit, tail and complete log, inheriting only the host-fil
   child?.print("a".repeat(13_000));
   child?.finish({ code: 7, signal: null });
   const output = await result;
-  expect(output).toMatchObject({ exitCode: 7, output: "a".repeat(12_000), truncated: true });
+  expect(output).toMatchObject({ exitCode: 7, truncated: true });
+  expect(String(output.output)).toMatch(
+    /^a{3000}\n\[\d+ characters omitted here; the log has all of them\]\na+$/,
+  );
+  expect(String(output.output).length).toBeLessThanOrEqual(12_000);
   expect(await readFile(join(root, String(output.log)), "utf8")).toBe("a".repeat(13_000));
   expect(consume).toHaveBeenCalledOnce();
   await expect(call.apply(signal())).rejects.toThrow("already used");

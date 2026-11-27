@@ -10,6 +10,7 @@ import {
   createMaskingResolver,
   createPiAiGateway,
   delegatedFullAccessEnabled,
+  gitHead,
   type LlmGateway,
   leaseRoot,
   ModelCalibrationStore,
@@ -320,6 +321,7 @@ export async function runTurn(
             indexedDocuments: (
               db.prepare("SELECT count(*) AS n FROM documents WHERE status='indexed'").get() as { n: number }
             ).n,
+            gitBranch: gitHead(snapshot.folder),
           },
         }).text,
     });

@@ -153,7 +153,7 @@ Fila **Marcaje** din panoul din dreapta listează în ordine marcajele acestei c
 
 ## Comenzi shell
 
-Folosește opțiuni neinteractive: intrarea standard a agentului este închisă. Comenzile în prim-plan întorc codul de ieșire, ultimele 12.000 de caractere și jurnalul complet în `.vera/runs`. Cele în fundal întorc un identificator; agentul citește `program_output`, cu `until` pentru mesajul de disponibilitate, și le oprește cu `program_stop`. Continuă după încheierea apelului, dar se opresc cu sesiunea, aplicația sau modul Bypass care le-a pornit. Afișarea locală din Rulări respectă mascarea secretelor pentru rulări; jurnalele locale păstrează ieșirea originală. Procesul moștenește mediul utilizatorului fără cheile furnizorilor VERA sau valorile acreditărilor stocate. Comenzile sunt limitate la 4.096 de caractere.
+Folosește opțiuni neinteractive: intrarea standard a agentului este închisă. Comenzile în prim-plan întorc codul de ieșire, cel mult 12.000 de caractere (începutul și sfârșitul unei ieșiri mai lungi) și jurnalul complet în `.vera/runs`. Cele în fundal întorc un identificator; agentul citește `program_output`, cu `until` pentru mesajul de disponibilitate, și le oprește cu `program_stop`. Continuă după încheierea apelului, dar se opresc cu sesiunea, aplicația sau modul Bypass care le-a pornit. Afișarea locală din Rulări respectă mascarea secretelor pentru rulări; jurnalele locale păstrează ieșirea originală. Procesul moștenește mediul utilizatorului fără cheile furnizorilor VERA sau valorile acreditărilor stocate. Comenzile sunt limitate la 4.096 de caractere.
 
 Aprobările comenzilor și prefixele salvate sunt descrise în [Permisiuni](permissions.md); folderele din afara workbench-ului în [Workbench-uri](workbenches.md).
 

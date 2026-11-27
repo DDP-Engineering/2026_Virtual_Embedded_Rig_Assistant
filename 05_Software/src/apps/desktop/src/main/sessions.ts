@@ -6,6 +6,7 @@ import {
   createMaskingResolver,
   type EmbeddingPort,
   electricalModelPlugin,
+  gitHead,
   type HelpLibrary,
   type LiveSessionActivity,
   type ModelCalibrationStore,
@@ -321,6 +322,7 @@ export class SessionsHost {
                   n: number;
                 }
               ).n,
+              gitBranch: gitHead(snapshot.folder),
             },
           }).text;
         };

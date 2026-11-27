@@ -31,7 +31,7 @@ specified in `.agentic/specs/REQ-FUNC-80b2033a.md`.
   order and unchanged), `pluginCompositionSchema` (`skills: {name, description?}[]`, `files: string[]`).
 - Rules (shared): `classifyCommand(rules, program, args, optionSyntax?, subcommandHelp?)` ->
   `{risk, notes, confirm, timeout}` (ordinary matching uses the largest rule timeout),
-  `programArgumentRefusal(args)` -> `{reason: count|length|control|argument-file, index?}` or null,
+  `programArgumentRefusal(args, optionSyntax?)` -> `{reason: count|length|control|argument-file, index?}` or null (the git syntax accepts a leading `@` and line breaks, never NUL; the confirmation word skips projected roles such as `<discard>`),
   `programPolicy(mode, risk, trial)` -> `run|refuse|mode|user|confirm`, `confirmationMatches(word,
   typed)`, `programCommandLine(program, args)`, `PROGRAM_ARGUMENTS {count 64, length 4096}`,
   `programApprovalSchema` (the event payload) and `validProgramApproval`.

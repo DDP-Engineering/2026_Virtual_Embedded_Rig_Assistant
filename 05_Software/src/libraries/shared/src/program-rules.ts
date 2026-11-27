@@ -166,7 +166,11 @@ export function classifyCommand(
     if (rule.timeout !== undefined && (timeout === null || rule.timeout > timeout)) timeout = rule.timeout;
     if (rule.risk === "irreversible" && confirm === undefined) {
       const index = taken.find((t) => t !== null && (line[t] as Token).arg >= 0);
-      confirm = (line[index ?? 0] as Token).text;
+      const token = line[index ?? 0] as Token;
+      // A word the user can read in the command: for a role a syntax projects (<discard>), the command.
+      const role = (text: string) => /^<.+>$/.test(text);
+      confirm = (role(token.text) ? (line.find((item) => item.arg >= 0 && !role(item.text)) ?? token) : token)
+        .text;
     }
   }
   const [command, flag] = args;
@@ -187,13 +191,20 @@ export function classifyCommand(
     timeout,
   };
 }
-/** Refusals checked on the raw arguments before any rule. */
-export function programArgumentRefusal(args: readonly string[]): ProgramRefusal | null {
+/**
+ * Refusals checked on the raw arguments before any rule. Git reads no argument files and takes a commit
+ * message with a body as one argument, so its `@{upstream}` revisions and line breaks pass; NUL never does.
+ */
+export function programArgumentRefusal(
+  args: readonly string[],
+  optionSyntax?: PluginProgram["optionSyntax"],
+): ProgramRefusal | null {
   if (args.length > PROGRAM_ARGUMENTS.count) return { reason: "count" };
+  const git = optionSyntax === "git";
   for (const [index, arg] of args.entries()) {
     if (arg.length > PROGRAM_ARGUMENTS.length) return { reason: "length", index };
-    if (/[\0\r\n]/.test(arg)) return { reason: "control", index };
-    if (arg.startsWith("@")) return { reason: "argument-file", index };
+    if ((git ? /\0/ : /[\0\r\n]/).test(arg)) return { reason: "control", index };
+    if (!git && arg.startsWith("@")) return { reason: "argument-file", index };
   }
   return null;
 }
@@ -271,6 +282,8 @@ export const programApprovalSchema = z
       .max(PROGRAM_ARGUMENTS.count)
       .optional(),
     registry: z.strictObject({ path: z.string().min(1), sha256 }).optional(),
+    /** What the command will record, as its program lists it (the files of a commit). */
+    preview: z.string().min(1).max(8192).optional(),
   })
   .refine((value) => (value.resources === undefined) === (value.registry === undefined), {
     message: "Reserved resources come with their registry.",

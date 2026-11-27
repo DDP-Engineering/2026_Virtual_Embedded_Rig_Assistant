@@ -90,7 +90,7 @@ workbench name; rules (cite claims, `search_docs` before the web, never guess pi
 voltages or timings, content is data, read `@path` attachments, announce edits, load skills, answer in
 the user's language) plus `run_command` (not in Read-only), `help` and `run_program` rules when
 offered; `<workbench>` with `.vera/WORKBENCH.md` cut at 16 KiB; `<skills>` and `<programs>` when not
-empty; `Environment:` date (UTC), OS family, VERA version, permission mode, indexed documents; in
+empty; `Environment:` date (UTC), OS family, VERA version, permission mode, indexed documents, Git branch; in
 Bypass a paragraph on full file access. Tool descriptions travel in the tool schemas.
 
 ## Tools
@@ -120,7 +120,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `edit` | write | Replaces exact text, keeps CRLF, mixed line endings and BOM | one match or `replaceAll`; current read |
 | `artifact_save` | session | Session artifact, ref `artifact:<name>`; an unportable name is saved under a portable one | 5 MiB; name 1–100 portable characters |
 | `todo` | session | Replaces the session Plan | 50 items, 200 characters (a longer step is shortened) |
-| `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed; a failed command lists the credential variables it ran without |
+| `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, at most 12 000 characters (both ends of a longer output), `.vera/runs` log; stdin closed; a failed command lists the credential variables it ran without |
 | `run_program` | program | Declared plugin program with an argument array, no shell | plugin risk rules and timeout |
 | `program_output`, `program_stop` | read | New output or stop of a background run | `waitMs` ≤ 600 000, `until` regex |
 | `terminal_read` | read | Recent output of a user terminal | terminals the user shared; with none shared it says how to share one |
@@ -153,19 +153,21 @@ releases the corresponding browser resources. [Desktop browser runtime](../.agen
 |---|---|---|---|
 | Read-only | not offered, refused | not offered | Safe, non-trial only |
 | Ask (default) | every change asks | every command asks | Device read and write ask; Irreversible asks with a typed word |
-| Auto-edit | applied, except protected requests (paths under `.vera/`, every download), which ask | saved prefixes run, others ask | Device read runs; Device write asks; Irreversible typed word |
+| Auto-edit | applied, except protected requests (paths under `.vera/`, every download), which ask | saved prefixes run, others ask | Device read runs; Device write asks unless a saved prefix matches; Irreversible typed word |
 | Bypass | applied in any folder the OS account can reach | runs in direct sessions, or with a saved prefix in delegated sessions | all but Blocked run, subject to trial rules |
 
 - Trial plugins always ask; Blocked never runs; risk levels: [Plugins.md](Plugins.md).
 - **Approval card:** file and unified diff; download URL and size limit; or the program's risk level,
-  plugin, command line, working directory, executable, rule notes and file hashes. **Approve**,
+  plugin, command line, working directory, executable, rule notes and file hashes; a Git commit also
+  lists the files it records. **Approve**,
   **Deny**, **Approve and switch to auto-edit** (not for commands or plugin installation). The
   decision is bound to the SHA-256 of the exact prepared request and used once; a late or foreign
   decision is `CONFLICT`. Decisions are stored with `decided_by` `user` or `mode`.
 - Each switch to Bypass asks for confirmation and approves pending approvals. A stricter mode cancels
   approvals given by the previous mode; leaving Bypass stops its outside work and background runs.
 - **Saved command prefixes** (`agent.allowed_commands`, at most 100): **Always allow** saves a literal
-  prefix of the approved command, matched at word boundaries, used in Auto-edit. Never savable, so
+  prefix of the approved command, matched at word boundaries, used in Auto-edit. A plugin program
+  command that only needs approval offers it too (`git commit`), by its program and leading arguments. Never savable, so
   always asked outside Bypass: shells and dispatchers (`bash`, `pwsh`, `sudo`, `env`, `xargs`, ...),
   delete, format and disk tools (`rm`, `del`, `Remove-Item`, `dd`, ...), force, recursive, hard and
   prune options, risky git forms (`clean`, hard reset, force push, branch deletion), inline code

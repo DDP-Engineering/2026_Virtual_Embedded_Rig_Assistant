@@ -19,7 +19,7 @@ const source = new URL("../../plugins/git/", import.meta.url);
 const manifest = async (): Promise<PluginManifest> =>
   parse(await readFile(new URL("plugin.yaml", source), "utf8"));
 
-it("publishes the find-only Git package and three bounded workflows", async () => {
+it("publishes the find-only Git package and its six workflows", async () => {
   const m = await manifest();
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m.programs.git?.install).toEqual({
@@ -30,7 +30,7 @@ it("publishes the find-only Git package and three bounded workflows", async () =
     hint: "Install Git for Windows or your distribution's git package.",
   });
   expect(m.programs.git?.version.range).toBe(">=2.40");
-  for (const name of ["git-inspect", "git-commit", "git-branches"])
+  for (const name of ["git-inspect", "git-commit", "git-branches", "git-sync", "git-bisect", "git-release"])
     expect(await readFile(new URL(`skills/${name}/SKILL.md`, source), "utf8")).toMatch(
       new RegExp(`name: ${name}\\r?\\n`),
     );
@@ -77,7 +77,7 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
     expect(release.issues).toEqual([]);
     expect(release.index?.plugins.find((item) => item.id === "git")?.tier).toBe("official");
     const store = new core.PluginStore({ root: join(root, "plugins") });
-    await store.install(join(root, "release/git-0.3.0.zip"));
+    await store.install(join(root, "release/git-0.4.0.zip"));
     const plugin = await store.load("git");
     expect(await readFile(join(plugin.folder, "no-hooks/README.txt"), "utf8")).toContain("no Git hook names");
     provisioner = new core.Provisioner({
@@ -319,8 +319,8 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
     });
     expect(
       (await skills.list()).filter((skill) => skill.plugin === "git").map((skill) => skill.name),
-    ).toEqual(["git-branches", "git-commit", "git-inspect"]);
-    for (const name of ["git-inspect", "git-commit", "git-branches"])
+    ).toEqual(["git-bisect", "git-branches", "git-commit", "git-inspect", "git-release", "git-sync"]);
+    for (const name of ["git-inspect", "git-commit", "git-branches", "git-sync", "git-bisect", "git-release"])
       expect((await skills.read("plugin", name)).content.length).toBeGreaterThan(500);
     let replayModel = "replay/git";
     service = new core.SessionService({
@@ -349,6 +349,8 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
       program: "git",
       risk: "device-write",
       args: ["commit", "-m", "Approved fixture change"],
+      // The card lists what the commit records, read by Git itself without a run.
+      preview: expect.stringMatching(/file\.txt \| 1 \+\n 1 file changed, 1 insertion\(\+\)/),
     });
     expect(service.get(session.id).snapshot.approvals).toHaveLength(1);
     expect(outputs).toHaveLength(inspectionCommands.length);
@@ -471,7 +473,7 @@ it("classifies every Git row and option-role collision at the highest risk", asy
     ["device-write", ["merge", "--no-edit", "topic"]],
     ["device-write", ["cherry-pick", "--no-edit", "HEAD"]],
     ["blocked", ["merge", "--no-no-edit", "topic"]],
-    ["device-write", ["for-each-ref"]],
+    ["safe", ["for-each-ref"]],
     ["blocked", ["for-each-ref", "--format=%(signature:grade)"]],
     ["blocked", ["for-each-ref", "--sort=signature:grade"]],
     ["blocked", ["--version", "--help"]],
@@ -675,7 +677,74 @@ it("classifies every Git row and option-role collision at the highest risk", asy
     ["device-write", ["push", "origin", "main:other"]],
     ["device-write", ["push", "--repo=origin", "main"]],
     ["blocked", ["-c", "core.pager=echo", "branch", "-a", "-D", "x"]],
+    // The spellings a model types for everyday reads run without a card.
+    ...[
+      ["log", "--oneline", "-5"],
+      ["log", "-1", "--format=%H"],
+      ["show", "-3", "--stat"],
+      ["grep", "-rn", "uart_init"],
+      ["remote", "get-url", "origin"],
+      ["submodule"],
+      ["submodule", "status", "--recursive"],
+      ["worktree", "list", "--porcelain"],
+      ["show-ref", "--tags"],
+      ["check-ignore", "-v", "build/x.o"],
+      ["count-objects", "-vH"],
+      ["config", "user.name"],
+      ["config", "--get", "remote.origin.url"],
+      ["config", "--global", "get", "user.email"],
+      ["bisect", "log"],
+    ].map((args) => ["safe", args] as const),
+    // Creating a branch, unstaging and the identity of the first commit lose nothing.
+    ...[
+      ["checkout", "-b", "feature/adc"],
+      ["checkout", "-b", "feature/adc", "origin/main"],
+      ["restore", "--staged", "src/main.c"],
+      ["restore", "-S", "--", "src/main.c"],
+      ["config", "user.email", "dev@example.invalid"],
+      ["config", "--global", "user.name", "A Developer"],
+      ["config", "set", "user.name", "A Developer"],
+      ["bisect", "start", "HEAD", "v1"],
+      ["bisect", "good"],
+      ["bisect", "reset"],
+      ["submodule", "update", "--init", "--recursive"],
+    ].map((args) => ["device-write", args] as const),
+    ...[
+      ["checkout", "main"],
+      ["checkout", "-B", "feature/adc"],
+      ["checkout", "-fb", "feature/adc"],
+      ["checkout", "-b", "feature/adc", "--", "f"],
+      ["restore", "--staged", "--worktree", "f"],
+      ["restore", "-SW", "f"],
+      ["clean", "-n"],
+    ].map((args) => ["irreversible", args] as const),
+    ...[
+      ["config", "--list"],
+      ["config", "alias.co", "!echo"],
+      ["config", "core.sshCommand", "helper"],
+      ["config", "--file", "x", "user.name"],
+      ["config", "--get", "user.name", "x", "y"],
+      ["config", "user.name", "a", "b"],
+      ["config", "--unset", "user.name"],
+      ["bisect", "run", "make"],
+      ["bisect", "visualize"],
+    ].map((args) => ["blocked", args] as const),
   ] as const;
   for (const [risk, args] of cases) expect.soft(classify(args).risk, args.join(" ")).toBe(risk);
   expect(classify(["checkout", "--", "f"]).confirm).toBe("checkout");
+  // The typed word is one the user reads in the command, never a projected role.
+  expect(classify(["reset", "--hard", "HEAD~1"]).confirm).toBe("reset");
+  expect(classify(["stash", "drop"]).confirm).toBe("stash");
+  expect(classify(["push", "--force-with-lease"]).confirm).toBe("push");
+  // A transfer may run long; every other command keeps the program's minute.
+  for (const args of [
+    ["clone", "url"],
+    ["fetch"],
+    ["pull", "--rebase"],
+    ["push"],
+    ["submodule", "update", "--init"],
+  ])
+    expect(classify(args).timeout, args.join(" ")).toBe(1800);
+  for (const args of [["status"], ["submodule", "status"], ["commit", "-m", "x"]])
+    expect(classify(args).timeout, args.join(" ")).toBeNull();
 });

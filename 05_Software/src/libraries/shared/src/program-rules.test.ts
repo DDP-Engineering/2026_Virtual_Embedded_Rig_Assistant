@@ -256,6 +256,12 @@ describe("pre-rule refusals (REQ-SEC-28b53f44)", () => {
   it("accepts the limits and an inner @", () => {
     expect(programArgumentRefusal(Array.from({ length: 64 }, () => "x".repeat(4096)))).toBeNull();
     expect(programArgumentRefusal(["x@y", "", "--a=@b"])).toBeNull();
+    // Git reads no argument files and takes a message with a body as one argument; NUL never passes.
+    expect(programArgumentRefusal(["log", "@{u}..HEAD"], "git")).toBeNull();
+    expect(programArgumentRefusal(["commit", "-m", "Subject\n\nBody\r\n- item"], "git")).toBeNull();
+    expect(programArgumentRefusal(["commit", "-m", "a\0b"], "git")).toEqual({ reason: "control", index: 2 });
+    expect(programArgumentRefusal(["log", "@{u}..HEAD"])).toEqual({ reason: "argument-file", index: 1 });
+    expect(programArgumentRefusal(["write", "a\nb"], "tshark")).toEqual({ reason: "control", index: 1 });
   });
 });
 

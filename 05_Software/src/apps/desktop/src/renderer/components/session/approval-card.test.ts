@@ -93,6 +93,78 @@ it.each(["en", "ro", "de", "fr"])("sends only an explicit chosen user prefix in 
   });
 });
 
+it("shows what a commit records and offers to always allow the program command", async () => {
+  await i18n.changeLanguage("en");
+  const program = {
+    pluginId: "git",
+    trial: false,
+    program: "git",
+    programVersion: "2.45.0",
+    executable: "/usr/bin/git",
+    args: ["commit", "-m", "Fix UART overrun\n\nThe ring buffer wrapped."],
+    cwd: ".",
+    risk: "device-write",
+    confirm: null,
+    files: [],
+    notes: [],
+    preview: " src/uart.c | 4 ++--\n 1 file changed, 2 insertions(+), 2 deletions(-)",
+  };
+  const approval = {
+    approvalId: "apv",
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool: "run_program",
+    path: "git",
+    diff: "",
+    bytes: 0,
+    decision: null,
+    program,
+  } as unknown as SessionState["approvals"][number];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+  );
+  expect(container.querySelector("[data-approval-preview]")?.textContent).toBe(program.preview);
+  expect(container.textContent).toContain("This commit records");
+  // The message is one argument: the command line shows its line breaks escaped.
+  expect(container.querySelector("[data-approval-command]")?.textContent).toBe(
+    'git commit -m "Fix UART overrun\\n\\nThe ring buffer wrapped."',
+  );
+  expect(container.querySelector("[data-command-always-allow]")).toBeNull();
+  await act(async () =>
+    root?.render(
+      createElement(ApprovalCard, { approval, sessionId: "s", disabled: false, canSavePrefix: true }),
+    ),
+  );
+  const select = container.querySelector<HTMLSelectElement>("[data-command-prefix]");
+  expect([...(select?.options ?? [])].map((option) => option.value)).toEqual(["git", "git commit"]);
+  expect(select?.value).toBe("git commit");
+  await act(async () => container?.querySelector<HTMLButtonElement>("[data-command-always-allow]")?.click());
+  expect(api.invoke).toHaveBeenLastCalledWith("session.approval.decide", {
+    sessionId: "s",
+    approvalId: "apv",
+    requestSha256: "a".repeat(64),
+    decision: "approved",
+    commandPrefix: "git commit",
+  });
+  // A command that needs the typed word, and a trial plugin, are never offered.
+  for (const change of [{ risk: "irreversible", confirm: "reset" }, { trial: true }]) {
+    await act(async () =>
+      root?.render(
+        createElement(ApprovalCard, {
+          approval: { ...approval, program: { ...program, ...change } } as typeof approval,
+          sessionId: "s",
+          disabled: false,
+          canSavePrefix: true,
+        }),
+      ),
+    );
+    expect(container.querySelector("[data-command-always-allow]")).toBeNull();
+  }
+});
+
 it("decides with A and D on the card, never while the prefix list has the key", async () => {
   const approval = {
     approvalId: "apv",

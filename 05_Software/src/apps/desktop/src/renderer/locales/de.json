@@ -678,6 +678,7 @@
     "registry": "Deklariert in",
     "typeToConfirm": "Diese Änderung ist dauerhaft. Geben Sie {{word}} zur Bestätigung ein.",
     "confirmMismatch": "Das eingegebene Wort stimmt nicht überein. Geben Sie das auf der Karte angezeigte Wort ein.",
+    "preview": "Dieser Commit erfasst",
     "alwaysAllow": "Immer erlauben",
     "commandPrefix": "Befehlspräfix",
     "allowedCommands": "Erlaubte Befehle",

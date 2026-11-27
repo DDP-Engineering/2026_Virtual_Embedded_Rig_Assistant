@@ -85,7 +85,8 @@ SHA-256. VERA never runs vendor installers or elevation: find programs are **Man
 The agent names a declared program; VERA resolves the executable. Refused before any rule: a program
 no enabled plugin declares, one that two enabled plugins declare, more than 64 arguments, an
 argument over 4096 characters or with NUL or a line break, and an argument starting with `@` (an
-argument file would hide the command).
+argument file would hide the command). Git reads no argument files and takes a commit message with a
+body as one argument: for the `git` option syntax a leading `@` and line breaks pass.
 
 Matching ([`program-rules.ts`](../05_Software/src/libraries/shared/src/program-rules.ts)):
 
@@ -101,8 +102,9 @@ Matching ([`program-rules.ts`](../05_Software/src/libraries/shared/src/program-r
   into role tokens such as `<write>` following that program's option parsing (STM32CubeProgrammer's
   ignores case). Only matching sees the projection; approvals show and run the raw arguments.
 - The confirmation word of an irreversible command is the token matched by the first non-wildcard
-  pattern token after the program in the first matching irreversible rule. The typed text is
-  trimmed and normalised like a token.
+  pattern token after the program in the first matching irreversible rule; for a role a syntax
+  projects (`<discard>`) it is the command's name. The typed text is trimmed and normalised like a
+  token.
 
 | Risk | Meaning |
 |---|---|
@@ -116,7 +118,7 @@ Matching ([`program-rules.ts`](../05_Software/src/libraries/shared/src/program-r
 |---|---|---|---|---|---|
 | `read-only` | runs | refused | refused | refused | refused |
 | `ask` | runs | approval | approval | typed word | approval; irreversible typed word |
-| `auto-edit` | runs | runs | approval | typed word | as `ask` |
+| `auto-edit` | runs | runs | approval; a saved prefix runs | typed word | as `ask` |
 | `bypass` | runs | runs | runs | runs | as `ask` |
 
 Runs by mode are recorded as decided by mode. A typed-word approval is used once; a wrong word
@@ -143,7 +145,10 @@ until?}`, `program_stop {handle}`. Runner:
   Programs are not sandboxed: rules and approvals are the control.
 - Timeout cap: the largest matching rule timeout, else the program's, else 600 s; a background run
   without a value has none.
-- Output is decoded as UTF-8 without ANSI escapes; results carry the last 12 000 characters.
+- Output is decoded as UTF-8 without ANSI escapes; results carry at most 12 000 characters: all of
+  it, or its first lines (3 000 characters), a line counting what is left out, and its end.
+- The working directory is a workbench folder or a folder added to the workbench; other outside
+  folders need Bypass.
 - Each run writes `.vera/runs/<ULID>.log` (64 MiB cap, then a truncation marker while the run
   continues) and a run record `<ULID>.json`. The newest 200 runs per workbench are kept; the
   **Runs** tab lists 50, shows the last 1 MiB of a log and stops a running run.

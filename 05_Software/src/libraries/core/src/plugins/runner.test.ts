@@ -328,7 +328,7 @@ describe("process tree", () => {
 });
 
 describe("output, log and retention", () => {
-  it("returns a 12 000-character tail while the ULID log keeps everything", async () => {
+  it("returns the beginning and the end of a long output while the ULID log keeps everything", async () => {
     const run = await runner.start(request());
     const full = `${"x".repeat(25_000)}${"\x1b[31my\x1b[0m".repeat(1)}${"z".repeat(24_998)}END`;
     host.programs[0]?.print(full.slice(0, 30_000));
@@ -338,7 +338,13 @@ describe("output, log and retention", () => {
     const clean = `${"x".repeat(25_000)}y${"z".repeat(24_998)}END`;
     expect(result.runId).toMatch(ULID);
     expect(result).toMatchObject({ exitCode: 3, truncated: true, log: `.vera/runs/${result.runId}.log` });
-    expect(result.output).toBe(clean.slice(-12_000));
+    const note = /\n\[(\d+) characters omitted here; the log has all of them\]\n/.exec(result.output);
+    const end = result.output.slice((note?.index ?? 0) + (note?.[0].length ?? 0));
+    expect(result.output.length).toBeLessThanOrEqual(12_000);
+    expect(result.output.slice(0, note?.index)).toBe("x".repeat(3000));
+    expect(end.length).toBeGreaterThan(8500);
+    expect(clean.endsWith(end)).toBe(true);
+    expect(3000 + Number(note?.[1]) + end.length).toBe(clean.length);
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
     expect(await readFile(join(root, result.log), "utf8")).toBe(clean);
   });
