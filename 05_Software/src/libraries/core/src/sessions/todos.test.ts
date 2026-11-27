@@ -2,7 +2,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import type { SessionEvent } from "@vera/shared";
+import { advancedSettings, resolveAdvanced, type SessionEvent } from "@vera/shared";
 import { afterEach, expect, it } from "vitest";
 import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
@@ -150,6 +150,7 @@ it("validates registry and repository boundaries, clears, and rolls back failed 
   handle.db.prepare("DELETE FROM events WHERE session_id=? AND seq=999").run(s.id);
   expect(JSON.parse((await registry.execute(ctx, "todo", { items: [] }, signal)).text)).toEqual({
     items: [],
+    totalItems: 0,
   });
   expect(JSON.parse(repository.get(s.id)?.items_json ?? "null")).toEqual([]);
 });
@@ -191,6 +192,62 @@ it("denies aborted and unowned mutation and scrubs user fields before storage/ev
   cleanup.push(() => readOnly.close());
   expect(() => readOnly.send(s.id, "plan")).toThrow(expect.objectContaining({ code: "DENIED" }));
   expect(repository.get(s.id)).toBeDefined();
+});
+
+it("pages every saved step within the tool budget and bounds masked text before committing", async () => {
+  const { service, handle, root } = await setup([]);
+  const session = service.create();
+  const repository = new core.TodosRepository(handle.db);
+  const ctx = core.createToolContext(root);
+  const limit = advancedSettings.toolResultChars.min;
+  ctx.advanced = (key) => resolveAdvanced(key, { app: { toolResultChars: limit } }).value;
+  let writes = 0;
+  ctx.todos = {
+    db: handle.db,
+    repository,
+    sessionId: session.id,
+    now: () => "2026-11-27T00:00:00.000Z",
+    assertWritable: () => {},
+    record: () => () => writes++,
+    scrub: (text) => text.replaceAll("token", "[REDACTED]"),
+  };
+  const registry = new core.ToolRegistry();
+  const signal = new AbortController().signal;
+  const items = Array.from({ length: 50 }, (_, index) => ({
+    id: String(index),
+    text: '"'.repeat(200),
+    status: "pending" as const,
+  }));
+  items[0]!.text = `${"a".repeat(189)}token😀tail`;
+  const expected = [{ ...items[0], text: `${"a".repeat(189)}[REDACTED]` }, ...items.slice(1)];
+  const result = async (args: Record<string, unknown>) => {
+    const reply = await registry.execute(ctx, "todo", args, signal);
+    expect(reply.isError).toBe(false);
+    expect(reply.truncated).toBe(false);
+    expect(reply.text.length).toBeLessThanOrEqual(limit);
+    const page = JSON.parse(reply.text);
+    expect(page.totalItems).toBe(50);
+    return page as { items: typeof items; nextOffset?: number };
+  };
+  const first = await result({ items });
+  expect(first.nextOffset).toBe(first.items.length + 1);
+  expect(JSON.parse(repository.get(session.id)!.items_json)).toEqual(expected);
+  let page = await result({});
+  expect(page).toEqual(first);
+  const read = [...page.items];
+  while (page.nextOffset !== undefined) {
+    expect(page.nextOffset).toBe(read.length + 1);
+    page = await result({ offset: page.nextOffset });
+    read.push(...page.items);
+  }
+  expect(read).toEqual(expected);
+  expect(writes).toBe(1);
+  const largeId = "x".repeat(limit);
+  const oversized = [{ ...items[0]!, id: largeId }, ...items.slice(1)];
+  const bounded = await result({ items: oversized });
+  expect(bounded).toHaveProperty("idsOmitted", true);
+  expect(bounded.items[0]).toEqual({ text: expected[0]!.text, status: "pending" });
+  expect(JSON.parse(repository.get(session.id)!.items_json)[0].id).toBe(largeId);
 });
 
 it("runs the Plan fixture and preserves existing automatic fixture routing", async () => {

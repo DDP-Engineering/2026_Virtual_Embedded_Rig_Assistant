@@ -1834,9 +1834,11 @@ ipcMain.handle(
           },
           { purpose: "ordinary", ordinarySessionId: sessionId },
         ),
-      // Stop and approval decisions must not wait for plugin loading and program probing.
-      "session.stop": ({ sessionId }) =>
-        router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" }),
+      "session.stop": ({ sessionId }) => {
+        const route = router.session(sessionId);
+        const { config } = router.verify(route);
+        return { stopped: route.runtime.sessions.stop({ workbenchId: config.id, db: route.db }, sessionId) };
+      },
       "session.question.answer": ({ sessionId, workbenchId, questionId, reply }) => {
         const route = router.session(sessionId, workbenchId);
         router.verify(route);

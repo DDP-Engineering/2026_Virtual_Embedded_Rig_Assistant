@@ -608,6 +608,8 @@
     "choices": "Choix de réponse",
     "recommended": "Recommandé",
     "freeText": "Votre propre réponse",
+    "replyTooLong": "Raccourcissez votre réponse à {{limit}} caractères. Votre brouillon est conservé.",
+    "replyTextOnly": "Retirez les images pour envoyer une réponse écrite ou répondez dans la carte de la question.",
     "deadline": "La réponse recommandée sera appliquée à {{date}}",
     "submit": "Envoyer la réponse",
     "cancel": "Annuler la question",

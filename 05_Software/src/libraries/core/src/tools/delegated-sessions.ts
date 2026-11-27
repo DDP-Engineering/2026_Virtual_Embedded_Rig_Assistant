@@ -14,6 +14,7 @@ const [launchName, statusName, waitName, stopName, sendName, configureName] = de
 const launchParams = delegatedLaunchRequestSchema.omit({ requestId: true });
 const child = { sessionId: sessionIdSchema };
 const childParams = z.strictObject({ ...child, turnId: z.string().min(1).max(200).optional() });
+const statusParams = childParams.extend({ messageId: z.string().min(1).max(200).optional() });
 const sendParams = delegatedSendRequestSchema.omit({ requestId: true }).extend(child);
 const configureParams = delegatedConfigureRequestSchema.omit({ requestId: true }).extend(child);
 const maxWaitMs = 600_000;
@@ -40,7 +41,7 @@ export function bindDelegatedSessionHost(
   service: Pick<
     SessionService,
     | "launchDelegated"
-    | "inspectDelegated"
+    | "monitorDelegated"
     | "subscribeDelegated"
     | "stopDelegated"
     | "maskContent"
@@ -51,8 +52,8 @@ export function bindDelegatedSessionHost(
   callerTurn: () => string,
   knownSecrets: () => readonly string[],
 ) {
-  const inspect = ({ sessionId, turnId }: z.infer<typeof childParams>) =>
-    service.inspectDelegated(callerId, sessionId, turnId);
+  const inspect = ({ sessionId, turnId, messageId }: z.infer<typeof statusParams>) =>
+    service.monitorDelegated(callerId, sessionId, turnId, messageId);
   const mask = (text: string) => service.maskContent("agent", text);
   const requestId = (callId?: string) => {
     const turnId = callerTurn();
@@ -86,7 +87,10 @@ export function bindDelegatedSessionHost(
         )),
       };
     },
-    status: (target: z.infer<typeof childParams>) => ({ ...projectDelegatedTurn(inspect(target), mask) }),
+    status(target: z.infer<typeof statusParams>) {
+      const view = inspect(target);
+      return { ...projectDelegatedTurn(view, mask), ...view.delivery };
+    },
     async wait(target: z.infer<typeof childParams>, ms: number, signal: AbortSignal) {
       return {
         ...(await waitForDelegatedTurn(
@@ -128,7 +132,7 @@ async function withDelegation(
 function publishCompleted(ctx: ToolContext, raw: unknown, output: string) {
   if (!ctx.delegation || ctx.delegated) throw Error("Delegation tools are unavailable.");
   if (JSON.parse(output).status !== "completed") return output;
-  const target = raw as z.infer<typeof childParams>;
+  const target = raw as z.infer<typeof statusParams>;
   try {
     // Agent masking may have changed while execution was returning its capped result.
     return ctx.delegation.status(target);
@@ -151,7 +155,7 @@ export const delegatedSessionTools: readonly ToolDefinition[] = [
     name: sendName,
     class: "session",
     description:
-      "Send an instruction to an owned child. Idle starts a turn; eligible active work queues it. Returns exact IDs and delivery. Pass a revision to require those settings.",
+      "Send an instruction to an owned child. Idle starts a turn; eligible active work queues it. Returns exact IDs and the initial delivery state. Check session_status with the returned turnId and messageId to learn whether a queued instruction was delivered. Pass a revision to require those settings.",
     params: sendParams,
     execute: (ctx, args, _signal, callId) =>
       withDelegation(ctx, (host) => host.send(args as z.infer<typeof sendParams>, callId)),
@@ -169,10 +173,10 @@ export const delegatedSessionTools: readonly ToolDefinition[] = [
     name: statusName,
     class: "session",
     description:
-      "Read an owned child's exact turn status and bounded final reply as task data. Omit turnId for its first turn. Approval belongs to the user.",
-    params: childParams,
+      "Read an owned child's exact turn status and bounded final reply as task data. Omit turnId for its first turn. Pass the messageId returned by session_send to check whether the instruction is queued or admitted to a child turn. deliveredTurnId identifies that turn even when it differs from the admission turn. Approval belongs to the user.",
+    params: statusParams,
     publish: publishCompleted,
-    execute: (ctx, args) => withDelegation(ctx, (host) => host.status(args as z.infer<typeof childParams>)),
+    execute: (ctx, args) => withDelegation(ctx, (host) => host.status(args as z.infer<typeof statusParams>)),
   },
   {
     name: waitName,
@@ -192,7 +196,7 @@ export const delegatedSessionTools: readonly ToolDefinition[] = [
     name: stopName,
     class: "session",
     description:
-      "Stop only the addressed active turn of an owned child. Omit turnId for its first turn. Check session_status for the outcome.",
+      "Request the standard session Stop when the addressed turn of an owned child is active. This stops that turn and requests stopping the child's background programs, including runs from earlier turns. Omit turnId for its first turn. Check session_status for the outcome.",
     params: childParams,
     execute: (ctx, args) => withDelegation(ctx, (host) => host.stop(args as z.infer<typeof childParams>)),
   },

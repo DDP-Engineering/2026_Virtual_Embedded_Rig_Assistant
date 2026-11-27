@@ -171,20 +171,22 @@ export const ToolDetails = memo(function ToolDetails({
   const results = result?.results ?? result?.matches ?? result?.paths ?? result?.entries;
   const plan =
     item.name === "todo" && item.status === "ok" ? todoItemsSchema.safeParse(result?.items) : undefined;
+  const planCount = plan?.success ? (number(result?.totalItems) ?? plan.data.length) : undefined;
   const { rows, pager } = usePaged(Array.isArray(results) ? results : []);
-  let caption = plan?.success
-    ? plan.data.length
-      ? t("toolActivity.planSteps", { count: plan.data.length })
-      : t("toolActivity.planCleared")
-    : exitCode !== undefined
-      ? t("toolActivity.exitCode", { code: exitCode })
-      : item.name === "web_download" && item.status === "ok"
-        ? t("downloads.saved")
-        : Array.isArray(results)
-          ? t("toolActivity.resultCount", { count: results.length })
-          : number(result?.added) !== undefined && number(result?.removed) !== undefined
-            ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
-            : undefined;
+  let caption =
+    planCount !== undefined
+      ? planCount > 0 || !Array.isArray(args.items)
+        ? t("toolActivity.planSteps", { count: planCount })
+        : t("toolActivity.planCleared")
+      : exitCode !== undefined
+        ? t("toolActivity.exitCode", { code: exitCode })
+        : item.name === "web_download" && item.status === "ok"
+          ? t("downloads.saved")
+          : Array.isArray(results)
+            ? t("toolActivity.resultCount", { count: results.length })
+            : number(result?.added) !== undefined && number(result?.removed) !== undefined
+              ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
+              : undefined;
   if (item.status === "ok" && result?.historyPending === true) caption = t("toolActivity.historyPending");
   const browserFailure = action >= 27 ? browserFailureCodeSchema.safeParse(result?.code).data : undefined;
   const usage = item.documentSearch?.usage;

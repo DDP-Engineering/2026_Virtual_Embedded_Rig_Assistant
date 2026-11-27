@@ -531,6 +531,12 @@ export class SessionsHost {
           (!row.delegation && row.status === "running"),
       );
   }
+  /** Interrupt an existing service without waiting for queued turn preparation. */
+  stop(scope: SessionScope, sessionId: string): boolean {
+    this.assertScope(scope);
+    if (this.shutdown) throw veraError("BUSY");
+    return this.db === scope.db ? (this.service?.stop(sessionId) ?? false) : false;
+  }
   /** A live question already has a service. Accept its reply without waiting for queued turn preparation. */
   answerQuestion(scope: SessionScope, sessionId: string, questionId: string, reply: QuestionReply): void {
     this.assertScope(scope);

@@ -58,7 +58,7 @@ Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten
 
 ## Eine Frage beantworten
 
-Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Wählen Sie **Antwort senden** oder drücken Sie Enter im Antwortfeld. Sie können auch im Nachrichtenfeld antworten. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
+Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Wählen Sie **Antwort senden** oder drücken Sie Enter im Antwortfeld. Sie können auch im Nachrichtenfeld antworten. Antworten dürfen bis zu 2.000 Zeichen lang sein und keine Bilder enthalten. Zu lange Entwürfe oder Entwürfe mit Bildern bleiben zur Bearbeitung im Nachrichtenfeld. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
 
 In den Workbench-Einstellungen unter **Agent und Chat** ist **Empfohlene Antworten nach einer Wartezeit übernehmen** standardmäßig aus. Nach dem Einschalten sind 1 bis 1440 ganze Minuten erlaubt. Bei gültiger Empfehlung zeigt die Karte den Zeitpunkt an, und der Chat kennzeichnet automatische Antworten. Die Zeit läuft im Hintergrund und beim Neuladen weiter. Genehmigungspflichtige Vorgänge fragen weiterhin gesondert nach.
 
@@ -69,6 +69,8 @@ Wenn VERA eine Aufgabe delegiert, erscheint die untergeordnete Sitzung eingerüc
 Öffne eine laufende untergeordnete Sitzung und wähle **Stoppen** bei der Nachrichteneingabe, um sie anzuhalten. Die übergeordnete Sitzung kann weiterarbeiten. Wenn eine Genehmigung erforderlich ist, verwende die Genehmigungskarte in der jeweiligen Sitzung. Beim erneuten Öffnen nach einem Neustart von VERA bleiben der Link und das Ergebnis des delegierten Durchlaufs verfügbar.
 
 Der übergeordnete Agent kann weitere Anweisungen im selben untergeordneten Chat senden und Modell sowie Denkstufe für spätere Durchläufe wählen. Der Verlauf kennzeichnet diese Nachrichten als **Anweisung des übergeordneten Agenten**. Während die untergeordnete Sitzung arbeitet, wartet eine zulässige Nachricht auf die nächste Modellanfrage. Ist eine Entscheidung erforderlich, nutze die Genehmigungskarte der untergeordneten Sitzung.
+
+Der übergeordnete Agent kann prüfen, ob eine Anweisung noch wartet und welcher Durchlauf sie erhalten hat. Wird die untergeordnete Sitzung vor der Zustellung angehalten, kann die Anweisung im nächsten Durchlauf ankommen. Beim Anhalten fordert VERA auch das Beenden ihrer Hintergrundprogramme an, einschließlich der Programme aus früheren Durchläufen.
 
 Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Delegiert eine Sitzung im Bypass-Modus, startet die neue Sitzung in Automatisch bearbeiten, außer du aktivierst unter **Einstellungen > Daten & Datenschutz** die Option **Vollzugriff für delegierte Aufgaben erlauben** und bestätigst. Die Option ist standardmäßig aus und gilt für künftige Starts in allen Workbenches; schaltest du sie aus, behalten bestehende Sitzungen ihren Modus. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat.
 

@@ -11,6 +11,7 @@ import { openDb } from "../storage/db.js";
 import { createToolContext } from "../tools/context.js";
 import { readTool } from "../tools/read.js";
 import { ToolRegistry } from "../tools/registry.js";
+import { projectDelegatedTurn } from "./delegation-monitor.js";
 import type { LiveSessionActivity } from "./live-activity.js";
 import type { SessionHost } from "./service.js";
 import { SessionService } from "./service.js";
@@ -796,6 +797,14 @@ it("uses ordinary pending edit approval for delegated work and refuses steering 
   });
   const snapshot = () => h.service.get(child.sessionId).snapshot;
   await vi.waitFor(() => expect(snapshot().status).toBe("awaiting_approval"));
+  expect(
+    projectDelegatedTurn(h.service.monitorDelegated(parent.id, child.sessionId), (text) => text),
+  ).toEqual({
+    sessionId: child.sessionId,
+    turnId: child.turnId,
+    status: "awaiting_approval",
+    toolSteps: 1,
+  });
   expect(() =>
     h.service.sendDelegated(parent.id, child.sessionId, {
       requestId: "cannot-steer",

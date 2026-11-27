@@ -58,7 +58,7 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 ## Răspunde la o întrebare
 
-Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Poți apăsa și Enter în câmpul răspunsului. Poți scrie și trimite răspunsul în caseta principală de mesaj. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
+Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Poți apăsa și Enter în câmpul răspunsului. Poți scrie și trimite răspunsul în caseta principală de mesaj. Răspunsul poate avea cel mult 2.000 de caractere, fără imagini. Dacă depășește limita sau conține imagini, ciorna rămâne în caseta de mesaj pentru editare. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
 
 În setările **Agent și chat** ale workbench-ului, opțiunea **Folosește răspunsurile recomandate după un interval** este dezactivată implicit. Activeaz-o și stabilește un număr întreg de la 1 la 1440 de minute. Cardul afișează termenul când se poate aplica o recomandare validă, iar conversația marchează răspunsul automat. Timpul continuă să curgă în fundal și la reîncărcarea interfeței. Operațiunile care necesită aprobare o cer separat.
 
@@ -69,6 +69,8 @@ Când VERA deleagă o sarcină, sesiunea copil apare indentată sub sesiunea pă
 Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
 
 Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
+
+Agentul părinte poate verifica dacă o instrucțiune este încă în coadă și în ce tură a primit-o sesiunea copil. Dacă oprești sesiunea copil înainte de livrare, instrucțiunea poate fi preluată în tura următoare. Oprirea cere și închiderea programelor de fundal ale sesiunii copil, inclusiv a celor pornite în ture anterioare.
 
 O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. Copilul unei sesiuni părinte în Bypass pornește în Editare automată, cu excepția cazului în care activezi **Permite acces complet pentru sarcinile delegate** în **Setări > Date și confidențialitate** și confirmi. Setarea este oprită implicit și se aplică lansărilor viitoare din toate workbench-urile; dacă o oprești, sesiunile existente își păstrează modul. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei.
 

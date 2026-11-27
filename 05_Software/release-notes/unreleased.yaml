@@ -11,10 +11,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Open session search from the magnifier next to New session.
-      ro: Deschide căutarea sesiunilor cu lupa de lângă Sesiune nouă.
-      de: Die Lupe neben Neue Sitzung öffnet die Sitzungssuche.
-      fr: Ouvrez la recherche de sessions avec la loupe à côté de Nouvelle session.
+      en: Search beside New session. Delegation tracks delivery and keeps the end of long replies.
+      ro: Caută lângă Sesiune nouă. Agentul urmărește livrarea și păstrează finalul răspunsului delegat.
+      de: Suche neben Neue Sitzung. Delegation verfolgt die Zustellung und behält das Antwortende.
+      fr: Loupe près de Nouvelle session. La délégation suit la livraison et garde la fin des réponses.
   - category: improved
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:
@@ -60,17 +60,17 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
     text:
-      en: Provider errors for reasoning appear above the chat controls.
-      ro: Erorile furnizorului pentru reasoning apar deasupra comenzilor conversației.
-      de: Anbieterfehler zum Reasoning erscheinen über den Chat-Steuerelementen.
-      fr: Les erreurs du fournisseur liées au raisonnement apparaissent au-dessus des commandes du chat.
+      en: Stop responds promptly. Invalid replies stay in drafts. Reasoning errors appear above controls.
+      ro: Stop răspunde prompt. Ciorna se păstrează. Erorile de reasoning apar deasupra comenzilor.
+      de: Stopp reagiert rasch. Entwürfe bleiben. Reasoning-Fehler stehen über der Chatleiste.
+      fr: Stop réagit vite. Le brouillon reste. Les erreurs de raisonnement s’affichent au-dessus du chat.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Continue reading files and artifacts without skipping lines between pages.
-      ro: Citește în continuare fișierele și artefactele fără să sară linii între pagini.
-      de: Beim Weiterblättern in Dateien und Artefakten werden keine Zeilen übersprungen.
-      fr: La lecture des fichiers et artefacts reprend sans sauter de lignes entre les pages.
+      en: Files and artifacts keep every line across pages. Agents can read long plans in pages.
+      ro: Fișierele și artefactele se citesc fără linii sărite. Agentul citește planurile lungi pe pagini.
+      de: Dateien und Artefakte behalten jede Zeile. Agenten lesen lange Pläne seitenweise.
+      fr: Chaque ligne de fichier ou d’artefact est lue. L’agent lit les plans longs par pages.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

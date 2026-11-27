@@ -1,4 +1,4 @@
-import type { QuestionReply, SessionQuestion } from "@vera/shared";
+import { type QuestionReply, questionAnswerMax, type SessionQuestion } from "@vera/shared";
 import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -85,7 +85,7 @@ export function QuestionCard({
               <span>{t("question.freeText")}</span>
               <input
                 type="text"
-                maxLength={2000}
+                maxLength={questionAnswerMax}
                 value={text}
                 onChange={(event) => {
                   setText(event.currentTarget.value);

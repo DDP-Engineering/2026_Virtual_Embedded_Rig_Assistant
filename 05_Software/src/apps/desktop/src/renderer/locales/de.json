@@ -608,6 +608,8 @@
     "choices": "Antwortmöglichkeiten",
     "recommended": "Empfohlen",
     "freeText": "Eigene Antwort",
+    "replyTooLong": "Kürzen Sie Ihre Antwort auf {{limit}} Zeichen. Der Entwurf bleibt erhalten.",
+    "replyTextOnly": "Entfernen Sie die Bilder, um eine Textantwort zu senden, oder antworten Sie in der Fragekarte.",
     "deadline": "Empfohlene Antwort wird um {{date}} übernommen",
     "submit": "Antwort senden",
     "cancel": "Frage abbrechen",

@@ -6,10 +6,12 @@ import {
   type AdvancedValueOf,
   acceptsImages,
   advancedPatchSchema,
+  advancedSettings,
   type ChangeDetail,
   type ChangeSummary,
   type ComposerImageSource,
   changeIdSchema,
+  foldSessionEvents,
   isLiveSessionEvent,
   type MaskingArea,
   maskQuestionOutcome,
@@ -822,6 +824,23 @@ export class SessionService {
     };
   }
 
+  /** Read the addressed turn's status data without replaying the rest of the child's transcript. */
+  monitorDelegated(parentId: string, childId: string, turnId?: string, messageId?: string) {
+    const child = this.ownedDelegation(parentId, childId);
+    const target = turnId ?? child.turn_id;
+    const start = this.delegations.start(childId, target);
+    if (!start?.messageId) throw veraError("NOT_FOUND");
+    const { seq } = this.hub.revision(childId);
+    const delivery = messageId ? this.delegations.messageDelivery(childId, parentId, messageId) : undefined;
+    if (messageId && !delivery) throw veraError("NOT_FOUND");
+    return {
+      launch: { sessionId: childId, turnId: target, messageId: start.messageId },
+      snapshot: foldSessionEvents(this.delegations.turnEvents(childId, target, start.seq, seq)),
+      seq,
+      delivery,
+    };
+  }
+
   /** Replay and follow the existing child event stream under its parent's authority. */
   subscribeDelegated(parentId: string, childId: string, sinceSeq: number, listener: SessionListener) {
     this.ownedDelegation(parentId, childId);
@@ -1095,10 +1114,13 @@ export class SessionService {
   }
   /** The Advanced value that applies to a session: session, workbench, application, then the default. */
   private resolveAdvanced<K extends AdvancedKey>(id: string, key: K): AdvancedValueOf<K> {
+    const scopes: readonly string[] = advancedSettings[key].scopes;
     return resolveAdvanced(
       key,
       {
-        session: { ...this.hub.get(id).snapshot.advanced, ...this.host.advanced?.run?.() },
+        session: scopes.includes("session")
+          ? { ...this.hub.get(id).snapshot.advanced, ...this.host.advanced?.run?.() }
+          : undefined,
         workbench: this.host.advanced?.workbench(),
         app: this.host.advanced?.app(),
       },
@@ -1498,7 +1520,7 @@ export class SessionService {
   async sendWithImages(id: string, text: string, images: string[]) {
     this.row(id);
     this.writable();
-    if (this.isPlanReviewActive(id)) throw veraError("BUSY");
+    if (this.isPlanReviewActive(id) || this.questions.current(id)) throw veraError("BUSY");
     const count = this.resolveAdvanced(id, "imagesPerMessage");
     if (images.length > count) throw { code: "INVALID", messageKey: "chat.imagesLimit", params: { count } };
     const reader = new SessionImages(this.host.root, this.host.managedRoots);
@@ -1525,6 +1547,7 @@ export class SessionService {
         active.failed ||
         active.approvalWait ||
         !active.turnId ||
+        this.questions.current(id) ||
         current.status === "awaiting_approval" ||
         this.host.db
           .prepare("SELECT 1 FROM approvals WHERE session_id=? AND decision IS NULL LIMIT 1")

@@ -608,6 +608,8 @@
     "choices": "Variante de răspuns",
     "recommended": "Recomandat",
     "freeText": "Răspunsul tău",
+    "replyTooLong": "Scurtează răspunsul la {{limit}} de caractere. Textul a rămas în ciornă.",
+    "replyTextOnly": "Elimină imaginile pentru a trimite un răspuns text sau răspunde în cardul întrebării.",
     "deadline": "Răspunsul recomandat se aplică la {{date}}",
     "submit": "Trimite răspunsul",
     "cancel": "Anulează întrebarea",

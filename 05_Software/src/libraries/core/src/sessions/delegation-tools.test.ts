@@ -266,6 +266,51 @@ it("returns current progress on timeout and disposes wait listeners on timeout, 
   expect(dispose).toHaveBeenCalledTimes(3);
 });
 
+it("tracks a queued instruction across Stop and delivery in the next turn", async () => {
+  const h = await setup();
+  const parent = h.service.create();
+  h.service.send(parent.id, "Parent tool host.");
+  await h.service.waitIdle(parent.id);
+  const releaseChild = h.hold("replay/child");
+  const child = await h.service.launchDelegated(parent.id, { ...childRequest, requestId: "track-message" });
+  const status = h.tool("replay/parent", "session_status");
+  const signal = new AbortController().signal;
+  const request = { requestId: "follow-up", instruction: "Use the updated fixture." };
+  await vi.waitFor(() =>
+    expect(h.requests.some((request) => request.sessionId === child.sessionId)).toBe(true),
+  );
+  const queued = h.service.sendDelegated(parent.id, child.sessionId, request);
+  const args = { sessionId: child.sessionId, turnId: queued.turnId, messageId: queued.messageId };
+  const read = async () => JSON.parse(await status.execute(args, signal));
+  expect(await read()).toMatchObject({ status: "running", messageId: queued.messageId, delivery: "queued" });
+  expect(h.service.stopDelegated(parent.id, child.sessionId, queued.turnId)).toBe(true);
+  await h.service.waitIdle(child.sessionId);
+  expect(await read()).toMatchObject({ status: "stopped", delivery: "queued" });
+  expect(h.service.sendDelegated(parent.id, child.sessionId, request)).toEqual(queued);
+
+  releaseChild();
+  const next = h.service.sendDelegated(parent.id, child.sessionId, {
+    requestId: "resume",
+    instruction: "Resume the task.",
+  });
+  await h.service.waitIdle(child.sessionId);
+  expect(await read()).toMatchObject({
+    status: "stopped",
+    turnId: queued.turnId,
+    delivery: "delivered",
+    deliveredTurnId: next.turnId,
+  });
+  const nextArgs = { sessionId: child.sessionId, turnId: next.turnId, messageId: next.messageId };
+  expect(JSON.parse(await status.execute(nextArgs, signal))).toMatchObject({
+    status: "completed",
+    delivery: "delivered",
+    deliveredTurnId: next.turnId,
+  });
+  await expect(status.execute({ ...args, messageId: "foreign-message" }, signal)).rejects.toThrow(
+    /NOT_FOUND/,
+  );
+});
+
 it("replays a terminal event committed before subscription and rejects a deleted target", async () => {
   const h = await setup();
   const releaseChild = h.hold("replay/child");
@@ -274,7 +319,7 @@ it("replays a terminal event committed before subscription and rejects a deleted
   await h.service.waitIdle(parent.id);
   const child = await h.service.launchDelegated(parent.id, { ...childRequest, requestId: "gap" });
   const args = { sessionId: child.sessionId };
-  const stale = h.service.inspectDelegated(parent.id, child.sessionId);
+  const stale = h.service.monitorDelegated(parent.id, child.sessionId);
   const stopAfterFinish = vi.fn();
   const off = h.service.subscribeDelegated(parent.id, child.sessionId, stale.seq, (_seq, event) => {
     if (event.type === "turn.done")
@@ -287,7 +332,7 @@ it("replays a terminal event committed before subscription and rejects a deleted
 
   const wait = h.tool("replay/parent", "session_wait");
   const signal = new AbortController().signal;
-  const inspect = vi.spyOn(h.service, "inspectDelegated");
+  const inspect = vi.spyOn(h.service, "monitorDelegated");
   const coreSubscribe = h.service.subscribeDelegated.bind(h.service);
   const disposed = vi.fn();
   const subscribe = vi.spyOn(h.service, "subscribeDelegated").mockImplementation((...input) => {
@@ -319,7 +364,8 @@ it("reports only the masked bounded reply of the original turn despite later chi
     masking: () => mask,
     scrub: (text) => text.replaceAll(secret, "[redacted]"),
   });
-  await h.scenario("child", [{ text: secret + 'circuit "pin" '.repeat(2600) }]);
+  const conclusion = "Final conclusion: the fixture is connected.";
+  await h.scenario("child", [{ text: secret + 'circuit "pin" '.repeat(2600) + conclusion }]);
   const parent = h.service.create();
   h.service.send(parent.id, "Parent tool host.");
   await h.service.waitIdle(parent.id);
@@ -338,6 +384,8 @@ it("reports only the masked bounded reply of the original turn despite later chi
     truncated: true,
   });
   expect(JSON.parse(bounded).reply).not.toContain(secret);
+  expect(JSON.parse(bounded).reply).toContain("\n[truncated]\n");
+  expect(JSON.parse(bounded).reply.endsWith(conclusion)).toBe(true);
 
   await h.scenario("child", [{ text: "PRIVATE LATER REPLY." }]);
   h.service.send(child.sessionId, "Private unrelated prompt.");
@@ -346,7 +394,11 @@ it("reports only the masked bounded reply of the original turn despite later chi
     kind: "assistant",
     text: "PRIVATE LATER REPLY.",
   });
+  await Promise.all([h.service.waitCompaction(child.sessionId), h.service.waitCompaction(parent.id)]);
+  const fullReplay = vi.spyOn(SessionHub.prototype, "get");
   expect(await status.execute(args, signal)).toBe(bounded);
+  expect(status.publish?.(args, bounded)).toBe(bounded);
+  expect(fullReplay).not.toHaveBeenCalled();
 });
 
 it("keeps the child alive after the parent ends and reports the recovered interruption after reopen", async () => {
@@ -405,8 +457,7 @@ it.each(["session_status", "session_wait"])(
   async (name) => {
     let mask = false;
     const secret = "CRED_SCOPED_TOKEN";
-    const prefix = "a".repeat(19994);
-    const fullReply = prefix + secret + "b".repeat(40000 - prefix.length - secret.length);
+    const fullReply = `Opening ${secret}\n${"a".repeat(40000)}\nConclusion ${secret}.`;
     const h = await setup({
       masking: () => mask,
       knownSecrets: () => [secret],
@@ -430,6 +481,7 @@ it.each(["session_status", "session_wait"])(
       truncated: true,
     });
     expect(published).not.toContain("CRED_S");
-    expect(initial).not.toContain("CRED_S");
+    expect(JSON.parse(initial).reply).toContain(`Conclusion ${secret}.`);
+    expect(JSON.parse(published ?? "{}").reply).toContain("Conclusion [redacted]");
   },
 );
