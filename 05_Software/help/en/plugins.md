@@ -34,6 +34,8 @@ A workbench can also carry plugin packages in `.vera/plugins/`. They are used on
 
 Installing does not enable a plugin. Open **Edit workbench** → **Plugins**, check the plugin and select **Save**. Only enabled plugins are offered to the agent in that workbench.
 
+Updating a trial plugin keeps its current selection in each workbench.
+
 ## Tools and plugin capabilities
 
 **Tools** contains general VERA capabilities, including `run_program`, `run_command`, `program_output`, `program_stop` and terminal access. Plugin programs, including Git's dedicated integration, are listed with their plugin under **Plugins**. Their execution still requires the generic tool allowance and the existing command risk and session permission rules.

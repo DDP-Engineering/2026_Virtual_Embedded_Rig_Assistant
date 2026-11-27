@@ -53,10 +53,10 @@ entries:
   - category: fixed
     topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
     text:
-      en: Saved firmware reports and test plans use the exact line references returned by tools.
-      ro: Rapoartele și planurile salvate folosesc referințele exacte furnizate de instrumente.
-      de: Firmware-Berichte und Testpläne speichern die genauen Zeilenverweise der Werkzeuge.
-      fr: Les rapports et plans enregistrés gardent les références de lignes exactes des outils.
+      en: Firmware reports and plans cite exact lines. Plugin drafts are checked before approval.
+      ro: Citări exacte în rapoarte și planuri. Pluginurile de probă sunt verificate înainte de aprobare.
+      de: Berichte und Testpläne zitieren exakte Zeilen. Plugin-Entwürfe werden vor der Freigabe geprüft.
+      fr: Rapports et plans citent les lignes exactes. Les plugins d’essai sont vérifiés avant approbation.
   - category: fixed
     topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
     text:

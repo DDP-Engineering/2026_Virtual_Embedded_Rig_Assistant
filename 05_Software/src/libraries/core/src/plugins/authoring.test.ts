@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { programPolicy } from "@vera/shared";
@@ -10,6 +10,7 @@ import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { plugin } from "./program-fixtures.test-support.js";
+import * as packages from "./store.js";
 import { PluginStore } from "./store.js";
 
 const roots: string[] = [];
@@ -35,6 +36,15 @@ async function fixture() {
   return { root, draft, manifest, save, store, ctx, registry: new ToolRegistry() };
 }
 const signal = () => new AbortController().signal;
+const change = () => ({
+  db: undefined as never,
+  queue: new WriteQueue(),
+  sessionId: "ses",
+  turnId: "turn",
+  callId: "call",
+  now: () => new Date().toISOString(),
+  recorded: () => undefined,
+});
 it("validates drafts and returns schema errors separately from authoring warnings", async () => {
   const f = await fixture();
   const result = await f.registry.execute(
@@ -76,6 +86,25 @@ it("validates drafts and returns schema errors separately from authoring warning
     signal(),
   );
   expect(JSON.parse(invalid.text).errors.length).toBeGreaterThan(0);
+});
+
+it("names an unusable skill in draft validation without invalidating other plugin content", async () => {
+  const f = await fixture();
+  const folder = join(f.draft, "skills", "guide");
+  await mkdir(folder, { recursive: true });
+  await writeFile(join(folder, "SKILL.md"), "# Guide without front matter\n");
+  const result = await f.registry.execute(
+    f.ctx,
+    "plugin_validate",
+    { path: "plugins/fixture-cli" },
+    signal(),
+  );
+  expect(JSON.parse(result.text)).toMatchObject({
+    errors: [],
+    warnings: expect.arrayContaining([
+      { code: "skill-metadata", path: "skills/guide/SKILL.md", detail: expect.any(String) },
+    ]),
+  });
 });
 it("warns authors to verify subcommand help before dispatch (REQ-FUNC-8f4df41b)", async () => {
   const f = await fixture();
@@ -123,15 +152,7 @@ it("binds a trial install to the reviewed draft, rejects changed bytes and preve
   const f = await fixture();
   const ctx = {
     ...f.ctx,
-    change: {
-      db: undefined as never,
-      queue: new WriteQueue(),
-      sessionId: "ses",
-      turnId: "turn",
-      callId: "call",
-      now: () => new Date().toISOString(),
-      recorded: () => undefined,
-    },
+    change: change(),
   };
   const prepared = await f.registry.prepare(ctx, "plugin_install", { path: "plugins/fixture-cli" }, signal());
   expect(prepared.request).toMatchObject({ tool: "plugin_install", protected: true });
@@ -150,6 +171,73 @@ it("binds a trial install to the reviewed draft, rejects changed bytes and preve
   expect((await f.registry.execute(ctx, "plugin_validate", { path: "../data" }, signal())).isError).toBe(
     true,
   );
+});
+
+it("refuses to prepare replacement of a trusted plugin and rechecks trial eligibility after preparation", async () => {
+  const f = await fixture();
+  const ctx = { ...f.ctx, change: change() };
+  const args = { path: "plugins/fixture-cli" };
+  const hash = (await f.store.review(f.draft)).sha256;
+  await f.store.installTrial(f.draft, hash);
+  const fullReview = vi.spyOn(f.store, "review");
+  const prepared = await f.registry.prepare(ctx, "plugin_install", args, signal());
+  expect(fullReview).not.toHaveBeenCalled();
+  await f.store.promote("fixture-cli", hash);
+  await expect(f.registry.prepare(ctx, "plugin_install", args, signal())).rejects.toThrow(
+    /cannot be replaced as a trial/,
+  );
+  await expect(prepared.apply(signal())).rejects.toMatchObject({ code: "DENIED" });
+  expect((await f.store.load("fixture-cli")).record.tier).toBe("local");
+});
+
+it.each(["plugin_validate", "plugin_install"])("stops %s while reading the draft", async (tool) => {
+  const f = await fixture();
+  const controller = new AbortController();
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const read = vi.spyOn(packages, "readPluginPackage").mockImplementationOnce(async () => {
+    await held;
+    throw Error("Read finished after Stop.");
+  });
+  const args = { path: "plugins/fixture-cli" };
+  const ctx = { ...f.ctx, change: change() };
+  const pending =
+    tool === "plugin_validate"
+      ? f.registry.execute(ctx, tool, args, controller.signal).then((result) => result.isError)
+      : f.registry.prepare(ctx, tool, args, controller.signal).then(
+          () => false,
+          (error: unknown) => error === controller.signal.reason,
+        );
+  try {
+    await vi.waitFor(() => expect(read).toHaveBeenCalledWith(f.draft, controller.signal));
+    controller.abort();
+    expect(await pending).toBe(true);
+  } finally {
+    release();
+  }
+});
+
+it("cleans a cancelled staged trial and keeps the previous installed package", async () => {
+  const f = await fixture();
+  const first = (await f.store.review(f.draft)).sha256;
+  await f.store.installTrial(f.draft, first);
+  f.manifest.version = "1.2.3";
+  await f.save();
+  const next = (await f.store.review(f.draft)).sha256;
+  const controller = new AbortController();
+  let ids = 0;
+  const store = new PluginStore({
+    root: f.store.root,
+    uuid: () => {
+      if (++ids === 2) controller.abort();
+      return `cancel-fixture-${ids}`;
+    },
+  });
+  await expect(store.installTrial(f.draft, next, undefined, controller.signal)).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  expect((await f.store.load("fixture-cli")).record.sha256).toBe(first);
+  expect(await readdir(join(f.store.root, "staging"))).toEqual([]);
 });
 it("ships an immutable official create-plugin skill and keeps disabling available", async () => {
   const f = await fixture();
@@ -193,15 +281,7 @@ it("validates and installs an outside draft only in Bypass, records absolute sou
     ...f.ctx,
     permissionMode: () => mode,
     bypassSignal: () => epoch.signal,
-    change: {
-      db: undefined as never,
-      queue: new WriteQueue(),
-      sessionId: "ses",
-      turnId: "turn",
-      callId: "call",
-      now: () => new Date().toISOString(),
-      recorded: () => undefined,
-    },
+    change: change(),
   };
   expect((await f.registry.execute(ctx, "plugin_validate", { path: outside }, signal())).isError).toBe(true);
   await expect(f.registry.prepare(ctx, "plugin_install", { path: outside }, signal())).rejects.toThrow();
@@ -216,7 +296,7 @@ it("validates and installs an outside draft only in Bypass, records absolute sou
   await expect(revoked.apply(signal())).rejects.toThrow();
   expect(await f.store.ids()).toEqual([]);
   const install = await f.registry.prepare(ctx, "plugin_install", { path: outside }, signal());
-  expect((await install.apply(signal())).enabled).toBe(false);
+  expect((await install.apply(signal())).enabledByInstall).toBe(false);
   expect(await f.store.ids()).toEqual(["fixture-cli"]);
   expect((await f.store.load("fixture-cli")).folder.startsWith(f.store.root)).toBe(true);
 });

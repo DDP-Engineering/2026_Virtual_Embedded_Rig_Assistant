@@ -86,6 +86,15 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
       .join("\n"),
   );
   await writeFile(
+    join(base, "replay/update.jsonl"),
+    [
+      { match: "update", toolCalls: [{ name: "plugin_install", args: { path: draft } }] },
+      { text: "The trial was updated." },
+    ]
+      .map((s) => JSON.stringify(s))
+      .join("\n"),
+  );
+  await writeFile(
     join(base, "replay/inspect.jsonl"),
     [
       {
@@ -180,6 +189,23 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
   const toolRows = db.db.prepare("SELECT name,status FROM tool_calls").all();
   expect(toolRows).toContainEqual({ name: "plugin_validate", status: "ok" });
   enabled.push("fixture-cli"); // User action, outside the agent tool registry.
+
+  await writeFile(join(root, draft, "plugin.yaml"), stringify({ ...manifest, version: "1.0.1" }));
+  model = "update";
+  service.send(s.id, "update the trial");
+  await expect.poll(() => pending()?.tool, { timeout: 10000 }).toBe("plugin_install");
+  decide();
+  await service.waitIdle(s.id);
+  expect((await store.load("fixture-cli")).manifest.version).toBe("1.0.1");
+  expect(
+    db.db
+      .prepare("SELECT status,result_json FROM tool_calls WHERE name='plugin_install' ORDER BY rowid DESC")
+      .get(),
+  ).toMatchObject({
+    status: "ok",
+    result_json: expect.stringContaining('\\"enabledByInstall\\":false'),
+  });
+
   model = "inspect";
   service.send(s.id, "inspect");
   await expect.poll(() => pending()?.tool, { timeout: 10000 }).toBe("run_program");
