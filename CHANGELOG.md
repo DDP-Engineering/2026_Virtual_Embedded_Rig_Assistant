@@ -108,6 +108,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Name each problem of a register definition and its place, and the argument a log or register call got wrong.
 - Take a register value written as a number, in binary, with a hex suffix or digit separators, a register name in another letter case, and log level names such as WARNING.
 - Preserve log counts and citation revisions, make register decoding cancellable, and clarify invalid arguments.
+- Open and validate citations to a log that holds stray bytes, was saved as UTF-16 or kept growing after its analysis.
+- Number log lines the way `read` and the viewer do, so a cited line is the reported one in captures with CR CR LF endings or rewritten progress lines.
+- Apply the tolerant reading of tool arguments in sessions as well: plan statuses, skill and help names, register values and log levels were still refused there.
 
 ## [0.4.0] - 2026-11-26
 

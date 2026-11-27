@@ -93,15 +93,19 @@ export function withinIssued(ref: string, issued: ReadonlySet<string>): boolean 
   return false;
 }
 function issuedLogSources(messages: readonly Message[]) {
-  const issued: (LineRef & { sha256: string | null })[] = [];
+  const issued: (LineRef & { sha256: string | null; bytes: number | undefined })[] = [];
   for (const message of messages)
     if (message.role === "toolResult" && message.toolName === "parse_log" && !message.isError)
       for (const block of message.content)
         if (block.type === "text") {
           try {
-            const source = parseLogResultSchema.shape.source.safeParse(JSON.parse(block.text)?.source).data;
+            const value = JSON.parse(block.text);
+            const source = parseLogResultSchema.shape.source.safeParse(value?.source).data;
+            const scan = parseLogResultSchema.shape.scan.safeParse(value?.scan).data;
             const range = source?.ref ? parseLineRef(source.ref) : undefined;
-            if (range && range.path === source?.path) issued.push({ ...range, sha256: source.sha256 });
+            // The hash is of the bytes analysed: a log that grew afterwards still holds them unchanged.
+            if (range && range.path === source?.path)
+              issued.push({ ...range, sha256: source.sha256, bytes: scan?.bytes });
           } catch {
             /* plain text issues no refs */
           }
@@ -172,9 +176,11 @@ export async function validateCitations(
               parsed.start,
               1,
               new AbortController().signal,
-              { utf8Log: !!log },
+              log ? { utf8Log: true, allowGrowth: true, prefixBytes: log.bytes } : {},
             );
-            valid = parsed.end <= window.totalLines && (!log?.sha256 || log.sha256 === window.sha256);
+            valid =
+              parsed.end <= window.totalLines &&
+              (!log?.sha256 || log.sha256 === (window.prefixSha256 ?? window.sha256));
           } else valid = !!(await validDocumentRef?.(ref));
         } catch {
           /* removed/ignored/binary/outside source is unresolved */

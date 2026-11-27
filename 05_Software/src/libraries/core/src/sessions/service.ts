@@ -1024,6 +1024,7 @@ export class SessionService {
       false,
       !!log,
       log?.sha256 ?? undefined,
+      log?.bytes,
     );
     this.row(id);
     return content;

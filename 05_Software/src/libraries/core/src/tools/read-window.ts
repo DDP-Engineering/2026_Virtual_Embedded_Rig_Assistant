@@ -21,6 +21,11 @@ type ReadWindowOptions = {
    * the window, line count and hash then describe the bytes it had when opened, and `growing` is set.
    */
   allowGrowth?: boolean;
+  /**
+   * Also hash the first this many bytes: what parse_log analysed of a log that has grown since. The
+   * lines it cited are unchanged exactly when that prefix still has the analysed hash.
+   */
+  prefixBytes?: number | undefined;
 };
 
 /**
@@ -67,7 +72,9 @@ async function scanWindow(
     const latin1 = fallback !== undefined;
     const hash = createHash("sha256");
     let encoding: "utf-8" | "utf-16le" | "utf-16be" | "latin1" = latin1 ? "latin1" : "utf-8";
-    let decoder = new TextDecoder("utf-8", { fatal: true });
+    // A log is read as parse_log read it: stray bytes become replacement characters.
+    let decoder = new TextDecoder("utf-8", { fatal: !options.utf8Log });
+    const prefix = options.prefixBytes === undefined ? undefined : createHash("sha256");
     const decode = (bytes?: Buffer) => {
       if (latin1) return bytes?.toString("latin1") ?? "";
       try {
@@ -144,17 +151,19 @@ async function scanWindow(
       if (options.utf8Log && position + bytesRead > 50 * 1024 * 1024)
         throw Error("Log exceeds the 50 MiB source limit.");
       const bytes = buffer.subarray(0, bytesRead);
-      if (!position && !options.utf8Log) {
+      if (!position) {
         const bom = utf16Bom(bytes);
         if (bom) {
           if (latin1) throw Error("File changed while reading. Read it again.");
           encoding = bom;
-          decoder = new TextDecoder(bom, { fatal: true });
-        } else if (isBinary(bytes)) {
+          decoder = new TextDecoder(bom, { fatal: !options.utf8Log });
+        } else if (!options.utf8Log && isBinary(bytes)) {
           throw Error("Cannot read a binary file. Choose a text file.");
         }
       }
       hash.update(bytes);
+      if (prefix && options.prefixBytes !== undefined && position < options.prefixBytes)
+        prefix.update(bytes.subarray(0, options.prefixBytes - position));
       consume(decode(bytes));
       position += bytesRead;
     }
@@ -191,6 +200,9 @@ async function scanWindow(
       lineClipped,
       growing,
       sha256: hash.digest("hex"),
+      ...(prefix && options.prefixBytes !== undefined && position >= options.prefixBytes
+        ? { prefixSha256: prefix.digest("hex") }
+        : {}),
       mtimeMs: after.mtimeMs,
       modified: after.mtime.toISOString(),
       size: after.size,

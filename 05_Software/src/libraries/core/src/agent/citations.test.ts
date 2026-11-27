@@ -397,3 +397,53 @@ it("does not accept a help ref that another tool's result carried", async () => 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+it("keeps a log citation valid for stray bytes, UTF-16 and lines appended after the analysis", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));
+  const issued = (bytes: Buffer, lines: number): Message => ({
+    role: "toolResult",
+    toolName: "parse_log",
+    toolCallId: "log",
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          source: {
+            path: "log.txt",
+            ref: `log.txt#L1-L${lines}`,
+            sha256: createHash("sha256").update(bytes).digest("hex"),
+          },
+          scan: { complete: true, stopReason: "eof", lines, bytes: bytes.length },
+        }),
+      },
+    ],
+    isError: false,
+    timestamp: 0,
+  });
+  const cited = async (message: Message) =>
+    (await validateCitations(root, "[[log.txt#L3-L3]]", [message]))[0]?.valid;
+  try {
+    const noisy = Buffer.concat([
+      Buffer.from("INFO boot\n"),
+      Buffer.from([0xff, 0xfe, 0xc3, 0x28, 0x0a]),
+      Buffer.from("ERROR fault\n"),
+    ]);
+    await writeFile(join(root, "log.txt"), noisy);
+    expect(await cited(issued(noisy, 3))).toBe(true);
+    const wide = Buffer.concat([
+      Buffer.from([0xff, 0xfe]),
+      Buffer.from("INFO boot\r\nINFO up\r\nERROR fault\r\n", "utf16le"),
+    ]);
+    await writeFile(join(root, "log.txt"), wide);
+    expect(await cited(issued(wide, 3))).toBe(true);
+    // The device kept logging after the analysis: what was analysed is unchanged.
+    const first = Buffer.from("INFO boot\nINFO up\nERROR fault\n");
+    await writeFile(join(root, "log.txt"), Buffer.concat([first, Buffer.from("INFO still running\n")]));
+    expect(await cited(issued(first, 3))).toBe(true);
+    // The analysed part itself was rewritten.
+    await writeFile(join(root, "log.txt"), "INFO boot\nINFO up\nERROR other\nINFO still running\n");
+    expect(await cited(issued(first, 3))).toBe(false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

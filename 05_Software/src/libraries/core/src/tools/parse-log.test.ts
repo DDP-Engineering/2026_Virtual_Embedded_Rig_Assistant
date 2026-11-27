@@ -475,3 +475,32 @@ it("passes application-data exclusions to its filesystem worker in Bypass", asyn
   expect(JSON.parse(outcome.text)).toMatchObject({ code: "DENIED", reason: "path_denied" });
   expect(outcome.text).toContain("VERA application data");
 });
+
+it("numbers lines as read and the viewer do, for CR CR LF endings and bare carriage returns", async () => {
+  const warn = "2026-04-12T08:00:00Z WARN supply low";
+  const error = "2026-04-12T08:00:01Z ERROR brown-out";
+  // A terminal that ends every line with CR CR LF: an empty line follows each one.
+  await log(`${warn}\r\r\n${error}\r\r\n`);
+  const doubled = (await call({ path: "log.txt", profile: "iso" })).value;
+  expect(doubled).toMatchObject({
+    scan: { complete: true, lines: 4, bytes: Buffer.byteLength(`${warn}\r\r\n${error}\r\r\n`) },
+    counts: { warn: 1, error: 1, blank: 2, unparsed: 0 },
+  });
+  expect(doubled.events.map((event: { line: number }) => event.line)).toEqual([1, 3]);
+  // A progress line rewritten in place: each state is a line, and the event after it keeps its number.
+  const text = `${warn}\nloading 10%\rloading 50%\rloading 100%\n${error}\n`;
+  await log(text);
+  const progress = (await call({ path: "log.txt", profile: "iso" })).value;
+  expect(progress).toMatchObject({
+    scan: { complete: true, lines: 5, bytes: Buffer.byteLength(text) },
+    counts: { warn: 1, error: 1, unparsed: 3 },
+  });
+  expect(progress.events.at(-1)).toMatchObject({ line: 5, ref: "log.txt#L5-L5" });
+  const read = await registry.execute(
+    createToolContext(root, pool),
+    "read",
+    { path: "log.txt", offset: 5, limit: 1 },
+    signal(),
+  );
+  expect(JSON.parse(read.text).text).toBe(`5: ${error}`);
+});

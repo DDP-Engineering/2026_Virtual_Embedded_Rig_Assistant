@@ -25,6 +25,7 @@ export class DocumentViewer {
     byPath = false,
     utf8Log = false,
     logSha256?: string,
+    logBytes?: number,
   ): Promise<ViewerContent> {
     try {
       const parsed = byPath ? undefined : parseRef(target);
@@ -42,14 +43,24 @@ export class DocumentViewer {
       const base = { path, ref: byPath ? null : target, snippet: snippet.slice(0, 12000) };
       if (parsed?.kind === "lines") {
         // File-tool refs also cover ordinary unindexed source files.
-        const window = await readWindow(guard, path, parsed.start, 1, signal, { utf8Log });
+        // A cited log may still be written: it is read as a snapshot, and what parse_log analysed of it
+        // must be unchanged.
+        const window = await readWindow(
+          guard,
+          path,
+          parsed.start,
+          1,
+          signal,
+          utf8Log ? { utf8Log, allowGrowth: true, prefixBytes: logBytes } : {},
+        );
         if (parsed.end > window.totalLines) throw Error("Line bounds.");
-        if (logSha256 && window.sha256 !== logSha256) throw Error("Log changed since it was parsed.");
+        if (logSha256 && (window.prefixSha256 ?? window.sha256) !== logSha256)
+          throw Error("Log changed since it was parsed.");
         if (!utf8Log && doc && (doc.status !== "indexed" || doc.sha256 !== window.sha256))
           throw Error("Stale index.");
         const bytes =
           utf8Log || managedLog
-            ? (await readGuardedFile(guard, path, 50 * 1024 * 1024, signal)).bytes
+            ? (await readGuardedFile(guard, path, 50 * 1024 * 1024, signal, { allowGrowth: utf8Log })).bytes
             : await verifyDocumentSource({
                 root: this.root,
                 path,
@@ -58,7 +69,16 @@ export class DocumentViewer {
                 signal,
                 assertWritable: () => {},
               });
-        if ((utf8Log || managedLog) && createHash("sha256").update(bytes).digest("hex") !== window.sha256)
+        // A growing log is read twice at different sizes, so the bytes shown are checked by what parse_log
+        // analysed of them, not against the first read as a whole.
+        const digest = (data: Uint8Array) => createHash("sha256").update(data).digest("hex");
+        if (
+          utf8Log
+            ? logSha256 !== undefined &&
+              logBytes !== undefined &&
+              digest(bytes.subarray(0, logBytes)) !== logSha256
+            : managedLog && digest(bytes) !== window.sha256
+        )
           throw Error("Source changed.");
         const after = rows.get(path);
         if (
@@ -75,7 +95,7 @@ export class DocumentViewer {
           : textLines(
               encoding === "latin1"
                 ? Buffer.from(bytes).toString("latin1")
-                : new TextDecoder(encoding, { fatal: true }).decode(bytes),
+                : new TextDecoder(encoding, { fatal: !utf8Log }).decode(bytes),
             );
         return {
           ...base,

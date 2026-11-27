@@ -14,10 +14,10 @@ title = "Check line citations from tool results"
 status = "active"
 
 requirement = """
-After each assistant message and when a cited line ref is opened, the citation checker shall mark every extracted line ref valid only when its lines lie within a line ref that a successful tool result issued for the same file and it resolves within the confined current workbench file lines.
+After each assistant message and when a cited line ref is opened, the citation checker shall mark every extracted line ref valid only when its lines lie within a line ref that a successful tool result issued for the same file and it resolves within the confined current workbench file lines. A line of a log that parse_log analysed shall stay valid while the bytes it analysed are unchanged, whatever was appended to the log afterwards, and shall be read the way parse_log read it: stray bytes as replacement characters, a UTF-16 capture as text.
 """
 
-verification = "Core citation tests: with issued board.txt#L1-L2, the issued ref and the sub-range board.txt#L2-L2 are valid while invented, out-of-range, missing, escaped and binary refs are invalid; with issued a.txt#L3-L10, L5-L6 and L10-L10 are valid while L2-L4, L9-L11 (extending) and b.txt#L5-L6 (other file) are invalid; a parse_log window admits a control-byte line inside it. Session test: a reply citing a sub-range of a read window opens that file."
+verification = "Core citation tests: with issued board.txt#L1-L2, the issued ref and the sub-range board.txt#L2-L2 are valid while invented, out-of-range, missing, escaped and binary refs are invalid; with issued a.txt#L3-L10, L5-L6 and L10-L10 are valid while L2-L4, L9-L11 (extending) and b.txt#L5-L6 (other file) are invalid; a parse_log window admits a control-byte line inside it; a log citation stays valid for stray bytes, UTF-16 and lines appended after the analysis, and turns invalid when the analysed part is rewritten. Session test: a reply citing a sub-range of a read window opens that file."
 
 affected_paths = ["05_Software/src/libraries/core/src/agent/citations.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/tests/fixtures/llm-scripts/read-then-cite-range.jsonl"]
 
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-11
-updated = 2026-11-20
+updated = 2026-11-27

@@ -12,6 +12,7 @@ import {
   parseLogArgsSchema,
 } from "@vera/shared";
 import { PathGuard } from "../workbench/path-guard.js";
+import { utf16Bom } from "./binary.js";
 
 import { LogFailure } from "./log-failure.js";
 
@@ -150,7 +151,6 @@ export async function scanLog(
       await checkExpectedVersion();
     }
     const line = (bytes: Buffer, consumed: number, clipped = false) => {
-      if (bytes.at(-1) === 13) bytes = bytes.subarray(0, -1);
       if (result.scan.lines === 0 && bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])))
         bytes = bytes.subarray(3);
       // One overlong line (a hex dump, a blob) is analysed by its first 16 KiB; the log is not refused.
@@ -203,10 +203,24 @@ export async function scanLog(
     let dropped = 0;
     // A capture saved by Windows PowerShell is UTF-16: it is read as the same text, line by line.
     let utf16: InstanceType<typeof TextDecoder> | undefined;
+    // A line ends at LF, CR or CR LF, as `read` and the viewer count lines: a line number reported here
+    // is the line a citation opens. A capture with CR CR LF endings or a progress line rewritten with a
+    // bare CR would otherwise be numbered differently in the two places.
+    let afterCR = false;
     const split = (chunk: Buffer) => {
       let start = 0;
-      for (let i = 0; i < chunk.length; i++)
-        if (chunk[i] === 10) {
+      for (let i = 0; i < chunk.length; i++) {
+        const byte = chunk[i];
+        if (afterCR) {
+          afterCR = false;
+          if (byte === 10) {
+            // The LF of a CR LF pair belongs to the line the CR ended.
+            result.scan.bytes++;
+            start = i + 1;
+            continue;
+          }
+        }
+        if (byte === 10 || byte === 13) {
           const bytes = pending.length
             ? Buffer.concat([pending, chunk.subarray(start, i)])
             : chunk.subarray(start, i);
@@ -214,7 +228,9 @@ export async function scanLog(
           pending = Buffer.alloc(0);
           dropped = 0;
           start = i + 1;
+          afterCR = byte === 13;
         }
+      }
       pending = Buffer.concat([pending, chunk.subarray(start)]);
       if (pending.length > LINE_BYTES + 4) {
         dropped += pending.length - LINE_BYTES;
@@ -227,10 +243,8 @@ export async function scanLog(
       if (!read.bytesRead) break;
       const chunk = buffer.subarray(0, read.bytesRead);
       if (!offset) {
-        const mark = chunk.subarray(0, 2);
-        if (mark.equals(Buffer.from([0xff, 0xfe]))) utf16 = new TextDecoder("utf-16le", { ignoreBOM: true });
-        else if (mark.equals(Buffer.from([0xfe, 0xff])))
-          utf16 = new TextDecoder("utf-16be", { ignoreBOM: true });
+        const mark = utf16Bom(chunk);
+        if (mark) utf16 = new TextDecoder(mark, { ignoreBOM: true });
       }
       offset += read.bytesRead;
       if (offset > 50 * 1024 * 1024)
