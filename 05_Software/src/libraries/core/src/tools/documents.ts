@@ -27,7 +27,7 @@ export const readDocTool: ToolDefinition = {
     if (!ctx.knowledge) throw Error("Document index unavailable. Use read/grep or index documents.");
     return ctx.knowledge.read(readDocSchema.parse(args), signal, toolExcludedRoots(ctx), {
       limit: toolLimit(ctx, "toolResultChars"),
-      maskText: ctx.maskDocumentText,
+      maskText: ctx.maskText,
     });
   },
 };

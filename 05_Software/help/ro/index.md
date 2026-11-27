@@ -15,6 +15,8 @@ Ajutorul este instalat odată cu VERA, așa că funcționează fără rețea. Es
 
 Agentul poate citi și el aceste pagini de ajutor. În orice sesiune, întreabă de exemplu „Cum activez un plugin în VERA?” sau „Cum export o sesiune în VERA?”, iar agentul caută răspunsul în ajutor.
 
+Selectează o citare din conversație pentru a deschide pagina de ajutor în limba în care a citit-o agentul.
+
 ## Ajutorul pluginurilor
 
 Fiecare plugin instalat are propria pagină de ajutor: ce face pluginul, de ce are nevoie și cum îi ceri agentului să îl folosească. O găsești în Ajutor, în lista de pagini, și pe cardul pluginului din pagina **Pluginuri**.

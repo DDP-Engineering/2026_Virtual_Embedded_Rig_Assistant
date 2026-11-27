@@ -173,10 +173,15 @@ export class WorkbenchService {
       root: state.folder,
       ...(this.host.userData ? { userData: this.host.userData } : {}),
       disabled: () => this.current().config.skills.disabled,
-      plugins: async () =>
-        (await this.loadPlugins(id)).map((plugin) => ({ id: plugin.manifest.id, folder: plugin.folder })),
-      refresh: async () => {
+      plugins: async (signal) =>
+        (await this.loadPlugins(id, signal)).map((plugin) => ({
+          id: plugin.manifest.id,
+          folder: plugin.folder,
+          sha256: plugin.record.sha256,
+        })),
+      refresh: async (signal) => {
         const config = await this.config(state.folder);
+        signal?.throwIfAborted();
         if (
           config.id !== id ||
           this.current().folder !== state.folder ||
@@ -228,19 +233,27 @@ export class WorkbenchService {
    * The enabled plugins of the open workbench that load: installed, issue-free and unchanged since
    * review, in plugins.enabled order. Others never load and are skipped.
    */
-  async loadPlugins(id: string): Promise<LoadedPlugin[]> {
-    return this.loadEnabled(this.enabledPlugins(id), this.current().folder);
+  async loadPlugins(id: string, signal?: AbortSignal): Promise<LoadedPlugin[]> {
+    return this.loadEnabled(this.enabledPlugins(id), this.current().folder, signal);
   }
-  private async loadEnabled(ids: readonly string[], folder: string): Promise<LoadedPlugin[]> {
+  private async loadEnabled(
+    ids: readonly string[],
+    folder: string,
+    signal?: AbortSignal,
+  ): Promise<LoadedPlugin[]> {
+    signal?.throwIfAborted();
     if (!this.host.userData || ids.length === 0) return [];
     const store = new PluginStore({ root: join(this.host.userData, "plugins"), workbench: folder });
     const loaded: LoadedPlugin[] = [];
-    for (const plugin of ids)
+    for (const plugin of ids) {
+      signal?.throwIfAborted();
       try {
         loaded.push(await store.load(plugin));
       } catch {
         // Not installed, invalid or changed since review: the plugin stays unavailable.
       }
+    }
+    signal?.throwIfAborted();
     return loaded;
   }
   /** Plugins enabled in the current configuration of the open workbench. */

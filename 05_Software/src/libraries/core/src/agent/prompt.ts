@@ -55,7 +55,7 @@ const rules = [
   "Answer in the user's language.",
 ];
 const helpRule =
-  "For questions about VERA itself (its screens, settings, permissions, providers, plugins or how to do something in VERA), read VERA's help with the help tool. If it returns help:permissions, cite it as [[help:permissions]].";
+  "For questions about VERA itself (its screens, settings, permissions, providers, plugins or how to do something in VERA), read VERA's help with the help tool. If it returns help:permissions#lang=en, cite it as [[help:permissions#lang=en]].";
 const programRule =
   "Run declared plugin programs with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
 function programLine({ name, version, plugin, description, skills }: ProgramPromptEntry): string {

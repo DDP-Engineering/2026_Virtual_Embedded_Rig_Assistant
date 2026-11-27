@@ -258,6 +258,8 @@ it("names the help tool for questions about VERA only when the session offers it
   expect(plain).not.toContain("help tool");
   expect(helped).toContain("For questions about VERA itself");
   expect(helped).toContain("help tool");
-  expect(helped).toContain("If it returns help:permissions, cite it as [[help:permissions]].");
+  expect(helped).toContain(
+    "If it returns help:permissions#lang=en, cite it as [[help:permissions#lang=en]].",
+  );
   expect(helped.replace(/\n- For questions about VERA itself[^\n]*/, "")).toBe(plain);
 });

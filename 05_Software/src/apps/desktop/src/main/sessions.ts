@@ -383,8 +383,8 @@ export class SessionsHost {
                 help: {
                   ...options.help,
                   // Only the workbench's enabled plugins, whose packages loaded without issues (REQ-SEC-3cb78ea6).
-                  plugins: async () =>
-                    (await options.workbench.loadPlugins(workbenchId)).map((plugin) => ({
+                  plugins: async (signal) =>
+                    (await options.workbench.loadPlugins(workbenchId, signal)).map((plugin) => ({
                       id: plugin.manifest.id,
                       folder: plugin.folder,
                     })),

@@ -137,6 +137,15 @@ it("parses help refs of app pages and plugin pages and refuses other forms", () 
   expect(api.formatRef({ kind: "help", page: "permissions" })).toBe("help:permissions");
   expect(api.formatRef({ kind: "help", plugin: "serial-monitor" })).toBe("help:plugin/serial-monitor");
   expect(api.referenceLabel("help:plugin/serial-monitor")).toBe("serial-monitor");
+  expect(api.parseRef("help:permissions#lang=fr")).toEqual({
+    kind: "help",
+    page: "permissions",
+    language: "fr",
+  });
+  expect(api.formatRef({ kind: "help", plugin: "serial-monitor", language: "de" })).toBe(
+    "help:plugin/serial-monitor#lang=de",
+  );
+  expect(api.parseRef("help:permissions#lang=es")).toBeUndefined();
   for (const ref of ["help:../x", "help:Permissions", "help:plugin/", "help:a/b", "help:"])
     expect(api.parseRef(ref)).toBeUndefined();
 });

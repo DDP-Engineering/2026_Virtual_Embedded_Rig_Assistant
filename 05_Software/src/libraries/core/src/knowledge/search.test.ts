@@ -719,7 +719,7 @@ it("keeps delivered ranges and every part exact at the configured tool response 
     expect(text).toBe(long);
     const masked = "stub ".repeat(1200);
     await h.add("docs/masked.pdf", "redaction fixture", [masked]);
-    ctx.maskDocumentText = (value) => value.replaceAll("stub", "[REDACTED]");
+    ctx.maskText = (value) => value.replaceAll("stub", "[REDACTED]");
     const projected = await read("docs/masked.pdf", { page: 1 });
     expect(projected.parts).toBeGreaterThan(1);
     let projectedText = projected.text;

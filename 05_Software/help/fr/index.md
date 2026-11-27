@@ -15,6 +15,8 @@ L’aide est installée avec VERA et fonctionne donc sans réseau. Elle s’affi
 
 L’agent peut lui aussi lire ces pages d’aide. Dans n’importe quelle session, demandez par exemple « Comment activer un plugin dans VERA ? » ou « Comment exporter une session dans VERA ? », et il cherche la réponse dans l’aide.
 
+Sélectionnez une référence d’aide dans la conversation pour ouvrir la page dans la langue lue par l’agent.
+
 ## Aide des plugins
 
 Chaque plugin installé possède sa propre page d’aide : ce que fait le plugin, ce dont il a besoin et comment demander à l’agent de l’utiliser. Vous la trouvez dans l’aide, dans la liste des pages, et sur la carte du plugin dans la page **Plugins**.

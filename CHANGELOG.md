@@ -71,6 +71,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Keep plan steps valid after masking and let the agent read the complete saved plan in pages.
 - Track delivery of queued delegated instructions and read status without replaying the full child conversation.
 - Keep the opening and conclusion when shortening delegated replies and clarify the scope of delegated Stop.
+- Keep each skill's metadata and files tied to the selected source, skip plugin scans for local skills, and report missing and disabled skills distinctly.
+- Stop waiting on Help promptly, page long Help and skill text, and open Help citations in the cited language.
 
 ## [0.4.0] - 2026-11-26
 
