@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -117,13 +118,25 @@ it("issues sourceRefs only from validated successful decode_register evidence an
 it("validates control-byte UTF8 only for successful parse_log provenance", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));
   try {
-    await writeFile(join(root, "log.txt"), "INFO ready\n\u0000\n");
+    const text = "INFO ready\n\u0000\n";
+    await writeFile(join(root, "log.txt"), text);
     const ref = "log.txt#L1-L1";
     const message: Message = {
       role: "toolResult",
       toolName: "parse_log",
       toolCallId: "log",
-      content: [{ type: "text", text: JSON.stringify({ events: [{ ref }] }) }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            source: {
+              path: "log.txt",
+              ref: "log.txt#L1-L2",
+              sha256: createHash("sha256").update(text).digest("hex"),
+            },
+          }),
+        },
+      ],
       isError: false,
       timestamp: 0,
     };
@@ -246,12 +259,24 @@ it("accepts a line ref inside an issued window of the same file and nothing beyo
 it("keeps parse_log provenance for a line inside an issued log window", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));
   try {
-    await writeFile(join(root, "log.txt"), "INFO ready\n\u0000\nINFO done\n");
+    const original = "INFO ready\n\u0000\nINFO done\n";
+    await writeFile(join(root, "log.txt"), original);
     const message: Message = {
       role: "toolResult",
       toolName: "parse_log",
       toolCallId: "log",
-      content: [{ type: "text", text: JSON.stringify({ events: [{ ref: "log.txt#L1-L3" }] }) }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            source: {
+              path: "log.txt",
+              ref: "log.txt#L1-L3",
+              sha256: createHash("sha256").update(original).digest("hex"),
+            },
+          }),
+        },
+      ],
       isError: false,
       timestamp: 0,
     };
@@ -259,6 +284,10 @@ it("keeps parse_log provenance for a line inside an issued log window", async ()
       { ref: "log.txt#L2-L2", valid: true },
     ]);
     expect(await validateCitations(root, "[[log.txt#L2-L2]]", [{ ...message, toolName: "read" }])).toEqual([
+      { ref: "log.txt#L2-L2", valid: false },
+    ]);
+    await writeFile(join(root, "log.txt"), original.replace("ready", "stale"));
+    expect(await validateCitations(root, "[[log.txt#L2-L2]]", [message])).toEqual([
       { ref: "log.txt#L2-L2", valid: false },
     ]);
   } finally {

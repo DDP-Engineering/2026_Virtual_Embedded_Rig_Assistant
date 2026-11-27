@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { appendFile, cp, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseLogResultSchema, resolveAdvanced } from "@vera/shared";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { createToolContext, NodeWorkerPool, ToolRegistry } from "../index.js";
 import { workerFixture } from "../workers/worker.test-support.js";
@@ -79,6 +80,30 @@ it("counts baseline and candidate fixture logs with exact cited WARN and ERROR",
     message: "i2c initialization failed",
     ref: "logs/boot-0413.log#L4-L4",
   });
+});
+
+it("fits the configured result size without losing metadata or miscounting omitted events", async () => {
+  const line = `2026-04-12T08:00:00Z INFO ${"boot progressed ".repeat(14)}\n`;
+  await log(line.repeat(55));
+  const ctx = createToolContext(root, pool);
+  const limit = 8000;
+  ctx.advanced = (key) => resolveAdvanced(key, { app: { toolResultChars: limit } }).value;
+  const outcome = await registry.execute(
+    ctx,
+    "parse_log",
+    { path: "log.txt", profile: "iso", maxEvents: 50 },
+    signal(),
+  );
+  expect(outcome.isError).toBe(false);
+  expect(outcome.text.length).toBeLessThanOrEqual(limit);
+  const result = parseLogResultSchema.parse(JSON.parse(outcome.text));
+  expect(result.scan).toMatchObject({ complete: true, lines: 55 });
+  expect(result.counts.info).toBe(55);
+  expect(result.events.length).toBeGreaterThan(0);
+  expect(result.events.length).toBeLessThan(50);
+  expect(result.preview).toEqual({ truncated: true, omitted: 55 - result.events.length });
+  expect(result.events[0]?.ref).toBe("log.txt#L1-L1");
+  expect(result.source.ref).toBe("log.txt#L1-L55");
 });
 it("parses a managed run log without admitting adjacent runtime files", async () => {
   const path = ".vera/runs/build.log";

@@ -609,7 +609,10 @@ export class ReferenceRuntime implements AgentRuntime {
             throw Error(
               `At most ${maxImages} images can be inspected in one step. Try the remaining files in a later step.`,
             );
-          const args = tool.params.parse(call.arguments);
+          const parsed = tool.params.safeParse(call.arguments);
+          if (!parsed.success)
+            throw Error(tool.invalidArguments?.(parsed.error.issues) ?? parsed.error.message);
+          const args = parsed.data;
           // Program commands ask the gate per command line, like file changes.
           if (tool.class === "write" || tool.class === "program") {
             const prepared = structuredClone({ ...call, arguments: args as ToolCall["arguments"] });

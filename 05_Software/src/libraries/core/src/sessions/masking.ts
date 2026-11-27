@@ -52,6 +52,8 @@ export function maskToolOutput(
       masked.length > limit &&
       (name === "read" ||
         name === "terminal_read" ||
+        name === "parse_log" ||
+        name === "decode_register" ||
         name === "web_search" ||
         name === "web_read" ||
         programToolNames.includes(name))

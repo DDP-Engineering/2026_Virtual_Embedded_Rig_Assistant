@@ -13,6 +13,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { builtinToolNames, type SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { afterAll, afterEach, beforeAll, expect, inject, it } from "vitest";
+import { parse, stringify } from "yaml";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -94,6 +95,15 @@ async function fixture() {
   // Keep the replay input identical to native sessions acceptance.
   await writeFile(join(workbench, "board.txt"), "Board uses 3.3 V.\nSecond source line.\n");
   return { dir, workbench };
+}
+async function focusAnalysisTool(workbench: string, tool: "parse_log" | "decode_register") {
+  const path = join(workbench, ".vera/workbench.yaml");
+  const config = parse(await readFile(path, "utf8"));
+  // Leave the Replay context available for the tool and its citations.
+  const disabled = builtinToolNames.filter((name) => name !== tool);
+  config.tools.disabled = disabled;
+  await writeFile(path, stringify(config));
+  return disabled;
 }
 function launch(
   args: string[],
@@ -236,6 +246,7 @@ const replay = (
 ) => ["run", "--workbench", workbench, "--prompt", prompt, "--provider", "replay", "--script", script];
 it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
+  const disabledTools = await focusAnalysisTool(workbench, "parse_log");
   await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");
   const scripts = join(dir, "scripts");
   await mkdir(scripts);
@@ -251,6 +262,11 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
       },
       { toolCalls: [{ name: "parse_log", args: { path: "logs/control.log", profile: "iso" } }] },
       {
+        toolCalls: [
+          { name: "parse_log", args: { path: "logs/control.log", profile: "iso", pattern: "INFO" } },
+        ],
+      },
+      {
         text: "Baseline WARN [[logs/boot-0412.log#L3-L3]]. Candidate ERROR [[logs/boot-0413.log#L4-L4]]. UTF8 log [[logs/control.log#L1-L1]].",
       },
     ]
@@ -263,6 +279,7 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
     db: handle.db,
     root: workbench,
     workers,
+    disabledTools,
     gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
     clock: { now: () => new Date(123), sleep: async () => {} },
     model: () => "replay/parse-log",
@@ -287,6 +304,7 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
       events: [{ ref: "logs/boot-0413.log#L4-L4" }],
     });
     expect(outputs(agent)[2]).toMatchObject({ counts: { info: 1, unparsed: 1 } });
+    expect(outputs(agent)[3]).toMatchObject({ code: "INVALID", reason: "invalid_arguments", isError: true });
     for (const records of [agent, cliEvents])
       expect(records.filter((event: SessionEvent) => event.type === "message.done").at(-1)).toMatchObject({
         citations: [
@@ -306,6 +324,12 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
       start: 1,
       end: 1,
     });
+    await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z WARN changed\n\u0000\n");
+    await expect(service.openCitation(session.id, answer.id, "logs/control.log#L1-L1")).rejects.toMatchObject(
+      {
+        code: "NOT_FOUND",
+      },
+    );
   } finally {
     await service.close();
     handle.close();
@@ -314,6 +338,7 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
 }, 60000);
 it("decode_register returns identical complete cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
+  const disabledTools = await focusAnalysisTool(workbench, "decode_register");
   const definitionPath = "definitions/registers/vera-demo-01.json";
   const bytes = await readFile(join(workbench, definitionPath));
   const definitionRef = `${definitionPath}#L1-L${bytes.toString().trimEnd().split("\n").length}`;
@@ -329,15 +354,21 @@ it("decode_register returns identical complete cited evidence through agent sess
           { name: "decode_register", args: { definitionPath, register: "I2C1_CR1", value: "0x81" } },
         ],
       },
+      {
+        toolCalls: [{ name: "decode_register", args: { definitionPath, register: "I2C1_CR1", value: "-1" } }],
+      },
       { text: `Captured value129 [[${definitionRef}]]. Field meanings [[${manualRef}]].` },
     ]
       .map((step) => JSON.stringify(step))
       .join("\n"),
   );
+  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
   const handle = await openDb(join(dir, "agent.db"), { workbenchId: "wb_test", appVersion: "0" });
   const options = {
     db: handle.db,
     root: workbench,
+    workers,
+    disabledTools,
     gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
     clock: { now: () => new Date(123), sleep: async () => {} },
     model: () => "replay/decode-register",
@@ -357,7 +388,7 @@ it("decode_register returns identical complete cited evidence through agent sess
     const outputs = (records: SessionEvent[]) =>
       records.flatMap((event) => (event.type === "tool.done" ? [JSON.parse(event.summary)] : []));
     expect(outputs(cliEvents)).toEqual(outputs(agent));
-    expect(outputs(agent)).toHaveLength(1);
+    expect(outputs(agent)).toHaveLength(2);
     expect(outputs(agent)[0]).toMatchObject({
       valueDec: "129",
       unmappedMaskHex: "0xffffff78",
@@ -365,12 +396,13 @@ it("decode_register returns identical complete cited evidence through agent sess
       source: { ref: definitionRef, sha256: createHash("sha256").update(bytes).digest("hex") },
       sourceRefs: [manualRef],
     });
+    expect(outputs(agent)[1]).toMatchObject({ code: "INVALID", reason: "invalid_arguments", isError: true });
     for (const records of [agent, cliEvents]) {
       expect(
         records
           .filter((event: SessionEvent) => event.type === "tool.done")
-          .every((event: SessionEvent) => event.type === "tool.done" && event.ok),
-      ).toBe(true);
+          .map((event: SessionEvent) => event.type === "tool.done" && event.ok),
+      ).toEqual([true, false]);
       expect(records.filter((event: SessionEvent) => event.type === "message.done").at(-1)).toMatchObject({
         citations: [
           { ref: definitionRef, valid: true },
@@ -412,6 +444,7 @@ it("decode_register returns identical complete cited evidence through agent sess
   } finally {
     await service.close();
     handle.close();
+    await workers.dispose();
   }
 }, 60000);
 it("CLI loads a separately authorized user skill and extra file", async () => {

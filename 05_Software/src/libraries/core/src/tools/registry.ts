@@ -1,5 +1,11 @@
 import type { ImageContent } from "@earendil-works/pi-ai";
-import { type BuiltinToolName, builtinToolNames, delegatedSessionToolNames } from "@vera/shared";
+import {
+  type BuiltinToolName,
+  boundLogResult,
+  builtinToolNames,
+  delegatedSessionToolNames,
+  parseLogResultSchema,
+} from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { industrialCatalogTool } from "../electrical/catalog-tool.js";
@@ -232,6 +238,22 @@ export function capToolResult(
   let text = JSON.stringify(result);
   let truncated = result.truncated === true;
   if (text.length > limit) {
+    if (toolName === "parse_log" && result.isError !== true) {
+      const log = parseLogResultSchema.safeParse(result);
+      if (log.success) {
+        const bounded = JSON.stringify(boundLogResult(log.data, limit));
+        if (bounded.length <= limit) return { text: bounded, truncated: true };
+      }
+      return {
+        text: '{"isError":true,"code":"INVALID","reason":"result_too_large","error":"The log result metadata exceeds the tool result limit."}',
+        truncated: true,
+      };
+    }
+    if (toolName === "decode_register" && result.isError !== true)
+      return {
+        text: '{"isError":true,"code":"INVALID","reason":"result_too_large","error":"The complete register decode exceeds the tool result limit. Increase the tool result size in Advanced settings or shorten the definition labels."}',
+        truncated: true,
+      };
     truncated = true;
     result.truncated = true;
     const tokens = protectedStrings
@@ -315,6 +337,31 @@ export function capToolResult(
     if (text.length > limit) text = '{"truncated":true,"isError":true,"error":"Narrow the request."}';
   }
   return { text, truncated };
+}
+
+/** The stable refusal of an analysis tool's arguments, with the argument and its problem named. */
+function analysisArgumentError(
+  name: string,
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+) {
+  const rule =
+    name === "parse_log"
+      ? "Use a path allowed by the current mode and exactly one profile or pattern."
+      : name === "decode_register"
+        ? "Supply definitionPath, register and an unsigned decimal/hex string."
+        : undefined;
+  if (!rule) return undefined;
+  const problems = issues
+    .slice(0, 4)
+    .map(
+      (issue) => `${issue.path.map(String).join(".") || "arguments"}: ${issue.message.replace(/\.$/, "")}`,
+    );
+  return JSON.stringify({
+    isError: true,
+    code: "INVALID",
+    reason: "invalid_arguments",
+    error: `${rule} Problem: ${problems.join("; ")}.`,
+  });
 }
 
 export interface ToolOutcome {
@@ -419,28 +466,13 @@ export class ToolRegistry {
         throw Error(`Tool ${name} is unavailable. Choose an enabled tool.`);
       }
       const parsed = tool.params.safeParse(tool.repair ? tool.repair(raw) : raw);
-      if (!parsed.success && (name === "parse_log" || name === "decode_register"))
-        return {
-          text: JSON.stringify({
-            isError: true,
-            code: "INVALID",
-            reason: "invalid_arguments",
-            error: `${
-              name === "parse_log"
-                ? "Use a path allowed by the current mode and exactly one profile or pattern."
-                : "Supply definitionPath, register and an unsigned decimal/hex string."
-            } Problem: ${parsed.error.issues
-              .slice(0, 4)
-              .map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message.replace(/\.$/, "")}`)
-              .join("; ")}.`,
-          }),
-          isError: true,
-          truncated: false,
-        };
-      if (!parsed.success)
+      if (!parsed.success) {
+        const text = analysisArgumentError(name, parsed.error.issues);
+        if (text) return { text, isError: true, truncated: false };
         throw Error(
           `Invalid arguments for ${name}: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; ")}`,
         );
+      }
       // The clarification wait belongs to the turn even if its filesystem permissions change.
       effectiveSignal = tool === askUserTool ? signal : toolSignal(ctx, signal);
       result = await tool.execute(ctx, parsed.data, effectiveSignal, callId, true);
@@ -486,6 +518,7 @@ export class ToolRegistry {
       class: tool.class,
       description: tool.description,
       params: tool.params,
+      invalidArguments: (issues) => analysisArgumentError(tool.name, issues),
       ...(tool.available ? { available: () => tool.available?.(ctx) === true } : {}),
       ...(tool.requiresImages && { requiresImages: true as const }),
       ...(tool.publish

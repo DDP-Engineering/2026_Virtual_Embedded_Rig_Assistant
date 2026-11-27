@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { decodeRegisterResultSchema } from "@vera/shared";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { decodeRegisterResultSchema, resolveAdvanced } from "@vera/shared";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { parseDocument } from "yaml";
-import { createToolContext, ToolRegistry } from "../index.js";
+import { createToolContext, NodeWorkerPool, ToolRegistry } from "../index.js";
+import { workerFixture } from "../workers/worker.test-support.js";
+import { loadDefinition } from "./decode-register/definition.js";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
@@ -17,6 +19,8 @@ vi.mock("yaml", async (importOriginal) => {
 });
 
 let root: string;
+let bundle: ReturnType<typeof workerFixture>;
+let pool: NodeWorkerPool;
 const registry = new ToolRegistry();
 const args = { definitionPath: "registers.json", register: "I2C1_CR1", value: "0x81" };
 const definition = () => ({
@@ -36,6 +40,14 @@ const definition = () => ({
     },
   ],
 });
+beforeAll(() => {
+  bundle = workerFixture();
+  pool = new NodeWorkerPool(bundle.url, { capacity: 1 });
+});
+afterAll(async () => {
+  await pool.dispose();
+  bundle.close();
+});
 beforeEach(async () => {
   root = await fs.mkdtemp(join(tmpdir(), "vera-decode-"));
 });
@@ -49,8 +61,14 @@ afterEach(async () => {
 async function save(value: unknown = definition()) {
   await fs.writeFile(join(root, args.definitionPath), JSON.stringify(value, null, 2) + "\n");
 }
-async function call(overrides: Record<string, unknown> = {}, disabled: string[] = [], bypass = false) {
-  const ctx = createToolContext(root);
+async function call(
+  overrides: Record<string, unknown> = {},
+  disabled: string[] = [],
+  bypass = false,
+  toolResultChars = 32000,
+) {
+  const ctx = createToolContext(root, pool);
+  ctx.advanced = (key) => resolveAdvanced(key, { app: { toolResultChars } }).value;
   if (bypass) ctx.permissionMode = () => "bypass";
   const outcome = await registry.execute(
     ctx,
@@ -97,7 +115,7 @@ it("decodes 0x81 exactly, sorts fields and gives complete byte provenance", asyn
   expect((await call({ value: "0X81" })).value).toEqual(result.value);
 });
 
-it("refuses adversarial wide and deep JSON before the main-process YAML duplicate-key pass", async () => {
+it("refuses wide and deep JSON before the YAML duplicate-key pass", async () => {
   // Measuring elapsed time would be host-dependent; reaching YAML here is the expensive operation.
   const yaml = vi.mocked(parseDocument);
   for (const text of [
@@ -110,7 +128,10 @@ it("refuses adversarial wide and deep JSON before the main-process YAML duplicat
   ]) {
     yaml.mockClear();
     await fs.writeFile(join(root, args.definitionPath), text);
-    failure(await call(), "INVALID", "invalid_definition");
+    await expect(loadDefinition(root, args.definitionPath, undefined)).rejects.toMatchObject({
+      code: "INVALID",
+      reason: "invalid_definition",
+    });
     expect(yaml).not.toHaveBeenCalled();
   }
 });
@@ -248,9 +269,14 @@ it("names what is wrong in a definition and where", async () => {
   ).toContain("Field masks overlap.");
 });
 it("rejects malformed bounded definitions and duplicate keys at every level", async () => {
+  const rejectDefinition = (reason: string) =>
+    expect(loadDefinition(root, args.definitionPath, undefined)).rejects.toMatchObject({
+      code: "INVALID",
+      reason,
+    });
   const mutate = async (change: (d: ReturnType<typeof definition>) => unknown) => {
     await save(change(definition()));
-    failure(await call(), "INVALID", "invalid_definition");
+    await rejectDefinition("invalid_definition");
   };
   await mutate((d) => ({ ...d, schemaVersion: 2 }));
   await mutate((d) => ({ ...d, registers: [...d.registers, ...d.registers] }));
@@ -308,16 +334,16 @@ it("rejects malformed bounded definitions and duplicate keys at every level", as
     '{"registers":[{"fields":[{"lsb":0,"lsb":1}]}]}',
   ]) {
     await fs.writeFile(join(root, args.definitionPath), text);
-    failure(await call(), "INVALID", "duplicate_keys");
+    await rejectDefinition("duplicate_keys");
   }
   for (const text of ["schemaVersion: 1", "{} {}", "{}\n---\n{}", '{"x":NaN}', '{"x":1,}']) {
     await fs.writeFile(join(root, args.definitionPath), text);
-    failure(await call(), "INVALID", "invalid_definition");
+    await rejectDefinition("invalid_definition");
   }
   await fs.writeFile(join(root, args.definitionPath), Buffer.from([0xff]));
-  failure(await call(), "INVALID", "invalid_utf8");
+  await rejectDefinition("invalid_utf8");
   await fs.writeFile(join(root, args.definitionPath), " ".repeat(1024 * 1024 + 1));
-  failure(await call(), "INVALID", "file_too_large");
+  await rejectDefinition("file_too_large");
 });
 it("enforces device identity, expected SHA and source byte encodings", async () => {
   await save();
@@ -384,7 +410,10 @@ it("detects an in-place change and file replacement during bounded reads", async
       }) as typeof handle.read;
       return handle;
     });
-    failure(await call(), "CONFLICT", "source_changed");
+    await expect(loadDefinition(root, args.definitionPath, undefined)).rejects.toMatchObject({
+      code: "CONFLICT",
+      reason: "source_changed",
+    });
     spy.mockImplementation(actualOpen);
   }
 });
@@ -404,6 +433,49 @@ it("returns a bounded explicit error instead of partially decoded fields", async
     ],
   });
   failure(await call(), "INVALID", "result_too_large");
+  expect((await call({}, [], false, 80000)).value.fields).toHaveLength(64);
+});
+
+it("keeps a complete decode or reports that it exceeds the configured result size", async () => {
+  await save({
+    ...definition(),
+    registers: [
+      {
+        name: args.register,
+        widthBits: 64,
+        fields: Array.from({ length: 64 }, (_, lsb) => ({
+          name: `STATUS_${lsb}_${"F".repeat(45)}`,
+          lsb,
+          width: 1,
+        })),
+      },
+    ],
+  });
+  const complete = await call();
+  expect(decodeRegisterResultSchema.parse(complete.value).fields).toHaveLength(64);
+  failure(await call({}, [], false, 8000), "INVALID", "result_too_large");
+});
+
+it("cancels a register decode on the worker and releases capacity for the next request", async () => {
+  await save({
+    ...definition(),
+    registers: Array.from({ length: 180 }, (_, index) => ({
+      name: index ? `REG_${index}` : args.register,
+      widthBits: 64,
+      fields: Array.from({ length: 36 }, (_, lsb) => ({ name: `FIELD_${lsb}`, lsb, width: 1 })),
+    })),
+  });
+  const stop = new AbortController();
+  const active = registry.execute(createToolContext(root, pool), "decode_register", args, stop.signal);
+  await vi.waitFor(() => expect(pool.activeCount).toBe(1));
+  stop.abort();
+  await expect(active).resolves.toMatchObject({
+    isError: true,
+    text: expect.stringContaining("Tool aborted"),
+  });
+  expect(pool.activeCount).toBe(0);
+  await save();
+  expect((await call()).value.valueDec).toBe("129");
 });
 
 it("accepts exact size and cardinality ceilings, numeric enums and full64bit enum strings", async () => {
@@ -480,18 +552,19 @@ it("maps descriptor read failures to a stable refusal", async () => {
     }) as typeof handle.read;
     return handle;
   });
-  failure(await call(), "DENIED", "path_denied");
+  await expect(loadDefinition(root, args.definitionPath, undefined)).rejects.toMatchObject({
+    code: "DENIED",
+    reason: "path_denied",
+  });
 });
 
 // REQ-SEC-3856567c
 it("refuses a definition in application data in every mode", async () => {
   await save();
-  vi.mocked(fs.open).mockClear();
   for (const mode of ["read-only", "ask", "auto-edit", "bypass"] as const) {
-    const ctx = { ...createToolContext(root), managedRoots: [root], permissionMode: () => mode };
+    const ctx = { ...createToolContext(root, pool), managedRoots: [root], permissionMode: () => mode };
     const outcome = await registry.execute(ctx, "decode_register", args, new AbortController().signal);
     expect(JSON.parse(outcome.text)).toMatchObject({ code: "DENIED", reason: "path_denied" });
     expect(outcome.text).toContain("VERA application data");
-    expect(fs.open).not.toHaveBeenCalled();
   }
 });

@@ -107,6 +107,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Cite a PDF page or a heading as the source of a register definition, and define registers of any width up to 64 bits with notes and up to 256 enumerated values.
 - Name each problem of a register definition and its place, and the argument a log or register call got wrong.
 - Take a register value written as a number, in binary, with a hex suffix or digit separators, a register name in another letter case, and log level names such as WARNING.
+- Preserve log counts and citation revisions, make register decoding cancellable, and clarify invalid arguments.
 
 ## [0.4.0] - 2026-11-26
 

@@ -120,11 +120,22 @@ export function emptyLogResult(args: Pick<ParseLogArgs, "path" | "profile">): Pa
   };
 }
 /** Preserve metadata/citations, shrink only the event preview before serialization. */
-export function boundLogResult(result: ParseLogResult): ParseLogResult {
-  while (JSON.stringify(result).length > 32000 && result.events.length) {
-    result.events.pop();
-    result.preview.omitted++;
-    result.preview.truncated = true;
+export function boundLogResult(result: ParseLogResult, limit = 32000): ParseLogResult {
+  if (JSON.stringify(result).length <= limit) return result;
+  result.preview.truncated = true;
+  const events = result.events;
+  result.events = [];
+  result.preview.omitted += events.length;
+  while (JSON.stringify(result).length > limit && result.unparsedSamples.length) result.unparsedSamples.pop();
+  let length = JSON.stringify(result).length;
+  for (const event of events) {
+    const omitted = result.preview.omitted;
+    const size = JSON.stringify(event).length + Number(result.events.length > 0);
+    const next = length + size + String(omitted - 1).length - String(omitted).length;
+    if (next > limit) break;
+    length = next;
+    result.events.push(event);
+    result.preview.omitted--;
   }
   return result;
 }

@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Files and artifacts keep every line. Agents can page through plans, skills and help.
-      ro: Fișierele și artefactele păstrează liniile. Agentul citește pe pagini planuri, skill-uri și ajutor.
-      de: Dateien und Artefakte behalten alle Zeilen. Pläne, Skills und Hilfe sind seitenweise lesbar.
-      fr: Les fichiers et artefacts gardent chaque ligne. Plans, compétences et aide se lisent par pages.
+      en: File reads keep all lines. Plans, skills and help are paged. Log and register results stay exact.
+      ro: Linii păstrate. Planuri, skill-uri și ajutor pe pagini. Rezultate exacte la loguri și registre.
+      de: Zeilen bleiben erhalten. Pläne, Skills und Hilfe haben Seiten. Log- und Registerdaten sind exakt.
+      fr: Lignes préservées. Plans, compétences et aide paginés. Résultats de journaux et registres exacts.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
