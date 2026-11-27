@@ -1,6 +1,6 @@
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4 REQ-FUNC-b3d37df6 REQ-SEC-86010eb5
 import { createHash } from "node:crypto";
-import { link, mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, expect, it } from "vitest";
@@ -320,6 +320,78 @@ async function direct() {
     path: join(env.root, ".vera/artifacts", session.id, "summary.md"),
   };
 }
+it("keeps the file and metadata on an identical masked overwrite, and repairs changed bytes", async () => {
+  const { store, artifactHost: host, path, session } = await direct();
+  const signal = new AbortController().signal;
+  let events = 0;
+  host.record = () => () => {
+    events++;
+  };
+  host.scrubContent = (text) => text.replaceAll(/fixture-secret-[ab]/g, "[REDACTED]");
+  host.now = () => new Date((events + 1) * 1000).toISOString();
+  const args = { name: "summary.md", content: "fixture-secret-a", description: "Note fixture-secret-a" };
+  const first = await store.save(host, args, signal);
+  const original = store.list(session.id);
+  const before = await stat(path, { bigint: true });
+  const retry = {
+    ...args,
+    content: "fixture-secret-b",
+    description: "Note fixture-secret-b",
+    overwrite: true,
+  };
+  expect(await store.save(host, retry, signal)).toEqual(first);
+  const after = await stat(path, { bigint: true });
+  expect(after.ino).toBe(before.ino);
+  expect(after.mtimeNs).toBe(before.mtimeNs);
+  expect(store.list(session.id)).toEqual(original);
+  expect(events).toBe(1);
+
+  await writeFile(path, "content changed outside the store");
+  await store.save(host, retry, signal);
+  expect(await readFile(path, "utf8")).toBe("[REDACTED]");
+  expect(events).toBe(2);
+  await store.save(host, { ...retry, description: "New note" }, signal);
+  expect(store.list(session.id)[0]?.description).toBe("New note");
+  expect(events).toBe(3);
+});
+
+it("rolls back a cancelled rename before a concurrent read can observe the new version", async () => {
+  const { store, artifactHost: host, path, session } = await direct();
+  const controller = new AbortController();
+  const name = "summary.md";
+  await store.save(host, { name, content: "old" }, controller.signal);
+  const original = store.list(session.id)[0]!;
+  let reading: ReturnType<typeof store.verified> | undefined;
+  let checks = 0;
+  host.assertWritable = () => {
+    if (++checks === 2) {
+      reading = store.verified(original.artifactId);
+      queueMicrotask(() => controller.abort());
+    }
+  };
+  await expect(
+    store.save(host, { name, content: "new", overwrite: true }, controller.signal),
+  ).rejects.toMatchObject({ name: "AbortError" });
+  await expect(reading).resolves.toMatchObject({ artifact: { content: "old" } });
+  expect(store.list(session.id)).toEqual([original]);
+  expect(await readdir(join(path, ".."))).toEqual([name]);
+});
+
+it("rejects a newly masked projection during asynchronous publication", async () => {
+  const { store, artifactHost: host, root, session } = await direct();
+  let masked = false;
+  let checks = 0;
+  host.scrubContent = (text) => (masked ? text.replaceAll("fixture-secret", "[REDACTED]") : text);
+  host.assertWritable = () => {
+    if (++checks === 2) masked = true;
+  };
+  await expect(
+    store.save(host, { name: "summary.md", content: "fixture-secret" }, new AbortController().signal),
+  ).rejects.toBeInstanceOf(core.ArtifactMaskingConflict);
+  expect(store.list(session.id)).toEqual([]);
+  expect(await readdir(join(root, ".vera/artifacts", session.id))).toEqual([]);
+});
+
 it("accepts empty/exact5MiB UTF8 content, refuses overlimit and restores bytes after metadata failure", async () => {
   const { store, artifactHost: host, handle, path, session } = await direct();
   const signal = new AbortController().signal;
@@ -396,12 +468,12 @@ it("refuses file links/hash mismatch and fabricated or foreign artifact citation
   expect(await check([tool], service.create().id)).toEqual([{ ref: "artifact:summary.md", valid: false }]);
   await writeFile(path, "changed");
   expect(await check([tool])).toEqual([{ ref: "artifact:summary.md", valid: false }]);
-  expect(() => store.verified(a.artifactId)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+  await expect(store.verified(a.artifactId)).rejects.toMatchObject({ code: "CONFLICT" });
   const external = join(root, "external.txt");
   await writeFile(external, "safe");
   await rm(path);
   await link(external, path);
-  expect(() => store.verified(a.artifactId)).toThrow(expect.objectContaining({ code: "DENIED" }));
+  await expect(store.verified(a.artifactId)).rejects.toMatchObject({ code: "DENIED" });
   expect(await readFile(external, "utf8")).toBe("safe");
 });
 it.skipIf(process.platform === "win32")("refuses native POSIX artifact file symlinks", async () => {
@@ -413,7 +485,7 @@ it.skipIf(process.platform === "win32")("refuses native POSIX artifact file syml
   await writeFile(external, "safe");
   await rm(path);
   await symlink(external, path, "file");
-  expect(() => store.verified(a.artifactId)).toThrow(expect.objectContaining({ code: "DENIED" }));
+  await expect(store.verified(a.artifactId)).rejects.toMatchObject({ code: "DENIED" });
 });
 it("preserves the completed rename and refuses compensation after ownership is lost", async () => {
   const { store, artifactHost: host, path, session } = await direct();
@@ -429,9 +501,7 @@ it("preserves the completed rename and refuses compensation after ownership is l
   ).rejects.toThrow(/ownership lost/);
   expect(await readFile(path, "utf8")).toBe("new");
   expect(store.list(session.id)).toEqual(original);
-  expect(() => store.verified(original[0]?.artifactId ?? "")).toThrow(
-    expect.objectContaining({ code: "CONFLICT" }),
-  );
+  await expect(store.verified(original[0]?.artifactId ?? "")).rejects.toMatchObject({ code: "CONFLICT" });
 });
 
 it("artifact fixture preserves automatic pathological and normal grep selection", async () => {

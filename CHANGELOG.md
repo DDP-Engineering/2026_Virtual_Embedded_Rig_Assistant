@@ -65,6 +65,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Let Stop end the turn while an image is decoding.
 - Preserve web citations when results are shortened, including Tavily links to sections.
 - Report the configured time limit when a web download times out.
+- Save and verify session artifacts asynchronously, skipping identical overwrites.
 
 ## [0.4.0] - 2026-11-26
 

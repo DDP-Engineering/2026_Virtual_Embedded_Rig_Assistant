@@ -1,17 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import {
-  closeSync,
-  fstatSync,
-  fsyncSync,
-  lstatSync,
-  mkdirSync,
-  openSync,
-  readSync,
-  realpathSync,
-  renameSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { constants, realpathSync, type Stats } from "node:fs";
+import { lstat, mkdir, open, realpath, rename, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
   ARTIFACT_MAX_BYTES,
@@ -28,7 +17,7 @@ import {
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { type ArtifactRow, ArtifactsRepository } from "../storage/repos/artifacts.js";
-import type { WriteQueue } from "../workbench/write-queue.js";
+import { WriteQueue } from "../workbench/write-queue.js";
 
 export interface ArtifactHost {
   sessionId: string;
@@ -43,17 +32,34 @@ export interface ArtifactHost {
 }
 
 /** An exact structured artifact cannot survive the active export mask. */
-export class ArtifactMaskingConflict extends Error {}
+export class ArtifactMaskingConflict extends Error {
+  constructor() {
+    super("Artifact masking changed the content. Retry the save with the current export settings.");
+  }
+}
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 function missing(error: unknown) {
-  return (error as NodeJS.ErrnoException).code === "ENOENT";
+  return (error as NodeJS.ErrnoException | undefined)?.code === "ENOENT";
+}
+
+function sameFile(first: Stats, current: Stats): boolean {
+  return (
+    current.isFile() &&
+    current.nlink === 1 &&
+    current.ino === first.ino &&
+    current.dev === first.dev &&
+    current.size === first.size &&
+    current.mtimeMs === first.mtimeMs &&
+    current.ctimeMs === first.ctimeMs
+  );
 }
 
 /** Narrow application-managed namespace. General file tools keep their .vera denial. */
 export class ArtifactStore {
   readonly repository: ArtifactsRepository;
   private readonly root: string;
+  private readonly access = new Map<string, { queue: WriteQueue; pending: number }>();
   constructor(
     root: string,
     private readonly db: Database.Database,
@@ -61,67 +67,63 @@ export class ArtifactStore {
     this.root = realpathSync(root);
     this.repository = new ArtifactsRepository(db);
   }
-  private directory(sessionId: string, create = false): string {
+  private async directory(sessionId: string, create = false): Promise<string> {
     if (!sessionIdSchema.safeParse(sessionId).success) throw veraError("INVALID");
-    if (key(realpathSync(this.root)) !== key(this.root)) throw veraError("DENIED");
+    if (key(await realpath(this.root)) !== key(this.root)) throw veraError("DENIED");
     let directory = this.root;
     for (const segment of [".vera", "artifacts", sessionId]) {
       directory = join(directory, segment);
       if (create && segment !== ".vera") {
         try {
-          mkdirSync(directory, { mode: 0o700 });
+          await mkdir(directory, { mode: 0o700 });
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
         }
       }
-      const stat = lstatSync(directory);
-      if (!stat.isDirectory() || stat.isSymbolicLink() || key(realpathSync(directory)) !== key(directory))
+      const stat = await lstat(directory);
+      if (!stat.isDirectory() || stat.isSymbolicLink() || key(await realpath(directory)) !== key(directory))
         throw veraError("DENIED");
     }
     return directory;
   }
-  private path(sessionId: string, name: string, create = false): string {
+  private async path(sessionId: string, name: string, create = false): Promise<string> {
     if (!validArtifactName(name)) throw veraError("INVALID");
-    return join(this.directory(sessionId, create), name);
+    return join(await this.directory(sessionId, create), name);
   }
-  private read(path: string): Buffer {
-    const before = lstatSync(path);
+  private async read(path: string, signal?: AbortSignal): Promise<{ bytes: Buffer; stat: Stats }> {
+    signal?.throwIfAborted();
+    const before = await lstat(path);
     if (
       !before.isFile() ||
       before.isSymbolicLink() ||
       before.nlink !== 1 ||
-      key(realpathSync(path)) !== key(path)
+      key(await realpath(path)) !== key(path)
     )
       throw veraError("DENIED");
     if (before.size > ARTIFACT_MAX_BYTES) throw veraError("INVALID");
-    const fd = openSync(path, "r");
+    const file = await open(
+      path,
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+    );
     try {
-      const opened = fstatSync(fd);
-      if (!opened.isFile() || opened.ino !== before.ino || opened.dev !== before.dev)
-        throw veraError("CONFLICT");
+      const opened = await file.stat();
+      if (!sameFile(before, opened)) throw veraError("CONFLICT");
       const bytes = Buffer.alloc(before.size + 1);
       let at = 0;
       while (at < bytes.length) {
-        const n = readSync(fd, bytes, at, bytes.length - at, at);
-        if (!n) break;
-        at += n;
+        signal?.throwIfAborted();
+        const { bytesRead } = await file.read(bytes, at, bytes.length - at, at);
+        if (!bytesRead) break;
+        at += bytesRead;
       }
-      const after = fstatSync(fd),
-        current = lstatSync(path);
-      if (
-        at !== before.size ||
-        after.size !== before.size ||
-        after.mtimeMs !== before.mtimeMs ||
-        after.ctimeMs !== before.ctimeMs ||
-        current.ino !== before.ino ||
-        current.dev !== before.dev ||
-        current.isSymbolicLink() ||
-        current.nlink !== 1
-      )
+      const after = await file.stat();
+      const current = await lstat(path);
+      signal?.throwIfAborted();
+      if (at !== before.size || !sameFile(before, after) || !sameFile(before, current))
         throw veraError("CONFLICT");
-      return bytes.subarray(0, at);
+      return { bytes: bytes.subarray(0, at), stat: current };
     } finally {
-      closeSync(fd);
+      await file.close();
     }
   }
   private summary(row: ArtifactRow): ArtifactSummary {
@@ -146,33 +148,50 @@ export class ArtifactStore {
     this.summary(row);
     return row;
   }
-  verified(id: string): { artifact: ArtifactContent; path: string } {
-    const row = this.row(id);
+  /** Readers of an artifact share the rename/metadata boundary, including rollback. */
+  private async withArtifact<T>(id: string, run: () => Promise<T>): Promise<T> {
+    const access = this.access.get(id) ?? { queue: new WriteQueue(), pending: 0 };
+    this.access.set(id, access);
+    access.pending++;
     try {
-      const path = this.path(row.session_id, row.name),
-        bytes = this.read(path);
-      this.directory(row.session_id);
-      if (
-        bytes.length !== row.bytes ||
-        hash(bytes) !== row.sha256 ||
-        !Buffer.from(bytes.toString("utf8"), "utf8").equals(bytes)
-      )
-        throw veraError("CONFLICT");
-      return { path, artifact: { ...this.summary(row), content: bytes.toString("utf8") } };
-    } catch (error) {
-      if (missing(error)) throw veraError("NOT_FOUND");
-      throw error;
+      return await access.queue.run(run);
+    } finally {
+      if (--access.pending === 0) this.access.delete(id);
     }
   }
-  openNamed(sessionId: string, name: string): ArtifactContent {
+
+  verified(id: string, signal?: AbortSignal): Promise<{ artifact: ArtifactContent; path: string }> {
+    return this.withArtifact(id, async () => {
+      signal?.throwIfAborted();
+      const row = this.row(id);
+      try {
+        const path = await this.path(row.session_id, row.name);
+        const { bytes } = await this.read(path, signal);
+        await this.directory(row.session_id);
+        signal?.throwIfAborted();
+        const content = bytes.toString("utf8");
+        if (
+          bytes.length !== row.bytes ||
+          hash(bytes) !== row.sha256 ||
+          !Buffer.from(content, "utf8").equals(bytes)
+        )
+          throw veraError("CONFLICT");
+        return { path, artifact: { ...this.summary(row), content } };
+      } catch (error) {
+        if (missing(error)) throw veraError("NOT_FOUND");
+        throw error;
+      }
+    });
+  }
+  async openNamed(sessionId: string, name: string, signal?: AbortSignal): Promise<ArtifactContent> {
     const row = this.repository.named(sessionId, name);
     if (!row) throw veraError("NOT_FOUND");
-    return this.verified(row.id).artifact;
+    return (await this.verified(row.id, signal)).artifact;
   }
 
-  exists(sessionId: string, name: string): boolean {
+  async exists(sessionId: string, name: string): Promise<boolean> {
     try {
-      this.openNamed(sessionId, name);
+      await this.openNamed(sessionId, name);
       return true;
     } catch {
       return false;
@@ -188,8 +207,8 @@ export class ArtifactStore {
       throw Error(
         "Invalid artifact name. Use a portable file name of1–100 ASCII letters, digits, dot, underscore or hyphen.",
       );
-    const bytes = Buffer.from(args.content, "utf8");
-    if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
+    if (Buffer.byteLength(args.content, "utf8") > ARTIFACT_MAX_BYTES)
+      throw Error("Artifact content exceeds the5MiB UTF8 limit.");
     if (host.scrub && host.scrub(args.name) !== args.name)
       throw Error("Artifact content contains protected credential data.");
     return host.queue.run(async () => {
@@ -200,27 +219,11 @@ export class ArtifactStore {
         signal.throwIfAborted();
         host.assertWritable();
       }
-      if (host.scrub && host.scrub(args.name) !== args.name)
-        throw Error("Artifact name contains protected credential data.");
-      const content = host.scrubContent?.(args.content) ?? host.scrub?.(args.content) ?? args.content;
-      if (options.exactContent && content !== args.content) throw new ArtifactMaskingConflict();
-      args = {
-        ...args,
-        content,
-        ...(args.description === undefined
-          ? {}
-          : {
-              description:
-                host.scrubContent?.(args.description) ?? host.scrub?.(args.description) ?? args.description,
-            }),
-      };
-      const bytes = Buffer.from(args.content, "utf8");
-      if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
-      const path = this.path(host.sessionId, args.name, true);
+      const path = await this.path(host.sessionId, args.name, true);
       const old = this.repository.named(host.sessionId, args.name);
-      let previous: Buffer | undefined;
+      let previous: Awaited<ReturnType<ArtifactStore["read"]>> | undefined;
       try {
-        previous = this.read(path);
+        previous = await this.read(path, signal);
       } catch (error) {
         if (!missing(error)) throw error;
       }
@@ -228,72 +231,114 @@ export class ArtifactStore {
         throw Error("Artifact name already exists. Set overwrite:true to replace it.");
       if (previous && !old)
         throw Error("Artifact storage contains an untracked file or name alias. Choose another name.");
+      const project = (text: string) => host.scrubContent?.(text) ?? host.scrub?.(text) ?? text;
+      const projectedDescription = () => (args.description === undefined ? null : project(args.description));
+      const assertName = () => {
+        if (host.scrub && host.scrub(args.name) !== args.name)
+          throw Error("Artifact name contains protected credential data.");
+      };
+      assertName();
+      signal.throwIfAborted();
+      const content = project(args.content);
+      const description = projectedDescription();
+      if (options.exactContent && content !== args.content) throw new ArtifactMaskingConflict();
+      const bytes = Buffer.from(content, "utf8");
+      if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
+      const sha256 = hash(bytes);
+      const mime = /\.(md|markdown)$/i.test(args.name) ? "text/markdown" : "text/plain";
+      const result = { ref: formatArtifactRef(args.name), bytes: bytes.length };
+      if (
+        old?.sha256 === sha256 &&
+        old.bytes === bytes.length &&
+        old.description === description &&
+        old.mime === mime &&
+        previous?.bytes.equals(bytes)
+      ) {
+        host.assertWritable();
+        return result;
+      }
       const row: ArtifactRow = {
         id: old?.id ?? `art_${ulid()}`,
         session_id: host.sessionId,
         name: args.name,
-        mime: /\.(md|markdown)$/i.test(args.name) ? "text/markdown" : "text/plain",
+        mime,
         bytes: bytes.length,
-        sha256: hash(bytes),
-        description: args.description ?? null,
+        sha256,
+        description,
         created_at: host.now(),
       };
-      const temporary = join(this.directory(host.sessionId), `.save-${randomUUID()}.tmp`);
-      let renamed = false,
-        committed = false;
-      try {
-        const fd = openSync(temporary, "wx", 0o600);
+      const temporary = join(await this.directory(host.sessionId), `.save-${randomUUID()}.tmp`);
+      let ownsTemporary = false;
+      const stage = async (data: Buffer, pending?: AbortSignal) => {
+        pending?.throwIfAborted();
+        const file = await open(temporary, "wx", 0o600);
+        ownsTemporary = true;
         try {
-          writeFileSync(fd, bytes);
-          fsyncSync(fd);
+          await file.writeFile(data, pending ? { signal: pending } : {});
+          pending?.throwIfAborted();
+          await file.sync();
         } finally {
-          closeSync(fd);
+          await file.close();
         }
-        this.directory(host.sessionId);
-        signal.throwIfAborted();
-        host.assertWritable();
-        renameSync(temporary, path);
-        renamed = true;
-        const publish = this.db.transaction(() => {
-          host.assertWritable();
-          this.repository.save(row);
-          return host.record({
-            type: "artifact.saved",
-            artifactId: row.id,
-            name: row.name,
-            bytes: row.bytes,
+      };
+      try {
+        await stage(bytes, signal);
+        return await this.withArtifact(row.id, async () => {
+          signal.throwIfAborted();
+          await this.directory(host.sessionId);
+          const current = await lstat(path).catch((error: unknown) => {
+            if (missing(error)) return undefined;
+            throw error;
           });
-        })();
-        committed = true;
-        publish();
-        return { ref: formatArtifactRef(row.name), bytes: row.bytes };
-      } catch (error) {
-        if (renamed && !committed) {
+          if (previous ? !current || !sameFile(previous.stat, current) : current) throw veraError("CONFLICT");
+          signal.throwIfAborted();
           host.assertWritable();
-          this.directory(host.sessionId);
-          if (previous) {
-            const fd = openSync(temporary, "wx", 0o600);
-            try {
-              writeFileSync(fd, previous);
-              fsyncSync(fd);
-            } finally {
-              closeSync(fd);
-            }
-            this.directory(host.sessionId);
-            renameSync(temporary, path);
-          } else rmSync(path, { force: true });
-        }
-        throw error;
+          await rename(temporary, path);
+          ownsTemporary = false;
+
+          let publish: () => void;
+          try {
+            signal.throwIfAborted();
+            assertName();
+            if (project(args.content) !== content || projectedDescription() !== description)
+              throw new ArtifactMaskingConflict();
+            publish = this.db.transaction(() => {
+              host.assertWritable();
+              this.repository.save(row);
+              return host.record({
+                type: "artifact.saved",
+                artifactId: row.id,
+                name: row.name,
+                bytes: row.bytes,
+              });
+            })();
+          } catch (error) {
+            host.assertWritable();
+            await this.directory(host.sessionId);
+            if (previous) {
+              await stage(previous.bytes);
+              await this.directory(host.sessionId);
+              host.assertWritable();
+              await rename(temporary, path);
+              ownsTemporary = false;
+            } else await rm(path, { force: true });
+            throw error;
+          }
+          publish();
+          return result;
+        });
       } finally {
-        this.directory(host.sessionId);
-        rmSync(temporary, { force: true });
+        if (ownsTemporary) {
+          await this.directory(host.sessionId);
+          await rm(temporary, { force: true });
+        }
       }
     });
   }
-  removeSession(id: string): void {
+  async removeSession(id: string): Promise<void> {
     try {
-      const directory = this.directory(id);
-      rmSync(directory, { recursive: true, force: true });
+      const directory = await this.directory(id);
+      await rm(directory, { recursive: true, force: true });
     } catch (error) {
       if (!missing(error)) throw error;
     }

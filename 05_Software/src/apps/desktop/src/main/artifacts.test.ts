@@ -11,20 +11,20 @@ const cleanup: string[] = [];
 afterEach(async () => {
   for (const p of cleanup.splice(0)) await rm(p, { recursive: true, force: true });
 });
-it("reveals only the freshly verified ordinary artifact path", () => {
+it("reveals only the freshly verified ordinary artifact path", async () => {
   const verify = vi.fn(() => ({
     path: "/ordinary/summary.md",
     artifact: { name: "summary.md", content: "ă" },
   }));
   const service = { verifiedArtifact: verify } as unknown as SessionService;
   const show = vi.fn();
-  expect(revealArtifact(service, "id", show)).toEqual({});
+  await expect(revealArtifact(service, "id", show)).resolves.toEqual({});
   expect(verify).toHaveBeenCalledWith("id");
   expect(show).toHaveBeenCalledWith("/ordinary/summary.md");
   verify.mockImplementation(() => {
     throw veraError("DENIED");
   });
-  expect(() => revealArtifact(service, "id", show)).toThrow(expect.objectContaining({ code: "DENIED" }));
+  await expect(revealArtifact(service, "id", show)).rejects.toMatchObject({ code: "DENIED" });
   expect(show).toHaveBeenCalledTimes(1);
 });
 it("cancels without writing and verifies source again after dialog before exporting scrubbed UTF8", async () => {
@@ -70,14 +70,14 @@ it("cancels without writing and verifies source again after dialog before export
   ).rejects.toMatchObject({ code: "CONFLICT" });
   expect(write).toHaveBeenCalledTimes(1);
 });
-it("offers the verified name to the save dialog and refuses a name that holds a secret", () => {
+it("offers the verified name to the save dialog and refuses a name that holds a secret", async () => {
   const service = {
     verifiedArtifact: () => ({ path: "source", artifact: { name: "summary.md", content: "test" } }),
   } as unknown as SessionService;
-  expect(exportName(service, "id", (s) => s)).toBe("summary.md");
-  expect(() => exportName(service, "id", (s) => s.replace("summary", "[redacted]"))).toThrow(
-    expect.objectContaining({ code: "INVALID" }),
-  );
+  await expect(exportName(service, "id", (s) => s)).resolves.toBe("summary.md");
+  await expect(exportName(service, "id", (s) => s.replace("summary", "[redacted]"))).rejects.toMatchObject({
+    code: "INVALID",
+  });
 });
 it("refuses managed runtime destinations including redirected parents", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-export-"));
