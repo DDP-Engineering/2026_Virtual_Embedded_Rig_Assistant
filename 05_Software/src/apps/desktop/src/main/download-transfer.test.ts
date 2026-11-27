@@ -15,6 +15,7 @@ beforeEach(() => {
   vi.mocked(session.fromPartition).mockReturnValue({ fetch, setProxy, closeAllConnections } as never);
 });
 afterEach(() => vi.resetAllMocks());
+const discard = { write: async () => {} };
 
 it("uses anonymous Chromium fetch, validates redirects and reuses only cleaned sessions", async () => {
   fetch
@@ -26,8 +27,14 @@ it("uses anonymous Chromium fetch, validates redirects and reuses only cleaned s
     )
     .mockResolvedValueOnce(new Response("text", { headers: { "content-type": "text/plain" } }));
   const transfer = createDesktopDownloadTransfer();
-  const first = await transfer("https://example.org/data.zip", new AbortController().signal);
-  expect(first).toMatchObject({ mime: "application/zip", data: Buffer.from([80, 75, 0, 255]) });
+  const chunks: Uint8Array[] = [];
+  const first = await transfer("https://example.org/data.zip", new AbortController().signal, {
+    write: async (chunk) => {
+      chunks.push(chunk);
+    },
+  });
+  expect(first).toMatchObject({ mime: "application/zip", bytes: 4 });
+  expect(Buffer.concat(chunks)).toEqual(Buffer.from([80, 75, 0, 255]));
   expect(fetch.mock.calls[0]?.[1]).toMatchObject({
     credentials: "omit",
     redirect: "manual",
@@ -38,19 +45,23 @@ it("uses anonymous Chromium fetch, validates redirects and reuses only cleaned s
   expect(lookup.mock.calls.map(([host]) => host)).toEqual(["example.org", "cdn.example.org"]);
   expect(closeAllConnections).toHaveBeenCalledOnce();
   expect(setProxy).toHaveBeenLastCalledWith({ mode: "direct" });
-  await transfer("https://example.org/notes.txt", new AbortController().signal);
+  await transfer("https://example.org/notes.txt", new AbortController().signal, discard);
   expect(session.fromPartition).toHaveBeenCalledTimes(1);
   expect(closeAllConnections).toHaveBeenCalledTimes(2);
 });
 it("rejects private DNS and redirect targets before Chromium contacts them", async () => {
   const transfer = createDesktopDownloadTransfer();
   lookup.mockResolvedValueOnce([{ address: "127.0.0.1", family: 4 }]);
-  await expect(transfer("https://example.org/file", new AbortController().signal)).rejects.toThrow(/public/i);
+  await expect(transfer("https://example.org/file", new AbortController().signal, discard)).rejects.toThrow(
+    /public/i,
+  );
   expect(fetch).not.toHaveBeenCalled();
   fetch.mockResolvedValueOnce(
     new Response(null, { status: 302, headers: { location: "http://127.0.0.1/private" } }),
   );
-  await expect(transfer("https://example.org/file", new AbortController().signal)).rejects.toThrow(/public/i);
+  await expect(transfer("https://example.org/file", new AbortController().signal, discard)).rejects.toThrow(
+    /public/i,
+  );
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(closeAllConnections).toHaveBeenCalledTimes(2);
 });
@@ -62,7 +73,7 @@ it("aborts stalled Chromium requests and releases the tunnel", async () => {
         options.signal.addEventListener("abort", () => reject(options.signal.reason), { once: true });
       }),
   );
-  const pending = createDesktopDownloadTransfer()("https://example.org/file", controller.signal);
+  const pending = createDesktopDownloadTransfer()("https://example.org/file", controller.signal, discard);
   const outcome = expect(pending).rejects.toBeDefined();
   await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
   controller.abort();

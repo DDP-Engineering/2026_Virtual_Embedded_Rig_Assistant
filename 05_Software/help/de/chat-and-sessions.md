@@ -36,11 +36,11 @@ Füge ein Bild aus der Zwischenablage in das Nachrichtenfeld ein, ziehe es dorth
 
 Wählen Sie die Miniaturansicht in einer gesendeten Nachricht aus, um das Bild in der Dateiansicht zu öffnen. Fehlt das Bild, zeigt die Nachricht den gespeicherten Workbench-Pfad.
 
-Eine Nachricht kann bis zu acht PNG-, JPEG-, GIF- oder WebP-Bilder aus der Workbench enthalten. Pro Datei gilt ein Limit von 20 MiB. VERA verkleinert die zum Modell gesendete Kopie auf höchstens 2048 Pixel an der längsten Seite und behält das Original. Ein reines Textmodell erhält die Dateipfade. Bei der Zusammenfassung älterer Nachrichten bleiben Bildpfade als Textnotizen erhalten. Sitzungsexporte enthalten diese Pfade.
+Standardmäßig kann eine Nachricht bis zu acht PNG-, JPEG-, GIF- oder WebP-Bilder mit höchstens 20 MiB pro Datei enthalten. Die Limits lassen sich unter **Einstellungen** → **Erweitert** → **Bilder** ändern. Der Anbieter kann Anfragen ablehnen, die seine eigenen Limits überschreiten. VERA verkleinert die zum Modell gesendete Kopie auf höchstens 2048 Pixel an der längsten Seite und behält das Original. Ein reines Textmodell erhält die Dateipfade. Bei der Zusammenfassung älterer Nachrichten bleiben Bildpfade als Textnotizen erhalten. Sitzungsexporte enthalten diese Pfade.
 
 Unter [Anbieter und Modelle](providers.md) steht, wie VERA die Bildunterstützung für das gewählte Modell ermittelt.
 
-Geben Sie dem Agenten den relativen Pfad eines Bildes im Workbench, damit er es betrachten kann. Mit einem bildfähigen Modell kann der Agent über `view_image` PNG-, JPEG-, GIF- und WebP-Dateien bis 20 MiB lesen. Die längste Seite der an das Modell gesendeten Kopie ist höchstens 2048 Pixel lang. Das Werkzeug benötigt auch im Umgehungsmodus einen erlaubten Workbench-Pfad ohne Verknüpfungen. Das Ergebnis im Sitzungsverlauf enthält den Pfad. Unter **Workbench bearbeiten** → **Werkzeuge** erscheint der Schalter, wenn das Standardmodell des Workbenchs Bilder akzeptiert.
+Geben Sie dem Agenten den relativen Pfad eines Bildes im Workbench, damit er es betrachten kann. Mit einem bildfähigen Modell kann der Agent über `view_image` PNG-, JPEG-, GIF- und WebP-Dateien bis zur eingestellten Dateigröße lesen. Die längste Seite der an das Modell gesendeten Kopie ist höchstens 2048 Pixel lang. Das Werkzeug benötigt auch im Umgehungsmodus einen erlaubten Workbench-Pfad ohne Verknüpfungen. Das Ergebnis im Sitzungsverlauf enthält den Pfad. Unter **Workbench bearbeiten** → **Werkzeuge** erscheint der Schalter, wenn das Standardmodell des Workbenchs Bilder akzeptiert.
 
 Der Agent kann ein in dieser Sitzung gesendetes Bild über seinen gespeicherten Pfad erneut öffnen. Pro Schritt kann er bis zu acht Bilder betrachten. Die acht zuletzt mit dem Werkzeug geöffneten Bilder bleiben im aktuellen Durchlauf verfügbar.
 
@@ -99,6 +99,8 @@ Bei Modellen, die es unterstützen, bietet **Reasoning-Stufe** die Option **Stan
 Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Währenddessen dreht sich die Anzeige und behält den letzten Prozentsatz, der sich aktualisiert, sobald die nächste Anfrage bereit ist. Das vollständige Transkript bleibt gespeichert und sichtbar.
 
 Schlägt der letzte Durchlauf wegen eines vorübergehenden Anbieterfehlers fehl, senden Sie seine Nachricht mit **Erneut versuchen** noch einmal. Bei einem Kontextlimit wählen Sie, sofern verfügbar, **Jetzt kompaktieren**. Bei Erreichen des Ausgabe- oder Werkzeugaufruflimits startet **Fortsetzen** einen weiteren Durchlauf.
+
+Lehnt der Anbieter die Anfrage wegen ihrer Größe ab, wählen Sie **Bilder ändern und erneut versuchen**. Entfernen Sie die Häkchen bei den gewünschten Anhängen und wählen Sie **Nachricht erneut senden**. Die ursprünglichen Anhänge bleiben im Chat sichtbar.
 
 **In Unterhaltung suchen** durchsucht die aktuelle Sitzung. Mit Enter springen Sie zum nächsten Treffer, mit Shift+Enter zum vorherigen. Das Senden einer Nachricht oder **Zur neuesten Nachricht** bringt Sie ans Ende. Die Markierungsleiste am linken Rand der Unterhaltung hat eine Markierung pro Nachricht von Ihnen; zeigen Sie auf eine Markierung, um eine Vorschau der Nachricht zu sehen, und wählen Sie sie aus, um dorthin zu springen.
 

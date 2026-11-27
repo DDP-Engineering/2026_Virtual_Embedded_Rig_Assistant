@@ -12,6 +12,7 @@ export interface ProviderFailure {
   retryAfter?: string | undefined;
   offline?: boolean;
   context?: boolean;
+  requestTooLarge?: boolean;
   openCode?: { operation: "catalog" | "inference"; body?: unknown };
   qwenCloud?: { plan: QwenCloudPlan; operation: "catalog" | "inference"; body?: unknown };
   scoped?: { operation: "catalog" | "inference"; body?: unknown };
@@ -74,6 +75,12 @@ const providerErrorFields = z.object({
   message: z.string().nullish(),
 });
 const providerErrorSchema = providerErrorFields.extend({ error: providerErrorFields.nullish() });
+
+export function isProviderSizeRefusal(text: string): boolean {
+  return /\b(?:request_too_large|payload_too_large|image_too_large|image_file_too_large|too_many_images)\b|\b(?:(?:request(?: body)?|payload|image(?: file)?) (?:is )?too large|too many images|maximum number of images)\b/i.test(
+    text,
+  );
+}
 const qwenCloudModelAccessCodes = new Set([
   "access_denied",
   "accessdenied",
@@ -167,6 +174,16 @@ export function mapProviderError(
   }
   if (failure.timeout !== undefined) return timeoutError(failure.timeout * 1000);
   const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  if (
+    failure.status === 413 ||
+    ((failure.status === undefined || failure.status === 400 || failure.status === 422) &&
+      (failure.requestTooLarge || isProviderSizeRefusal(raw)))
+  )
+    return {
+      code: "PROVIDER",
+      messageKey: "provider.requestTooLarge",
+      params: { reason: "request_too_large" },
+    };
   const message = scrub(raw);
   const scopedError = scopedProviderError(failure);
   if (scopedError) return scopedError;

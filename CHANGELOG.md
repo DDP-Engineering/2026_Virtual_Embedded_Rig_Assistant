@@ -6,6 +6,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Added
+
+- Configure chat image count and file size in Advanced settings, with a clear message for provider size refusals.
+
 ### Changed
 
 - Open session search on demand from a magnifier next to New session.
@@ -22,6 +26,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Return keyword results when hybrid document search reaches the time limit for semantic ranking.
 - Start commands faster with focused Windows shell lookup and batched pruning of old run logs.
 - Skip rebuilding and resending unchanged terminal output between polls.
+- Reuse decoded chat images during a turn while their files stay unchanged.
+- Stream web downloads to disk and validate staged PDFs in their worker.
+- Reuse an Exa connection within each turn for faster web search and reading.
 
 ### Fixed
 
@@ -54,6 +61,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Preserve background output after cancelled reads and report timeouts and startup errors.
 - Preserve the end of long terminal lines and mark shortened terminal reads.
 - Accept bracketed terminal pastes at the text limit and explain when input is too long.
+- Let users reduce image attachments and resend after a provider size refusal.
+- Let Stop end the turn while an image is decoding.
+- Preserve web citations when results are shortened, including Tavily links to sections.
+- Report the configured time limit when a web download times out.
 - Send the first message to a model with a 32K context window: before a model's first answer a request counts two bytes per token instead of one.
 
 ## [0.4.0] - 2026-11-26

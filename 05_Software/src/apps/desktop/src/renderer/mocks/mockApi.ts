@@ -672,7 +672,8 @@ export function createMockApi(
         } else {
           const name = source.name || "image";
           const path = `.vera/attachments/${args.sessionId}/${crypto.randomUUID()}-${name}`;
-          const thumbnail = await mockImageThumbnail(name, source.data);
+          const maxMB = resolveAdvanced("imageFileMB", { app: settings.advanced }).value;
+          const thumbnail = await mockImageThumbnail(name, source.data, maxMB);
           uploads.set(imageKey(args.workbenchId, path), { data: source.data, thumbnail });
           value = { name, path, thumbnail };
         }

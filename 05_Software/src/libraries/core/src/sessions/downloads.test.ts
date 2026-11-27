@@ -31,15 +31,15 @@ async function setup(mode: PermissionMode = "ask", disabledTools: string[] = [])
   const settings = { enabled: true, provider: "brave" as const, authentication: "api-key" as const };
   const access = new core.ConfiguredWebProvider({ config: () => settings, getKey: async () => undefined });
   closes.push(() => access.close());
-  const transfer = vi.fn(async (_source: string, _signal: AbortSignal, _budget?: unknown) => ({
-    data: Buffer.from("%PDF-1.7\nfixture"),
-    finalUrl: url,
-    mime: "application/pdf",
-  }));
+  const transfer = vi.fn<typeof core.transferFile>(async (_source, signal, ports) => {
+    const data = Buffer.from("%PDF-1.7\nfixture");
+    await ports.write(data, signal);
+    return { bytes: data.length, finalUrl: url, mime: "application/pdf" };
+  });
   const downloads = new core.WebDownloads(root, {
     access,
     transfer,
-    pdf: async () => ({ kind: "pdf", pages: ["Datasheet"] }),
+    pdf: { count: async () => 1, read: async () => ({ kind: "pdf", pages: ["Datasheet"] }) },
   });
   const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: () => Date.now() });
   await gateway.models("replay", new AbortController().signal);
@@ -93,8 +93,22 @@ it("binds the application's Download size into the approval and transfers within
     decision: "approved",
   });
   expect(await h.service.waitIdle(h.session.id)).toEqual({ stopReason: "end" });
-  expect(h.transfer.mock.calls[0]?.[2]).toEqual({ maxBytes: 500 * 1024 * 1024, deadlineMs: 600_000 });
+  expect(h.transfer.mock.calls[0]?.[2]).toMatchObject({ maxBytes: 500 * 1024 * 1024, deadlineMs: 600_000 });
 });
+it("reports a download timeout as a failed tool with the configured duration", async () => {
+  const h = await setup("bypass");
+  h.transfer.mockRejectedValueOnce(new core.DownloadTimeoutError(120_000));
+  h.service.send(h.session.id, "Download this datasheet");
+  expect(await h.service.waitIdle(h.session.id)).toEqual({ stopReason: "end" });
+  const item = h.service.get(h.session.id).snapshot.items.find((entry) => entry.kind === "tool");
+  expect(item).toMatchObject({ name: "web_download", status: "error" });
+  expect(JSON.parse(item?.kind === "tool" ? (item.summary ?? "") : "")).toMatchObject({
+    isError: true,
+    timedOut: true,
+    timeoutSeconds: 120,
+  });
+});
+
 it.each(["approved", "denied"] as const)(
   "Ask %s binds the source/destination and sends no request before approval",
   async (decision) => {

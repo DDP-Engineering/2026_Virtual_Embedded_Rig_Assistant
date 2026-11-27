@@ -22,6 +22,8 @@ export interface DownloadHttpResponse {
   close(): void;
 }
 export interface DownloadTransferPorts {
+  /** Backpressure keeps at most the current body chunk in use by the download. */
+  write(chunk: Uint8Array, signal: AbortSignal): Promise<void>;
   resolve?(hostname: string): Promise<PublicAddress[]>;
   connect?(
     url: URL,
@@ -85,7 +87,7 @@ export const connectDownload: NonNullable<DownloadTransferPorts["connect"]> = (
   });
 
 /** No provider client, cookie jar, credentials or ambient proxy participates in this transport. */
-export async function transferFile(source: string, caller: AbortSignal, ports: DownloadTransferPorts = {}) {
+export async function transferFile(source: string, caller: AbortSignal, ports: DownloadTransferPorts) {
   const maxBytes = Math.min(ports.maxBytes ?? DEFAULT_MAX_BYTES, DOWNLOAD_MAX_BYTES);
   const deadlineMs = Math.min(ports.deadlineMs ?? DOWNLOAD_DEADLINE_MS, MAX_DEADLINE_MS);
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || !Number.isFinite(deadlineMs) || deadlineMs < 1)
@@ -131,7 +133,6 @@ export async function transferFile(source: string, caller: AbortSignal, ports: D
         (typeof length !== "string" || !/^\d+$/.test(length) || Number(length) > maxBytes)
       )
         throw Error("Download exceeds the size limit.");
-      const chunks: Buffer[] = [];
       let bytes = 0;
       const iterator = response.body[Symbol.asyncIterator]();
       for (;;) {
@@ -141,12 +142,11 @@ export async function transferFile(source: string, caller: AbortSignal, ports: D
         signal.throwIfAborted();
         bytes += chunk.byteLength;
         if (bytes > maxBytes) throw Error("Download exceeds the size limit.");
-        chunks.push(Buffer.from(chunk));
+        await ports.write(chunk, signal);
       }
       signal.throwIfAborted();
       if (length !== undefined && bytes !== Number(length)) throw Error("Incomplete download.");
-      const data = Buffer.concat(chunks, bytes);
-      return { data, finalUrl: url.href, mime };
+      return { bytes, finalUrl: url.href, mime };
     } finally {
       response.close();
     }

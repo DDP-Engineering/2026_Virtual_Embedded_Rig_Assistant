@@ -84,7 +84,7 @@ export async function readGuardedFile(
     )
       throw Error("File changed while reading. Read it again.");
     guard.assertAuthorized();
-    return { bytes, target, mtimeMs: after.mtimeMs };
+    return { bytes, target, mtimeMs: after.mtimeMs, stat: after };
   } finally {
     await handle.close();
   }

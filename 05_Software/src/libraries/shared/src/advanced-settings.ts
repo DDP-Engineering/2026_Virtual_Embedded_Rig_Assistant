@@ -82,6 +82,10 @@ export const advancedSettings = {
   autoCompaction: toggle(true, ["session"]),
   /** Characters of one tool result the model receives; longer results are shrunk. */
   toolResultChars: int(8000, 128000, 32000, ["app"]),
+  /** Images attached to one message or inspected in one tool step. */
+  imagesPerMessage: int(1, 32, 8, ["app"]),
+  /** Source file size, in MiB, for attachments and view_image. */
+  imageFileMB: int(1, 64, 20, ["app"]),
   /** Lines one read returns at most, and when the call names none. */
   readLines: int(500, 10000, 2000, ["app"]),
   /** Characters of text one read returns at most. */

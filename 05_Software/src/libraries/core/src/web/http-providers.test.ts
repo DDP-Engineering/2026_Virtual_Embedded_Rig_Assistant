@@ -53,6 +53,22 @@ it("Tavily key never enters URL/body and private reads are rejected before egres
   await expect(p.read({ url: "http://192.168.1.13/" }, signal())).rejects.toThrow();
   expect(f).toHaveBeenCalledOnce();
 });
+it("Tavily extracts the page without its fragment and cites the original section", async () => {
+  const page = "https://example.com/guide?q=%23";
+  const url = `${page}#pins`;
+  const f = vi
+    .fn()
+    .mockResolvedValueOnce(reply({ results: [{ url: page, raw_content: "Pin table" }] }))
+    .mockResolvedValueOnce(
+      reply({ results: [{ url: "https://example.com/other#pins", raw_content: "Other" }] }),
+    );
+  const provider = new Tavily({ fetch: f });
+  expect(await provider.read({ url }, signal())).toMatchObject({
+    sources: [{ url, content: "Pin table" }],
+  });
+  expect(JSON.parse(f.mock.calls[0]?.[1]?.body)).toMatchObject({ urls: [page] });
+  await expect(provider.read({ url }, signal())).rejects.toThrow(/could not extract the requested page/);
+});
 it("Brave normalizes search snippets and rejects unsupported reading and long queries locally", async () => {
   const f = vi.fn().mockResolvedValue(
     reply({

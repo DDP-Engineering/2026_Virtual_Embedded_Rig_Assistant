@@ -2,10 +2,15 @@
 import { defaultSettings } from "@vera/shared";
 import { expect, it, vi } from "vitest";
 import * as api from "../index.js";
-import type { WebProvider } from "../web/provider.js";
+import type { WebProvider, WebResult } from "../web/provider.js";
 import { webReadTool, webSearchTool } from "./web.js";
 
-const result = { content: [], retrievedAt: "2026-11-21T00:00:00.000Z" };
+const result: WebResult = {
+  provider: "fixture",
+  sources: [],
+  truncated: false,
+  retrievedAt: "2026-11-21T00:00:00.000Z",
+};
 function context(limits: Record<string, number>) {
   const web = {
     search: vi.fn(async (_request: unknown) => result),
@@ -69,4 +74,46 @@ it("creates the web provider client with the host's Web request timeout", async 
   timeout = 20_000;
   await provider.read({ url: "https://example.com/", maxCharacters: 1000 }, signal());
   expect(create.mock.calls.map((call) => call[2])).toEqual([{ timeoutMs: 90_000 }, { timeoutMs: 20_000 }]);
+});
+
+it("shortens search excerpts before removing citations", async () => {
+  const { ctx, web } = context({ webSearchResults: 8, toolResultChars: 8000 });
+  const sources = Array.from({ length: 8 }, (_, index) => ({
+    title: `Result ${index}`,
+    url: `https://example.com/page-${index}`,
+    content: "Search excerpt. ".repeat(200),
+  }));
+  web.search.mockResolvedValueOnce({ ...result, sources });
+  const output = await new api.ToolRegistry().execute(
+    ctx,
+    "web_search",
+    { query: "public manual" },
+    signal(),
+  );
+  expect(output).toMatchObject({ isError: false, truncated: true });
+  expect(output.text.length).toBeLessThanOrEqual(8000);
+  const read = JSON.parse(output.text) as WebResult;
+  expect(read.sources).toEqual(
+    sources.map(({ url, title }) => ({ url, title, content: expect.stringMatching(/^Search excerpt/) })),
+  );
+});
+
+it("keeps the source and a readable prefix when JSON escaping pushes a page over the cap", async () => {
+  const { ctx, web } = context({ webReadChars: 12000, toolResultChars: 8000 });
+  const source = {
+    title: "Manual",
+    url: "https://example.com/manual#specs",
+    content: '"\\\n😀'.repeat(1600),
+  };
+  web.read.mockResolvedValueOnce({ ...result, sources: [source] });
+  const output = await new api.ToolRegistry().execute(ctx, "web_read", { url: source.url }, signal());
+  expect(output).toMatchObject({ isError: false, truncated: true });
+  expect(output.text.length).toBeLessThanOrEqual(8000);
+  const read = JSON.parse(output.text) as WebResult;
+  expect(read.sources).toMatchObject([{ url: source.url, title: source.title, content: expect.any(String) }]);
+  const excerpt = read.sources[0]?.content ?? "";
+  expect(excerpt.length).toBeGreaterThan(0);
+  expect(excerpt.length).toBeLessThan(source.content.length);
+  expect(source.content.startsWith(excerpt)).toBe(true);
+  expect(excerpt).not.toMatch(/[\uD800-\uDBFF]$/);
 });

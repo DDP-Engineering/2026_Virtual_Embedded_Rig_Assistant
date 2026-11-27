@@ -28,7 +28,7 @@ import {
   miniMaxThinking,
   zaiCompletionsCompatibility,
 } from "./curated-adapters.js";
-import { mapProviderError, type ProviderFailure } from "./errors.js";
+import { isProviderSizeRefusal, mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { scrubAssistantMessage } from "./message-scrub.js";
 import { openCodeCompatibility } from "./opencode.js";
@@ -696,11 +696,13 @@ export function createPiAiGateway(
                 const copy = response.clone();
                 const signal = AbortSignal.any([request.signal, AbortSignal.timeout(1000)]);
                 const body = await readProviderJson(copy, signal, 16384).catch(() => undefined);
+                failure.requestTooLarge = isProviderSizeRefusal(JSON.stringify(body) ?? "");
                 if (keyScope) failure.scoped = { operation: "inference", body };
                 if (openCode) failure.openCode = { operation: "inference", body };
                 if (qwenCloud) failure.qwenCloud = { plan: qwenCloud, operation: "inference", body };
               } else {
                 const body = await response.clone().text();
+                failure.requestTooLarge = isProviderSizeRefusal(body);
                 failure.context =
                   /context[_ -]?(length|window)|maximum context|too many tokens|token limit/i.test(body);
               }

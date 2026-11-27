@@ -283,6 +283,25 @@ it.each(["en", "ro"])("shows the send date and time to the minute at verbose in 
   expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(3);
   await act(async () => i18n.changeLanguage("en"));
 });
+it("lets the latest provider size refusal resend only the checked attachments", async () => {
+  const state = emptySessionState();
+  state.items.push(
+    { kind: "user", id: "u", text: "Inspect", images: ["keep.png", "remove.png"] },
+    { kind: "error", id: "e", code: "PROVIDER", messageKey: "provider.requestTooLarge", retryable: true },
+  );
+  const retry = vi.fn();
+  await render(state, "normal", retry);
+  const user = userEvent.setup();
+  const button = (text: string) =>
+    [...container.querySelectorAll("button")].find((b) => b.textContent === text)!;
+  await act(async () => user.click(button("Change images and retry")));
+  const inputs = [...container.querySelectorAll<HTMLInputElement>(".image-retry-list input")];
+  expect(inputs.map(({ checked }) => checked)).toEqual([true, true]);
+  await act(async () => user.click(inputs[1]!));
+  await act(async () => user.click(button("Resend message")));
+  expect(retry).toHaveBeenCalledWith(["keep.png"]);
+});
+
 it("switches levels reversibly without mutating history", async () => {
   const state = fixture(),
     before = JSON.stringify(state);

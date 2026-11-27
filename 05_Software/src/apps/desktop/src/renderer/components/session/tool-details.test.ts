@@ -166,6 +166,26 @@ it.each([
   },
 );
 
+it("shows the configured duration in the localized web download timeout", async () => {
+  await i18n.changeLanguage("ro");
+  await render(
+    tool({
+      name: "web_download",
+      status: "error",
+      summary: JSON.stringify({
+        isError: true,
+        timedOut: true,
+        timeoutSeconds: 120,
+        error: "Download timed out",
+      }),
+    }),
+  );
+  await expand();
+  expect(container.querySelector(".tool-activity-body")?.textContent).toContain(
+    "Descărcarea a depășit limita de 120 s.",
+  );
+});
+
 it.each([undefined, "", " \n\t"])(
   "omits blank program output %j while retaining technical details",
   async (output) => {

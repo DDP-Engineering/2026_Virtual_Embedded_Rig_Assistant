@@ -466,6 +466,22 @@ describe("model gateway", () => {
     expect(JSON.stringify(result)).not.toContain(secret);
     expect(calls).toBe(1);
   });
+  it.each([
+    [413, { message: "rejected" }],
+    [400, { code: "image_too_large", message: "rejected" }],
+    [422, { message: "Too many images" }],
+  ])("identifies a size refusal with HTTP %i", async (status, error) => {
+    let calls = 0;
+    const { url } = await endpoint((_req, res) => {
+      calls++;
+      res.writeHead(status, { "content-type": "application/json" }).end(JSON.stringify({ error }));
+    });
+    expect((await events(setup(url).gateway)).at(-1)).toMatchObject({
+      type: "error",
+      error: { code: "PROVIDER", messageKey: "provider.requestTooLarge" },
+    });
+    expect(calls).toBe(1);
+  });
   it("maps refused connection OFFLINE and rejects unknown providers/models without network", async () => {
     const { url, server } = await endpoint((_req, res) => res.end());
     await new Promise<void>((r) => server.close(() => r()));

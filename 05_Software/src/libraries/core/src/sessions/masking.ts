@@ -50,7 +50,11 @@ export function maskToolOutput(
     const masked = scrub(text);
     if (
       masked.length > limit &&
-      (name === "read" || name === "terminal_read" || programToolNames.includes(name))
+      (name === "read" ||
+        name === "terminal_read" ||
+        name === "web_search" ||
+        name === "web_read" ||
+        programToolNames.includes(name))
     ) {
       try {
         return capToolResult(JSON.parse(masked), [], limit, name).text;

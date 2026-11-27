@@ -405,6 +405,11 @@ main {
   display: grid;
   gap: 0.5rem;
 }
+.image-retry-list {
+  padding-inline-start: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
 .transcript-item.user {
   background: var(--accent);
   border-radius: 0.5rem;

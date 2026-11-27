@@ -35,11 +35,12 @@ export function userParts(request: Request | undefined) {
 export const contextWindow = 32768;
 export const maxOutputTokens = 4096;
 
-export async function setup(contextPolicy?: ContextPolicy) {
+export async function setup(contextPolicy?: ContextPolicy, modelContextWindow = contextWindow) {
   const root = await mkdtemp(join(tmpdir(), "vera-session-images-"));
   cleanups.push(() => rm(root, { recursive: true, force: true }));
   const requests: Request[] = [];
   let hold: Promise<void> | undefined;
+  let refuseSize = false;
   const imageCalls: string[][] = [];
   const server = createServer(async (req, res) => {
     const chunks: Buffer[] = [];
@@ -47,6 +48,13 @@ export async function setup(contextPolicy?: ContextPolicy) {
     const body = JSON.parse(Buffer.concat(chunks).toString()) as Request;
     requests.push(body);
     await hold;
+    if (refuseSize) {
+      refuseSize = false;
+      res
+        .writeHead(413, { "content-type": "application/json" })
+        .end('{"error":{"message":"Request too large"}}');
+      return;
+    }
     res.writeHead(200, { "content-type": "text/event-stream" });
     const toolPaths = imageCalls.shift();
     const choices = toolPaths?.length
@@ -83,7 +91,7 @@ export async function setup(contextPolicy?: ContextPolicy) {
       name: "Local",
       model: "vision",
       baseUrl: `http://127.0.0.1:${address.port}/v1`,
-      contextWindow,
+      contextWindow: modelContextWindow,
       maxOutputTokens,
       imageModels: ["vision"],
     },
@@ -101,7 +109,9 @@ export async function setup(contextPolicy?: ContextPolicy) {
   });
   const db = await openDb(join(root, "session.db"), { workbenchId: "wb_test", appVersion: "0" });
   cleanups.push(async () => db.close());
-  const open = (overrides?: Pick<SessionHost, "managedRoots" | "additionalFolders" | "disabledTools">) => {
+  const open = (
+    overrides?: Pick<SessionHost, "managedRoots" | "additionalFolders" | "disabledTools" | "advanced">,
+  ) => {
     const session = new SessionService({
       db: db.db,
       root,
@@ -127,6 +137,9 @@ export async function setup(contextPolicy?: ContextPolicy) {
     },
     holdResponse: (pending: Promise<void>) => {
       hold = pending;
+    },
+    refuseNextRequestForSize: () => {
+      refuseSize = true;
     },
   };
 }

@@ -23,6 +23,7 @@ import { ApprovalCard } from "./approval-card.js";
 import { BookmarkButton } from "./bookmark-button.js";
 import { Disclosure } from "./disclosure.js";
 import { ExternalSourceScope } from "./external-source-link.js";
+import { ImageRetry } from "./image-retry.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
@@ -74,7 +75,7 @@ export function Transcript({
   state: SessionState;
   reasoning: Record<string, string>;
   updates: Record<string, string>;
-  retry: () => void;
+  retry: (images?: string[]) => void;
   /** Sends a continuation after a turn stopped at its tool-call limit (REQ-UX-a1584354). */
   continueTurn?: (() => void) | undefined;
   search: string;
@@ -206,13 +207,17 @@ export function Transcript({
   // Stable for memoized rows: the workspace passes a new retry function on every render.
   const retryRef = useRef(retry);
   retryRef.current = retry;
-  const onRetry = useCallback(() => retryRef.current(), []);
+  const onRetry = useCallback((images?: string[]) => retryRef.current(images), []);
   // Retry sends the latest user message again, so it is offered only while that is the message that failed.
   const latestError = useMemo(() => {
     const index = state.items.findLastIndex((i) => i.kind === "error" || i.kind === "user");
     const item = state.items[index];
     return item?.kind === "error" ? item.id : undefined;
   }, [state.items]);
+  const retryPrompt = useMemo(
+    () => (latestError ? state.items.findLast((item) => item.kind === "user" && !item.pending) : undefined),
+    [latestError, state.items],
+  );
   const userMessages = useMemo(() => {
     const messages = new Map<string, NavigatorMessage>();
     for (const item of state.items)
@@ -347,8 +352,21 @@ export function Transcript({
                   <ErrorRow
                     key={key}
                     item={item}
-                    canRetry={item.id === latestError && !state.activeTurnId && item.retryable}
+                    canRetry={
+                      item.id === latestError &&
+                      !state.activeTurnId &&
+                      item.retryable &&
+                      (!disabled || item.messageKey !== "provider.requestTooLarge")
+                    }
                     retry={onRetry}
+                    imageRetry={
+                      item.id === latestError &&
+                      item.messageKey === "provider.requestTooLarge" &&
+                      retryPrompt?.kind === "user" &&
+                      retryPrompt.images?.length
+                        ? retryPrompt
+                        : undefined
+                    }
                     compactSession={
                       item.id === latestError && !state.activeTurnId && !disabled ? sessionId : undefined
                     }
@@ -596,11 +614,13 @@ const ErrorRow = memo(function ErrorRow({
   item,
   canRetry,
   retry,
+  imageRetry,
   compactSession,
 }: {
   item: Extract<Item, { kind: "error" }>;
   canRetry: boolean;
-  retry: () => void;
+  retry: (images?: string[]) => void;
+  imageRetry?: Extract<Item, { kind: "user" }> | undefined;
   /** The session a context-limit error may compact: set only for the latest error of an idle session. */
   compactSession?: string | undefined;
 }) {
@@ -647,11 +667,14 @@ const ErrorRow = memo(function ErrorRow({
           {compacted === "failed" && <span role="status">{t("advanced.compacted.failed")}</span>}
         </>
       )}
-      {canRetry && (
-        <button type="button" onClick={retry}>
-          {t("settings.retry")}
-        </button>
-      )}
+      {canRetry &&
+        (imageRetry?.images ? (
+          <ImageRetry paths={imageRetry.images} hasText={!!imageRetry.text.trim()} retry={retry} />
+        ) : (
+          <button type="button" onClick={() => retry()}>
+            {t("settings.retry")}
+          </button>
+        ))}
     </article>
   );
 });

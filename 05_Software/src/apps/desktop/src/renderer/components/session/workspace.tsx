@@ -264,12 +264,14 @@ export function SessionWorkspace({
       sendUpdates.dispatchEvent(new Event(sendKey));
     }
   }
-  async function retryRequest() {
+  async function retryRequest(images?: string[]) {
     if (!id || !view || pending || restoring.current || readOnly || archived || activeReview) return;
-    const last = view.state.items.findLast((item) => item.kind === "user");
+    const last = view.state.items.findLast(
+      (item) => item.kind === "user" && (images === undefined || !item.pending),
+    );
     if (last?.kind !== "user") return;
     if (!last.reviewId) {
-      void send(last.text, last.images);
+      void send(last.text, images ?? last.images);
       return;
     }
     const generation = scopeGeneration.current;
@@ -449,7 +451,7 @@ export function SessionWorkspace({
           revealQuestionId={revealQuestionId}
           reasoning={view.reasoning}
           updates={view.updates}
-          retry={() => void retryRequest()}
+          retry={(images) => void retryRequest(images)}
           continueTurn={() => void send(t("chatDetail.continueMessage"))}
           search={search}
           sessionId={id}

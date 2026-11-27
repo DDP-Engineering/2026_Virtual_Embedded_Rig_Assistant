@@ -190,8 +190,14 @@ export const ToolDetails = memo(function ToolDetails({
   const usage = item.documentSearch?.usage;
   const fallback = usage?.mode === "keyword" ? usage.fallbackReason : undefined;
   const programError = string(result?.error);
+  const downloadTimeout =
+    item.name === "web_download" && result?.timedOut === true ? number(result.timeoutSeconds) : undefined;
   const reportedError =
-    program && programError === "STOP_UNCONFIRMED" ? t("runs.stopUnconfirmed") : programError;
+    downloadTimeout !== undefined
+      ? t("downloads.timedOut", { seconds: downloadTimeout })
+      : program && programError === "STOP_UNCONFIRMED"
+        ? t("runs.stopUnconfirmed")
+        : programError;
   const output = browserFailure
     ? browserFailureText(t, browserFailure)
     : fallback === "embedding-rebuild"

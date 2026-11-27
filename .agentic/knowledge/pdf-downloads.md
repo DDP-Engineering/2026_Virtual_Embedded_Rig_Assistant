@@ -6,12 +6,12 @@ Select for web_download, WebDownloads, public PDF transfer, .vera/downloads, dow
 
 ## Purpose and boundaries
 
-Download a public PDF independently of search-provider credentials, preserve exact bytes/provenance in the workbench-owned .vera/downloads namespace, and let the user open it locally. No browser login/cookies, external file launching, generic binary download, text-file tool widening or automatic RAG indexing. Completed downloads belong to the workbench rather than the originating session.
+Download a public file independently of search-provider credentials and preserve exact bytes and provenance in the workbench-owned .vera/downloads namespace. PDFs open in VERA and other files can be shown in the file manager. There is no browser login, cookie use or automatic RAG indexing. Completed downloads belong to the workbench.
 
 ## Public interface
 
 - web_download({url,filename?}) is a prepared write tool. It returns only {download: metadata}, never binary/base64 or extracted PDF text.
-- WebDownloads.allocate makes a fresh UUID and portable PDF name (safe URL basename or document.pdf by default), with no network I/O. save transfers/validates then publishes through the host write queue; list/open are offline reads; close cancels and drains owned work.
+- WebDownloads.allocate assigns a UUID and a portable name (safe URL basename or download.bin) without network I/O. Save streams to an owned staging file with incremental SHA-256, validates PDFs from the open file in the worker, then publishes through the host write queue. List/open are offline reads and close cancels and drains owned work.
 - Metadata contains downloadId, name/path, sourceUrl/finalUrl, sessionId/callId, application/pdf, bytes, SHA-256, createdAt and page count. Files live at .vera/downloads/<UUID>/<name>.pdf with strict manifest.json provenance.
 - ConfiguredWebProvider.withAccess leases global authorization without consulting search-provider keys/capabilities. Its live assertion and cancellation are checked around publication.
 - downloads.list({workbenchId}) returns validated records newest first. downloads.open({workbenchId,downloadId}) validates current workbench identity and exact bytes before returning existing PDF ViewerContent.
@@ -21,7 +21,7 @@ Download a public PDF independently of search-provider credentials, preserve exa
 
 Every HTTP(S) source/redirect is credential-free and resolved to public addresses; mixed/private DNS answers are rejected. Node HTTP lookup is pinned to a validated address while HTTPS keeps original-hostname certificate checks. Mapped/NAT64/tunneled IPv6 and local destinations are excluded. Source hosts receive only GET, PDF Accept, identity encoding and VERA user-agent headers; provider credentials and cookies are absent.
 
-PDF or binary-download MIME, PDF signature and actual worker parsing are required. Transfer has at most five redirects, the size bound into its approval (the session's Download size, default 100 MiB, range 10-1000 MiB; `DOWNLOAD_MAX_BYTES` is the 1000 MiB ceiling, REQ-FUNC-8a1eea8b) and the session's Download time limit (default 120 s) as the cooperative deadline of the transfer (PDF extraction keeps its own); `WebDownloads.save(..., budget)` forwards both to the transfer port, and a larger response ends with "Download exceeds the size limit." and saves nothing (REQ-FUNC-17f34e4b, REQ-FUNC-dfe84577). The PDF parser gets the session's Document extraction time limit as its base (`DownloadBudget.extractionMs`, REQ-FUNC-aa35b135). DNS, connector and body waits are cancellable, including late-response cleanup. Invalid/oversized/failed/revoked attempts publish nothing.
+A download detected or named as a PDF requires a PDF signature and worker validation. Transfer has at most five redirects, the approved size (default 100 MiB, range 10–1000 MiB, REQ-FUNC-8a1eea8b) and the configured Download time limit (default 120 s). The PDF validator uses the Document extraction time limit as its base (REQ-FUNC-aa35b135). DNS, connector and body waits are cancellable, including late-response cleanup. Invalid, oversized, failed or revoked attempts publish nothing.
 
 Read-only and per-workbench exclusions hide the tool. Ask and protected Auto-edit require source/destination/budget approval before network; Bypass uses the existing approval gate. A mode change revokes captured Bypass execution authority. Global Web access disable/reconfiguration cancels pending transfers, while saved PDFs remain readable offline.
 

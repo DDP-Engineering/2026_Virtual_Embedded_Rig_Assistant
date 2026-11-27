@@ -30,6 +30,15 @@ export class MessagesRepository {
       .prepare("SELECT * FROM messages WHERE session_id=? ORDER BY seq")
       .all(sessionId) as MessageRow[];
   }
+  /** Keep rejected attachment references for the transcript while omitting their pixels from model history. */
+  omitRejectedImages(sessionId: string, afterSeq: number): void {
+    this.db
+      .prepare(
+        `UPDATE messages SET content_json = json_set(content_json, '$.imagesRejected', json('true'))
+         WHERE session_id = ? AND seq > ? AND role = 'user' AND json_type(content_json, '$.images') = 'array'`,
+      )
+      .run(sessionId, afterSeq);
+  }
   /** A user row exists only after its message is admitted to the runtime transcript. */
   hasUserImage(sessionId: string, path: string): boolean {
     return (

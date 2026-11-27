@@ -46,6 +46,8 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Grep-Ergebnisse | Anwendung | 50–2000 | 500 | Sofort |
 | Dateigröße für grep (MiB) | Anwendung | 1–50 | 5 | Sofort |
 | Glob-Ergebnisse | Anwendung | 100–5000 | 500 | Sofort |
+| Bilder pro Nachricht | Anwendung | 1–32 | 8 | Sofort |
+| Maximale Bilddateigröße (MiB) | Anwendung | 1–64 | 20 | Sofort |
 | Worker-Frist (s) | Anwendung | 5–120 | 10 | Für das nächste Terminal, den nächsten Worker, Lauf oder die nächste geöffnete Sitzung |
 | Websuche-Ergebnisse | Anwendung | 1–8 | 5 | Sofort |
 | Web-Lesegröße (Zeichen) | Anwendung | 1000–16000 | 12000 | Sofort |

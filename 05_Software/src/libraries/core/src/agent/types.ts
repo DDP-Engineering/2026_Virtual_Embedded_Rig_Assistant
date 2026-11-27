@@ -38,6 +38,7 @@ export interface RuntimeInit {
   requestIdentity?: { turnId: string; messageId: string };
   /** Characters of one tool result the model receives at most; 32000 when absent (REQ-FUNC-f6f79cd2). */
   maxToolResultChars?: number;
+  maxImagesPerStep?: number;
 }
 export interface RuntimeInput {
   text: string;

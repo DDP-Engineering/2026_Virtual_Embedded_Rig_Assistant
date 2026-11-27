@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_MESSAGE_IMAGES } from "./composer-images.js";
+import { advancedSettings } from "./advanced-settings.js";
 import { modelReferenceSchema } from "./providers.js";
 import { questionIdSchema } from "./session-questions.js";
 
@@ -7,7 +7,7 @@ const imagePathSchema = z
   .string()
   .min(1)
   .refine((path) => [...path].every((character) => character >= " " && character !== "\u007f"));
-export const messageImagesSchema = z.array(imagePathSchema).max(MAX_MESSAGE_IMAGES);
+export const messageImagesSchema = z.array(imagePathSchema).max(advancedSettings.imagesPerMessage.max);
 export const sessionIdSchema = z.string().regex(/^ses_[0-9A-HJKMNP-TV-Z]{26}$/);
 export const permissionModeSchema = z.enum(["read-only", "ask", "auto-edit", "bypass"]);
 export const sessionStatusSchema = z.enum(["idle", "running", "awaiting_approval", "error"]);

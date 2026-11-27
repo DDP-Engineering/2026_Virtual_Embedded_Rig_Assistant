@@ -1,6 +1,7 @@
 import { extname, posix } from "node:path";
 import { rasterThumbnail, scrub, validateRelativePath, type WorkbenchService } from "@vera/core";
 import {
+  DEFAULT_IMAGE_FILE_BYTES,
   DOCS_BYTE_WINDOW_LIMIT,
   type DocumentRecord,
   formatRef,
@@ -10,7 +11,6 @@ import {
   type GitDiffResult,
   type GitHistoryResult,
   type GitStatus,
-  MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
   type Response,
   rasterSignature,
@@ -374,7 +374,7 @@ export class DisplayDocuments {
       try {
         const first = await this.workbench().readBytes(id, sourcePath, 0, DOCS_BYTE_WINDOW_LIMIT);
         const { size } = first;
-        if (size > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
+        if (size > DEFAULT_IMAGE_FILE_BYTES) throw veraError("IMAGE_TOO_LARGE");
         if (first.path !== sourcePath || first.offset !== 0 || first.revision === undefined)
           throw veraError("CONFLICT");
         const bytes = Buffer.alloc(size);

@@ -145,7 +145,7 @@
   },
   "errors": {
     "IMAGE_FORMAT": "Choisissez une image PNG, JPEG, GIF ou WebP valide. Le format SVG est incompatible.",
-    "IMAGE_TOO_LARGE": "Une image peut faire au maximum 20 Mio.",
+    "IMAGE_TOO_LARGE": "Une image peut faire au maximum {{maxMB}} Mio.",
     "INVALID": "La requête n’est pas valide.",
     "NOT_FOUND": "L’opération demandée {{operation}} est introuvable.",
     "CONFLICT": "L’opération est en conflit avec l’état actuel.",
@@ -445,6 +445,7 @@
     "rateLimit": "Limite de débit du fournisseur.",
     "rateLimitWithRetry": "Limite de débit du fournisseur. Réessayer après : {{retryAfter}}.",
     "context": "Le fournisseur a refusé la taille du contexte. Réduisez l’entrée ou vérifiez la fenêtre configurée.",
+    "requestTooLarge": "Le fournisseur a refusé la requête car elle est trop volumineuse. Essayez avec moins de texte ou des images moins nombreuses et plus petites.",
     "failure": "Erreur du fournisseur : {{message}}",
     "timeout": "Le modèle n’a pas répondu dans un délai de {{seconds}} s.",
     "discoveryTimeout": "La détection des modèles ne s’est pas terminée en {{seconds}} s."
@@ -494,6 +495,8 @@
     "attachImage": "Joindre une image",
     "imagesTextOnly": "Ce modèle accepte uniquement du texte. Il recevra les chemins des images.",
     "imagesLimit": "Vous pouvez joindre jusqu’à {{count}} images.",
+    "changeImagesAndRetry": "Modifier les images et réessayer",
+    "retrySelectedImages": "Renvoyer le message",
     "openImage": "Ouvrir l’image {{path}}",
     "imageUnavailable": "Image indisponible",
     "removeAttachment": "Retirer la pièce jointe : {{path}}",
@@ -1365,6 +1368,7 @@
     "openTerminalDesc": "Ouvre et cible le terminal utilisateur."
   },
   "downloads": {
+    "timedOut": "Le téléchargement a dépassé la limite de {{seconds}} s. Réessayez ou augmentez la limite dans les paramètres avancés.",
     "revealNamed": "Afficher dans l’Explorateur : {{name}}",
     "reveal": "Afficher dans l’Explorateur",
     "title": "Fichiers téléchargés",
@@ -1836,6 +1840,7 @@
     "groups": {
       "agent": "Agent et contexte",
       "tools": "Outils et terminaux",
+      "images": "Images",
       "documents": "Documents",
       "providers": "Fournisseurs et navigateur",
       "dictation": "Dictée",
@@ -1859,6 +1864,8 @@
       "restart": "S’applique après le redémarrage de VERA"
     },
     "settings": {
+      "imagesPerMessage": "Images par message",
+      "imageFileMB": "Taille maximale du fichier image (Mio)",
       "providerDiscoveryTimeout": "Délai de détection des modèles (s)",
       "browserNavigationTimeout": "Délai de navigation du navigateur (s)",
       "dictationTranscriptionTimeout": "Délai de transcription (s)",
@@ -1911,6 +1918,8 @@
       "pageSize": "Lignes par page"
     },
     "about": {
+      "imagesPerMessage": "Nombre maximal de pièces jointes par message et d’images que l’agent peut examiner en une étape.",
+      "imageFileMB": "Taille maximale du fichier original pour les pièces jointes et les images ouvertes par l’agent.",
       "providerDiscoveryTimeout": "Délai de détection des modèles dans LM Studio et les catalogues, chargement de la liste compris.",
       "browserNavigationTimeout": "Délai d’ouverture d’une page ou de suivi d’un lien. Le mode automatique conserve les délais intégrés.",
       "dictationTranscriptionTimeout": "Délai d’une transcription locale, chargement du modèle Whisper compris.",

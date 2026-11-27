@@ -12,6 +12,7 @@ import { electricalModelChangeTool, electricalModelTool } from "../electrical/to
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
+import type { WebSource } from "../web/provider.js";
 import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import { askUserTool } from "./ask-user.js";
@@ -140,6 +141,56 @@ function resultSuffix(text: string, limit: number, tokens: readonly string[]): s
   return text.slice(cut).replace(/^[\uDC00-\uDFFF]/, "");
 }
 
+function webExcerpt(content: string, budget: number, tokens: readonly string[]): string {
+  if (JSON.stringify(content).length - 2 <= budget) return content;
+  let low = 0;
+  let high = Math.min(content.length, budget);
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (JSON.stringify(content.slice(0, middle)).length - 2 <= budget) low = middle;
+    else high = middle - 1;
+  }
+  return resultPrefix(content, low, tokens).replace(/[\uD800-\uDBFF]$/, "");
+}
+
+/** Reserve space for complete citations before distributing the remaining budget to excerpts. */
+function capWebResult(result: Record<string, unknown>, limit: number, tokens: readonly string[]) {
+  if (
+    !Array.isArray(result.sources) ||
+    !result.sources.length ||
+    !result.sources.every(
+      (source) =>
+        typeof source?.url === "string" &&
+        typeof source.title === "string" &&
+        typeof source.content === "string",
+    )
+  )
+    return undefined;
+  const sources: WebSource[] = result.sources;
+  const excerpts = sources.map((source) => {
+    const content = source.content;
+    source.content = "";
+    return content;
+  });
+  let metadata = JSON.stringify(result);
+  while (metadata.length > limit && sources.length > 1) {
+    sources.pop();
+    metadata = JSON.stringify(result);
+  }
+  if (metadata.length > limit)
+    return '{"truncated":true,"isError":true,"error":"The web citation exceeds the tool result limit."}';
+  let remaining = limit - metadata.length;
+  for (const [index, source] of sources.entries()) {
+    source.content = webExcerpt(
+      excerpts[index] ?? "",
+      Math.floor(remaining / (sources.length - index)),
+      tokens,
+    );
+    remaining -= JSON.stringify(source.content).length - 2;
+  }
+  return JSON.stringify(result);
+}
+
 export function capToolResult(
   value: Record<string, unknown>,
   protectedStrings: readonly string[] = [],
@@ -155,6 +206,10 @@ export function capToolResult(
     const tokens = protectedStrings
       .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
       .filter((token) => token.length > 1);
+    if (toolName === "web_search" || toolName === "web_read") {
+      const web = capWebResult(result, limit, tokens);
+      if (web !== undefined) return { text: web, truncated };
+    }
     const tailKey =
       toolName === "terminal_read"
         ? "text"

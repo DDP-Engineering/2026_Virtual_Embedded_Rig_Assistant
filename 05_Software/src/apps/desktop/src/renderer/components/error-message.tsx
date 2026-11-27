@@ -1,4 +1,9 @@
-import { browserFailureCodeSchema, terminalInputLimit, veraErrorSchema } from "@vera/shared";
+import {
+  advancedSettings,
+  browserFailureCodeSchema,
+  terminalInputLimit,
+  veraErrorSchema,
+} from "@vera/shared";
 import { useTranslation } from "react-i18next";
 import { browserFailureText } from "../lib/browser-failure.js";
 
@@ -21,6 +26,10 @@ export function ErrorMessage({ error }: { error: unknown }) {
     ...(parsed.success ? (parsed.data.params ?? {}) : {}),
   };
   const messages: Record<string, string> = {
+    "chat.imagesLimit": t("chat.imagesLimit", {
+      count: advancedSettings.imagesPerMessage.default,
+      ...options,
+    }),
     "wireshark.invalidCitation": t("wireshark.invalidCitation"),
     "wireshark.fileUnavailable": t("wireshark.fileUnavailable"),
     "wireshark.staleCapture": t("wireshark.staleCapture"),
@@ -47,7 +56,10 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.DENIED": t("errors.DENIED", options),
     "errors.CONTEXT_LIMIT": t("errors.CONTEXT_LIMIT", options),
     "errors.IMAGE_FORMAT": t("errors.IMAGE_FORMAT", options),
-    "errors.IMAGE_TOO_LARGE": t("errors.IMAGE_TOO_LARGE", options),
+    "errors.IMAGE_TOO_LARGE": t("errors.IMAGE_TOO_LARGE", {
+      maxMB: advancedSettings.imageFileMB.default,
+      ...options,
+    }),
     "errors.PROVIDER": t("errors.PROVIDER", options),
     "errors.OFFLINE": t("errors.OFFLINE", options),
     "errors.INTERNAL": t("errors.INTERNAL", options),
@@ -73,6 +85,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
       ? t("provider.rateLimitWithRetry", options)
       : t("provider.rateLimit"),
     "provider.context": t("provider.context", options),
+    "provider.requestTooLarge": t("provider.requestTooLarge"),
     "provider.failure": t("provider.failure", options),
     "provider.timeout": t("provider.timeout", options),
     "provider.discoveryTimeout": t("provider.discoveryTimeout", options),

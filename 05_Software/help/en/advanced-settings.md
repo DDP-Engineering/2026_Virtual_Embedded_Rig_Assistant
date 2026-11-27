@@ -46,6 +46,8 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Grep results | application | 50–2000 | 500 | Right away |
 | Grep file size (MiB) | application | 1–50 | 5 | Right away |
 | Glob results | application | 100–5000 | 500 | Right away |
+| Images per message | application | 1–32 | 8 | Right away |
+| Maximum image file size (MiB) | application | 1–64 | 20 | Right away |
 | Worker deadline (s) | application | 5–120 | 10 | For the next terminal, worker, run or opened session |
 | Web search results | application | 1–8 | 5 | Right away |
 | Web read size (characters) | application | 1000–16000 | 12000 | Right away |
