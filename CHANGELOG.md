@@ -98,6 +98,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Say whether a skill or its file is missing and list the enabled skills, and name the help pages when one does not exist.
 - Take a skill or help page name written in another letter case, with spaces or with `.md`.
 - Warn about invalid draft skills, check trial replacement before approval, and honor Stop before installation.
+- Validate and install a plugin draft kept under version control: `.git`, compiled caches, a virtual environment and desktop files are left out of the package and listed.
+- Explain each plugin validation error and say why a draft cannot be read, instead of codes and a bare tool failure.
+- Say why a trial plugin was not installed after the approval, such as a draft changed since its review.
 
 ## [0.4.0] - 2026-11-26
 

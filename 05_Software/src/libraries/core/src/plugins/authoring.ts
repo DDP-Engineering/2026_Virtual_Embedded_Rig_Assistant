@@ -1,26 +1,88 @@
 // REQ-FUNC-bf693078, REQ-FUNC-ef7d2de3
 import { lstat } from "node:fs/promises";
-import { dangerousToken, ruleNamesProgram, veraError, veraErrorSchema } from "@vera/shared";
+import {
+  dangerousToken,
+  type PluginIssue,
+  ruleNamesProgram,
+  type VeraError,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { z } from "zod";
 import { waitForAbort } from "../abort.js";
 import type { PreparedChange } from "../tools/changes.js";
 import { type ToolContext, type ToolDefinition, toolPathGuard, toolSignal } from "../tools/context.js";
 import type { PathGuard } from "../workbench/path-guard.js";
-import { readPluginPackage } from "./store.js";
+import { pluginFailureDetail, readPluginPackage } from "./store.js";
 
 const params = z.strictObject({ path: z.string().min(1).max(4096) });
+
+/** What a storage refusal means to the author when the store gave no reason of its own. */
+const refusals: Partial<Record<VeraError["code"], string>> = {
+  NOT_FOUND: "There is no plugin draft at that path.",
+  INVALID: "The draft folder cannot be read as a plugin package.",
+  DENIED: "The draft holds a link or a special file, or its path is not an ordinary folder.",
+  CONFLICT:
+    "The draft changed after it was reviewed. Call plugin_install again so the user reviews the current files.",
+  BUSY: "The plugin's installed files are in use by another program. Close it and call plugin_install again.",
+};
+/**
+ * An error the model can act on. The store signals refusals with coded objects, which reach the model as
+ * a bare tool failure; the code is kept on the error for callers that check it.
+ */
+function explained(error: unknown, extra: Partial<Record<VeraError["code"], string>> = {}): unknown {
+  const code = veraErrorSchema.safeParse(error).data?.code;
+  if (!code) return error;
+  const message = pluginFailureDetail(error) ?? extra[code] ?? refusals[code];
+  return message ? Object.assign(Error(message), { code }) : error;
+}
+
+const fieldProblems: Record<string, string> = {
+  missing_file: "names a file that is not in the draft",
+  unrecognized_keys: "is not a manifest field; remove it",
+  invalid_type: "has the wrong type of value",
+  invalid_format: "is not written in the required format",
+  invalid_value: "is not one of the allowed values",
+  too_small: "is too short, empty or below the allowed range",
+  too_big: "is too long or above the allowed range",
+};
+/** One sentence on what a validation error asks the author to change. */
+function issueDetail(issue: PluginIssue): string {
+  if (issue.code === "manifest") return "plugin.yaml is missing, larger than 256 KiB or not UTF-8 text.";
+  if (issue.code === "yaml")
+    return `plugin.yaml is not valid YAML${issue.line ? ` at line ${issue.line}` : ""}.`;
+  if (issue.code === "id") return "The draft folder must be named exactly as the manifest id.";
+  if (issue.code === "field")
+    return `${issue.path ?? "The manifest"} ${fieldProblems[issue.issue ?? ""] ?? "is not valid"}.`;
+  return "The draft does not pass the install checks.";
+}
+const described = (issues: readonly PluginIssue[]) =>
+  issues.map((issue) => ({ ...issue, detail: issueDetail(issue) }));
+
 /** Draft source authority comes from the host-selected tool scope. */
 async function draftPath(guard: PathGuard, path: string) {
   const target = await guard.resolve(path);
-  if (!(await lstat(target.absolute)).isDirectory()) throw Error("Choose a plugin draft folder.");
+  let entry: Awaited<ReturnType<typeof lstat>>;
+  try {
+    entry = await lstat(target.absolute);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    throw Error(`There is no folder at ${path}. Give the path of the plugin draft folder.`);
+  }
+  if (!entry.isDirectory()) throw Error("Choose a plugin draft folder.");
   return target;
 }
 
 async function inspectDraft(guard: PathGuard, path: string, signal: AbortSignal) {
   const target = await draftPath(guard, path);
   signal.throwIfAborted();
-  const pkg = await waitForAbort(readPluginPackage(target.absolute, signal), signal);
-  if ((await draftPath(guard, path)).absolute !== target.absolute) throw veraError("CONFLICT");
+  const pkg = await waitForAbort(readPluginPackage(target.absolute, signal), signal).catch(
+    (error: unknown) => {
+      signal.throwIfAborted();
+      throw explained(error);
+    },
+  );
+  if ((await draftPath(guard, path)).absolute !== target.absolute) throw explained(veraError("CONFLICT"));
   signal.throwIfAborted();
   return { target, pkg };
 }
@@ -36,6 +98,8 @@ export const pluginValidateTool: ToolDefinition = {
     signal.throwIfAborted();
     const { pkg } = await inspectDraft(guard, params.parse(raw).path, signal);
     const warnings: { code: string; path: string; detail: string }[] = [];
+    for (const path of pkg.leftOut ?? [])
+      warnings.push({ code: "left-out", path, detail: "Not part of the package; it will not be installed." });
     for (const skill of pkg.composition?.skills ?? [])
       if (!skill.description)
         warnings.push({
@@ -73,7 +137,11 @@ export const pluginValidateTool: ToolDefinition = {
       }
     }
     signal.throwIfAborted();
-    return { errors: pkg.issues, warnings: warnings.slice(0, 64), truncated: warnings.length > 64 };
+    return {
+      errors: described(pkg.issues),
+      warnings: warnings.slice(0, 64),
+      truncated: warnings.length > 64,
+    };
   },
 };
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
@@ -89,7 +157,12 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
     target,
     pkg: { manifest, issues, sha256 },
   } = await inspectDraft(guard, path, signal);
-  if (issues.length || !manifest) throw Error(`Invalid plugin draft: ${JSON.stringify(issues)}`);
+  if (issues.length || !manifest)
+    throw Error(
+      `Invalid plugin draft. Fix these and run plugin_validate: ${described(issues)
+        .map((issue) => issue.detail)
+        .join(" ")}`,
+    );
   try {
     await waitForAbort(store.assertTrialReplaceable(manifest.id, signal), signal);
   } catch (error) {
@@ -127,18 +200,27 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       guard.assertAuthorized();
       const currentGuard = await toolPathGuard(ctx);
       installSignal.throwIfAborted();
-      if ((await draftPath(currentGuard, path)).absolute !== target.absolute) throw veraError("CONFLICT");
-      const installed = await store.installTrial(
-        target.absolute,
-        sha256,
-        () => {
-          guard.assertAuthorized();
-          installSignal.throwIfAborted();
-          host.assertWritable?.();
-        },
-        installSignal,
-      );
-      return { plugin: installed, enabledByInstall: false };
+      try {
+        if ((await draftPath(currentGuard, path)).absolute !== target.absolute) throw veraError("CONFLICT");
+        const installed = await store.installTrial(
+          target.absolute,
+          sha256,
+          () => {
+            guard.assertAuthorized();
+            installSignal.throwIfAborted();
+            host.assertWritable?.();
+          },
+          installSignal,
+        );
+        return { plugin: installed, enabledByInstall: false };
+      } catch (error) {
+        installSignal.throwIfAborted();
+        // After the approval the model would otherwise learn only that the tool failed.
+        throw explained(error, {
+          DENIED: `Plugin ${manifest.id} is installed and is not a trial, so it cannot be replaced. Choose a different ID.`,
+          INVALID: "The draft is no longer a valid plugin. Run plugin_validate and fix what it reports.",
+        });
+      }
     },
   };
 }

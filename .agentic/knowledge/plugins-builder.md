@@ -14,6 +14,8 @@ workbench draft, and the user-only `plugins.promote` and `plugins.export`.
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
 for unusable skill metadata, declared subcommand help, dangerous tokens in safe/device-read rules,
 programs without rules, and find without hint. The help warning asks the author to verify the exact parser exit.
+A package read from a draft folder leaves out `.git`, `__pycache__`, `.venv`, `.DS_Store` and `Thumbs.db` (`DRAFT_LEFT_OUT` in store.ts): they turn up while a plugin is written and are no part of it; `plugin_validate` lists them as `left-out` warnings. An installed plugin is still read whole, so nothing placed in its folder escapes the integrity hash. Every validation error carries a `detail` sentence (`issueDetail`). The store keeps the reason of a refusal beside its coded error object (`pluginFailureDetail`, a WeakMap, so the strict VeraError shape is unchanged) and the authoring tools turn coded refusals into errors with a message and the code (`explained`), before and after the approval; without it the model saw only a bare tool failure.
+
 `plugin_install {path}` is a program-class prepared tool. Its inline review shows the complete manifest;
 ApprovalGate always waits for a user decision, including bypass, and refuses read-only. The exact
 request binds the draft path, manifest and integrity hash. The store checks before approval and again

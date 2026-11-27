@@ -300,3 +300,94 @@ it("validates and installs an outside draft only in Bypass, records absolute sou
   expect(await f.store.ids()).toEqual(["fixture-cli"]);
   expect((await f.store.load("fixture-cli")).folder.startsWith(f.store.root)).toBe(true);
 });
+
+it("leaves work files out of the package and says so", async () => {
+  const f = await fixture();
+  // What turns up in a draft folder while a plugin is written.
+  await mkdir(join(f.draft, ".git/objects"), { recursive: true });
+  await writeFile(join(f.draft, ".git/objects/ab"), "object");
+  await mkdir(join(f.draft, "scripts/__pycache__"), { recursive: true });
+  await writeFile(join(f.draft, "scripts/__pycache__/tool.cpython-312.pyc"), "compiled");
+  await writeFile(join(f.draft, ".DS_Store"), "desktop");
+  const result = await f.registry.execute(
+    f.ctx,
+    "plugin_validate",
+    { path: "plugins/fixture-cli" },
+    signal(),
+  );
+  const { errors, warnings } = JSON.parse(result.text) as {
+    errors: unknown[];
+    warnings: { code: string; path: string }[];
+  };
+  expect(errors).toEqual([]);
+  expect(warnings.filter(({ code }) => code === "left-out").map(({ path }) => path)).toEqual([
+    ".DS_Store",
+    ".git",
+    "scripts/__pycache__",
+  ]);
+  const ctx = { ...f.ctx, change: change() };
+  const prepared = await f.registry.prepare(ctx, "plugin_install", { path: "plugins/fixture-cli" }, signal());
+  await prepared.apply(signal());
+  const installed = await f.store.load("fixture-cli");
+  expect((await readdir(installed.folder)).sort()).toEqual(["install.json", "plugin.yaml"]);
+});
+
+it("explains each validation error and a draft that cannot be read", async () => {
+  const f = await fixture();
+  const validate = async (path = "plugins/fixture-cli") => {
+    const result = await f.registry.execute(f.ctx, "plugin_validate", { path }, signal());
+    return {
+      failed: result.isError,
+      ...(JSON.parse(result.text) as { errors?: unknown[]; error?: string }),
+    };
+  };
+  Object.assign(f.manifest, { version: "latest", author: "me" });
+  await f.save();
+  expect((await validate()).errors).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ path: "version", detail: expect.stringMatching(/^version is not/) }),
+      {
+        code: "field",
+        path: "author",
+        issue: "unrecognized_keys",
+        detail: "author is not a manifest field; remove it.",
+      },
+    ]),
+  );
+  await writeFile(join(f.draft, "plugin.yaml"), "programs: [unclosed\n");
+  expect((await validate()).errors).toEqual([
+    {
+      code: "yaml",
+      line: expect.any(Number),
+      detail: expect.stringMatching(/^plugin.yaml is not valid YAML at line \d+\.$/),
+    },
+  ]);
+  await rm(join(f.draft, "plugin.yaml"));
+  expect((await validate()).errors).toEqual([
+    { code: "manifest", detail: "plugin.yaml is missing, larger than 256 KiB or not UTF-8 text." },
+  ]);
+  await writeFile(join(f.draft, "install.json"), "{}");
+  expect(await validate()).toMatchObject({
+    failed: true,
+    error: expect.stringContaining("install.json is written by VERA at installation"),
+  });
+  const missing = await validate("plugins/missing");
+  expect(missing).toMatchObject({
+    failed: true,
+    error: expect.stringContaining("There is no folder at plugins/missing"),
+  });
+  expect(JSON.stringify(missing)).not.toContain(f.root);
+});
+
+it("says after the approval why a trial was not installed", async () => {
+  const f = await fixture();
+  const ctx = { ...f.ctx, change: change() };
+  const prepared = await f.registry.prepare(ctx, "plugin_install", { path: "plugins/fixture-cli" }, signal());
+  await writeFile(join(f.draft, "notes.md"), "added after the review");
+  const failure = await prepared.apply(signal()).catch((error: unknown) => error);
+  expect(failure).toBeInstanceOf(Error);
+  expect(failure).toMatchObject({
+    code: "CONFLICT",
+    message: expect.stringContaining("The draft changed after it was reviewed"),
+  });
+});

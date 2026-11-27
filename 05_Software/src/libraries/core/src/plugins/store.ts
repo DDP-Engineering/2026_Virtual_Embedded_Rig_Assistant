@@ -63,6 +63,8 @@ interface Package {
   files: Files;
   folder?: string;
   kind: "folder" | "zip";
+  /** Entries of a draft folder that are no part of the package, by package-relative path. */
+  leftOut?: string[];
 }
 /** A package read with the import checks and examined, as review, install and the catalog see it. */
 export interface PluginPackage extends Package {
@@ -89,11 +91,32 @@ const STALE_STAGE_MS = 60 * 60 * 1000;
 const recovered = new Map<string, Promise<void>>();
 const order = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const fails = (code: VeraError["code"]) => veraError(code);
+/**
+ * Why a package folder or one of its files was refused, kept beside the error object: the code stays the
+ * contract every caller checks, and the plugin authoring tools tell the model the reason.
+ */
+const failureDetails = new WeakMap<object, string>();
+const refused = (code: VeraError["code"], detail: string) => {
+  const error = fails(code);
+  failureDetails.set(error, detail);
+  return error;
+};
+export const pluginFailureDetail = (error: unknown): string | undefined =>
+  typeof error === "object" && error !== null ? failureDetails.get(error) : undefined;
+/**
+ * Left out of a package read from a draft folder: version control, compiled caches, a virtual environment
+ * and desktop files turn up while a plugin is written and are no part of it. An installed plugin is read
+ * whole, so nothing placed in its folder escapes the integrity hash.
+ */
+const DRAFT_LEFT_OUT = new Set([".git", "__pycache__", ".venv", ".DS_Store", "Thumbs.db"]);
+const UNPORTABLE =
+  'is not a name a package can hold (no trailing dot or space, none of \\ : * ? " < > |, no device name)';
 const errno = (error: unknown) => (error as NodeJS.ErrnoException | undefined)?.code;
 /** Windows refuses to rename a folder while a file in it is open (an editor, a virus scanner). */
 const busy = (error: unknown) =>
   ["EPERM", "EBUSY", "EACCES", "ENOTEMPTY", "EEXIST"].includes(errno(error) ?? "") ? fails("BUSY") : error;
 /** Opening never follows a link (where the system supports it) and never blocks on a FIFO. */
+const TOO_MANY_FILES = `The folder holds more than ${PLUGIN_LIMITS.files} files. A plugin package is scripts and text; keep other content outside the draft folder.`;
 const READ_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
 
 /**
@@ -119,18 +142,20 @@ interface Names {
 const names = (): Names => ({ files: new Set(), folders: new Map() });
 /** Adds one file under the file-count limit, refusing names that collide by case or as file and folder. */
 function admit(files: Files, seen: Names, path: string, data: Uint8Array): void {
-  if (!isPluginRelativePath(path)) throw fails("INVALID");
+  if (!isPluginRelativePath(path)) throw refused("INVALID", `${path} ${UNPORTABLE}.`);
   const parts = path.split("/");
   for (let i = 1; i < parts.length; i++) {
     const folder = parts.slice(0, i).join("/");
     const key = folder.toLowerCase();
     const known = seen.folders.get(key);
-    if (seen.files.has(key) || (known !== undefined && known !== folder)) throw fails("INVALID");
+    if (seen.files.has(key) || (known !== undefined && known !== folder))
+      throw refused("INVALID", `${folder} collides with another name that differs only in letter case.`);
     seen.folders.set(key, folder);
   }
   const key = path.toLowerCase();
-  if (seen.files.has(key) || seen.folders.has(key) || files.size >= PLUGIN_LIMITS.files)
-    throw fails("INVALID");
+  if (seen.files.has(key) || seen.folders.has(key))
+    throw refused("INVALID", `${path} collides with another name that differs only in letter case.`);
+  if (files.size >= PLUGIN_LIMITS.files) throw refused("INVALID", TOO_MANY_FILES);
   seen.files.add(key);
   files.set(path, data);
 }
@@ -158,7 +183,12 @@ async function readSeen(
 }
 
 /** Ordinary files and folders only; a link or any other entry is DENIED. */
-async function readFolder(root: string, installed: boolean, signal?: AbortSignal): Promise<Files> {
+async function readFolder(
+  root: string,
+  installed: boolean,
+  signal?: AbortSignal,
+  leftOut?: string[],
+): Promise<Files> {
   signal?.throwIfAborted();
   const files: Files = new Map();
   const seen = names();
@@ -169,21 +199,26 @@ async function readFolder(root: string, installed: boolean, signal?: AbortSignal
     signal?.throwIfAborted();
     for await (const entry of await opendir(relative ? join(root, ...relative.split("/")) : root)) {
       signal?.throwIfAborted();
-      if (++scanned > PLUGIN_LIMITS.files * 2) throw fails("INVALID");
       const path = relative ? `${relative}/${entry.name}` : entry.name;
+      if (!installed && DRAFT_LEFT_OUT.has(entry.name)) {
+        leftOut?.push(path);
+        continue;
+      }
+      if (++scanned > PLUGIN_LIMITS.files * 2) throw refused("INVALID", TOO_MANY_FILES);
       if (path === RECORD) {
         if (installed) continue;
-        throw fails("INVALID");
+        throw refused("INVALID", `${RECORD} is written by VERA at installation; remove it from the draft.`);
       }
       const full = join(root, ...path.split("/"));
       const info = await lstat(full);
-      if (info.isSymbolicLink()) throw fails("DENIED");
+      if (info.isSymbolicLink())
+        throw refused("DENIED", `${path} is a link; a package holds ordinary files and folders only.`);
       if (info.isDirectory()) {
-        if (!isPluginRelativePath(path)) throw fails("INVALID");
+        if (!isPluginRelativePath(path)) throw refused("INVALID", `${path} ${UNPORTABLE}.`);
         await walk(path);
       } else if (info.isFile()) {
         admit(files, seen, path, await readSeen(full, info, signal));
-      } else throw fails("DENIED");
+      } else throw refused("DENIED", `${path} is a special file; a package holds ordinary files only.`);
     }
   };
   await walk("");
@@ -389,14 +424,16 @@ export async function readPluginPackage(path: string, signal?: AbortSignal): Pro
   }
   if (info.isSymbolicLink()) throw fails("DENIED");
   let pkg: Package;
-  if (info.isDirectory())
+  if (info.isDirectory()) {
+    const leftOut: string[] = [];
     pkg = {
       source,
-      files: await readFolder(source, false, signal),
+      files: await readFolder(source, false, signal, leftOut),
       folder: basename(source),
       kind: "folder",
+      ...(leftOut.length && { leftOut: leftOut.sort(order) }),
     };
-  else if (info.isFile() && /\.zip$/i.test(source)) {
+  } else if (info.isFile() && /\.zip$/i.test(source)) {
     const bytes = await readFile(source, signal ? { signal } : undefined);
     signal?.throwIfAborted();
     pkg = { source, ...readZip(bytes), kind: "zip" };
