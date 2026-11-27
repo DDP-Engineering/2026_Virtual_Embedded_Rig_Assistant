@@ -69,6 +69,24 @@ it("Tavily extracts the page without its fragment and cites the original section
   expect(JSON.parse(f.mock.calls[0]?.[1]?.body)).toMatchObject({ urls: [page] });
   await expect(provider.read({ url }, signal())).rejects.toThrow(/could not extract the requested page/);
 });
+it("Tavily reads a long document in windows, although its whole text is above 1 MiB", async () => {
+  const text = `${"p".repeat(1_500_000)}END`;
+  const f = vi.fn(async () => reply({ results: [{ url: "https://example.com/rm.pdf", raw_content: text }] }));
+  const provider = new Tavily({ fetch: f });
+  const first = await provider.read({ url: "https://example.com/rm.pdf", maxCharacters: 2000 }, signal());
+  expect(first).toMatchObject({ truncated: true, nextOffset: 2000, totalCharacters: 1_500_003 });
+  expect(first.sources[0]?.content).toHaveLength(2000);
+  const last = await provider.read(
+    { url: "https://example.com/rm.pdf", maxCharacters: 2000, offset: 1_499_990 },
+    signal(),
+  );
+  expect(last.sources[0]?.content).toBe(`${"p".repeat(10)}END`);
+  expect(last.truncated).toBe(false);
+  expect(last).not.toHaveProperty("nextOffset");
+  // A search reply keeps the 1 MiB limit.
+  f.mockResolvedValueOnce(new Response(new Uint8Array(1048577)));
+  await expect(provider.search({ query: "topic" }, signal())).rejects.toThrow(/size limit/);
+});
 it("Brave normalizes search snippets and rejects unsupported reading and long queries locally", async () => {
   const f = vi.fn().mockResolvedValue(
     reply({

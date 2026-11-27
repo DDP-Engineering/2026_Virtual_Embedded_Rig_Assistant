@@ -12,6 +12,10 @@ export interface WebResult {
   retrievedAt: string;
   sources: WebSource[];
   truncated: boolean;
+  /** A page read that stopped before the page's end: where the next read continues. */
+  nextOffset?: number;
+  /** The page's whole length, given with nextOffset when the provider returned all of it. */
+  totalCharacters?: number;
 }
 export interface WebSearchRequest {
   query: string;
@@ -21,6 +25,7 @@ export interface WebSearchRequest {
 export interface WebReadRequest {
   url: string;
   maxCharacters?: number;
+  offset?: number;
 }
 export interface WebProvider {
   search(request: WebSearchRequest, signal: AbortSignal): Promise<WebResult>;
@@ -85,6 +90,14 @@ export function publicWebUrl(value: string): string {
   }
 }
 
+/**
+ * The most text of one page a provider is asked for; web_read returns windows of it. About 1 700 datasheet
+ * pages, and below the 6 000 000 that Exa accepts (it refuses the whole request above its own maximum).
+ */
+export const WEB_PAGE_CHARACTERS = 4_000_000;
+/** The reply size that carries a page of that length. */
+export const WEB_PAGE_BYTES = 16 * 1024 * 1024;
+
 export const webSearchSchema = z.strictObject({
   query: z.string().trim().min(1).max(2000),
   objective: z.string().trim().min(1).max(4096).optional(),
@@ -104,4 +117,26 @@ export const webReadSchema = z.strictObject({
       }
     }, "Use a public HTTP or HTTPS URL without credentials or local addresses."),
   maxCharacters: z.number().int().min(1).max(16000).default(12000),
+  offset: z.number().int().min(0).max(WEB_PAGE_CHARACTERS).default(0),
 });
+
+/**
+ * One window of a page's text. A provider asks for the page up to WEB_PAGE_CHARACTERS and cuts the window
+ * here, so a long document can be continued or entered anywhere; `complete` is false when the text itself
+ * stopped at that size.
+ */
+export function pageWindow(text: string, offset: number, maxCharacters: number, complete = true) {
+  if (offset > 0 && offset >= text.length)
+    throw Error(`The page has ${text.length} characters. Use a smaller offset.`);
+  let end = Math.min(text.length, offset + maxCharacters);
+  // Never leave half of a surrogate pair at the cut.
+  const last = text.charCodeAt(end - 1);
+  if (end < text.length && last >= 0xd800 && last <= 0xdbff) end--;
+  const more = end < text.length;
+  return {
+    content: text.slice(offset, end),
+    truncated: more || !complete,
+    ...(more ? { nextOffset: end } : {}),
+    ...(more && complete ? { totalCharacters: text.length } : {}),
+  };
+}

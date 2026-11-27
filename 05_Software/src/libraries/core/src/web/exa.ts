@@ -4,9 +4,12 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { webApiKeySchema } from "@vera/shared";
 import {
+  pageWindow,
   publicWebUrl,
   webReadSchema as readSchema,
   webSearchSchema as searchSchema,
+  WEB_PAGE_BYTES,
+  WEB_PAGE_CHARACTERS,
   type WebProvider,
   type WebReadRequest,
   type WebResult,
@@ -15,7 +18,7 @@ import {
 } from "./provider.js";
 
 const endpoint = "https://mcp.exa.ai/mcp";
-const responseLimit = 1048576;
+const responseLimit = WEB_PAGE_BYTES;
 
 class WebFailure extends Error {}
 class ExpiredExaSession extends WebFailure {}
@@ -68,7 +71,7 @@ export class ExaWebProvider implements WebProvider {
     let malformed = 0;
     for (const block of blocks) {
       const match =
-        /^Title:\s*([^\n]*)\nURL:\s*(\S+)[^\n]*\n(?:Published:[^\n]*\n)?(?:Author:[^\n]*\n)?(?:Highlights:|Text:|Content:)\s*\n?([\s\S]*)$/.exec(
+        /^Title:\s*([^\n]*)\nURL:\s*(\S+)[^\n]*\n(?:(?!Highlights:|Text:|Content:)[^\n]*\n)*(?:Highlights:|Text:|Content:)\s*\n?([\s\S]*)$/.exec(
           block.trim(),
         );
       // One malformed block never discards the sources that did parse.
@@ -100,26 +103,32 @@ export class ExaWebProvider implements WebProvider {
 
   async read(request: WebReadRequest, signal: AbortSignal): Promise<WebResult> {
     const args = readSchema.parse(request);
-    const text = await this.call(
-      "web_fetch_exa",
-      { urls: [publicWebUrl(args.url)], maxCharacters: args.maxCharacters },
-      signal,
-    );
-    const match = /^#\s*([^\n]*)\nURL:\s*(\S+)\s*\n\s*\n([\s\S]*)$/.exec(text.trim());
+    // The whole page is requested and the window cut here: Exa has no start position, and its text can end
+    // short of the size asked for, which hid that a page went on.
+    const text = (
+      await this.call(
+        "web_fetch_exa",
+        { urls: [publicWebUrl(args.url)], maxCharacters: WEB_PAGE_CHARACTERS },
+        signal,
+      )
+    ).trim();
+    // The title and URL lines, then lines such as Published and Author, end at the first blank line.
+    const blank = text.search(/\n[ \t]*\n/);
+    const match = /^#\s*([^\n]*)\nURL:\s*(\S+)/.exec(blank < 0 ? "" : text.slice(0, blank));
     if (!match)
       throw new WebFailure("Web provider returned an invalid response. Try a different source URL.");
-    const [, title = "", url = "", body = ""] = match;
-    const content = body.trim();
-    return this.result(
-      [
-        {
-          title: title.slice(0, 500),
-          url: publicWebUrl(url),
-          content: content.slice(0, args.maxCharacters),
-        },
-      ],
-      content.length >= args.maxCharacters,
+    const [, title = "", url = ""] = match;
+    const body = text.slice(blank).trim();
+    const { content, ...window } = pageWindow(
+      body,
+      args.offset,
+      args.maxCharacters,
+      body.length < WEB_PAGE_CHARACTERS - 1024,
     );
+    return {
+      ...this.result([{ title: title.slice(0, 500), url: publicWebUrl(url), content }], window.truncated),
+      ...window,
+    };
   }
 
   private result(sources: WebSource[], truncated: boolean): WebResult {

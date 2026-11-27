@@ -154,7 +154,12 @@ function webExcerpt(content: string, budget: number, tokens: readonly string[]):
 }
 
 /** Reserve space for complete citations before distributing the remaining budget to excerpts. */
-function capWebResult(result: Record<string, unknown>, limit: number, tokens: readonly string[]) {
+function capWebResult(
+  result: Record<string, unknown>,
+  limit: number,
+  tokens: readonly string[],
+  page: boolean,
+) {
   if (
     !Array.isArray(result.sources) ||
     !result.sources.length ||
@@ -172,6 +177,11 @@ function capWebResult(result: Record<string, unknown>, limit: number, tokens: re
     source.content = "";
     return content;
   });
+  // A page window cut here continues where the kept text ends, not where the provider's window ended.
+  const start = typeof result.offset === "number" ? result.offset : 0;
+  const window = page ? (excerpts[0] ?? "").length : 0;
+  const next = result.nextOffset;
+  if (page) result.nextOffset = start + window;
   let metadata = JSON.stringify(result);
   while (metadata.length > limit && sources.length > 1) {
     sources.pop();
@@ -187,6 +197,12 @@ function capWebResult(result: Record<string, unknown>, limit: number, tokens: re
       tokens,
     );
     remaining -= JSON.stringify(source.content).length - 2;
+  }
+  if (page) {
+    const kept = sources[0]?.content.length ?? 0;
+    if (kept < window) result.nextOffset = start + kept;
+    else if (next === undefined) delete result.nextOffset;
+    else result.nextOffset = next;
   }
   return JSON.stringify(result);
 }
@@ -207,7 +223,7 @@ export function capToolResult(
       .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
       .filter((token) => token.length > 1);
     if (toolName === "web_search" || toolName === "web_read") {
-      const web = capWebResult(result, limit, tokens);
+      const web = capWebResult(result, limit, tokens, toolName === "web_read");
       if (web !== undefined) return { text: web, truncated };
     }
     const tailKey =

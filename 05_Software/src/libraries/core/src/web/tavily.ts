@@ -2,7 +2,10 @@ import { webApiKeySchema } from "@vera/shared";
 import { z } from "zod";
 import { type WebHttpOptions, webJson } from "./http.js";
 import {
+  pageWindow,
   publicWebUrl,
+  WEB_PAGE_BYTES,
+  WEB_PAGE_CHARACTERS,
   type WebProvider,
   type WebReadRequest,
   type WebSearchRequest,
@@ -26,7 +29,8 @@ export class TavilyWebProvider implements WebProvider {
       new URL(`https://api.tavily.com/${path}`),
       { method: "POST", headers, body: JSON.stringify(body) },
       signal,
-      this.options,
+      // An extraction carries the page's whole text, of which web_read keeps one window.
+      path === "extract" ? { ...this.options, maxBytes: WEB_PAGE_BYTES } : this.options,
     );
   }
   async search(request: WebSearchRequest, signal: AbortSignal) {
@@ -82,17 +86,17 @@ export class TavilyWebProvider implements WebProvider {
       }
     });
     if (!source) throw Error("Web service could not extract the requested page. Try another source.");
+    const { content, ...window } = pageWindow(
+      source.raw_content.slice(0, WEB_PAGE_CHARACTERS),
+      args.offset,
+      args.maxCharacters,
+      source.raw_content.length <= WEB_PAGE_CHARACTERS,
+    );
     return {
       provider: "tavily",
       retrievedAt: (this.options.now?.() ?? new Date()).toISOString(),
-      sources: [
-        {
-          url: requested,
-          title: page.slice(0, 500),
-          content: source.raw_content.slice(0, args.maxCharacters),
-        },
-      ],
-      truncated: source.raw_content.length > args.maxCharacters,
+      sources: [{ url: requested, title: page.slice(0, 500), content }],
+      ...window,
     };
   }
 }

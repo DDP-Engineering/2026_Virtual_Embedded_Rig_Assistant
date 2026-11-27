@@ -97,6 +97,21 @@ it("searches anonymously and normalizes Exa source blocks with bounded content",
   expect(result.sources[1]!.content.length).toBeLessThanOrEqual(3500);
 });
 
+it("accepts source blocks with further and multi-line metadata before the content", async () => {
+  const fixture = mcp(() =>
+    text(
+      "Title: Regulator\nURL: https://example.com/lm317.pdf\nPublished: 2020-01-01\nAuthor: Vendor [SLVS044,Z\n]\nScore: 0.9\nText:\nOutput range.",
+    ),
+  );
+  const result = await new api.ExaWebProvider({ fetch: fixture.fetch }).search(
+    { query: "topic" },
+    new AbortController().signal,
+  );
+  expect(result.sources).toEqual([
+    { title: "Regulator", url: "https://example.com/lm317.pdf", content: "Output range." },
+  ]);
+});
+
 it("skips a malformed source block and keeps the sources that parse", async () => {
   const fixture = mcp(() =>
     text(
@@ -124,7 +139,8 @@ it("reads one public page through MCP and supports a different provider behind t
   );
   expect(fixture.calls[0]).toEqual({
     name: "web_fetch_exa",
-    args: { urls: ["https://example.com/"], maxCharacters: 1000 },
+    // The whole page is asked for; the window is cut locally.
+    args: { urls: ["https://example.com/"], maxCharacters: api.WEB_PAGE_CHARACTERS },
   });
   expect(result.sources[0]).toMatchObject({ url: "https://example.com/", content: "Public page." });
   const ctx = api.createToolContext("unused");
@@ -136,6 +152,41 @@ it("reads one public page through MCP and supports a different provider behind t
   expect(ctx.web.search).toHaveBeenCalledOnce();
   await registry.execute(ctx, "web_search", { query: "topic" }, new AbortController().signal, ["web_search"]);
   expect(ctx.web.search).toHaveBeenCalledOnce();
+});
+
+it.each([
+  ["a publication date", "Published: 2026-11-16\n"],
+  ["a date and an author", "Published: 2023-04-05\nAuthor: by: A Writer\n"],
+  ["an author that spans lines", "Author: Vendor, Incorporated [SLVS044,Z\n]\n"],
+])("reads a page whose header carries %s", async (_label, metadata) => {
+  const fixture = mcp(() =>
+    text(`# Page\nURL: https://example.com/page\n${metadata}\nFirst line.\n\nSecond.`),
+  );
+  const result = await new api.ExaWebProvider({ fetch: fixture.fetch }).read(
+    { url: "https://example.com/page" },
+    new AbortController().signal,
+  );
+  expect(result).toMatchObject({
+    truncated: false,
+    sources: [{ title: "Page", url: "https://example.com/page", content: "First line.\n\nSecond." }],
+  });
+});
+
+it("returns windows of a long page with where to continue and the page's length", async () => {
+  const page = `${"a".repeat(999)} ${"b".repeat(1500)}${"c".repeat(500)}`;
+  const fixture = mcp(() => text(`# Long\nURL: https://example.com/long.pdf\n\n${page}`));
+  const provider = new api.ExaWebProvider({ fetch: fixture.fetch });
+  const read = (request: { maxCharacters: number; offset?: number }) =>
+    provider.read({ url: "https://example.com/long.pdf", ...request }, new AbortController().signal);
+  const first = await read({ maxCharacters: 1000 });
+  expect(first).toMatchObject({ truncated: true, nextOffset: 1000, totalCharacters: 3000 });
+  expect(first.sources[0]?.content).toBe(`${"a".repeat(999)} `);
+  const last = await read({ maxCharacters: 1000, offset: 2500 });
+  expect(last.sources[0]?.content).toBe("c".repeat(500));
+  expect(last).toMatchObject({ truncated: false });
+  expect(last).not.toHaveProperty("nextOffset");
+  expect(last).not.toHaveProperty("totalCharacters");
+  await expect(read({ maxCharacters: 1000, offset: 3000 })).rejects.toThrow(/has 3000 characters/);
 });
 
 it.each([
@@ -180,7 +231,7 @@ it.each([402, 429, 401, 503])(
 it("bounds oversized and malformed responses and provider tool failures", async () => {
   expect(api.ExaWebProvider).toBeTypeOf("function");
   for (const response of [
-    new Response("x".repeat(1048577), { headers: { "Content-Type": "text/event-stream" } }),
+    new Response("x".repeat(api.WEB_PAGE_BYTES + 1), { headers: { "Content-Type": "text/event-stream" } }),
     text("unparseable"),
     { ...text("remote error"), isError: true },
   ]) {

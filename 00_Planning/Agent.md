@@ -113,7 +113,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `load_skill` | read | An enabled skill or a file in its folder | enabled skills |
 | `help` | read | VERA's and enabled plugins' help, ref `help:<page>` | — |
 | `web_search` | read | Web search through Exa, Tavily or Brave | 1–8 sources (5), 3 500 characters each; 30 s |
-| `web_read` | read | A public page through the provider | 12 000 characters (max 16 000) |
+| `web_read` | read | A public page through the provider; `offset` continues or enters a long page | 12 000 characters (max 16 000) per window |
 | `web_download` | write | Saves a public file under `.vera/downloads/`; content never reaches the model | 100 MiB, 120 s, 5 redirects |
 | `parts_search` | read | Mouser, DigiKey, TME, Farnell, Rutronik search by keyword or part number | parts-search plugin; never orders |
 | `write` | write | Creates a UTF-8 file or overwrites a file, keeping its CRLF, BOM and Latin-1 encoding | overwrite needs a current read |

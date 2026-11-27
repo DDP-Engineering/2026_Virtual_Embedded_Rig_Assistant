@@ -63,7 +63,7 @@ test("native agent searches and reads via Exa adapter, presents sources/tool cal
               text:
                 body.params.name === "web_search_exa"
                   ? "Title: Official guide\nURL: https://example.com/guide\nPublished: N/A\nAuthor: N/A\nHighlights:\nCurrent public facts from an authoritative source."
-                  : "# Official guide\nURL: https://example.com/guide\n\nThe guide describes public information.",
+                  : "# Official guide\nURL: https://example.com/guide\nPublished: 2026-01-01\n\nThe guide describes public information.",
             },
           ],
         };
@@ -130,7 +130,8 @@ test("native agent searches and reads via Exa adapter, presents sources/tool cal
     const source = page.locator('[data-web-source="https://example.com/guide"]');
     await expect(source).toBeVisible();
     expect(requests.map((r) => r.name)).toEqual(["web_search_exa", "web_fetch_exa"]);
-    expect(requests[1]!.args).toEqual({ urls: ["https://example.com/guide"], maxCharacters: 2000 });
+    // The whole page is asked for; web_read cuts its 2 000-character window locally.
+    expect(requests[1]!.args).toEqual({ urls: ["https://example.com/guide"], maxCharacters: 4_000_000 });
     if (process.env.VERA_WEB_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_WEB_SCREENSHOT.replace(".png", "-sources.png") });
     await source.click();

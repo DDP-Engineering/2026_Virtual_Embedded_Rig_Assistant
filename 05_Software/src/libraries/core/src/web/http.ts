@@ -1,6 +1,13 @@
 class WebHttpFailure extends Error {}
 /** Fixed-service JSON transport; never fetches a source URL or returns response/error bodies. */
-export type WebHttpOptions = { apiKey?: string; fetch?: typeof fetch; timeoutMs?: number; now?: () => Date };
+export type WebHttpOptions = {
+  apiKey?: string;
+  fetch?: typeof fetch;
+  timeoutMs?: number;
+  now?: () => Date;
+  /** The largest reply read; 1 MiB unless a page's whole text is expected. */
+  maxBytes?: number;
+};
 export async function webJson(
   url: URL,
   init: RequestInit,
@@ -14,6 +21,7 @@ export async function webJson(
   ]);
   if (!allowed.has(url.origin + url.pathname) || url.username || url.password || url.hash)
     throw new WebHttpFailure("Web destination rejected.");
+  const limit = options.maxBytes ?? 1048576;
   const deadline = AbortSignal.timeout(options.timeoutMs ?? 30000);
   const signal = AbortSignal.any([caller, deadline]);
   let response: Response | undefined;
@@ -29,7 +37,7 @@ export async function webJson(
         );
       throw new WebHttpFailure("Web service unavailable. Retry later.");
     }
-    if (Number(response.headers.get("content-length")) > 1048576)
+    if (Number(response.headers.get("content-length")) > limit)
       throw new WebHttpFailure("Web response exceeds the size limit.");
     if (!response.body) throw new WebHttpFailure("Web service returned an empty response.");
     const reader = response.body.getReader();
@@ -46,7 +54,7 @@ export async function webJson(
         signal.throwIfAborted();
         if (item.done) break;
         size += item.value.byteLength;
-        if (size > 1048576) {
+        if (size > limit) {
           await reader.cancel();
           throw new WebHttpFailure("Web response exceeds the size limit.");
         }

@@ -66,6 +66,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Preserve web citations when results are shortened, including Tavily links to sections.
 - Report the configured time limit when a web download times out.
 - Send the first message to a model with a 32K context window: before a model's first answer a request counts two bytes per token instead of one.
+- Read web pages that state a publication date or an author; `web_read` refused them with the default provider.
+- Continue a long web page or document with `web_read`: a shortened result gives the position to continue from and the page's length, and `offset` reads from any position.
+- Report a web page as shortened when its text was cut at the requested size.
+- Read large documents through Tavily instead of failing on the reply size.
 
 ## [0.4.0] - 2026-11-26
 

@@ -116,4 +116,25 @@ it("keeps the source and a readable prefix when JSON escaping pushes a page over
   expect(excerpt.length).toBeLessThan(source.content.length);
   expect(source.content.startsWith(excerpt)).toBe(true);
   expect(excerpt).not.toMatch(/[\uD800-\uDBFF]$/);
+  // The page ended in this window, yet the shortened result still says where the kept text stops.
+  expect(read.nextOffset).toBe(excerpt.length);
+});
+
+it("passes the offset to the provider and continues a shortened window from the text it kept", async () => {
+  const { ctx, web } = context({ webReadChars: 12000, toolResultChars: 8000 });
+  const url = "https://example.com/reference.pdf";
+  const window = { ...result, sources: [{ title: "Reference", url, content: "r".repeat(12000) }] };
+  web.read.mockResolvedValueOnce({ ...window, truncated: true, nextOffset: 52000, totalCharacters: 900000 });
+  const output = await new api.ToolRegistry().execute(ctx, "web_read", { url, offset: 40000 }, signal());
+  expect(web.read).toHaveBeenCalledWith(expect.objectContaining({ offset: 40000 }), expect.anything());
+  const read = JSON.parse(output.text) as WebResult & { offset: number };
+  const kept = read.sources[0]?.content.length ?? 0;
+  expect(kept).toBeLessThan(12000);
+  expect(read).toMatchObject({ offset: 40000, nextOffset: 40000 + kept, totalCharacters: 900000 });
+  // A window that fits keeps the provider's position.
+  const whole = { ...window, sources: [{ title: "Reference", url, content: "r".repeat(2000) }] };
+  web.read.mockResolvedValueOnce({ ...whole, truncated: true, nextOffset: 2000, totalCharacters: 900000 });
+  const fits = await new api.ToolRegistry().execute(ctx, "web_read", { url, maxCharacters: 2000 }, signal());
+  expect(JSON.parse(fits.text)).toMatchObject({ nextOffset: 2000, totalCharacters: 900000 });
+  expect(JSON.parse(fits.text)).not.toHaveProperty("offset");
 });
