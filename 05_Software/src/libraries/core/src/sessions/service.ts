@@ -1842,6 +1842,7 @@ export class SessionService {
                 await run.apply(signal),
                 [],
                 this.resolveAdvanced(id, "toolResultChars"),
+                tool.name,
               );
               return text;
             } catch (error) {

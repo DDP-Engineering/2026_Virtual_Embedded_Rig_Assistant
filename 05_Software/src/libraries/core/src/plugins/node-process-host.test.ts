@@ -11,8 +11,13 @@ class FakePipe extends EventEmitter {
 class FakeChild extends EventEmitter {
   readonly stdout = new FakePipe();
   readonly stderr = new FakePipe();
+  readonly signals: string[] = [];
   constructor(readonly pid: number | undefined) {
     super();
+  }
+  kill(signal: string) {
+    this.signals.push(signal);
+    return true;
   }
 }
 
@@ -103,7 +108,11 @@ describe("NodeProcessHost", () => {
     const child = new FakeChild(7);
     const host = new NodeProcessHost(() => child, 60_000);
     const spawned = host.spawn("/bin/tool", [], options);
+    spawned.terminate?.();
+    expect(child.signals).toEqual(["SIGKILL"]);
     child.emit("exit", 2, null);
+    spawned.terminate?.();
+    expect(child.signals).toEqual(["SIGKILL"]);
     child.emit("close", 2, null);
     expect(await spawned.exit).toEqual({ code: 2, signal: null });
     expect(child.stdout.destroyed).toBe(false);

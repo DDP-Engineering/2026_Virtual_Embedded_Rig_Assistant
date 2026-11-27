@@ -13,6 +13,7 @@ interface ChildLike {
     on(event: "error", listener: (error: Error) => void): unknown;
     end(data: string): unknown;
   } | null;
+  kill(signal: "SIGKILL"): boolean;
   once(event: "error", listener: (error: Error) => void): unknown;
   once(event: "exit", listener: (code: number | null, signal: NodeJS.Signals | null) => void): unknown;
   once(event: "close", listener: (code: number | null, signal: NodeJS.Signals | null) => void): unknown;
@@ -76,10 +77,12 @@ export class NodeProcessHost implements ProcessHost {
     }
     child.stdout?.on("data", (chunk) => options.output("stdout", chunk));
     child.stderr?.on("data", (chunk) => options.output("stderr", chunk));
+    let exited = false;
     const exit = new Promise<ProcessExit>((resolve) => {
       let failure: string | undefined;
       let grace: ReturnType<typeof setTimeout> | undefined;
       const settle = (code: number | null, signal: string | null) => {
+        exited = true;
         clearTimeout(grace);
         resolve({ code, signal, ...(failure === undefined ? {} : { error: failure }) });
       };
@@ -89,6 +92,7 @@ export class NodeProcessHost implements ProcessHost {
         if (child.pid === undefined) settle(null, null);
       });
       child.once("exit", (code, signal) => {
+        exited = true;
         grace = setTimeout(() => {
           child.stdout?.destroy();
           child.stderr?.destroy();
@@ -97,7 +101,19 @@ export class NodeProcessHost implements ProcessHost {
       });
       child.once("close", settle);
     });
-    return { pid: child.pid, exit };
+    return {
+      pid: child.pid,
+      exit,
+      terminate: () => {
+        if (!exited && child.pid !== undefined) {
+          try {
+            child.kill("SIGKILL");
+          } catch {
+            // The caller can still report that termination was not confirmed.
+          }
+        }
+      },
+    };
   }
 
   signal(pid: number, signal: "SIGTERM" | "SIGKILL"): boolean {

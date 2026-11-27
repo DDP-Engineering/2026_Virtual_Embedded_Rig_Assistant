@@ -171,6 +171,31 @@ it("caps nested text and arrays to valid JSON within32000 characters with trunca
   }
   expect(api.capToolResult({ x: 1 })).toMatchObject({ text: '{"x":1}', truncated: false });
 });
+it.each(["run_command", "run_program", "program_output", "program_stop"])(
+  "preserves the final diagnostic and run metadata when %s output needs shortening",
+  (name) => {
+    const result = api.capToolResult(
+      {
+        output: `"${"\\\n".repeat(6_000)}Last line: build failed.`,
+        exitCode: 1,
+        log: ".vera/runs/example.log",
+        running: false,
+      },
+      [],
+      8_000,
+      name,
+    );
+    expect(result.text.length).toBeLessThanOrEqual(8_000);
+    expect(JSON.parse(result.text)).toMatchObject({
+      output: expect.stringMatching(/^\[truncated\][\s\S]*Last line: build failed\.$/),
+      exitCode: 1,
+      log: ".vera/runs/example.log",
+      running: false,
+      truncated: true,
+    });
+  },
+);
+
 it("contains serialization failures and honors explicit tool error results", async () => {
   const cycle: Record<string, unknown> = {};
   cycle.self = cycle;

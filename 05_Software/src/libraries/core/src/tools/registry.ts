@@ -127,11 +127,24 @@ function resultPrefix(text: string, limit: number, tokens: readonly string[]): s
   return text.slice(0, cut);
 }
 
+function resultSuffix(text: string, limit: number, tokens: readonly string[]): string {
+  let cut = text.length - limit;
+  let previous: number;
+  do {
+    previous = cut;
+    for (const token of tokens) {
+      const at = text.indexOf(token, Math.max(0, cut - token.length + 1));
+      if (at >= 0 && at < cut) cut = at + token.length;
+    }
+  } while (cut > previous);
+  return text.slice(cut).replace(/^[\uDC00-\uDFFF]/, "");
+}
+
 export function capToolResult(
   value: Record<string, unknown>,
   protectedStrings: readonly string[] = [],
   limit = TOOL_RESULT_CAP,
-  numberedRead = false,
+  toolName?: string,
 ) {
   const result = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
   let text = JSON.stringify(result);
@@ -142,6 +155,7 @@ export function capToolResult(
     const tokens = protectedStrings
       .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
       .filter((token) => token.length > 1);
+    const programOutput = toolName !== undefined && programToolNames.includes(toolName);
     for (let round = 0; text.length > limit && round < 100; round++) {
       let best: { owner: Record<string, unknown>; key: string; size: number } | undefined;
       const visit = (owner: Record<string, unknown>) => {
@@ -165,7 +179,12 @@ export function capToolResult(
         break;
       }
       const item = best.owner[best.key];
-      if (numberedRead && best.owner === result && best.key === "text" && typeof item === "string") {
+      if (programOutput && best.owner === result && best.key === "output" && typeof item === "string") {
+        result.output = `[truncated]\n${resultSuffix(item, Math.floor(item.length / 2), tokens)}`;
+        text = JSON.stringify(result);
+        continue;
+      }
+      if (toolName === "read" && best.owner === result && best.key === "text" && typeof item === "string") {
         const prefix = resultPrefix(item, Math.floor(item.length / 2), tokens);
         const boundary = item[prefix.length] === "\n" ? prefix.length : prefix.lastIndexOf("\n");
         const page = boundary < 0 ? prefix.replace(/[\uD800-\uDBFF]$/, "") : prefix.slice(0, boundary);
@@ -239,7 +258,7 @@ export class ToolRegistry {
       value,
       delegationNames.has(name) ? ctx.delegation?.resultSecrets() : undefined,
       toolLimit(ctx, "toolResultChars"),
-      name === "read",
+      name,
     );
   }
   specs(disabled: readonly string[] = []) {

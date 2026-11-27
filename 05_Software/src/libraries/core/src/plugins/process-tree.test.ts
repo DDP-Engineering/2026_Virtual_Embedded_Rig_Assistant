@@ -31,7 +31,7 @@ function manualClock() {
 describe("killProcessTree", () => {
   it("runs System32 tree termination with a late-child sweep on Windows", async () => {
     const { host, spawns, signals } = fakeHost("win32", { SYSTEMROOT: "D:\\Win" });
-    await killProcessTree(host, 4242, manualClock());
+    expect(await killProcessTree(host, 4242, manualClock())).toBe(true);
     expect(spawns).toHaveLength(1);
     expect(spawns[0]?.executable).toBe("D:\\Win\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
     const script = Buffer.from(spawns[0]?.args[3] ?? "", "base64").toString("utf16le");
@@ -44,17 +44,20 @@ describe("killProcessTree", () => {
 
   it("stops waiting for a Windows tree termination that hangs", async () => {
     const { host } = fakeHost("win32");
-    host.spawn = () => ({ pid: 99, exit: new Promise(() => {}) });
+    const terminate = vi.fn();
+    host.spawn = () => ({ pid: 99, exit: new Promise(() => {}), terminate });
     vi.useFakeTimers();
     try {
       let settled = false;
-      const killing = killProcessTree(host, 4242, manualClock()).then(() => {
+      const killing = killProcessTree(host, 4242, manualClock()).then((confirmed) => {
         settled = true;
+        return confirmed;
       });
       await vi.advanceTimersByTimeAsync(19_999);
       expect(settled).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
-      await killing;
+      expect(await killing).toBe(false);
+      expect(terminate).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

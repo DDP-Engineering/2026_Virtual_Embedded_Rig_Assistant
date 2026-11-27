@@ -102,17 +102,17 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: File searches report missing locations and apply filters to a directly selected file.
-      ro: Căutarea semnalează căile inexistente și aplică filtrul și unui fișier indicat direct.
-      de: Die Suche meldet fehlende Pfade und filtert auch direkt ausgewählte Dateien.
-      fr: La recherche signale les chemins absents et filtre aussi un fichier choisi directement.
+      en: File searches validate paths and filters, keep results if files vanish, and honor Stop.
+      ro: Căutarea verifică căile și filtrele, păstrează rezultate dacă dispar fișiere și răspunde la Stop.
+      de: Die Dateisuche prüft Pfade und Filter, behält Treffer bei Dateiverlust und reagiert auf Stopp.
+      fr: La recherche vérifie chemins et filtres, garde les résultats si un fichier disparaît et s’arrête.
   - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: File searches keep other results when a file disappears, and Stop cancels the scan.
-      ro: Căutarea păstrează celelalte rezultate dacă un fișier dispare. Stop oprește scanarea.
-      de: Die Suche behält Ergebnisse bei gelöschten Dateien. Stopp beendet den Scan.
-      fr: La recherche garde les autres résultats si un fichier disparaît. Arrêter coupe le scan.
+      en: Windows command stops report failures promptly, and shortened output keeps its final lines.
+      ro: Pe Windows, eșecul opririi este raportat, iar outputul scurtat păstrează ultimele linii.
+      de: Windows meldet Fehler beim Stoppen. Gekürzte Ausgaben behalten ihre letzten Zeilen.
+      fr: Windows signale les échecs d’arrêt. La sortie tronquée garde ses dernières lignes.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

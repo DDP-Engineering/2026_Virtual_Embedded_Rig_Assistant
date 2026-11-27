@@ -51,6 +51,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.PROVIDER": t("errors.PROVIDER", options),
     "errors.OFFLINE": t("errors.OFFLINE", options),
     "errors.INTERNAL": t("errors.INTERNAL", options),
+    "runs.stopUnconfirmed": t("runs.stopUnconfirmed"),
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
     "provider.noModel": t("provider.noModel"),

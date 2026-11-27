@@ -97,11 +97,13 @@ export interface RunRequest {
 }
 /** The physical state of a supervised run's resources when it ended. */
 export type PhysicalState = "unchanged" | "confirmed" | "unknown";
+export const RUN_STOP_UNCONFIRMED = "STOP_UNCONFIRMED";
+const WINDOWS_EXIT_GRACE_MS = 2500;
 export interface RunResult {
   runId: string;
   exitCode: number | null;
   signal: string | null;
-  /** System error code when the executable could not start. */
+  /** System error code when the executable could not start, or STOP_UNCONFIRMED. */
   error?: string;
   durationMs: number;
   /** The last `tailChars` characters of interleaved stdout and stderr. */
@@ -122,6 +124,8 @@ export interface RunRead {
   output: string;
   truncated: boolean;
   running: boolean;
+  error?: typeof RUN_STOP_UNCONFIRMED;
+  timedOut?: true;
   exitCode?: number | null;
   /** Supervised runs that ended: their physical state and cleanup. */
   physical?: PhysicalState;
@@ -349,6 +353,7 @@ class Run implements ActiveRun {
   private result: RunResult | undefined;
   private reason: "timedOut" | "stopped" | undefined;
   private pid: number | undefined;
+  private processExit: Promise<ProcessExit> | undefined;
   /** Set once the host reports the exit, so a late timeout never signals a reused pid. */
   private exited = false;
   private started = 0;
@@ -362,6 +367,10 @@ class Run implements ActiveRun {
   private readonly tail: TailBuffer;
   private unread: TailBuffer;
   private readonly abort = () => this.kill("stopped");
+  private stopUnconfirmed = false;
+  private stopOutcome: Promise<RunResult> | undefined;
+  private notifyStopFailure: ((result: RunResult) => void) | undefined;
+  private readonly boundedWindowsStop: boolean;
 
   constructor(
     readonly id: string,
@@ -370,6 +379,7 @@ class Run implements ActiveRun {
     private readonly settings: RunnerSettings,
   ) {
     this.background = request.background === true;
+    this.boundedWindowsStop = settings.host.platform === "win32" && request.command !== undefined;
     this.workbench = runner.key(request.workbench);
     this.ports = serialPorts(
       request.programArgs ?? request.args,
@@ -479,6 +489,7 @@ class Run implements ActiveRun {
       ...(this.request.windowsVerbatimArguments ? { windowsVerbatimArguments: true } : {}),
     });
     this.pid = child.pid;
+    this.processExit = child.exit;
     if (this.request.timeoutMs !== undefined)
       this.timer = setTimeout(() => this.kill("timedOut"), this.request.timeoutMs);
     void child.exit.then((exit) => this.finish(exit));
@@ -501,6 +512,10 @@ class Run implements ActiveRun {
       running: !this.result,
       ...(this.result?.stopped ? { stopped: true as const } : {}),
       ...(this.result ? { exitCode: this.result.exitCode } : {}),
+      ...(this.stopUnconfirmed && {
+        error: RUN_STOP_UNCONFIRMED,
+        ...(this.reason === "timedOut" && { timedOut: true as const }),
+      }),
       ...(this.result?.physical
         ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
         : {}),
@@ -509,19 +524,31 @@ class Run implements ActiveRun {
 
   stop(): Promise<RunResult> {
     this.kill("stopped");
-    return this.done;
+    return this.waitForResult();
   }
 
-  private killing: Promise<void> | undefined;
+  /** A shell caller can stop waiting while the runner keeps tracking an unconfirmed stop. */
+  waitForResult(): Promise<RunResult> {
+    if (!this.boundedWindowsStop) return this.done;
+    this.stopOutcome ??= new Promise((resolve) => {
+      this.notifyStopFailure = resolve;
+    });
+    return Promise.race([this.done, this.stopOutcome]);
+  }
+
+  private killing: Promise<unknown> | undefined;
 
   private kill(reason: "timedOut" | "stopped"): void {
-    if (this.exited || this.reason) return;
-    this.reason = reason;
+    if (this.exited || (this.reason && !(this.boundedWindowsStop && this.stopUnconfirmed))) return;
+    this.reason ??= reason;
     if (this.pid === undefined) return;
     const pid = this.pid;
     const { host, clock, killGraceMs } = this.settings;
     const treeKill = () => {
-      if (!this.exited) this.killing = killProcessTree(host, pid, clock, killGraceMs).catch(() => {});
+      if (this.exited) return;
+      this.stopUnconfirmed = false;
+      const killing = killProcessTree(host, pid, clock, killGraceMs);
+      this.killing = this.boundedWindowsStop ? this.checkWindowsStop(killing) : killing.catch(() => {});
     };
     const { lease } = this.request;
     if (!lease || !this.control) {
@@ -535,6 +562,28 @@ class Run implements ActiveRun {
       .then(() => rename(`${stop}.tmp`, stop))
       .catch(() => {});
     this.graceTimer = setTimeout(treeKill, lease.graceMs);
+  }
+
+  private async checkWindowsStop(killing: Promise<boolean>): Promise<void> {
+    const confirmed = await killing.catch(() => false);
+    if (!this.exited) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const grace = new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, WINDOWS_EXIT_GRACE_MS);
+      });
+      await Promise.race([this.processExit, grace]).finally(() => clearTimeout(timer));
+    }
+    if (confirmed && this.exited) return;
+    this.stopUnconfirmed = true;
+    this.write("\n[VERA] Could not confirm that the command stopped.\n");
+    if (this.exited) return;
+    const notify = this.notifyStopFailure;
+    this.stopOutcome = undefined;
+    this.notifyStopFailure = undefined;
+    notify?.({
+      ...this.snapshot({ code: null, signal: null, error: RUN_STOP_UNCONFIRMED }),
+      stopped: false,
+    });
   }
 
   /** The variables of a supervised run: its control folder and the recorded unknown states of its resources. */
@@ -674,7 +723,7 @@ class Run implements ActiveRun {
     await this.supervise();
     await this.writing;
     await this.file?.close().catch(() => {});
-    this.result = this.snapshot(exit);
+    this.result = this.snapshot(this.stopUnconfirmed ? { ...exit, error: RUN_STOP_UNCONFIRMED } : exit);
     await this.record(this.result);
     this.runner.release(this.id);
     this.settle(this.result);
@@ -1012,7 +1061,7 @@ export class ProgramRunner {
     let stdoutBytes = 0;
     let stderrBytes = 0;
     let exceeded = false;
-    let killing: Promise<void> | undefined;
+    let killing: Promise<unknown> | undefined;
     const kill = () => {
       if (child.pid !== undefined)
         killing ??= killProcessTree(host, child.pid, clock, killGraceMs).catch(() => {});
@@ -1066,7 +1115,7 @@ export class ProgramRunner {
    * with BUSY `{handle, resource}` a run naming a volume (`--volume`) that another unfinished run names or claims,
    * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
-  async start(request: RunRequest): Promise<ProgramRun> {
+  async start(request: RunRequest): Promise<ProgramRun & { waitForResult(): Promise<RunResult> }> {
     this.refreshLimits();
     const run = new Run(this.nextId(), request, this, this.settings);
     let runs = [...this.active.values()];
@@ -1307,7 +1356,9 @@ export class ProgramRunner {
   async stopRun(workbench: string, id: string): Promise<void> {
     const run = this.active.get(id);
     if (!run || !this.running(workbench, id)) throw veraError("NOT_FOUND");
-    await run.stop();
+    const result = await run.stop();
+    if (result.error === RUN_STOP_UNCONFIRMED)
+      throw { ...veraError("INTERNAL"), messageKey: "runs.stopUnconfirmed" };
   }
 
   private running(workbench: string, id: string): boolean {

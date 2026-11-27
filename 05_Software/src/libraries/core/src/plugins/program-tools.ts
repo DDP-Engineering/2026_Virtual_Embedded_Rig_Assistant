@@ -34,7 +34,13 @@ import {
 } from "./program-request.js";
 import { claimedResources } from "./resource-registry.js";
 import { TailBuffer } from "./run-output.js";
-import type { ProgramRun, ProgramRunner, RunRequest, RunResult } from "./runner.js";
+import {
+  type ProgramRun,
+  type ProgramRunner,
+  RUN_STOP_UNCONFIRMED,
+  type RunRequest,
+  type RunResult,
+} from "./runner.js";
 import type { CommandShellHost } from "./shell.js";
 import type { LoadedPlugin } from "./store.js";
 
@@ -644,13 +650,14 @@ export const programOutputTool: ToolDefinition = {
       gathered.push(read.output);
       truncated ||= read.truncated;
       if (matches && read.output) matched = matches(gathered.text());
-      if (!read.running || matched || waited >= (args.waitMs ?? 0)) {
+      if (!read.running || read.error || matched || waited >= (args.waitMs ?? 0)) {
         const output = gathered.text();
         return {
           output,
           truncated: truncated || gathered.total > output.length,
           running: read.running,
           ...(read.stopped ? { stopped: true } : {}),
+          ...(read.error ? { error: read.error, ...(read.timedOut && { timedOut: true }) } : {}),
           ...(read.running ? {} : { exitCode: read.exitCode ?? null }),
           ...(read.physical ? { physical: read.physical, cleanup: read.cleanup } : {}),
           ...(matches ? { matched } : {}),
@@ -675,7 +682,8 @@ export const programStopTool: ToolDefinition = {
     const run = backgroundRun(ctx, handle);
     const result = await run.stop();
     const unread = run.read();
-    programContext(ctx).session.delete(handle);
+    const unconfirmed = result.error === RUN_STOP_UNCONFIRMED;
+    if (!unconfirmed || !unread.running) programContext(ctx).session.delete(handle);
     return {
       exitCode: result.exitCode,
       stopped: result.stopped,
@@ -684,6 +692,7 @@ export const programStopTool: ToolDefinition = {
       output: unread.output,
       truncated: unread.truncated,
       log: result.log,
+      ...(unconfirmed && { error: result.error, running: unread.running }),
       ...(result.physical ? { physical: result.physical, cleanup: result.cleanup } : {}),
     };
   },

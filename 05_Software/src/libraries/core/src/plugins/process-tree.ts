@@ -12,7 +12,7 @@ const WINDOWS_KILL_MS = 20_000;
 
 /**
  * Kills a program and every process it started (plugins architecture §3.2). Windows: System32 `taskkill /T /F /PID`, followed by reaping children
- * created during its enumeration, waiting at most 20 s for it. Elsewhere the program leads its own process group: SIGTERM to the group, then
+ * created during its enumeration, waiting at most 20 s for confirmation. Elsewhere the program leads its own process group: SIGTERM to the group, then
  * SIGKILL after `graceMs`, unless the group is already gone.
  */
 export async function killProcessTree(
@@ -20,7 +20,7 @@ export async function killProcessTree(
   pid: number,
   clock: Pick<Clock, "sleep">,
   graceMs = 3000,
-): Promise<void> {
+): Promise<boolean> {
   if (host.platform === "win32") {
     const systemRoot = hostVariable(host, "SystemRoot") ?? "C:\\Windows";
     const script = windowsTreeKill(pid, systemRoot);
@@ -34,17 +34,21 @@ export async function killProcessTree(
         output: () => {},
       },
     );
-    // A PowerShell that hangs must not keep the caller (a run waiting to finish) waiting forever.
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, WINDOWS_KILL_MS);
+    const timeout = new Promise<undefined>((resolve) => {
+      timer = setTimeout(() => resolve(undefined), WINDOWS_KILL_MS);
     });
-    await Promise.race([helper.exit, timeout]).finally(() => clearTimeout(timer));
-    return;
+    const exit = await Promise.race([helper.exit, timeout]).finally(() => clearTimeout(timer));
+    if (!exit) {
+      helper.terminate?.();
+      return false;
+    }
+    return exit.code === 0 && exit.error === undefined;
   }
-  if (!host.signal(-pid, "SIGTERM")) return;
+  if (!host.signal(-pid, "SIGTERM")) return true;
   await clock.sleep(graceMs);
   host.signal(-pid, "SIGKILL");
+  return true;
 }
 
 // taskkill snapshots the tree before terminating it: a starting shell can create a child after that snapshot.
@@ -100,6 +104,7 @@ while ($parents.Count) {
   $parents = $next
   $cutoffs = $nextCutoffs
 }
+if (!$rootProcess.HasExited) { exit 1 }
 } catch {
   # Preserve best-effort tree termination when CIM is unavailable, only while the original process is alive.
   if (!$rootProcess.HasExited) { & '${taskkill}' /T /F /PID $targetPid | Out-Null }

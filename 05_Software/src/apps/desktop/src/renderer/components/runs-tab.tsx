@@ -183,7 +183,11 @@ function RunRow({
           </div>
         )}
       </div>
-      {run.error && <p className="run-error">{run.error}</p>}
+      {run.error && (
+        <p className="run-error">
+          {run.error === "STOP_UNCONFIRMED" ? t("runs.stopUnconfirmed") : run.error}
+        </p>
+      )}
       {run.command && log.isError && <ErrorMessage error={log.error} />}
       {run.command && text?.trim() && (
         // biome-ignore lint/a11y/noNoninteractiveTabindex: the live log supports keyboard scrolling.

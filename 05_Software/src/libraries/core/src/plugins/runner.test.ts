@@ -268,6 +268,53 @@ describe("process tree", () => {
     expect(await stopping).toMatchObject({ stopped: true });
   });
 
+  it.each(["stop", "timeout"] as const)(
+    "bounds Windows command %s and keeps a live run retryable",
+    async (operation) => {
+      host = new FakeHost("win32", { SystemRoot: "C:\\Windows" });
+      const spawn = host.spawn.bind(host);
+      let fail = true;
+      host.spawn = (executable, args, options) => {
+        if (!fail || !args.includes("-EncodedCommand")) return spawn(executable, args, options);
+        const helper = new FakeProcess(999, executable, args, options);
+        // A failed helper and a helper that returns success without a child exit both have a deadline.
+        helper.finish({ code: operation === "stop" ? 1 : 0, signal: null });
+        return helper;
+      };
+      runner = make({ host, clock: { sleep: async () => {} } });
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        const run = await runner.start(
+          request({
+            command: "fixture",
+            ...(operation === "timeout" ? { timeoutMs: 100 } : { background: true }),
+          }),
+        );
+        const waiting = operation === "timeout" ? run.waitForResult() : runner.stopRun(root, run.id);
+        const checked =
+          operation === "timeout"
+            ? expect(waiting).resolves.toMatchObject({
+                error: "STOP_UNCONFIRMED",
+                timedOut: true,
+                stopped: false,
+                exitCode: null,
+              })
+            : expect(waiting).rejects.toMatchObject({ messageKey: "runs.stopUnconfirmed" });
+        await vi.advanceTimersByTimeAsync(operation === "timeout" ? 2600 : 2500);
+        await checked;
+        expect(run.read()).toMatchObject({ running: true, error: "STOP_UNCONFIRMED" });
+        expect(await runner.list(root)).toMatchObject([{ state: "running" }]);
+        fail = false;
+        await runner.stopRun(root, run.id);
+        expect(await run.done).not.toHaveProperty("error");
+        expect(runner.get(run.id)).toBeUndefined();
+      } finally {
+        fail = false;
+        vi.useRealTimers();
+      }
+    },
+  );
+
   it("uses taskkill on Windows", async () => {
     host = new FakeHost("win32", { SystemRoot: "C:\\Windows" });
     runner = make({ host, clock: { sleep: async () => {} } });

@@ -35,6 +35,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.
 - Keep document citations and pagination aligned with the configured response limit.
 - Omit outdated results when indexed document sources change or disappear.
+- Bound command cancellation on Windows and keep the final output when command results are shortened.
 
 ## [0.4.0] - 2026-11-26
 

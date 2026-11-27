@@ -189,6 +189,9 @@ export const ToolDetails = memo(function ToolDetails({
   const browserFailure = action >= 27 ? browserFailureCodeSchema.safeParse(result?.code).data : undefined;
   const usage = item.documentSearch?.usage;
   const fallback = usage?.mode === "keyword" ? usage.fallbackReason : undefined;
+  const programError = string(result?.error);
+  const reportedError =
+    program && programError === "STOP_UNCONFIRMED" ? t("runs.stopUnconfirmed") : programError;
   const output = browserFailure
     ? browserFailureText(t, browserFailure)
     : fallback === "embedding-rebuild"
@@ -201,10 +204,7 @@ export const ToolDetails = memo(function ToolDetails({
             ? usage.reason === "revision-conflict"
               ? t("documents.searchChanging")
               : t("documents.searchUnavailable")
-            : (string(result?.error) ??
-              string(result?.output) ??
-              string(result?.text) ??
-              string(result?.message));
+            : (reportedError ?? string(result?.output) ?? string(result?.text) ?? string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
   // A program approval shows the exact command, folder and shell, so the raw arguments are not repeated.
   const programApproval = approvals?.some((approval) => approval.program) ?? false;

@@ -6,7 +6,7 @@ import { mapProviderError } from "../llm/errors.js";
 import type { LlmEvent } from "../llm/gateway.js";
 import { scrubAssistantMessage } from "../llm/message-scrub.js";
 import { createStreamScrubber } from "../llm/stream-scrub.js";
-import { capToolResult } from "../tools/registry.js";
+import { capToolResult, programToolNames } from "../tools/registry.js";
 import { maskCaptureOutput } from "../wireshark/model-output.js";
 
 /** Project arbitrary tool data while retaining enclosing protocol fields. */
@@ -48,9 +48,9 @@ export function maskToolOutput(
   const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
   if (!result) {
     const masked = scrub(text);
-    if (name === "read" && masked.length > limit) {
+    if (masked.length > limit && (name === "read" || programToolNames.includes(name))) {
       try {
-        return capToolResult(JSON.parse(masked), [], limit, true).text;
+        return capToolResult(JSON.parse(masked), [], limit, name).text;
       } catch {
         // Older tool messages can contain unstructured text.
       }

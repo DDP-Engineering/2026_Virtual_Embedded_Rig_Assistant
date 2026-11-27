@@ -1740,6 +1740,7 @@
     "exitCode": "code de sortie {{code}}",
     "openLog": "Ouvrir le journal",
     "stop": "Arrêter",
+    "stopUnconfirmed": "VERA n’a pas pu confirmer l’arrêt de la commande.",
     "logTitle": "Journal d’exécution",
     "truncated": "Seul le dernier 1 MiB du journal est affiché.",
     "tailOnly": "La sortie antérieure n’est pas affichée.",

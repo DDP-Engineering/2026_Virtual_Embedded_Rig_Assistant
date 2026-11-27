@@ -116,7 +116,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
         programs.session.add(run);
         return { handle: run.id, log: `.vera/runs/${run.id}.log` };
       }
-      const { risk: _risk, ...result } = foreground(await run.done, "command");
+      const { risk: _risk, ...result } = foreground(await run.waitForResult(), "command");
       return result;
     },
   });

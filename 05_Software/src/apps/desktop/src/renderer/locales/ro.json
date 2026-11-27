@@ -1740,6 +1740,7 @@
     "exitCode": "cod de ieșire {{code}}",
     "openLog": "Deschide jurnalul",
     "stop": "Oprește",
+    "stopUnconfirmed": "VERA nu a putut confirma oprirea comenzii.",
     "logTitle": "Jurnalul rulării",
     "truncated": "Se afișează ultimul 1 MiB din jurnal.",
     "tailOnly": "Ieșirea anterioară nu este afișată.",

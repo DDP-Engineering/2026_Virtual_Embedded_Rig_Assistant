@@ -54,6 +54,8 @@ export interface SpawnedProcess {
   readonly pid: number | undefined;
   /** Settles once the process has exited and both pipes have closed, or it failed to start. */
   readonly exit: Promise<ProcessExit>;
+  /** Terminates this child through its original handle, when the host still owns it. */
+  terminate?(): void;
 }
 export interface ProcessSpawnOptions {
   /** Host-quoted Cmd command string; never supplied by a plugin or tool request. */

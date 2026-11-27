@@ -1740,6 +1740,7 @@
     "exitCode": "Exit-Code {{code}}",
     "openLog": "Protokoll öffnen",
     "stop": "Stoppen",
+    "stopUnconfirmed": "VERA konnte nicht bestätigen, dass der Befehl beendet wurde.",
     "logTitle": "Laufprotokoll",
     "truncated": "Es wird das letzte 1 MiB des Protokolls angezeigt.",
     "tailOnly": "Frühere Ausgaben werden nicht angezeigt.",

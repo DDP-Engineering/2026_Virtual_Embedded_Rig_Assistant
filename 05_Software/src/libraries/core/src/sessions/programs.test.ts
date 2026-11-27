@@ -38,6 +38,7 @@ async function setup(
     prefixes?: string[];
     savePrefix?: (prefix: string) => Promise<void>;
     delegatedFullAccess?: boolean;
+    toolResultChars?: number;
   } = {},
 ) {
   const base = await realpath(await mkdtemp(join(tmpdir(), "vera-programs-")));
@@ -112,6 +113,11 @@ async function setup(
     prompt: () => "Test",
     commandPrefixes: () => options.prefixes ?? [],
     allowDelegatedFullAccess: () => options.delegatedFullAccess === true,
+    ...(options.toolResultChars === undefined
+      ? {}
+      : {
+          advanced: { app: () => ({ toolResultChars: options.toolResultChars }), workbench: () => undefined },
+        }),
     ...(options.savePrefix ? { saveCommandPrefix: options.savePrefix } : {}),
     skills,
     ...(options.programs === false ? {} : { programs }),
@@ -285,6 +291,31 @@ describe("built-in shell commands through sessions", () => {
       ]);
     },
   );
+  it("publishes the final command diagnostic in a capped session result", async () => {
+    const rig = await setup({ mode: "bypass", toolResultChars: 8000 });
+    rig.programs.shell = {
+      resolve: async () => ({ executable: "/bin/bash", kind: "bash" }),
+      environment: () => ({}),
+    };
+    await rig.scripts("command", [
+      { toolCalls: [{ name: "run_command", args: { command: "fixture" } }] },
+      { text: "Done" },
+    ]);
+    rig.service.send(rig.session.id, "run command");
+    const child = await spawned(rig);
+    child.print("x".repeat(12_000));
+    child.print("\nLast diagnostic");
+    child.finish({ code: 1, signal: null });
+    await rig.service.waitIdle(rig.session.id);
+    const result = rig.toolResults()[0]?.summary ?? "";
+    expect(result.length).toBeLessThanOrEqual(8000);
+    expect(JSON.parse(result)).toMatchObject({
+      output: expect.stringMatching(/Last diagnostic$/),
+      exitCode: 1,
+      log: `.vera/runs/${HANDLE}.log`,
+      truncated: true,
+    });
+  });
   it("omits shell commands from a Read-only model request even with a shell host", async () => {
     const rig = await setup({ mode: "read-only" });
     rig.programs.shell = {

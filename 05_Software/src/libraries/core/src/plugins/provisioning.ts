@@ -983,7 +983,7 @@ export class Provisioner implements ProgramResolver {
       () => this.executions.delete(child.exit),
     );
     let timedOut = false;
-    let killing: Promise<void> | undefined;
+    let killing: Promise<unknown> | undefined;
     const kill = () => {
       if (child.pid === undefined || killing) return;
       const task = killProcessTree(host, child.pid, clock).catch(() => {});
