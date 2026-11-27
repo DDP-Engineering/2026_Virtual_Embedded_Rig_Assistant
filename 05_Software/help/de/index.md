@@ -15,6 +15,8 @@ Die Hilfe wird mit VERA installiert und funktioniert daher ohne Netzwerk. Sie wi
 
 Der Agent kann diese Hilfeseiten ebenfalls lesen. Fragen Sie in einer beliebigen Sitzung zum Beispiel „Wie aktiviere ich ein Plugin in VERA?“ oder „Wie exportiere ich eine Sitzung in VERA?“, und er sucht die Antwort in der Hilfe.
 
+Wählen Sie einen Hilfebeleg im Chat, um die Seite in der Sprache zu öffnen, in der sie der Agent gelesen hat.
+
 ## Plugin-Hilfe
 
 Jedes installierte Plugin hat eine eigene Hilfeseite: was das Plugin tut, was es benötigt und wie Sie den Agenten bitten, es zu verwenden. Sie finden sie in der Hilfe in der Seitenliste und auf der Karte des Plugins auf der Seite **Plugins**.

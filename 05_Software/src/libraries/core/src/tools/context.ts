@@ -46,7 +46,7 @@ export interface ToolContext {
   askUser?: AskUser;
   knowledge?: DocumentKnowledge;
   /** Project extracted text for the agent before dividing it into parts. */
-  maskDocumentText?: (text: string) => string;
+  maskText?: (text: string) => string;
   web?: WebProvider;
   browser?: AgentBrowserPort;
   downloads?: WebDownloads;

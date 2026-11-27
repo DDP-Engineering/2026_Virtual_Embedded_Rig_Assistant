@@ -36,7 +36,7 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
 ## Public interface
 
 - SkillCatalog.list/metadata/load/read/path use current roots and admission callback.
-- load_skill {name,file?} is read-class and uses existing32000-character result cap.
+- `load_skill {name,file?,offset?}` is read-class. Long results use the configured tool result budget and return a one-based `nextOffset` for the next page of the projected text.
 - skills.list/open/create/save/toggle carry workbenchId; open/create/save targets use only
   workbench/user source (`skillEditableSourceSchema`; plugin is INVALID) and folder name, never
   an arbitrary root. save requires original SHA256. Summaries carry `plugin` for plugin skills.
@@ -67,8 +67,7 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
   retain the permanent .vera exclusion.
   Ignored primary skills show unavailable diagnostics and stay out of the prompt;
   explicit UI inspection/editing keeps its separate current ownership admission.
-- Current ownership and abort checks surround async reads; content/version and source
-  are revalidated before disclosure. Workbench ID/folder/ownership guard settings saves.
+- Current ownership and abort checks surround async reads. Plugin files share a selected package identity and revision, which are revalidated with the primary skill before disclosure. Local skill loads do not resolve plugins. Workbench ID/folder/ownership guards settings saves.
 - Plugin skill reads use the user-root rules (permanent exclusions, no links) under the installed
   plugin folder, whose integrity hash PluginStore checks before the plugin loads.
 - Exclusive creation and stale-edit conflicts preserve existing user bytes. Workbench

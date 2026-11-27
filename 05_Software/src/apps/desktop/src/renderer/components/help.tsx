@@ -21,7 +21,8 @@ export function pluginHelpKey(id: string): string {
 export function helpCitationKey(ref: string): string | undefined {
   const parsed = parseRef(ref);
   if (parsed?.kind !== "help") return undefined;
-  return "plugin" in parsed ? pluginHelpKey(parsed.plugin) : parsed.page;
+  const key = "plugin" in parsed ? pluginHelpKey(parsed.plugin) : parsed.page;
+  return parsed.language ? `${key}#lang=${parsed.language}` : key;
 }
 
 /** Opens Help at a page key from anywhere in the shell (the plugin rows' Help buttons). */
@@ -30,23 +31,29 @@ export const HelpContext = createContext<((page: string) => void) | undefined>(u
 /** Help: the selected page on the left, the page lists on the right (REQ-UX-3de89feb). */
 export function HelpView({ page, open }: { page: string; open: (page: string) => void }) {
   const { t, i18n } = useTranslation();
-  const language = helpLanguage(i18n.resolvedLanguage ?? i18n.language);
-  const plugin = page.startsWith("plugin/") ? page.slice("plugin/".length) : undefined;
+  const [pageKey = page, citedLanguage] = page.split("#lang=");
+  const language = helpLanguage(citedLanguage ?? i18n.resolvedLanguage ?? i18n.language);
+  const plugin = pageKey.startsWith("plugin/") ? pageKey.slice("plugin/".length) : undefined;
+  const navigate = useCallback(
+    (key: string) => open(citedLanguage ? `${key}#lang=${language}` : key),
+    [open, citedLanguage, language],
+  );
   const list = useQuery({
     queryKey: ["help.list", language],
     queryFn: () => api.invoke("help.list", { language }),
   });
   const content = useQuery({
-    queryKey: ["help.read", page, language],
-    queryFn: () => api.invoke("help.read", plugin === undefined ? { page, language } : { plugin, language }),
+    queryKey: ["help.read", pageKey, language],
+    queryFn: () =>
+      api.invoke("help.read", plugin === undefined ? { page: pageKey, language } : { plugin, language }),
   });
   // Links to other help pages open them here; everything else keeps the Markdown default (REQ-UX-2eb10026).
   const link = useCallback(
     (href: string) => {
       const target = /^([a-z0-9][a-z0-9-]{0,63})\.md(?:#.*)?$/.exec(href)?.[1];
-      return target ? { page: target, open: () => open(target) } : undefined;
+      return target ? { page: target, open: () => navigate(target) } : undefined;
     },
-    [open],
+    [navigate],
   );
   const pages = list.data?.filter((entry) => !entry.plugin) ?? [];
   const plugins = list.data?.filter((entry) => entry.plugin) ?? [];
@@ -58,9 +65,9 @@ export function HelpView({ page, open }: { page: string; open: (page: string) =>
         <button
           type="button"
           data-help-page={key}
-          aria-current={key === page ? "page" : undefined}
+          aria-current={key === pageKey ? "page" : undefined}
           lang={summary.language}
-          onClick={() => open(key)}
+          onClick={() => navigate(key)}
         >
           {summary.title}
         </button>
@@ -69,7 +76,7 @@ export function HelpView({ page, open }: { page: string; open: (page: string) =>
   };
   return (
     <div className="help-view" data-help-view>
-      <article className="help-page" data-help-current={page} lang={content.data?.language}>
+      <article className="help-page" data-help-current={pageKey} lang={content.data?.language}>
         {content.isError ? (
           <ErrorMessage error={content.error} />
         ) : (

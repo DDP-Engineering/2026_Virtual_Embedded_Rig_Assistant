@@ -15,6 +15,8 @@ Help is installed with VERA, so it works without network. It is shown in the int
 
 The agent can read these help pages too. In any session, ask for example "How do I enable a plugin in VERA?" or "How do I export a session in VERA?", and it looks up the answer in help.
 
+Select a help citation in chat to open the page in the language the agent read.
+
 ## Plugin help
 
 Each installed plugin has its own help page: what the plugin does, what it needs and how to ask the agent to use it. You find it in Help, in the page list, and on the plugin's card on the **Plugins** page.

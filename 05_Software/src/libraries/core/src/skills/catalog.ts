@@ -3,6 +3,7 @@ import { lstat, open, opendir, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { SKILL_BYTES, type SkillSource, type SkillSummary, skillNameSchema, veraError } from "@vera/shared";
 import { parseDocument } from "yaml";
+import { waitForAbort } from "../abort.js";
 import { isBinary } from "../tools/binary.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard, validateRelativePath } from "../workbench/path-guard.js";
@@ -42,7 +43,9 @@ export function parseSkill(content: string, folder: string) {
 export interface SkillPluginRoot {
   id: string;
   folder: string;
+  sha256?: string;
 }
+type Selection = { source: "plugin"; plugin: SkillPluginRoot } | { source: Exclude<SkillSource, "plugin"> };
 const byId = (a: SkillPluginRoot, b: SkillPluginRoot) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 /**
  * Separately authorized roots; callers supply names rather than filesystem authority. A name resolves
@@ -55,9 +58,9 @@ export class SkillCatalog {
       userData?: string;
       disabled: () => readonly string[];
       assertCurrent?: () => void;
-      refresh?: () => Promise<void>;
+      refresh?: (signal?: AbortSignal) => Promise<void>;
       /** Enabled, issue-free plugins of the workbench. */
-      plugins?: () => Promise<readonly SkillPluginRoot[]>;
+      plugins?: (signal?: AbortSignal) => Promise<readonly SkillPluginRoot[]>;
     },
   ) {}
   check(signal?: AbortSignal) {
@@ -74,32 +77,24 @@ export class SkillCatalog {
     if (!root) throw veraError("DENIED");
     return root;
   }
-  /** Plugin roots loaded once for every read of one list(); loading verifies each plugin's files. */
-  private snapshot: { roots: Promise<SkillPluginRoot[]>; users: number } | undefined;
-  private async plugins(): Promise<SkillPluginRoot[]> {
-    if (this.snapshot) return this.snapshot.roots;
-    return [...((await this.options.plugins?.()) ?? [])].sort(byId);
+  private async plugins(signal?: AbortSignal): Promise<SkillPluginRoot[]> {
+    this.check(signal);
+    return [...(await waitForAbort(this.options.plugins?.(signal) ?? Promise.resolve([]), signal))].sort(
+      byId,
+    );
   }
-  private async withPlugins<T>(operation: () => Promise<T>): Promise<T> {
-    if (!this.snapshot) {
-      const roots = this.plugins();
-      roots.catch(() => {});
-      this.snapshot = { roots, users: 0 };
-    }
-    const snapshot = this.snapshot;
-    snapshot.users++;
-    try {
-      return await operation();
-    } finally {
-      if (--snapshot.users === 0 && this.snapshot === snapshot) this.snapshot = undefined;
-    }
+  private async refresh(signal?: AbortSignal) {
+    this.check(signal);
+    if (this.options.refresh) await waitForAbort(this.options.refresh(signal), signal);
+    this.check(signal);
   }
   /** The enabled plugin with the lowest id that has a skills/<name> entry. */
-  private async pluginOf(name: string): Promise<SkillPluginRoot | undefined> {
-    for (const plugin of await this.plugins()) {
+  private async pluginOf(name: string, signal?: AbortSignal): Promise<SkillPluginRoot | undefined> {
+    for (const plugin of await this.plugins(signal)) {
+      this.check(signal);
       try {
-        await lstat(join(plugin.folder, "skills", name));
-        return plugin;
+        const entry = await lstat(join(plugin.folder, "skills", name));
+        if (entry.isDirectory() || entry.isSymbolicLink()) return plugin;
       } catch (error) {
         if (!missing(error)) throw error;
       }
@@ -107,12 +102,22 @@ export class SkillCatalog {
     return undefined;
   }
   async path(source: SkillSource, name: string, file = "SKILL.md") {
-    if (source !== "plugin") return this.pathAt(this.root(source), name, file);
+    return this.selectedPath(await this.selectSource(source, name), name, file);
+  }
+  private async selectSource(source: SkillSource, name: string, signal?: AbortSignal): Promise<Selection> {
+    if (source !== "plugin") return { source };
     if (!name || name === "." || name === ".." || /[\\/:\0]/.test(name)) throw veraError("INVALID");
     validateRelativePath(name);
-    const plugin = await this.pluginOf(name);
+    const plugin = await this.pluginOf(name, signal);
     if (!plugin) throw veraError("NOT_FOUND");
-    return this.pathAt(plugin.folder, name, file);
+    return { source, plugin };
+  }
+  private selectedPath(selected: Selection, name: string, file: string) {
+    return this.pathAt(
+      selected.source === "plugin" ? selected.plugin.folder : this.root(selected.source),
+      name,
+      file,
+    );
   }
   private async pathAt(base: string, name: string, file: string) {
     if (!name || name === "." || name === ".." || /[\\/:\0]/.test(name)) throw veraError("INVALID");
@@ -146,17 +151,19 @@ export class SkillCatalog {
     }
     return target;
   }
-  read(source: SkillSource, name: string, file = "SKILL.md", signal?: AbortSignal) {
-    return this.withPlugins(() => this.readNow(source, name, file, signal));
-  }
-  private async readNow(source: SkillSource, name: string, file: string, signal?: AbortSignal) {
+  async read(source: SkillSource, name: string, file = "SKILL.md", signal?: AbortSignal) {
     this.check(signal);
-    if (source === "official") {
+    return this.readNow(await this.selectSource(source, name, signal), name, file, signal);
+  }
+  private async readNow(selected: Selection, name: string, file: string, signal?: AbortSignal) {
+    this.check(signal);
+    if (selected.source === "official") {
       if (name !== createPluginSkill.name || file !== "SKILL.md") throw veraError("NOT_FOUND");
       const content = `---\nname: ${createPluginSkill.name}\ndescription: ${createPluginSkill.description}\n---\n${createPluginSkill.body}`;
       return { content, sha256: createHash("sha256").update(content).digest("hex") };
     }
-    const target = await this.path(source, name, file);
+    const target = await this.selectedPath(selected, name, file);
+    this.check(signal);
     const handle = await open(target, "r");
     try {
       const before = await handle.stat();
@@ -170,7 +177,7 @@ export class SkillCatalog {
         count += read.bytesRead;
       }
       const after = await handle.stat();
-      const current = await lstat(await this.path(source, name, file));
+      const current = await lstat(await this.selectedPath(selected, name, file));
       this.check(signal);
       if (
         count !== before.size ||
@@ -184,10 +191,10 @@ export class SkillCatalog {
         before.ctimeMs !== current.ctimeMs
       )
         throw veraError("CONFLICT");
-      const selected = bytes.subarray(0, count);
-      if (isBinary(selected)) throw veraError("INVALID");
-      const content = new TextDecoder("utf-8", { fatal: true }).decode(selected);
-      return { content, sha256: createHash("sha256").update(selected).digest("hex") };
+      const contentBytes = bytes.subarray(0, count);
+      if (isBinary(contentBytes)) throw veraError("INVALID");
+      const content = new TextDecoder("utf-8", { fatal: true }).decode(contentBytes);
+      return { content, sha256: createHash("sha256").update(contentBytes).digest("hex") };
     } finally {
       await handle.close();
     }
@@ -211,12 +218,9 @@ export class SkillCatalog {
     return names;
   }
   private async selection() {
-    const selected = new Map<string, { source: SkillSource; plugin?: string }>([
-      [createPluginSkill.name, { source: "official" }],
-    ]);
+    const selected = new Map<string, Selection>([[createPluginSkill.name, { source: "official" }]]);
     for (const plugin of (await this.plugins()).reverse())
-      for (const name of await this.discover(plugin.folder))
-        selected.set(name, { source: "plugin", plugin: plugin.id });
+      for (const name of await this.discover(plugin.folder)) selected.set(name, { source: "plugin", plugin });
     if (this.options.userData)
       for (const name of await this.discover(this.root("user"))) selected.set(name, { source: "user" });
     for (const name of await this.discover(this.root("workbench")))
@@ -236,24 +240,23 @@ export class SkillCatalog {
     }
   }
   async list(): Promise<SkillSummary[]> {
-    this.check();
-    await this.options.refresh?.();
-    this.check();
-    return this.withPlugins(() => this.summaries());
+    await this.refresh();
+    return this.summaries();
   }
   private async summaries(): Promise<SkillSummary[]> {
     const selected = await this.selection();
     const results: SkillSummary[] = [];
-    for (const [name, { source, plugin }] of [...selected].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+    for (const [name, selection] of [...selected].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+      const { source } = selection;
       const base = {
         name,
         source,
-        ...(plugin ? { plugin } : {}),
+        ...(selection.source === "plugin" ? { plugin: selection.plugin.id } : {}),
         description: "",
         enabled: !this.options.disabled().includes(name),
       };
       try {
-        const loaded = await this.read(source, name);
+        const loaded = await this.readNow(selection, name, "SKILL.md");
         const { description } = parseSkill(loaded.content, name);
         await this.agentPath(source, name, "SKILL.md");
         results.push({ ...base, description });
@@ -267,8 +270,7 @@ export class SkillCatalog {
         results.push({ ...base, error: diagnostic });
       }
     }
-    await this.options.refresh?.();
-    this.check();
+    await this.refresh();
     return results.map((s) => ({ ...s, enabled: !this.options.disabled().includes(s.name) }));
   }
   async metadata() {
@@ -276,47 +278,55 @@ export class SkillCatalog {
       .filter((s) => s.enabled && !s.error)
       .map(({ name, description }) => ({ name, description }));
   }
-  private async source(name: string): Promise<SkillSource> {
-    for (const source of ["workbench", "user", "plugin"] as const) {
-      if (source === "plugin") {
-        if (await this.pluginOf(name)) return source;
-        continue;
-      }
+  private async source(name: string, signal: AbortSignal): Promise<Selection> {
+    for (const source of ["workbench", "user"] as const) {
+      this.check(signal);
       if (source === "user" && !this.options.userData) continue;
       // An existing workbench folder shadows the user skill even if its content is invalid.
-      await this.path(source, name);
+      await this.pathAt(this.root(source), name, "SKILL.md");
       try {
         await lstat(join(this.root(source), "skills", name));
-        return source;
+        return { source };
       } catch (error) {
         if (!missing(error)) throw error;
       }
     }
-    if (name === createPluginSkill.name) return "official";
+    const plugin = await this.pluginOf(name, signal);
+    if (plugin) return { source: "plugin", plugin };
+    if (name === createPluginSkill.name) return { source: "official" };
     throw veraError("NOT_FOUND");
   }
-  async load(name: string, file: string | undefined, signal: AbortSignal): Promise<Record<string, unknown>> {
-    this.check(signal);
-    await this.options.refresh?.();
-    this.check(signal);
+  private requireEnabled(name: string) {
+    if (this.options.disabled().includes(name))
+      throw { ...veraError("DENIED"), messageKey: "skills.disabled" };
+  }
+  async load(name: string, file: string | undefined, signal: AbortSignal) {
+    await this.refresh(signal);
     skillNameSchema.parse(name);
-    if (this.options.disabled().includes(name)) throw veraError("DENIED");
-    const source = await this.source(name);
-    await this.agentPath(source, name, "SKILL.md");
-    if (file) await this.agentPath(source, name, file);
-    const primary = await this.read(source, name, "SKILL.md", signal);
+    this.requireEnabled(name);
+    const selected = await this.source(name, signal);
+    await this.agentPath(selected.source, name, "SKILL.md");
+    if (file) await this.agentPath(selected.source, name, file);
+    const primary = await this.readNow(selected, name, "SKILL.md", signal);
     const skill = parseSkill(primary.content, name);
-    const text = file ? (await this.read(source, name, file, signal)).content : skill.body;
-    await this.options.refresh?.();
-    await this.agentPath(source, name, "SKILL.md");
-    if (file) await this.agentPath(source, name, file);
+    const text = file ? (await this.readNow(selected, name, file, signal)).content : skill.body;
+    await this.refresh(signal);
+    this.requireEnabled(name);
+    await this.agentPath(selected.source, name, "SKILL.md");
+    if (file) await this.agentPath(selected.source, name, file);
+    const current = await this.source(name, signal);
     if (
-      (await this.source(name)) !== source ||
-      (await this.read(source, name, "SKILL.md", signal)).sha256 !== primary.sha256
+      current.source !== selected.source ||
+      (current.source === "plugin" &&
+        selected.source === "plugin" &&
+        (current.plugin.id !== selected.plugin.id ||
+          current.plugin.folder !== selected.plugin.folder ||
+          current.plugin.sha256 !== selected.plugin.sha256)) ||
+      (await this.readNow(current, name, "SKILL.md", signal)).sha256 !== primary.sha256
     )
       throw veraError("CONFLICT");
     this.check(signal);
-    if (this.options.disabled().includes(name)) throw veraError("DENIED");
+    this.requireEnabled(name);
     return { name, ...(file ? { file } : {}), text };
   }
 }

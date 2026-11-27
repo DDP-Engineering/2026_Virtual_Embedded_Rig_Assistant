@@ -301,6 +301,9 @@ it("loads the enabled plugins once per list, however many plugin skills it reads
     ],
   );
   expect(loads).toBe(1);
+  await f.skill("workbench", "local");
+  await catalog.load("local", undefined, new AbortController().signal);
+  expect(loads).toBe(1);
   await catalog.read("plugin", "c-tools-guide");
   expect(loads).toBe(2);
   enabled.pop();
@@ -319,10 +322,25 @@ it("shadows plugin skills by workbench and user skills; the lower plugin id wins
     plugins: async () => enabled,
   });
   const signal = new AbortController().signal;
+  await writeFile(
+    join(enabled[0]!.folder, "skills/shared/SKILL.md"),
+    "---\nname: shared\ndescription: B description\n---\nB BODY\n",
+  );
+  await writeFile(
+    join(enabled[1]!.folder, "skills/shared/SKILL.md"),
+    "---\nname: shared\ndescription: A description\n---\nA BODY\n",
+  );
   expect((await catalog.list()).filter((s) => s.source !== "official")).toMatchObject([
-    { name: "shared", source: "plugin", plugin: "a-tools" },
+    { name: "shared", source: "plugin", plugin: "a-tools", description: "A description" },
   ]);
   expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "A BODY\n" });
+  const lowerEntry = join(enabled[1]!.folder, "skills", "shared");
+  await rm(lowerEntry, { recursive: true });
+  await writeFile(lowerEntry, "This is a file rather than a skill directory.");
+  expect((await catalog.list()).find((skill) => skill.name === "shared")).toMatchObject({
+    plugin: "b-tools",
+  });
+  expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "B BODY\n" });
   await f.skill("user", "shared", "User copy", "USER BODY");
   expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([
     { name: "shared", source: "user", description: "User copy", enabled: true },
@@ -333,4 +351,27 @@ it("shadows plugin skills by workbench and user skills; the lower plugin id wins
     { name: "shared", source: "workbench" },
   ]);
   expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "BENCH BODY\n" });
+});
+
+it("keeps a skill and its extra file tied to the selected plugin during a catalog refresh", async () => {
+  const f = await fixture();
+  const roots = await Promise.all(
+    ["a-tools", "b-tools"].map(async (id) => {
+      const folder = await pluginSkill(f.userData, id, "shared", "SAME BODY");
+      await writeFile(join(folder, "skills/shared/extra.md"), id);
+      return { id, folder };
+    }),
+  );
+  let refreshes = 0;
+  const catalog = new SkillCatalog({
+    root: f.workbench,
+    disabled: () => [],
+    plugins: async () => roots,
+    refresh: async () => {
+      if (++refreshes === 2) roots.shift();
+    },
+  });
+  const signal = new AbortController().signal;
+  await expect(catalog.load("shared", "extra.md", signal)).rejects.toMatchObject({ code: "CONFLICT" });
+  await expect(catalog.load("shared", "extra.md", signal)).resolves.toMatchObject({ text: "b-tools" });
 });

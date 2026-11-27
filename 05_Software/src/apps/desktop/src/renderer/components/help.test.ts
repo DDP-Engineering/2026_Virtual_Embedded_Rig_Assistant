@@ -46,17 +46,17 @@ function serve() {
     return { page, language: served, title: /^# (.+)$/m.exec(content)?.[1], content };
   }) as never);
 }
-function Harness() {
-  const [page, setPage] = useState("index");
+function Harness({ initial }: { initial: string }) {
+  const [page, setPage] = useState(initial);
   return createElement(HelpView, { page, open: setPage });
 }
-async function render() {
+async function render(initial = "index") {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
-    root.render(createElement(QueryClientProvider, { client }, createElement(Harness)));
+    root.render(createElement(QueryClientProvider, { client }, createElement(Harness, { initial })));
   });
 }
 
@@ -77,6 +77,16 @@ it("lists pages on the right and renders the page in the interface language, els
   expect(container.querySelector('[data-help-page="permissions"]')?.getAttribute("aria-current")).toBe(
     "page",
   );
+});
+
+it("opens a cited page in its served language even if the interface is English", async () => {
+  serve();
+  const ref = helpCitationKey("help:index#lang=fr");
+  expect(ref).toBe("index#lang=fr");
+  await render(ref);
+  await vi.waitFor(() => expect(container.querySelector(".help-page h1")?.textContent).toBe("Aide de VERA"));
+  expect(api.invoke).toHaveBeenCalledWith("help.read", { page: "index", language: "fr" });
+  expect(container.querySelector(".help-page")?.getAttribute("lang")).toBe("fr");
 });
 
 it("opens another help page from an internal link and keeps external links confirmed", async () => {
@@ -104,8 +114,8 @@ it("shows an issued help citation as a valid chip whose key opens the page in He
   await act(async () => {
     root.render(
       createElement(Markdown, {
-        text: "See [[help:permissions]].",
-        citations: [{ ref: "help:permissions", valid: true }],
+        text: "See [[help:permissions#lang=fr]].",
+        citations: [{ ref: "help:permissions#lang=fr", valid: true }],
         onCitation: (ref: string) => opened.push(helpCitationKey(ref) ?? ref),
       }),
     );
@@ -113,5 +123,5 @@ it("shows an issued help citation as a valid chip whose key opens the page in He
   const chip = container.querySelector<HTMLElement>('[data-citation="valid"][data-citation-kind="help"]');
   expect(chip?.textContent).toContain("permissions");
   await act(async () => chip?.click());
-  expect(opened).toEqual(["permissions"]);
+  expect(opened).toEqual(["permissions#lang=fr"]);
 });

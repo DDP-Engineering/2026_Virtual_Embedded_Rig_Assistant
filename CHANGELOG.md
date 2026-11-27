@@ -91,6 +91,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Take a question's recommendation written as text, so its mark and automatic answer are kept.
 - Ask a plan decision as an ordinary question when the session has no plan, instead of an unexplained tool failure.
 - Accept a plan with another word for a status or a step that is too long, and drop blank steps.
+- Keep each skill's metadata and files tied to the selected source, skip plugin scans for local skills, and report missing and disabled skills distinctly.
+- Stop waiting on Help promptly, page long Help and skill text, and open Help citations in the cited language.
 
 ## [0.4.0] - 2026-11-26
 

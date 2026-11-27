@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Files and artifacts keep every line across pages. Agents can read long plans in pages.
-      ro: Fișierele și artefactele se citesc fără linii sărite. Agentul citește planurile lungi pe pagini.
-      de: Dateien und Artefakte behalten jede Zeile. Agenten lesen lange Pläne seitenweise.
-      fr: Chaque ligne de fichier ou d’artefact est lue. L’agent lit les plans longs par pages.
+      en: Files and artifacts keep every line. Agents can page through plans, skills and help.
+      ro: Fișierele și artefactele păstrează liniile. Agentul citește pe pagini planuri, skill-uri și ajutor.
+      de: Dateien und Artefakte behalten alle Zeilen. Pläne, Skills und Hilfe sind seitenweise lesbar.
+      fr: Les fichiers et artefacts gardent chaque ligne. Plans, compétences et aide se lisent par pages.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

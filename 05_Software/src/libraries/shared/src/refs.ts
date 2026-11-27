@@ -1,4 +1,6 @@
 // REQ-FUNC-7cd31fe3
+import { type HelpLanguage, helpLanguageSchema } from "./help.js";
+import { pluginIdSchema } from "./plugins.js";
 export interface LineRef {
   path: string;
   start: number;
@@ -94,18 +96,21 @@ export type Reference =
   | ({ kind: "lines" } & LineRef)
   | { kind: "artifact"; name: string }
   | { kind: "capture"; identity: string; frame: number }
-  | { kind: "help"; page: string }
-  | { kind: "help"; plugin: string };
+  | { kind: "help"; page: string; language?: HelpLanguage }
+  | { kind: "help"; plugin: string; language?: HelpLanguage };
 const helpName = /^[a-z0-9][a-z0-9-]{0,63}$/;
-/** `help:<page>` names an app help page, `help:plugin/<id>` a plugin's help page (the help tool issues them). */
+/** Help references name a page or a plugin, and optionally the language served. */
 function parseHelpRef(text: string): Reference | undefined {
-  if (!text.startsWith("help:")) return undefined;
-  const target = text.slice(5);
+  const [target, code, ...rest] = text.slice(5).split("#lang=");
+  if (!target || rest.length) return undefined;
+  const language = code === undefined ? undefined : helpLanguageSchema.safeParse(code).data;
+  if (code !== undefined && !language) return undefined;
+  const localized = language ? { language } : {};
   if (target.startsWith("plugin/")) {
     const plugin = target.slice(7);
-    return helpName.test(plugin) ? { kind: "help", plugin } : undefined;
+    return pluginIdSchema.safeParse(plugin).success ? { kind: "help", plugin, ...localized } : undefined;
   }
-  return helpName.test(target) ? { kind: "help", page: target } : undefined;
+  return helpName.test(target) ? { kind: "help", page: target, ...localized } : undefined;
 }
 
 /** Pure syntax only; source/provenance/session bounds belong to core. */
@@ -144,6 +149,7 @@ export function formatRef(value: Reference): string {
       break;
     case "help":
       ref = "plugin" in value ? `help:plugin/${value.plugin}` : `help:${value.page}`;
+      if (value.language) ref += `#lang=${value.language}`;
       break;
     case "lines":
       return formatLineRef(value);
