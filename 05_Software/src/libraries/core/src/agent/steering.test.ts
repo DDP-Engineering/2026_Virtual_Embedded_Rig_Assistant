@@ -2,6 +2,7 @@
 import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
+import { conservativeCompactor } from "./conservative-counting.test-support.js";
 import { ContextPolicy } from "./context.js";
 import { ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
@@ -52,6 +53,7 @@ function rig(stream: LlmGateway["stream"], messages: Message[] = []) {
     tools: [],
     messages,
     contextPolicy: new ContextPolicy(),
+    contextCompactor: conservativeCompactor(),
   });
   return { runtime, queue, events };
 }

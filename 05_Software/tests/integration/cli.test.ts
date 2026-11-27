@@ -1054,6 +1054,10 @@ it("reuses a provider count on the first request of a second CLI process with th
     };
     res.end(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`);
   });
+  // A full pinned context file and a long prompt: more than a cold 32K count admits at two bytes per token,
+  // well inside the window at the measured ratio. A command line cannot carry a prompt that long alone.
+  await writeFile(join(workbench, ".vera/WORKBENCH.md"), "pinned ".repeat(2_300));
+  const plain = (await fixture()).workbench;
   const largePrompt = "context ".repeat(3_000);
   const long = (folder: string) => launch([...custom(workbench, url, largePrompt), "--data", folder]).result;
   const cold = await long(data);
@@ -1061,7 +1065,7 @@ it("reuses a provider count on the first request of a second CLI process with th
   expect(cold.stdout).toContain("CONTEXT_LIMIT");
   expect(requests).toBe(0);
 
-  const measured = await launch([...custom(workbench, url), "--data", data]).result;
+  const measured = await launch([...custom(plain, url), "--data", data]).result;
   expect(measured.code).toBe(0);
   expect(
     events(measured.stdout).some(({ event }) => event.type === "usage.updated" && event.calibration),

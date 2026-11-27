@@ -19,28 +19,28 @@ afterEach(() => {
 });
 
 const window = 60000;
-const gatewayFor = () =>
+const gatewayFor = (size = window) =>
   scriptedGateway(
-    window,
+    size,
     (request) =>
       new ContextPolicy().prepare(
         { system: request.system, tools: request.tools, messages: request.messages },
         {
-          contextWindow: window,
+          contextWindow: size,
           maxOutputTokens: 1000,
           safetyMargin: 1024,
           input: ["text"],
-          inputBudget: window - 2024,
+          inputBudget: size - 2024,
           supportsTools: true,
         },
         false,
       ).contextTokens,
   );
-const long = (label: string) => `${label} ${"words ".repeat(3000)}`;
+const long = (label: string, words = 3000) => `${label} ${"words ".repeat(words)}`;
 type Env = Awaited<ReturnType<typeof durableSetup>>;
-async function turns(env: Env, id: string, labels: string[]) {
+async function turns(env: Env, id: string, labels: string[], words?: number) {
   for (const label of labels) {
-    env.service.send(id, long(label));
+    env.service.send(id, long(label, words));
     expect((await env.service.waitIdle(id))?.stopReason).toBe("end");
     await env.service.waitCompaction(id);
   }
@@ -87,15 +87,17 @@ it("makes no summary while the session's automatic compaction is off and stops a
 });
 
 it("compacts at the resolved trigger: a higher workbench trigger leaves the same history uncompacted", async () => {
-  const gateway = gatewayFor();
+  // A wide window puts two turns thousands of tokens above the default trigger and below the raised one,
+  // so the size of the system prompt and the tool descriptions does not decide the outcome.
+  const gateway = gatewayFor(200_000);
   const env = await durableSetup(gateway);
   advanced(env, {}, { compactionTrigger: 95 });
   const id = env.service.create().id;
-  await turns(env, id, ["one", "two"]);
+  await turns(env, id, ["one", "two"], 12_000);
   expect(gateway.summaries).toHaveLength(0);
   // The default trigger summarizes the same history right after the turn.
   advanced(env, {}, {});
-  await turns(env, env.service.create().id, ["one", "two"]);
+  await turns(env, env.service.create().id, ["one", "two"], 12_000);
   expect(gateway.summaries.length).toBeGreaterThan(0);
 });
 

@@ -160,7 +160,9 @@ const preflight = (events: SessionEvent[]) =>
   events.filter((e): e is Usage => e.type === "usage.updated" && e.contextTokens !== undefined).at(-1);
 
 it("keeps the calibration across a restart so the first request after it is counted calibrated", async () => {
-  // The provider reports a quarter of the conservative byte estimate.
+  // The provider reports a quarter of the conservative byte estimate. The first request is counted cold,
+  // at half of that estimate, so the report is half of its count; a calibrated count already is that
+  // quarter with the 10 % margin.
   const gateway = scriptedGateway(200_000, () => 0);
   const env = await durableSetup(gateway);
   const id = env.service.create().id;
@@ -171,8 +173,9 @@ it("keeps the calibration across a restart so the first request after it is coun
       for await (const event of own) {
         if (event.type === "done" && event.message.usage.input === 0) {
           const counted = preflight(env.events(id))?.contextTokens ?? 0;
+          const cold = estimate === 0;
           estimate ||= counted;
-          event.message.usage.input = Math.ceil(counted / 4);
+          event.message.usage.input = Math.ceil(cold ? counted / 2 : counted / 1.1);
         }
         yield event;
       }
@@ -189,8 +192,9 @@ it("keeps the calibration across a restart so the first request after it is coun
   env.service.send(id, "Second");
   await env.service.waitIdle(id);
   const after = preflight(env.events(id));
-  // Calibrated: far below the conservative estimate of the same, slightly larger request.
-  expect(after?.contextTokens).toBeLessThan(estimate * 0.4);
+  // Calibrated at a quarter with the 10 % margin: clearly below the cold count (a half) of the same,
+  // slightly larger request.
+  expect(after?.contextTokens).toBeLessThan(estimate * 0.7);
   expect(gateway.summaries).toHaveLength(0);
 });
 
@@ -208,11 +212,16 @@ it("uses the application calibration for a fresh session at the first 32K dispat
     },
     () => [],
   );
-  const largePrompt = "word ".repeat(9_000);
+  // Between the two counts: over the budget at the cold ratio of a half, inside it and below the
+  // compaction trigger at the measured ratio of about a third.
+  const largePrompt = "word ".repeat(10_000);
   const cold = env.service.create().id;
   env.service.send(cold, largePrompt);
   expect((await env.service.waitIdle(cold))?.stopReason).toBe("limit");
   expect(gateway.requests).toHaveLength(0);
+  // The refused turn's history is summarized in the background; that summary is not the warm session's.
+  await env.service.waitCompaction(cold);
+  const summarized = gateway.summaries.length;
 
   const warmup = env.service.create().id;
   env.service.send(warmup, "Measure the model");
@@ -227,7 +236,7 @@ it("uses the application calibration for a fresh session at the first 32K dispat
   expect(gateway.requests).toHaveLength(2);
   const estimated = preflight(env.events(warm));
   expect(estimated?.contextTokens).toBeLessThan(estimated?.inputBudgetTokens ?? 0);
-  expect(gateway.summaries).toHaveLength(0);
+  expect(gateway.summaries).toHaveLength(summarized);
 
   env.host.model = () => "scripted/another";
   const other = env.service.create().id;

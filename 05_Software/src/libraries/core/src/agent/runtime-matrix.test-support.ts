@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
 import { ReplayGateway } from "../llm/replay.js";
+import { conservativeCompactor } from "./conservative-counting.test-support.js";
 import { ContextPolicy, conservativeCounter } from "./context.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, ToolDef } from "./types.js";
 
@@ -120,6 +121,7 @@ export function runtimeMatrix(
         tools,
         messages: options.messages ?? [],
         contextPolicy: options.policy ?? new ContextPolicy(),
+        contextCompactor: conservativeCompactor(),
       };
       runtime.start(init);
       return {

@@ -4,6 +4,7 @@ import { expect, it, vi } from "vitest";
 import { z } from "zod";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
 import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
+import { conservativeCompactor } from "./conservative-counting.test-support.js";
 import { ContextPolicy, conservativeCounter } from "./context.js";
 import { buildContext, ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
@@ -598,6 +599,7 @@ it("settles running compaction usage after abort without dispatching a normal re
     tools: [],
     messages: [...exchange(), ...exchange()],
     contextPolicy: policy,
+    contextCompactor: conservativeCompactor(),
   });
   expect(await runtime.send("Current instruction")).toEqual({ stopReason: "aborted" });
   expect(calls).toBe(1);

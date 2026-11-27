@@ -7,10 +7,10 @@ title = "Calibrate the request token count from provider-reported usage"
 status = "active"
 
 requirement = """
-When provider token counts are enabled, the context policy shall use the same model's accepted session ratio or, on the first request of a fresh session, the most recently saved ratio for that provider and model in the same application data folder, applying the configured margin (10% by default) and capping the result at the conservative estimate, with conservative counting for a cold model or a switch to a different model in an existing session.
+When provider token counts are enabled, the context policy shall use the same model's accepted session ratio or, on the first request of a fresh session, the most recently saved ratio for that provider and model in the same application data folder, applying the configured margin (10% by default) and capping the result at the conservative estimate. A cold model, or a different model selected in an existing session, shall count at half the conservative estimate until that model reports usage.
 """
 
-verification = "Measure an accepted normal request, then start a fresh session using the same application data folder and model and verify the first dispatch uses ceil(estimate x ratio x 1.1), capped at the conservative estimate. With a different model, connection or data folder, a cold request uses the conservative estimate. A report below 0.12, corrupt or unavailable cache and disabled provider counts introduce no scale. A second CLI invocation dispatches a warm plugin-heavy request that a cold 32K session refuses."
+verification = "Measure an accepted normal request, then start a fresh session using the same application data folder and model and verify the first dispatch uses ceil(estimate x ratio x 1.1), capped at the conservative estimate. With a different model, connection or data folder, a cold request uses ceil(estimate x 0.5). A report below 0.12 and a corrupt or unavailable cache leave the cold count. Disabled provider counts use the conservative estimate, cold or measured. A first request of 30 000 bytes, refused by the conservative estimate, fits a 32K model cold. A second CLI invocation dispatches a warm request that a cold 32K session refuses."
 
 affected_paths = ["05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/model-calibration.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
 
@@ -20,7 +20,7 @@ linked_tests = ["05_Software/src/libraries/core/src/agent/context.test.ts", "05_
 spec = "specs/REQ-NFR-4721c12f.md"
 
 priority = "normal"   # low | normal | high
-rationale = ""        # why this behavior exists, if not obvious
+rationale = "At one token per byte a plain first request (system prompt and tool schemas, about 27 000 bytes) exceeded the 27 033-token input budget of a 32K model, so the model was never called and never measured."
 
 created = 2026-11-20
-updated = 2026-11-24
+updated = 2026-11-27

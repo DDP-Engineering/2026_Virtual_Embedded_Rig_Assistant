@@ -68,7 +68,8 @@ the turn continues.
 - The request (system prompt, tool schemas, messages) is estimated as the UTF-8 bytes of its JSON plus
   fixed framing, and 2 048 tokens per image, marked `estimated`. After each answer VERA keeps the ratio
   of provider-reported input tokens to the estimate (at most 1, ignored below 0.12) and scales later
-  estimates by it times 1.1.
+  estimates by it times 1.1. Until a model's first answer the estimate counts at half, two bytes per
+  token.
 - Over budget, completed tool results are shortened oldest first to a stub with tool name, outcome
   and `sourceRefs`. If the minimum request still does not fit, no call is made: `CONTEXT_LIMIT`, stop
   reason `limit`. A provider context rejection ends the turn the same way, without retry.

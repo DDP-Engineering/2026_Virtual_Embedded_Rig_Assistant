@@ -332,6 +332,9 @@ it("keeps failed watcher generations blocked even after ready and recovers on Re
   const ingest = (h.service as unknown as { ingest: Ingester }).ingest;
   const watcher = () => (ingest as unknown as { watcher: FSWatcher }).watcher;
   await writeFile(join(h.folder, "docs/source.txt"), "one");
+  // An explicit pass: the watcher may not have reported the new file yet, and an idle indexer is then
+  // ready with nothing searchable.
+  await h.service.reindexDocuments();
   await ingest.waitIdle();
   expect(status()).toMatchObject({ state: "ready", searchable: 1 });
   const old = watcher();

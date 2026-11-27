@@ -122,6 +122,14 @@ type CompactionView = ContextView & {
  * prompt (prefix caching servers report newly evaluated tokens), so it is not used.
  */
 export const MIN_CALIBRATION_RATIO = 0.12;
+/**
+ * The scale of a model no request has measured yet: two bytes per token. Reported ratios are about a
+ * quarter for prose and code and about a third for the JSON of tool schemas, so this keeps a margin of half
+ * again over the heaviest of them. At one token per byte the first request of a plain session alone counted
+ * above the input budget of a 32K model, which then refused every first message before any call. The first
+ * accepted report replaces it (REQ-NFR-4721c12f).
+ */
+export const COLD_CALIBRATION_RATIO = 0.5;
 
 /** The durable form of an adopted summary (REQ-DATA-d9ca38e5). */
 export interface CompactionRecord {
@@ -179,12 +187,14 @@ export class ContextCompactor {
   /** Reported input tokens per estimated token of the latest answered normal request. */
   calibration: { modelRef: string; ratio: number } | undefined;
   applicationCalibration: { modelRef: string; ratio: number } | undefined;
-  /** The count scale for a model, when its calibration is known. */
+  /**
+   * The count scale for a model: its measured ratio with the margin, or the cold ratio until a request has
+   * measured it. With provider token counts off there is none and the conservative estimate counts.
+   */
   scale(modelRef: string): number | undefined {
+    if (!this.settings.calibrated) return undefined;
     const sample = this.calibration ?? this.applicationCalibration;
-    return this.settings.calibrated && sample?.modelRef === modelRef
-      ? sample.ratio * this.settings.margin
-      : undefined;
+    return sample?.modelRef === modelRef ? sample.ratio * this.settings.margin : COLD_CALIBRATION_RATIO;
   }
   /** Keep the ratio of a reported input count to the estimate it answered; returns what was kept. */
   calibrate(

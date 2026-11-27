@@ -54,6 +54,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Preserve background output after cancelled reads and report timeouts and startup errors.
 - Preserve the end of long terminal lines and mark shortened terminal reads.
 - Accept bracketed terminal pastes at the text limit and explain when input is too long.
+- Send the first message to a model with a 32K context window: before a model's first answer a request counts two bytes per token instead of one.
 
 ## [0.4.0] - 2026-11-26
 

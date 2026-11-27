@@ -1,5 +1,6 @@
 import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
 import { expect, it, vi } from "vitest";
+import { conservativeCounting } from "../agent/conservative-counting.test-support.js";
 import { ReferenceRuntime, zeroUsage } from "../agent/runtime.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { fixture, input, plan } from "./review-turn.test-support.js";
@@ -57,6 +58,7 @@ it("keeps every summary and finalization boundary review-only, including fabrica
       created_at: new Date(i).toISOString(),
     });
   }
+  env.host.advanced = conservativeCounting;
   env.host.gateway.capabilities = () => ({
     input: ["text"],
     contextWindow: 6000,

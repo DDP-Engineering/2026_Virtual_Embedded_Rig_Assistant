@@ -83,7 +83,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 
 **Context compaction.** When a conversation fills more than the **Compaction trigger** of the model's input budget, VERA summarizes the earlier history and keeps the most recent part word for word (**Recent history kept verbatim**, at most a fifth of the budget). With **Background compaction** on, the summary runs right after a turn; with it off, the next message summarizes first, when needed. **Summary tool-result size** and **Summary passes per request** limit how much of each tool result a summary carries and how many summaries one request may make. With **Automatic compaction** off, a session sends its full history until it no longer fits; the turn then stops at the context limit.
 
-**Token counting.** VERA counts a request with the ratio the provider reported for earlier requests, plus the **Calibration margin**: 110 counts 1.1 times. Raise the margin when context-limit errors appear. Turn **Use provider token counts** off when a provider reports wrong usage; VERA then counts with its conservative estimate.
+**Token counting.** VERA counts a request with the ratio the provider reported for earlier requests, plus the **Calibration margin**: 110 counts 1.1 times. Before a model's first answer, VERA counts two bytes of the request as one token. Raise the margin when context-limit errors appear. Turn **Use provider token counts** off when a provider reports wrong usage; VERA then counts with its conservative estimate.
 
 **Delegated sessions per workbench** is how many delegated sessions may run at the same time within one workbench. A further one is refused until one finishes.
 

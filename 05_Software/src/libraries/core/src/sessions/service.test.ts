@@ -14,6 +14,7 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import * as citations from "../agent/citations.js";
+import { conservativeCounting } from "../agent/conservative-counting.test-support.js";
 import { zeroUsage } from "../agent/runtime.js";
 import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
@@ -194,6 +195,7 @@ afterEach(async () => {
 // REQ-FUNC-e5b6a1c9: authored for deferred runtime verification.
 it("keeps full durable history and restart transcript while compacting only provider views", async () => {
   const { service, gateway, handle, host } = await setup({ registry: new core.ToolRegistry([]) });
+  host.advanced = conservativeCounting;
   const caps = {
     contextWindow: 6000,
     maxOutputTokens: 1000,

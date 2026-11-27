@@ -4,6 +4,7 @@ import { veraError } from "@vera/shared";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
+import { conservativeCompactor } from "./conservative-counting.test-support.js";
 import { ContextPolicy } from "./context.js";
 import { ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
@@ -146,6 +147,7 @@ it("retains reported usage from a failed historical summary without adopting its
     messages: history,
     tools: [],
     contextPolicy: new ContextPolicy(),
+    contextCompactor: conservativeCompactor(),
   });
   await runtime.send("Next");
   expect(summaries).toBe(1);

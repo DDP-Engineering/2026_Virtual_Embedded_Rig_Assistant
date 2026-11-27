@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { defaultSettings } from "@vera/shared";
 import sharp from "sharp";
 import { afterEach } from "vitest";
+import { conservativeCounting } from "../agent/conservative-counting.test-support.js";
 import type { ContextPolicy } from "../agent/context.js";
 import { createPiAiGateway } from "../llm/providers.js";
 import { openDb } from "../storage/db.js";
@@ -109,6 +110,7 @@ export async function setup(contextPolicy?: ContextPolicy) {
       model: (model) => model ?? "custom:local/vision",
       prompt: () => "Explain the image.",
       mode: "read-only",
+      advanced: conservativeCounting,
       ...overrides,
       ...(contextPolicy && { contextPolicy }),
     });

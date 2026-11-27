@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type MaskingArea, workbenchSchema } from "@vera/shared";
 import { afterEach, expect, it } from "vitest";
+import { conservativeCounting } from "../agent/conservative-counting.test-support.js";
 import {
   ContextPolicy,
   createMaskingResolver,
@@ -251,6 +252,7 @@ it("masks a raw artifact export when read by the agent and reprojects retained r
 
 it("budgets actual masked historical and compaction requests after a short-secret off-to-on change", async () => {
   const f = await setup(false, false, false, "q");
+  f.host.advanced = conservativeCounting;
   f.host.registry = new ToolRegistry([readTool]);
   await writeFile(join(f.root, "input.txt"), "safe");
   const id = f.service.create().id;

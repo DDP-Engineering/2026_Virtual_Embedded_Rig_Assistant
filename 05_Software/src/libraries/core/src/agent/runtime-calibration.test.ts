@@ -2,7 +2,8 @@
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
-import { ContextCompactor } from "./compaction.js";
+import { COLD_CALIBRATION_RATIO, ContextCompactor } from "./compaction.js";
+import { conservativeCompactor } from "./conservative-counting.test-support.js";
 import { ContextPolicy } from "./context.js";
 import { ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
@@ -81,8 +82,8 @@ it("calibrates later requests from the reported input of the previous one and ke
   const first = raw(f.requests[0] as LlmRequest);
   const ratio = Math.ceil(first / 4) / first;
   expect(report).toMatchObject({ calibration: { modelRef: "replay/scenario", ratio } });
-  // Before any report the count is the conservative estimate.
-  expect(preflights(f.events)[0]?.contextTokens).toBe(first);
+  // Before any report the count is the cold ratio of the conservative estimate.
+  expect(preflights(f.events)[0]?.contextTokens).toBe(Math.ceil(first * COLD_CALIBRATION_RATIO));
   expect(JSON.stringify(f.events)).not.toContain("rawTokens");
 
   const next = fixture(compactor);
@@ -92,7 +93,7 @@ it("calibrates later requests from the reported input of the previous one and ke
   expect(preflights(next.events)[0]?.contextTokens).toBe(Math.ceil(second * ratio * 1.1));
 });
 
-it("uses the conservative estimate for another model and never a ratio above one", async () => {
+it("counts another model cold again and never keeps a ratio above one", async () => {
   const compactor = new ContextCompactor();
   const f = fixture(compactor, "replay/scenario", 10_000_000);
   await f.runtime.send("Question");
@@ -102,7 +103,36 @@ it("uses the conservative estimate for another model and never a ratio above one
   const other = fixture(compactor, "replay/other");
   other.start(f.runtime.messages());
   await other.runtime.send("Again");
-  expect(preflights(other.events)[0]?.contextTokens).toBe(raw(other.requests[0] as LlmRequest));
+  // The first model's ratio does not carry over: the other model starts at the cold ratio.
+  expect(preflights(other.events)[0]?.contextTokens).toBe(
+    Math.ceil(raw(other.requests[0] as LlmRequest) * COLD_CALIBRATION_RATIO),
+  );
+});
+
+it("counts conservatively, cold or measured, while provider token counts are off", async () => {
+  const compactor = conservativeCompactor();
+  const f = fixture(compactor);
+  await f.runtime.send(`First ${"context ".repeat(500)}`);
+  expect(preflights(f.events)[0]?.contextTokens).toBe(raw(f.requests[0] as LlmRequest));
+  const next = fixture(compactor);
+  next.start(f.runtime.messages());
+  await next.runtime.send("Second");
+  expect(preflights(next.events)[0]?.contextTokens).toBe(raw(next.requests[0] as LlmRequest));
+});
+
+it("lets a first request that the conservative estimate refused reach a 32K model", async () => {
+  // A plain session's system prompt and tool schemas alone are about 27 000 bytes, against an input budget
+  // of 27 033 tokens: at one token per byte a small WORKBENCH.md was enough to refuse every first message.
+  const window = { ...caps, contextWindow: 32_768, maxOutputTokens: 4_096 };
+  const request = { system: "s".repeat(30_000), tools: [], messages: [] };
+  const policy = new ContextPolicy();
+  expect(policy.prepare(request, window).fits).toBe(false);
+  expect(
+    policy.prepare(request, window, true, undefined, new ContextCompactor().scale("replay/any")).fits,
+  ).toBe(true);
+  expect(
+    policy.prepare(request, window, true, undefined, conservativeCompactor().scale("replay/any")).fits,
+  ).toBe(false);
 });
 
 it("ignores an implausibly small report, as from a prefix-caching server, and keeps the earlier ratio", async () => {

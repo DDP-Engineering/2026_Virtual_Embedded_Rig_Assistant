@@ -74,8 +74,8 @@ Ce lipsește la cele marcate **[PARȚIAL]**:
 - **F-31 / F-32:** regulile de prefix sunt lărgite (F-32); „Always allow” tot nu are efect în Ask
   (F-31), fiindcă documentația definește prefixele doar pentru Auto-edit.
 
-Încercat și retras: **F-02** (factorul de 0,4 tokeni per octet rupe 33 de teste de compactare).
-Neatinse din cele 16 prioritare: **F-02** și **F-08**.
+**F-02** a fost încercat și retras în lotul 4 (factorul global de 0,4 tokeni per octet rupea 33 de
+teste de compactare) și corectat pe 2026-11-27 altfel: doar un model nemăsurat numără la jumătate.
 
 De făcut manual după F-13: pe un workbench deja indexat, șterge `.vera/cache/extract` și reindexează.
 
@@ -93,7 +93,7 @@ de după această bază. Probele Windows, Ubuntu WSL2 și LM Studio sunt raporta
 | Finding | Decizie și stare |
 | --- | --- |
 | F-01 | Corecția publicată este necesară. Un model indicat la salvare devine implicit, iar lipsa lui trimite utilizatorul la Providers. Cheia OpenAI singură nu identifică un model disponibil pentru acel cont. Selecția rămâne explicită. |
-| F-02 | Limitarea la rece se reproduce și este definită explicit în REQ-NFR-4721c12f, inclusiv după schimbarea modelului într-o sesiune cu istoric. Raportul nu justifică o estimare globală de 0,4 tokeni/octet. Păstrat contractul până la o revizuire măsurată a preflight-ului. |
+| F-02 | Limitarea la rece se reproduce și este definită explicit în REQ-NFR-4721c12f, inclusiv după schimbarea modelului într-o sesiune cu istoric. Raportul nu justifică o estimare globală de 0,4 tokeni/octet. Păstrat contractul până la o revizuire măsurată a preflight-ului. **Revizuit 2026-11-27:** măsurat pe codul real, o sesiune simplă (26 de unelte, o întrebare scurtă) numără 27.192 față de bugetul de 27.033, deci primul mesaj era refuzat fără `WORKBENCH.md`. Un model nemăsurat numără acum la jumătate din estimarea conservatoare (`COLD_CALIBRATION_RATIO`); cerința și specificația sunt actualizate. |
 | F-03 | Corecția publicată este necesară și afișează fișierul și problemele de schemă. Local, dialogul folosește numele aplicației și evită expunerea mesajului brut al unei excepții necunoscute. |
 | F-04 | Retry manual este necesar pentru erorile tranzitorii. Local, autentificarea și configurarea nu mai sunt tratate ca tranzitorii. Retry explicit retrimite ultimul mesaj căruia i se aplică eroarea și rămâne vizibil în istoric. Reîncercarea automată ar schimba politica de execuție. |
 | F-05 | Publicat. Textul din compozitor răspunde întrebării pendinte, iar Enter trimite din card. Mesajele cu imagini și răspunsurile mai mari decât limita cardului trec prin trimiterea obișnuită. |
@@ -343,7 +343,7 @@ există niciun provider. Ecranul de pornire arată doar sigla VERA, fără nicio
 mesajul generic cu „Niciun model ales” plus un buton către Settings → Providers. Pe ecranul gol,
 când nu există provider, arată o singură linie cu același buton.
 
-**F-02. Un model personalizat cu fereastra implicită de 32k poate refuza primul mesaj. [V] numărare,
+**F-02. [CORECTAT] Un model personalizat cu fereastra implicită de 32k poate refuza primul mesaj. [V] numărare,
 [R] mărimi**
 Până la prima calibrare, tokenii se estimează la 1 token per octet de JSON
 (`core/agent/context.ts:32-54`). Revizorul a măsurat cererea goală (30 de unelte, `WORKBENCH.md`
@@ -353,6 +353,9 @@ schimbarea modelului în mijlocul sesiunii, calibrarea salvată nu se aplică is
 supraestimat de câteva ori.
 *Reparație:* fără calibrare, estimează la circa 0,4 tokeni per octet; folosește calibrarea de la
 nivelul aplicației ori de câte ori sesiunea nu are una pentru modelul curent.
+*Aplicat (2026-11-27):* un model fără nicio măsurătoare numără la 0,5 tokeni per octet, doar în
+`ContextCompactor.scale()`; estimarea conservatoare rămâne neschimbată și se folosește în continuare
+când „Use provider token counts” este oprit. O fereastră de 16K rămâne prea mică pentru setul de unelte.
 
 **F-03. [CORECTAT] Un `settings.json` invalid oprește aplicația fără fereastră și fără mesaj. [V]**
 `core/settings/service.ts:60-68` aruncă `INVALID` fără detalii; `main/index.ts:2422-2430` scrie în
