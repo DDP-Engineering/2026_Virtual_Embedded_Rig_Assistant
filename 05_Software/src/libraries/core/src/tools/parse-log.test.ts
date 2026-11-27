@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
-import { cp, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { createToolContext, NodeWorkerPool, ToolRegistry } from "../index.js";
 import { workerFixture } from "../workers/worker.test-support.js";
+import { scanLog } from "./parse-log-worker.js";
 
 let root: string;
 let pool: NodeWorkerPool;
@@ -46,7 +47,7 @@ it("validates defaults, exclusive selectors and strict argument boundaries", asy
     { path: "x", pattern: "x".repeat(513) },
     { path: "x", profile: "iso", fromLine: 0 },
     { path: "x", profile: "iso", maxEvents: 201 },
-    { path: "x", profile: "iso", levels: ["fatal"] },
+    { path: "x", profile: "iso", levels: ["loud"] },
     { path: "x", profile: "iso", contains: "x".repeat(201) },
     { path: "x", profile: "iso", extra: true },
     { path: "x", profile: "iso", expectedSha256: "bad" },
@@ -190,19 +191,96 @@ it("bounds escaped previews and samples without corrupting counts", async () => 
   expect(result.value.unparsedSamples[0].text).toHaveLength(256);
   expect(result.value.events.every((e: { message: string }) => e.message.length <= 256)).toBe(true);
 });
-it("refuses invalid UTF8, byte/line limits, regex syntax/groups and stale hashes", async () => {
-  for (const [bytes, reason] of [
-    [Buffer.from([0xff]), "invalid_utf8"],
-    ["a".repeat(16385), "line_too_large"],
-    ["é".repeat(8193), "line_too_large"],
-  ] as const) {
-    await log(bytes);
+it("analyses a capture with stray bytes or an overlong line instead of refusing it", async () => {
+  const good = "2026-04-12T08:00:00Z WARN supply low";
+  // Boot output at another baud rate and a reset glitch between two good lines.
+  await log(
+    Buffer.concat([
+      Buffer.from(`${good}\n`),
+      Buffer.from([0xff, 0xfe, 0x00, 0xc3, 0x28, 0x0a]),
+      Buffer.from(`${good}\n`),
+    ]),
+  );
+  expect((await call({ path: "log.txt", profile: "iso" })).value).toMatchObject({
+    scan: { complete: true, lines: 3 },
+    counts: { warn: 2, unparsed: 1 },
+  });
+  // One line of 40 KiB (a hex dump) is analysed by its first 16 KiB; the lines around it count as usual.
+  const dump = `2026-04-12T08:00:01Z INFO dump ${"deadbeef".repeat(5000)}`;
+  await log(`${good}\n${dump}\n${good}\n`);
+  const clipped = (await call({ path: "log.txt", profile: "iso", levels: ["info"] })).value;
+  expect(clipped).toMatchObject({
+    scan: { complete: true, lines: 3, bytes: Buffer.byteLength(`${good}\n${dump}\n${good}\n`) },
+    counts: { warn: 2, info: 1, unparsed: 0 },
+    preview: { truncated: true },
+  });
+  expect(clipped.events[0].message).toHaveLength(256);
+  for (const text of ["a".repeat(16385), "é".repeat(8193)]) {
+    await log(text);
     expect((await call({ path: "log.txt", profile: "iso" })).value).toMatchObject({
-      isError: true,
-      code: "INVALID",
-      reason,
+      scan: { complete: true, lines: 1, bytes: Buffer.byteLength(text) },
+      counts: { unparsed: 1 },
+      preview: { truncated: true },
     });
   }
+});
+
+it("reads a capture saved as UTF-16, as Windows PowerShell writes it", async () => {
+  const text = "2026-04-12T08:00:00Z WARN supply low\r\n2026-04-12T08:00:01Z ERROR brown-out détecté\r\n";
+  for (const [mark, encoding] of [
+    [[0xff, 0xfe], "utf16le"],
+    [[0xfe, 0xff], "utf16be"],
+  ] as const) {
+    const body = Buffer.from(text, "utf16le");
+    if (encoding === "utf16be") body.swap16();
+    const bytes = Buffer.concat([Buffer.from(mark), body]);
+    await log(bytes);
+    const value = (await call({ path: "log.txt", profile: "iso" })).value;
+    expect(value).toMatchObject({
+      scan: { complete: true, lines: 2, bytes: bytes.length },
+      counts: { warn: 1, error: 1, unparsed: 0 },
+    });
+    expect(value.events[1].message).toBe("brown-out détecté");
+  }
+});
+
+it("accepts a log that is still being written as the snapshot it read", async () => {
+  const first = "2026-04-12T08:00:00Z WARN supply low\n";
+  await log(first);
+  const grow = () => appendFile(join(root, "log.txt"), "2026-04-12T08:00:01Z ERROR brown-out\n");
+  // The scanner's first checkpoint comes after it opened the log: the device logs one more line then.
+  let appended: Promise<void> | undefined;
+  const result = await scanLog(root, { path: "log.txt", profile: "iso" }, () => {
+    appended ??= grow();
+  });
+  await appended;
+  expect(result).toMatchObject({
+    scan: { complete: true, growing: true, lines: 1, bytes: first.length },
+    counts: { warn: 1, error: 0 },
+    source: { sha256: createHash("sha256").update(first).digest("hex") },
+  });
+  // A caller that pinned a version still gets the change reported.
+  appended = undefined;
+  await expect(
+    scanLog(root, { path: "log.txt", profile: "iso", expectedSha256: result.source.sha256 }, () => {}),
+  ).rejects.toMatchObject({ code: "CONFLICT", reason: "source_changed" });
+});
+
+it("takes level names as logs write them and says which argument is wrong", async () => {
+  await log("2026-04-12T08:00:00Z WARN supply low\n2026-04-12T08:00:01Z ERROR brown-out\n");
+  const value = (await call({ path: "log.txt", profile: "iso", levels: ["WARNING", "err"] })).value;
+  expect(value.events.map((event: { level: string }) => event.level)).toEqual(["warn", "error"]);
+  expect((await call({ path: "log.txt", profile: "iso", maxEvents: 500 })).value).toMatchObject({
+    code: "INVALID",
+    reason: "invalid_arguments",
+    error: expect.stringContaining("maxEvents"),
+  });
+  expect((await call({ path: "log.txt", profile: "iso", pattern: "x" })).value.error).toContain(
+    "Supply exactly one of profile or pattern",
+  );
+});
+
+it("refuses byte limits, regex syntax/groups and stale hashes", async () => {
   await log("é".repeat(8192));
   expect((await call({ path: "log.txt", profile: "iso" })).value).toMatchObject({
     scan: { complete: true, lines: 1, bytes: 16384 },

@@ -15,6 +15,9 @@ import { PathGuard } from "../workbench/path-guard.js";
 
 import { LogFailure } from "./log-failure.js";
 
+/** What is kept of one line; a longer line is analysed by this much. */
+const LINE_BYTES = 16384;
+
 function patternFor(pattern: string): RegExp {
   try {
     const regex = new RegExp(pattern);
@@ -104,7 +107,9 @@ export async function scanLog(
     const result = emptyLogResult({ ...args, path: sourcePath });
     const ref = (line: number) =>
       local ? formatLineRef({ path: sourcePath, start: line, end: line }) : null;
-    const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+    // A serial capture holds stray bytes (boot output at another baud rate, a reset glitch): they become
+    // replacement characters in their line, which then counts as unparsed, and the rest is analysed.
+    const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
     const hash = createHash("sha256");
     let eligible = 0;
     let offset = 0;
@@ -144,19 +149,17 @@ export async function scanLog(
         );
       await checkExpectedVersion();
     }
-    const line = (bytes: Buffer, consumed: number) => {
+    const line = (bytes: Buffer, consumed: number, clipped = false) => {
       if (bytes.at(-1) === 13) bytes = bytes.subarray(0, -1);
       if (result.scan.lines === 0 && bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])))
         bytes = bytes.subarray(3);
-      if (bytes.length > 16384)
-        throw new LogFailure("INVALID", "line_too_large", "Choose a log with lines no larger than 16 KiB.");
-      let text: string;
-      try {
-        text = decoder.decode(bytes);
-      } catch {
-        throw new LogFailure("INVALID", "invalid_utf8", "Save the log as valid UTF-8.");
+      // One overlong line (a hex dump, a blob) is analysed by its first 16 KiB; the log is not refused.
+      if (bytes.length > LINE_BYTES) {
+        bytes = bytes.subarray(0, LINE_BYTES);
+        clipped = true;
       }
-      text = stripVTControlCharacters(text);
+      if (clipped) result.preview.truncated = true;
+      const text = stripVTControlCharacters(decoder.decode(bytes));
       const number = result.scan.lines + 1;
       const groups = text.trim() ? regex.exec(text)?.groups : undefined;
       if (!text.trim()) result.counts.blank++;
@@ -196,34 +199,53 @@ export async function scanLog(
       if (number % 1000 === 0) emit();
     };
     const buffer = Buffer.alloc(65536);
-    for (;;) {
-      const read = await handle.read(buffer, 0, buffer.length, offset);
-      if (!read.bytesRead) break;
-      offset += read.bytesRead;
-      if (offset > 50 * 1024 * 1024)
-        throw new LogFailure("INVALID", "file_too_large", "Choose a log no larger than 50 MiB.");
-      const chunk = buffer.subarray(0, read.bytesRead);
-      if (args.expectedSha256) await checkExpectedVersion();
-      hash.update(chunk);
+    // Bytes of the current line beyond what is kept of an overlong line.
+    let dropped = 0;
+    // A capture saved by Windows PowerShell is UTF-16: it is read as the same text, line by line.
+    let utf16: InstanceType<typeof TextDecoder> | undefined;
+    const split = (chunk: Buffer) => {
       let start = 0;
       for (let i = 0; i < chunk.length; i++)
         if (chunk[i] === 10) {
           const bytes = pending.length
             ? Buffer.concat([pending, chunk.subarray(start, i)])
             : chunk.subarray(start, i);
-          line(bytes, bytes.length + 1);
+          line(bytes, bytes.length + 1 + dropped, dropped > 0);
           pending = Buffer.alloc(0);
+          dropped = 0;
           start = i + 1;
         }
       pending = Buffer.concat([pending, chunk.subarray(start)]);
-      const bomBytes =
-        result.scan.lines === 0 && pending.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])) ? 3 : 0;
-      if (pending.length > 16385 + bomBytes)
-        throw new LogFailure("INVALID", "line_too_large", "Choose a log with lines no larger than 16 KiB.");
+      if (pending.length > LINE_BYTES + 4) {
+        dropped += pending.length - LINE_BYTES;
+        pending = pending.subarray(0, LINE_BYTES);
+      }
+    };
+    while (offset < before.size) {
+      // Only the bytes the log had when it was opened: one that is still written is read as a snapshot.
+      const read = await handle.read(buffer, 0, Math.min(buffer.length, before.size - offset), offset);
+      if (!read.bytesRead) break;
+      const chunk = buffer.subarray(0, read.bytesRead);
+      if (!offset) {
+        const mark = chunk.subarray(0, 2);
+        if (mark.equals(Buffer.from([0xff, 0xfe]))) utf16 = new TextDecoder("utf-16le", { ignoreBOM: true });
+        else if (mark.equals(Buffer.from([0xfe, 0xff])))
+          utf16 = new TextDecoder("utf-16be", { ignoreBOM: true });
+      }
+      offset += read.bytesRead;
+      if (offset > 50 * 1024 * 1024)
+        throw new LogFailure("INVALID", "file_too_large", "Choose a log no larger than 50 MiB.");
+      if (args.expectedSha256) await checkExpectedVersion();
+      hash.update(chunk);
+      split(
+        utf16 ? Buffer.from(utf16.decode(chunk, { stream: true }).replace(/^\uFEFF/, ""), "utf8") : chunk,
+      );
     }
     if (result.scan.lines === 0 && pending.equals(Buffer.from([0xef, 0xbb, 0xbf])))
       result.scan.bytes = pending.length;
-    else if (pending.length) line(pending, pending.length);
+    else if (pending.length) line(pending, pending.length + dropped, dropped > 0);
+    // The count is of the source's bytes, whatever its encoding.
+    if (utf16) result.scan.bytes = offset;
     const after = await handle.stat();
     let current: Awaited<ReturnType<PathGuard["resolve"]>>;
     let info: Awaited<ReturnType<typeof lstat>>;
@@ -234,7 +256,20 @@ export async function scanLog(
       throw new LogFailure("CONFLICT", "source_changed", "Log changed during analysis. Parse it again.");
     }
     const sha256 = hash.digest("hex");
-    if (
+    // A log that only grew (a device still logging into its capture) is accepted as the snapshot read;
+    // a caller that pinned a version, or a file rewritten in place, is still refused.
+    const growing =
+      !args.expectedSha256 &&
+      // The growth may land between the two looks at the file.
+      after.size >= before.size &&
+      info.size >= after.size &&
+      info.size > before.size &&
+      offset === before.size &&
+      before.ino === info.ino &&
+      before.dev === info.dev &&
+      target.key === current.key;
+    if (growing) result.scan.growing = true;
+    else if (
       offset !== before.size ||
       before.size !== after.size ||
       before.mtimeMs !== after.mtimeMs ||

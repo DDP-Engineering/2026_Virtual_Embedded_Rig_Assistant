@@ -151,8 +151,14 @@ it.each([8, 16, 32, 64])("preserves width %i, enums, unmapped bits and JSON maxi
 });
 it("rejects invalid strict arguments and unsigned value syntax", async () => {
   await save();
-  for (const value of ["-1", "+1", "1.0", "1e2", "1+1", " 1", "1\n", "0x", "0xfg", "1".repeat(81), 1, ""])
+  for (const value of ["-1", "+1", "1.0", "1e2", "1+1", "0x", "0xfg", "1".repeat(81), -1, 1.5, ""])
     failure(await call({ value }), "INVALID", "invalid_arguments");
+  // The value as bench tools and datasheets write it.
+  for (const value of [129, " 129", "129\n", "0b1000_0001", "81h", "0x0000_0081", "0X81"])
+    expect((await call({ value })).value).toMatchObject({ valueDec: "129", valueHex: "0x00000081" });
+  expect((await call({ value: "zz" })).value.error).toContain(
+    "value: Use an unsigned decimal or hexadecimal string",
+  );
   for (const overrides of [
     { extra: true },
     { definitionPath: "a".repeat(257) },
@@ -161,7 +167,85 @@ it("rejects invalid strict arguments and unsigned value syntax", async () => {
     { device: { id: "x", extra: true } },
   ])
     failure(await call(overrides), "INVALID", "invalid_arguments");
-  failure(await call({ register: "missing" }), "INVALID", "unknown_register");
+  const missing = await call({ register: "missing" });
+  failure(missing, "INVALID", "unknown_register");
+  expect(missing.value.error).toBe("Choose a register declared in the definition: I2C1_CR1.");
+  // A name that differs only in letter case names the register.
+  expect((await call({ register: "i2c1_cr1" })).value).toMatchObject({ register: "I2C1_CR1" });
+});
+
+it("accepts what a datasheet's register table states: PDF pages, odd widths, notes and long enums", async () => {
+  await save({
+    ...definition(),
+    sourceRefs: ["docs/adc.pdf#p=24", "docs/adc.pdf#p=30-31", "docs/notes.md#h=registers"],
+    registers: [
+      {
+        name: "DATA",
+        widthBits: 24,
+        address: "0x12",
+        description: "Conversion result",
+        reset: "0x000000",
+        access: "read-only",
+        fields: [
+          { name: "RESULT", lsb: 0, width: 19 },
+          {
+            name: "GAIN",
+            lsb: 19,
+            width: 5,
+            enum: Array.from({ length: 32 }, (_, value) => ({ value, label: `x${value + 1}` })),
+          },
+        ],
+      },
+    ],
+  });
+  const result = await call({ register: "DATA", value: "0xA80001" });
+  expect(result.isError).toBe(false);
+  expect(decodeRegisterResultSchema.safeParse(result.value).success).toBe(true);
+  expect(result.value).toMatchObject({
+    widthBits: 24,
+    valueHex: "0xa80001",
+    fields: [
+      { name: "RESULT", valueDec: "1" },
+      { name: "GAIN", valueDec: "21", label: "x22" },
+    ],
+    sourceRefs: ["docs/adc.pdf#p=24", "docs/adc.pdf#p=30-31", "docs/notes.md#h=registers"],
+  });
+  // A 10-bit register pads its hexadecimal form to three digits.
+  await save({
+    ...definition(),
+    registers: [{ name: "TIMER", widthBits: 10, fields: [{ name: "COUNT", lsb: 0, width: 10 }] }],
+  });
+  expect((await call({ register: "TIMER", value: "5" })).value).toMatchObject({
+    valueHex: "0x005",
+    unmappedMaskHex: "0x000",
+  });
+  failure(await call({ register: "TIMER", value: "1024" }), "INVALID", "value_out_of_range");
+});
+
+it("names what is wrong in a definition and where", async () => {
+  const problem = async (change: (d: ReturnType<typeof definition>) => unknown) => {
+    await save(change(definition()));
+    const result = await call();
+    failure(result, "INVALID", "invalid_definition");
+    return result.value.error as string;
+  };
+  expect(await problem((d) => ({ ...d, registers: [{ ...d.registers[0], owner: "me" }] }))).toMatch(
+    /registers\.0: Unrecognized key: "owner"/,
+  );
+  expect(await problem((d) => ({ ...d, registers: [{ ...d.registers[0], widthBits: 65 }] }))).toMatch(
+    /registers\.0\.widthBits: /,
+  );
+  expect(await problem((d) => ({ ...d, sourceRefs: ["datasheet page 12"] }))).toMatch(
+    /sourceRefs\.0: Use a workbench reference such as docs\/sheet\.md#L3-L9 or docs\/sheet\.pdf#p=12/,
+  );
+  expect(
+    await problem((d) => ({
+      ...d,
+      registers: [
+        { ...d.registers[0], fields: [...d.registers[0]!.fields, { name: "X", lsb: 0, width: 2 }] },
+      ],
+    })),
+  ).toContain("Field masks overlap.");
 });
 it("rejects malformed bounded definitions and duplicate keys at every level", async () => {
   const mutate = async (change: (d: ReturnType<typeof definition>) => unknown) => {
@@ -206,7 +290,7 @@ it("rejects malformed bounded definitions and duplicate keys at every level", as
         name: "X",
         lsb: 0,
         width: 32,
-        enum: Array.from({ length: 17 }, (_, value) => ({ value, label: "x" })),
+        enum: Array.from({ length: 257 }, (_, value) => ({ value, label: "x" })),
       },
     ],
   ])
@@ -215,7 +299,8 @@ it("rejects malformed bounded definitions and duplicate keys at every level", as
     ...d,
     registers: Array.from({ length: 513 }, (_, i) => ({ ...d.registers[0], name: `R${i}` })),
   }));
-  await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], widthBits: 24 }] }));
+  await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], widthBits: 65 }] }));
+  await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], widthBits: 12.5 }] }));
   await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], address: "0".repeat(257) }] }));
   for (const text of [
     '{"schemaVersion":1,"schemaVersion":1}',

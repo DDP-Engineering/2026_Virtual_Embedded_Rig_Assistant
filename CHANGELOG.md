@@ -102,6 +102,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Explain each plugin validation error and say why a draft cannot be read, instead of codes and a bare tool failure.
 - Say why a trial plugin was not installed after the approval, such as a draft changed since its review.
 - Preserve browser citations, release empty sessions, and report tab selection and scroll movement accurately.
+- Analyse a serial capture that holds stray bytes or one overlong line instead of refusing the whole log.
+- Analyse a log that is still being written, as the bytes it had when opened, and a capture saved as UTF-16.
+- Cite a PDF page or a heading as the source of a register definition, and define registers of any width up to 64 bits with notes and up to 256 enumerated values.
+- Name each problem of a register definition and its place, and the argument a log or register call got wrong.
+- Take a register value written as a number, in binary, with a hex suffix or digit separators, a register name in another letter case, and log level names such as WARNING.
 
 ## [0.4.0] - 2026-11-26
 

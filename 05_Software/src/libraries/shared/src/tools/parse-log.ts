@@ -37,6 +37,8 @@ export const parseLogResultSchema = z.strictObject({
     stopReason: z.enum(["eof", "timeout"]),
     lines: count,
     bytes: count,
+    /** The log was appended to while it was read: the result describes the bytes it had when opened. */
+    growing: z.literal(true).optional(),
   }),
   counts: z.strictObject({
     error: count,

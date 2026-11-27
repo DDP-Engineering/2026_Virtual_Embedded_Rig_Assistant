@@ -425,10 +425,14 @@ export class ToolRegistry {
             isError: true,
             code: "INVALID",
             reason: "invalid_arguments",
-            error:
+            error: `${
               name === "parse_log"
-                ? "Use a path allowed by the current mode and exactly one profile or pattern; check argument limits."
-                : "Supply definitionPath, register and an unsigned decimal/hex string; check argument limits.",
+                ? "Use a path allowed by the current mode and exactly one profile or pattern."
+                : "Supply definitionPath, register and an unsigned decimal/hex string."
+            } Problem: ${parsed.error.issues
+              .slice(0, 4)
+              .map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message.replace(/\.$/, "")}`)
+              .join("; ")}.`,
           }),
           isError: true,
           truncated: false,

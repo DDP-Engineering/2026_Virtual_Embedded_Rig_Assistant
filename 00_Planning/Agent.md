@@ -108,7 +108,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `list` / `glob` | read | Entries / paths newest first | depth 1–3 / 500 paths; `glob` and `grep` skip `.vera`, `.git` and `node_modules` unless named, also in Bypass |
 | `grep` | read | JavaScript regex search in a worker | 500 matches; skips binary and files over 5 MB; 10 s |
 | `parse_log` | read | Counts and cited events of an `esp-idf`, `zephyr`, `iso` or pattern log | 50 MiB; 10 s; 200 events |
-| `decode_register` | read | Exact field decode of a register value (8–64 bit) against a JSON definition | 1 MiB; reads no device |
+| `decode_register` | read | Exact field decode of a register value (1–64 bit) against a JSON definition | 1 MiB; reads no device |
 | `search_docs`, `read_doc` | read | Document index search and read ([Workbench.md](Workbench.md)) | `k` 1–20; 12 000 characters per part; a read returns the page or line count, the next heading and, without a heading, all headings |
 | `load_skill` | read | An enabled skill or a file in its folder | enabled skills |
 | `help` | read | VERA's and enabled plugins' help, ref `help:<page>` | — |

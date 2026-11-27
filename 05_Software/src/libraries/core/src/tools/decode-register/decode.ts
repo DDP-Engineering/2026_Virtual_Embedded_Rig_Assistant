@@ -17,9 +17,21 @@ export function decodeRegister(
       "device_mismatch",
       "Use the device id and revision from the definition.",
     );
-  const register = definition.registers.find((register) => register.name === args.register);
-  if (!register)
-    throw new DecodeFailure("INVALID", "unknown_register", "Choose a register declared in the definition.");
+  // The exact name, else the one name that differs only in letter case (CTRL for ctrl).
+  const named = definition.registers.filter(
+    (register) => register.name.toLowerCase() === args.register.toLowerCase(),
+  );
+  const register =
+    definition.registers.find((register) => register.name === args.register) ??
+    (named.length === 1 ? named[0] : undefined);
+  if (!register) {
+    const names = definition.registers.map((register) => register.name);
+    throw new DecodeFailure(
+      "INVALID",
+      "unknown_register",
+      `Choose a register declared in the definition: ${names.slice(0, 24).join(", ")}${names.length > 24 ? ` and ${names.length - 24} more` : ""}.`,
+    );
+  }
   const value = BigInt(args.value);
   const max = (1n << BigInt(register.widthBits)) - 1n;
   if (value > max)
@@ -28,7 +40,7 @@ export function decodeRegister(
       "value_out_of_range",
       "Use an unsigned value that fits the register width.",
     );
-  const hex = (value: bigint) => `0x${value.toString(16).padStart(register.widthBits / 4, "0")}`;
+  const hex = (value: bigint) => `0x${value.toString(16).padStart(Math.ceil(register.widthBits / 4), "0")}`;
   let mapped = 0n;
   const fields = [...register.fields]
     .sort((a, b) => a.lsb - b.lsb)
@@ -65,7 +77,7 @@ export function decodeRegister(
     throw new DecodeFailure(
       "INVALID",
       "result_too_large",
-      "Shorten definition names, labels or source references so the complete result fits32000characters.",
+      "Shorten definition names, labels or source references so the complete result fits 32000 characters.",
     );
   return result;
 }

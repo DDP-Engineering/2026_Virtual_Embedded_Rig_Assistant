@@ -114,7 +114,7 @@ export async function loadDefinition(
     await checkIdentity();
     if (!before.isFile()) throw denied();
     if (before.size > MAX_BYTES)
-      throw new DecodeFailure("INVALID", "file_too_large", "Choose a definition no larger than1MiB.");
+      throw new DecodeFailure("INVALID", "file_too_large", "Choose a definition no larger than 1 MiB.");
     const bytes = Buffer.alloc(MAX_BYTES + 1);
     let size = 0;
     while (size < bytes.length) {
@@ -161,12 +161,21 @@ export async function loadDefinition(
       throw new DecodeFailure("INVALID", "invalid_definition", "Use one valid JSON device definition.");
     }
     const parsed = decodeRegisterDefinitionSchema.safeParse(raw);
-    if (!parsed.success)
+    if (!parsed.success) {
+      // Name what is wrong and where: a definition is written by hand from a datasheet, and one general
+      // sentence for every mistake left only guessing.
+      const problems = parsed.error.issues
+        .slice(0, 6)
+        .map(
+          (issue) =>
+            `${issue.path.length ? `${issue.path.join(".")}: ` : ""}${issue.message.replace(/\.$/, "")}`,
+        );
       throw new DecodeFailure(
         "INVALID",
         "invalid_definition",
-        "Check definition version1, names, widths, field masks, enums and source references.",
+        `Correct the definition: ${problems.join("; ")}${parsed.error.issues.length > 6 ? `; and ${parsed.error.issues.length - 6} more` : ""}.`,
       );
+    }
     signal.throwIfAborted();
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     return {
