@@ -38,6 +38,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Omit outdated results when indexed document sources change or disappear.
 - Bound command cancellation on Windows and keep the final output when command results are shortened.
 - Preserve background output after cancelled reads and report timeouts and startup errors.
+- Preserve the end of long terminal lines and mark shortened terminal reads.
 
 ## [0.4.0] - 2026-11-26
 

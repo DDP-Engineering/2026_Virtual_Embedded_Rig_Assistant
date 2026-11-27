@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Changes that leave a file identical finish without rewriting it or asking for approval.
-      ro: Dacă textul rămâne identic, fișierul nu se rescrie și nu mai cere aprobare.
-      de: Bei identischem Inhalt entfallen das erneute Schreiben und die Freigabe.
-      fr: Un contenu identique ne déclenche ni réécriture ni demande d’approbation.
+      en: Unchanged files skip approval and rewriting. VERA confirms saves while change history is pending.
+      ro: Fișierele identice nu cer aprobare sau rescriere. Salvarea se confirmă și cu istoricul în așteptare.
+      de: Unveränderte Dateien ohne Freigabe oder Neuschreiben. Speichern auch bei offenem Verlauf bestätigt.
+      fr: Fichiers identiques sans réécriture ni accord. La sauvegarde est signalée si l’historique attend.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -86,12 +86,12 @@ entries:
       de: Große Textdateien lesen und große Ordner auflisten oder durchsuchen geht schneller.
       fr: Lire les gros fichiers texte et parcourir ou rechercher dans de grands dossiers est plus rapide.
   - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: VERA reports a saved file even when the change history is pending.
-      ro: VERA confirmă salvarea fișierului chiar dacă modificarea nu apare încă în istoric.
-      de: VERA bestätigt die gespeicherte Datei auch bei ausstehendem Verlaufseintrag.
-      fr: VERA indique que le fichier est enregistré même si l’historique reste en attente.
+      en: Terminal reads keep the latest diagnostic and indicate when output was shortened.
+      ro: Citirea terminalului păstrează ultimul diagnostic și semnalează trunchierea.
+      de: Das Terminal behält die letzte Diagnose und zeigt an, wenn die Ausgabe gekürzt wurde.
+      fr: Le terminal conserve le dernier diagnostic et signale la sortie tronquée.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

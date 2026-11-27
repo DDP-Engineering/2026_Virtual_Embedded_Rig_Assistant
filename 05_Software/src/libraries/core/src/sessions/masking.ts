@@ -48,7 +48,10 @@ export function maskToolOutput(
   const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
   if (!result) {
     const masked = scrub(text);
-    if (masked.length > limit && (name === "read" || programToolNames.includes(name))) {
+    if (
+      masked.length > limit &&
+      (name === "read" || name === "terminal_read" || programToolNames.includes(name))
+    ) {
       try {
         return capToolResult(JSON.parse(masked), [], limit, name).text;
       } catch {

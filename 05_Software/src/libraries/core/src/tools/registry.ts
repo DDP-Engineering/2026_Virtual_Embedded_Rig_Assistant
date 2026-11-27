@@ -155,7 +155,12 @@ export function capToolResult(
     const tokens = protectedStrings
       .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
       .filter((token) => token.length > 1);
-    const programOutput = toolName !== undefined && programToolNames.includes(toolName);
+    const tailKey =
+      toolName === "terminal_read"
+        ? "text"
+        : toolName && programToolNames.includes(toolName)
+          ? "output"
+          : undefined;
     for (let round = 0; text.length > limit && round < 100; round++) {
       let best: { owner: Record<string, unknown>; key: string; size: number } | undefined;
       const visit = (owner: Record<string, unknown>) => {
@@ -179,8 +184,8 @@ export function capToolResult(
         break;
       }
       const item = best.owner[best.key];
-      if (programOutput && best.owner === result && best.key === "output" && typeof item === "string") {
-        result.output = `[truncated]\n${resultSuffix(item, Math.floor(item.length / 2), tokens)}`;
+      if (best.owner === result && best.key === tailKey && typeof item === "string") {
+        result[tailKey] = `[truncated]\n${resultSuffix(item, Math.floor(item.length / 2), tokens)}`;
         text = JSON.stringify(result);
         continue;
       }

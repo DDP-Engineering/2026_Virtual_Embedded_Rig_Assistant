@@ -123,18 +123,23 @@ describe("user terminal host", () => {
       await f.service.closeAll();
     },
   );
-  it("publishes a consented control-heavy capture after the registry caps serialized JSON", async () => {
+  it("caps the serialized terminal response and preserves the latest diagnostic", async () => {
     const f = fixture(),
       a = await f.service.create("bench-a", 80, 24);
     f.service.consent("bench-a", a.id, true);
-    f.processes[0]?.print("\0".repeat(12000));
+    f.processes[0]?.print(`${"\0".repeat(12000)}\nprivate-token-123\nlast diagnostic`);
     const reader = f.service.reader("bench-a");
     const capped = capToolResult(reader.read(a.id));
-    expect(capped.truncated).toBe(true);
-    expect(capped.text.length).toBeLessThanOrEqual(32000);
-    const published = JSON.parse(reader.publish(capped.text));
+    expect(capped.truncated).toBe(false);
+    expect(capped.text).not.toContain("last diagnostic");
+    const result = reader.publish(capped.text, 8000);
+    expect(result.length).toBeLessThanOrEqual(8000);
+    const published = JSON.parse(result);
     expect(published.truncated).toBe(true);
     expect(published.text).toContain("[truncated]");
+    expect(published.text).toContain("[REDACTED]");
+    expect(published.text).not.toContain("private-token-123");
+    expect(published.text).toMatch(/\nlast diagnostic$/);
     expect(published).not.toHaveProperty("leases");
     f.service.consent("bench-a", a.id, false);
     expect(() => reader.publish(capped.text)).toThrow();
@@ -242,6 +247,51 @@ describe("user terminal host", () => {
     expect(next.start).toBeGreaterThan(full.start);
     expect(next.output).toBe(`${full.output.slice(next.start - full.start)}tail\n`);
   });
+  it("keeps a long line's tail, advances the snapshot offset, and marks agent truncation", async () => {
+    const f = fixture();
+    f.limits.bufferChars = 64 * 1024;
+    const a = await f.service.create("bench-a", 80, 24);
+    f.masking(false);
+    f.service.consent("bench-a", a.id, true);
+    const tail = `${"x".repeat(f.limits.bufferChars - 13)}final detail`;
+    f.processes[0]?.print(`🙂${tail}`);
+    expect(f.service.output("bench-a", a.id)).toMatchObject({ start: 2, output: tail });
+    f.processes[0]?.print("!?");
+    expect(f.service.output("bench-a", a.id)).toMatchObject({
+      start: 3,
+      output: `${tail.slice(1)}!?`,
+    });
+    f.processes[0]?.print("\n");
+    expect(f.service.output("bench-a", a.id)).toMatchObject({ start: 4, output: `${tail.slice(2)}!?\n` });
+    const reader = f.service.reader("bench-a");
+    expect(JSON.parse(reader.publish(JSON.stringify(reader.read(a.id))))).toMatchObject({
+      text: expect.stringMatching(/final detail!\?\n$/),
+      truncated: true,
+    });
+  });
+  it.each([
+    ["private-", "token-123"],
+    ["private-\x1b[3", "1mtoken-123\x1b[0m"],
+  ])("withholds a credential clipped at the head of a long line", async (prefix, continuation) => {
+    const f = fixture();
+    f.limits.bufferChars = 2048;
+    const a = await f.service.create("bench-a", 80, 24);
+    f.service.consent("bench-a", a.id, true);
+    const reader = f.service.reader("bench-a");
+    const final = "last diagnostic";
+    const filler = "x".repeat(f.limits.bufferChars - continuation.length - final.length);
+    f.processes[0]?.print(prefix);
+    f.processes[0]?.print(continuation + filler + final);
+    expect(f.service.output("bench-a", a.id)).toMatchObject({
+      start: prefix.length,
+      output: filler + final,
+    });
+    const capture = JSON.stringify(reader.read(a.id));
+    expect(JSON.parse(reader.publish(capture))).toMatchObject({ text: filler + final, truncated: true });
+    f.masking(false);
+    expect(f.service.output("bench-a", a.id).output).toBe(continuation + filler + final);
+    expect(JSON.parse(reader.publish(capture)).text).toBe(filler + final);
+  });
   it("masks credentials split by terminal formatting before renderer disclosure", async () => {
     const f = fixture(),
       a = await f.service.create("bench-a", 80, 24);
@@ -340,12 +390,13 @@ describe("user terminal host", () => {
     f.service.consent("bench-a", a.id, true);
     f.processes[0]?.print("0123456789\n".repeat(5000));
     const reader = f.service.reader("bench-a");
-    const read = () => JSON.parse(reader.publish(JSON.stringify(reader.read(a.id)), 64000)).text as string;
-    expect(read()).toHaveLength(12000);
+    const read = () => JSON.parse(reader.publish(JSON.stringify(reader.read(a.id)), 64000));
+    expect(read()).toMatchObject({ text: expect.any(String), truncated: true });
+    expect(read().text).toHaveLength(12000);
     f.limits.agentChars = 3000;
-    expect(read()).toHaveLength(3000);
+    expect(read().text).toHaveLength(3000);
     f.limits.agentChars = 40000;
-    expect(read()).toHaveLength(40000);
+    expect(read().text).toHaveLength(40000);
     expect(JSON.parse(reader.publish(JSON.stringify(reader.read(a.id)))).truncated).toBe(true);
   });
   it("refuses malformed dimensions/input and limits simultaneous terminals", async () => {

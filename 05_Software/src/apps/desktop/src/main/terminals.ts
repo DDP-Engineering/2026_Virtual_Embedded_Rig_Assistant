@@ -50,6 +50,8 @@ type Entry = {
   output: string;
   /** Characters trimmed from the head of `output` so far. */
   dropped: number;
+  /** Escape state immediately before a retained line fragment. */
+  headDecoder?: OutputDecoder | undefined;
   /** Characters of output kept: the Terminal buffer when the terminal opened. */
   buffer: number;
   listeners: { dispose(): void }[];
@@ -68,14 +70,41 @@ const defaultLimits: TerminalLimits = {
 const leaseSchema = z.strictObject({ id: terminalIdSchema, grant: z.number().int().nonnegative() });
 const readSchema = z.strictObject({
   truncated: z.literal(true).optional(),
+  terminalId: terminalIdSchema.optional(),
   leases: z.array(leaseSchema).max(advancedSettings.terminals.max),
   terminals: z
     .array(
       z.strictObject({ id: terminalIdSchema, number: z.number().int().positive(), running: z.boolean() }),
     )
     .max(advancedSettings.terminals.max),
-  text: z.string().max(advancedSettings.terminalAgentChars.max).optional(),
 });
+
+function withoutClippedSecret(text: string, secrets: readonly string[]): string {
+  const first = text[0];
+  if (!first) return text;
+  let cut = 0;
+  for (const secret of secrets) {
+    // The discarded part may contain any prefix of a credential that ends inside this window.
+    for (let at = secret.indexOf(first, 1); at >= 0; at = secret.indexOf(first, at + 1)) {
+      const suffix = secret.slice(at);
+      if (text.startsWith(suffix) || suffix.startsWith(text)) {
+        cut = Math.max(cut, Math.min(text.length, suffix.length));
+        break;
+      }
+    }
+  }
+  if (!cut) return text;
+  // The new boundary must also avoid cutting a full credential that overlaps that fragment.
+  let previous: number;
+  do {
+    previous = cut;
+    for (const secret of secrets) {
+      const at = text.indexOf(secret, Math.max(0, cut - secret.length + 1));
+      if (at >= 0 && at < cut) cut = at + secret.length;
+    }
+  } while (cut > previous);
+  return text.slice(cut).replace(/^[\uDC00-\uDFFF]/, "");
+}
 
 /** Ephemeral workbench-owned user shells. Only reader() crosses the core agent boundary. */
 export class TerminalService {
@@ -198,11 +227,18 @@ export class TerminalService {
             ? entry.commandPrompt.output(data, (reply) => pty.write(reply))
             : data;
           if (entry.output.length > entry.buffer) {
-            const length = entry.output.length;
-            const tail = entry.output.slice(-entry.buffer);
-            // Drop a cut line rather than disclose the suffix of a secret at the buffer boundary.
-            entry.output = tail.slice(tail.indexOf("\n") < 0 ? tail.length : tail.indexOf("\n") + 1);
-            entry.dropped += length - entry.output.length;
+            let cut = entry.output.length - entry.buffer;
+            const newline = entry.output.indexOf("\n", cut);
+            if (newline >= 0 && newline + 1 < entry.output.length) {
+              cut = newline + 1;
+              entry.headDecoder = undefined;
+            } else {
+              if (/^[\uDC00-\uDFFF]/.test(entry.output.slice(cut, cut + 1))) cut++;
+              entry.headDecoder ??= new OutputDecoder();
+              entry.headDecoder.writeText(entry.output.slice(0, cut));
+            }
+            entry.output = entry.output.slice(cut);
+            entry.dropped += cut;
           }
         }),
         pty.onExit(({ exitCode }) => {
@@ -216,12 +252,13 @@ export class TerminalService {
       this.creating--;
     }
   }
-  private publicOutput(entry: Pick<Entry, "output" | "buffer">): string {
+  private publicOutput(entry: Entry): string {
     const text = entry.output;
+    const secrets = this.host.secrets();
     // A secret split over PTY callbacks must not reveal its leading fragment on an interim poll.
     const trim = (value: string) => {
       let held = 0;
-      for (const secret of this.host.secrets()) {
+      for (const secret of secrets) {
         for (let size = Math.min(secret.length - 1, value.length); size > held; size--) {
           if (value.endsWith(secret.slice(0, size))) {
             held = size;
@@ -231,20 +268,28 @@ export class TerminalService {
       }
       return { text: held ? value.slice(0, -held) : value, held };
     };
+    if (entry.headDecoder) {
+      const plain = entry.headDecoder.previewText(text);
+      return this.host.scrub(withoutClippedSecret(trim(plain).text, secrets));
+    }
     const raw = trim(text),
       plain = trim(this.strip(text));
     const masked = this.host.scrub(raw.text);
     // Keep VT behavior normally; secrets split by formatting require a safe plain-text projection.
     const visible = this.strip(masked);
-    return (
-      plain.held > raw.held || this.host.scrub(visible) !== visible ? this.host.scrub(plain.text) : masked
-    ).slice(-entry.buffer);
+    return plain.held > raw.held || this.host.scrub(visible) !== visible
+      ? this.host.scrub(plain.text)
+      : masked;
   }
   output(owner: string, id: string): TerminalSnapshot {
     const entry = this.entry(owner, id);
     return {
       ...this.summary(entry),
-      output: this.host.maskUserOutput() ? this.publicOutput(entry) : entry.output,
+      output: this.host.maskUserOutput()
+        ? this.publicOutput(entry)
+            .slice(-entry.buffer)
+            .replace(/^[\uDC00-\uDFFF]/, "")
+        : entry.output,
       // Lets the renderer tell a trimmed head from changed content and append only the new tail.
       start: entry.dropped,
     };
@@ -329,18 +374,20 @@ export class TerminalService {
         const data = {
           leases: entries.map((entry) => ({ id: entry.id, grant: entry.grant })),
           terminals: entries.map((entry) => ({ id: entry.id, number: entry.number, running: entry.running })),
-          ...(id ? { text: this.recent(entries[0] as Entry, false) } : {}),
+          ...(id ? { terminalId: id } : {}),
         };
         return data;
       },
       publish: (output, limit) => {
         this.owner(owner);
         const data = readSchema.parse(JSON.parse(output));
-        for (const lease of data.leases) {
+        const entries = data.leases.map((lease) => {
           const entry = this.entry(owner, lease.id);
           if (!entry.shared || entry.grant !== lease.grant) throw Error("Terminal read consent was revoked.");
-        }
-        const entries = data.leases.map((lease) => this.entry(owner, lease.id));
+          return entry;
+        });
+        const selected = entries.find((entry) => entry.id === data.terminalId);
+        if (data.terminalId && !selected) throw Error("Terminal read consent is required for this terminal.");
         return capToolResult(
           {
             ...(data.truncated ? { truncated: true } : {}),
@@ -349,23 +396,27 @@ export class TerminalService {
               number: entry.number,
               running: entry.running,
             })),
-            ...(data.text === undefined
-              ? {}
-              : { text: this.recent(entries[0] as Entry, this.host.maskAgentOutput?.() !== false) }),
+            ...(selected ? this.recent(selected, this.host.maskAgentOutput?.() !== false) : {}),
           },
           [],
           limit,
+          "terminal_read",
         ).text;
       },
     };
   }
-  private recent(entry: Entry, mask: boolean): string {
-    const text = this.strip(mask ? this.publicOutput(entry) : entry.output);
+  private recent(entry: Entry, mask: boolean): { text: string; truncated?: true } {
+    const output = mask ? this.publicOutput(entry) : entry.output;
+    const text = entry.headDecoder
+      ? mask
+        ? output
+        : entry.headDecoder.previewText(output)
+      : this.strip(output);
     const size = this.limits().agentChars;
-    if (text.length <= size) return text;
-    const tail = text.slice(-size);
-    const first = tail.charCodeAt(0);
-    return first >= 0xdc00 && first <= 0xdfff ? tail.slice(1) : tail;
+    return {
+      text: text.length <= size ? text : text.slice(-size).replace(/^[\uDC00-\uDFFF]/, ""),
+      ...(entry.dropped > 0 || text.length > size ? { truncated: true } : {}),
+    };
   }
   private strip(text: string): string {
     const decoder = new OutputDecoder();

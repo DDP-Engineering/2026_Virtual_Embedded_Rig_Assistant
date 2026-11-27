@@ -26,7 +26,8 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   open or create and a reopen of the current workbench keep the terminals (main/index.ts replaceForeground). The renderer disables New at the same count; `terminal.list` and the agent read schema allow 16.
   Bash uses `-il`, sh `-i`, PowerShell `-NoLogo`; agent command flags and closed stdin are separate.
 - Host capture retains at most the Terminal buffer the terminal had when it opened (64-1024 Ki characters,
-  default 256 Ki, REQ-FUNC-240f4e02), dropping a cut leading line; the snapshot schema allows 1024 Ki. User snapshots follow the live Program runs choice, default off. With masking on,
+  default 256 Ki, REQ-FUNC-240f4e02). It drops a cut leading line when a line break remains, and
+  retains the tail of a line that fills the window. User snapshots follow the live Program runs choice, default off. With masking on,
   current known credentials are masked and split secret prefixes are held. The renderer appends
   snapshot deltas and reconstructs a bounded view when truncation or masking changes the prefix.
   Plain projection keeps incomplete VT sequences pending so partial CSI/OSC/DCS cannot bypass
@@ -42,7 +43,7 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   the resolved Terminal scrollback when it opens (1000-50000 lines, default 3000, REQ-UX-996ae06e). Consent starts false and applies to one terminal in its workbench.
 - Grant epochs and current ownership are checked again by the runtime's synchronous publication hook.
   Revocation/close/switch refuses unpublished captures; already shared results remain in transcript history.
-  Serialized JSON truncation retains the registry's `truncated:true` marker alongside lease checks.
+  Tool results retain the newest text and report `truncated:true` when the buffer, agent window or JSON limit cuts output.
 - Chat code-block Run (`terminal.execute`) writes one line only into a pristine shell VERA started with a
   private random prompt marker, after the marker arrived and ownership was rechecked; input or close leaves it
   unverified for good, and a timeout (5 s) until the marker arrives (`chatActions.promptNotReady`). Bash gets `eval -- $'...'`. PowerShell's startup

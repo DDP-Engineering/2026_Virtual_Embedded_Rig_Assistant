@@ -19,7 +19,20 @@ export class OutputDecoder {
   private pending = "";
 
   write(chunk: Uint8Array): string {
-    return this.strip(this.pending + this.decoder.decode(chunk, { stream: true }), false);
+    return this.writeText(this.decoder.decode(chunk, { stream: true }));
+  }
+
+  /** Accepts text from a host that already decoded the stream, such as a PTY. */
+  writeText(text: string): string {
+    return this.strip(this.pending + text, false);
+  }
+
+  /** Projects a text window without advancing the escape state at its boundary. */
+  previewText(text: string): string {
+    const pending = this.pending;
+    const visible = this.writeText(text);
+    this.pending = pending;
+    return visible;
   }
 
   end(): string {

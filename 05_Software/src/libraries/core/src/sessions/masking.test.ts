@@ -53,15 +53,17 @@ it("updates read pagination if masking expands the serialized page", () => {
   expect(page.ref).toBe(`input.txt#L1-L${lines.length}`);
 });
 
-it("preserves the final command diagnostic when masking expands its output past the limit", () => {
-  const value = JSON.stringify({ output: `${"stub".repeat(1500)}\nLast line.`, exitCode: 1 });
+it.each([
+  ["run_command", "output"],
+  ["terminal_read", "text"],
+])("preserves the final %s diagnostic when masking expands its output past the limit", (name, field) => {
+  const value = JSON.stringify({ [field]: `${"stub".repeat(1500)}\nLast line.` });
   expect(value.length).toBeLessThan(8000);
-  const masked = maskToolOutput("run_command", value, (text) => text.replaceAll("stub", "[REDACTED]"), 8000);
+  const masked = maskToolOutput(name, value, (text) => text.replaceAll("stub", "[REDACTED]"), 8000);
   expect(masked.length).toBeLessThanOrEqual(8000);
   expect(masked).not.toContain("stub");
   expect(JSON.parse(masked)).toMatchObject({
-    output: expect.stringMatching(/Last line\.$/),
-    exitCode: 1,
+    [field]: expect.stringMatching(/Last line\.$/),
     truncated: true,
   });
 });
