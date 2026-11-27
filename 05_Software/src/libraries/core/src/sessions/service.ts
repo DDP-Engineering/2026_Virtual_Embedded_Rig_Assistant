@@ -1307,11 +1307,12 @@ export class SessionService {
     return this.host.downloads.locate(downloadId);
   }
   async openArtifact(id: string) {
-    return this.verifiedArtifact(id).artifact;
+    return (await this.verifiedArtifact(id)).artifact;
   }
-  verifiedArtifact(id: string) {
+  async verifiedArtifact(id: string) {
     if (this.closed) throw veraError("CONFLICT");
-    const result = this.artifacts.verified(id);
+    const result = await this.artifacts.verified(id);
+    if (this.closed) throw veraError("CONFLICT");
     this.row(result.artifact.sessionId);
     if (this.deleting.has(result.artifact.sessionId)) throw veraError("BUSY");
     return result;
@@ -1329,7 +1330,7 @@ export class SessionService {
       await this.liveCaptures.stopOwner(id);
       await this.writeQueue.run(async () => {
         this.writable();
-        this.artifacts.removeSession(id);
+        await this.artifacts.removeSession(id);
         this.writable();
         this.host.db.transaction(() => {
           this.delegations.forgetDeletedChildren(id);

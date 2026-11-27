@@ -105,7 +105,7 @@ export async function validateCitations(
   root: string,
   text: string,
   messages: readonly Message[],
-  artifactExists?: (name: string) => boolean,
+  artifactExists?: (name: string) => boolean | Promise<boolean>,
   validDocumentRef?: (ref: string) => Promise<boolean>,
   captureNavigation?: CaptureNavigationLookup,
 ) {
@@ -142,7 +142,7 @@ export async function validateCitations(
       if (parsed?.kind === "capture") valid = captures?.has(ref) ?? false;
       else if (parsed && withinIssued(ref, issued))
         try {
-          if (parsed.kind === "artifact") valid = !!artifactExists?.(parsed.name);
+          if (parsed.kind === "artifact") valid = !!(await artifactExists?.(parsed.name));
           // Help pages ship with the application; the help tool issued this ref.
           else if (parsed.kind === "help") valid = help.has(ref);
           else if (parsed.kind === "lines") {

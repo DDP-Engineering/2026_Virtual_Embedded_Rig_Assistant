@@ -74,6 +74,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Save a download whose server states no content type or a malformed one, or marks the reply as encoded, instead of refusing it.
 - Tell the agent to use `run_command` for a device or server on the local network when a web tool refuses the address.
 - Suggest adding an API key when a web provider's limit is reached without one.
+- Save and verify session artifacts asynchronously, skipping identical overwrites.
+- Shorten long session artifact descriptions while still saving the full artifact content.
 
 ## [0.4.0] - 2026-11-26
 

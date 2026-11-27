@@ -7,7 +7,7 @@ import { toolLimit, toolPathGuard } from "./context.js";
 import { entryDisappeared } from "./discovery.js";
 import { readWindow } from "./read-window.js";
 
-function readArtifact(
+async function readArtifact(
   host: NonNullable<ToolContext["artifacts"]>,
   path: string,
   offset: number,
@@ -18,7 +18,7 @@ function readArtifact(
   const ref = parseArtifactRef(path);
   if (!ref) throw veraError("INVALID");
   signal.throwIfAborted();
-  const { content, sha256 } = host.store.openNamed(host.sessionId, ref.name);
+  const { content, sha256 } = await host.store.openNamed(host.sessionId, ref.name, signal);
   const lines = content.split(/\r\n|[\r\n]/);
   if (lines.at(-1) === "") lines.pop();
   const selected: string[] = [];

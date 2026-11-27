@@ -14,12 +14,12 @@ export function publicArtifact<T extends ArtifactSummary>(artifact: T, scrub: (t
   };
 }
 
-export function revealArtifact(
+export async function revealArtifact(
   service: SessionService,
   id: string,
   show: (path: string) => void,
-): Record<string, never> {
-  const { path } = service.verifiedArtifact(id);
+): Promise<Record<string, never>> {
+  const { path } = await service.verifiedArtifact(id);
   show(path);
   return {};
 }
@@ -48,8 +48,14 @@ export function exportDestination(root: string, path: string): string {
   return target;
 }
 /** The verified artifact name a save dialog offers; a name that holds a secret is refused. */
-export function exportName(service: SessionService, id: string, scrub: (text: string) => string): string {
-  const name = service.verifiedArtifact(id).artifact.name;
+export async function exportName(
+  service: SessionService,
+  id: string,
+  scrub: (text: string) => string,
+): Promise<string> {
+  const {
+    artifact: { name },
+  } = await service.verifiedArtifact(id);
   if (scrub(name) !== name) throw veraError("INVALID");
   return name;
 }
@@ -64,9 +70,9 @@ export async function exportArtifact(
     masking?(): boolean;
   },
 ): Promise<{ exported: boolean }> {
-  const path = await options.choose(exportName(service, id, options.scrub));
+  const path = await options.choose(await exportName(service, id, options.scrub));
   if (path === null) return { exported: false };
-  const { artifact } = service.verifiedArtifact(id);
+  const { artifact } = await service.verifiedArtifact(id);
   await options.write(
     exportDestination(options.root, path),
     options.masking?.() === false ? artifact.content : options.scrub(artifact.content),

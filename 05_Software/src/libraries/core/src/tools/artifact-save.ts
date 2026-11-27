@@ -21,7 +21,10 @@ export const artifactSaveTool: ToolDefinition = {
         (s) => Buffer.byteLength(s, "utf8") <= ARTIFACT_MAX_BYTES,
         "Artifact content exceeds the5MiB UTF8 limit.",
       ),
-    description: z.string().optional(),
+    description: z
+      .string()
+      .optional()
+      .describe("A short description. Longer descriptions are shortened when saved."),
     overwrite: z.boolean().optional(),
     exactLineRefs: z
       .boolean()
