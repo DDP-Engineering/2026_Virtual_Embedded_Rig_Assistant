@@ -1,6 +1,13 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
 
-import type { EventEnvelope, ParseLogResult, SettingsPatch, SettingsSnapshot, VeraError } from "@vera/shared";
+import type {
+  DecodeRegisterResult,
+  EventEnvelope,
+  ParseLogResult,
+  SettingsPatch,
+  SettingsSnapshot,
+  VeraError,
+} from "@vera/shared";
 import type { PathRootBinding } from "./workbench/path-guard.js";
 
 /** Host-owned isolated file analysis; matching never executes on the main thread. */
@@ -17,7 +24,7 @@ export interface GrepFileResult {
   count: number;
 }
 export interface WorkerTask {
-  kind: "grep" | "parse_log";
+  kind: "grep" | "parse_log" | "decode_register";
   root: string;
   args: unknown;
   /** Grep skips files larger than this (the session's Grep file size, REQ-FUNC-820e2701); 5 MiB when absent. */
@@ -28,7 +35,7 @@ export interface WorkerTask {
   additionalRoots?: readonly PathRootBinding[];
 }
 export interface WorkerResult {
-  value?: ParseLogResult;
+  value?: ParseLogResult | DecodeRegisterResult;
   failure?: { code: VeraError["code"]; reason: string; message: string };
   matches: GrepMatch[];
   files?: GrepFileResult[];

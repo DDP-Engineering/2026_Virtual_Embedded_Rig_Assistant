@@ -7,7 +7,12 @@ import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 interface Probe {
-  start(root: string, args: unknown, deadlineMs?: number, kind?: "grep" | "parse_log"): Promise<void>;
+  start(
+    root: string,
+    args: unknown,
+    deadlineMs?: number,
+    kind?: "grep" | "parse_log" | "decode_register",
+  ): Promise<void>;
   partials(): number;
   result(): Promise<{ matches: unknown[]; truncated: boolean; reason?: string }>;
   abort(): void;
@@ -85,6 +90,26 @@ test("parse_log keeps IPC responsive at its production deadline and after Stop",
     expect(
       await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).result()),
     ).toMatchObject({ value: { scan: { complete: true }, events: [{ message: "recovered" }] } });
+    await writeFile(
+      join(root, "registers.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        device: { id: "fixture", revision: "A" },
+        sourceRefs: ["manual.md#L1-L1"],
+        registers: [{ name: "STATUS", widthBits: 8, fields: [{ name: "READY", lsb: 0, width: 1 }] }],
+      }),
+    );
+    await app.evaluate(async (_, root) => {
+      await (Reflect.get(globalThis, "veraTestFileTools") as Probe).start(
+        root,
+        { definitionPath: "registers.json", register: "STATUS", value: "0x81" },
+        undefined,
+        "decode_register",
+      );
+    }, root);
+    expect(
+      await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).result()),
+    ).toMatchObject({ value: { valueDec: "129", fields: [{ name: "READY", valueDec: "1" }] } });
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app.close();

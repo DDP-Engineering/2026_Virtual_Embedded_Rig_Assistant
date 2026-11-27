@@ -47,7 +47,7 @@ export function decodeRegister(
       };
     });
   const unmapped = max ^ mapped;
-  const result = {
+  return {
     device: definition.device,
     register: register.name,
     widthBits: register.widthBits,
@@ -60,12 +60,4 @@ export function decodeRegister(
     source,
     sourceRefs: register.sourceRefs ?? definition.sourceRefs,
   };
-  // A successful decode is complete. Never let generic registry truncation discard fields or refs.
-  if (JSON.stringify(result).length > 32000)
-    throw new DecodeFailure(
-      "INVALID",
-      "result_too_large",
-      "Shorten definition names, labels or source references so the complete result fits32000characters.",
-    );
-  return result;
 }

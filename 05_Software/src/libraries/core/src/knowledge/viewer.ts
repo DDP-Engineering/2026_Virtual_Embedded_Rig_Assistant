@@ -19,7 +19,13 @@ export class DocumentViewer {
     private readonly root: string,
     private readonly db: Database.Database,
   ) {}
-  async open(target: string, snippet = "", byPath = false, utf8Log = false): Promise<ViewerContent> {
+  async open(
+    target: string,
+    snippet = "",
+    byPath = false,
+    utf8Log = false,
+    logSha256?: string,
+  ): Promise<ViewerContent> {
     try {
       const parsed = byPath ? undefined : parseRef(target);
       if (!byPath && (!parsed || parsed.kind === "artifact")) throw Error("Invalid document ref.");
@@ -38,6 +44,7 @@ export class DocumentViewer {
         // File-tool refs also cover ordinary unindexed source files.
         const window = await readWindow(guard, path, parsed.start, 1, signal, { utf8Log });
         if (parsed.end > window.totalLines) throw Error("Line bounds.");
+        if (logSha256 && window.sha256 !== logSha256) throw Error("Log changed since it was parsed.");
         if (!utf8Log && doc && (doc.status !== "indexed" || doc.sha256 !== window.sha256))
           throw Error("Stale index.");
         const bytes =

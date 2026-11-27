@@ -1,6 +1,6 @@
 import { isAbsolute } from "node:path";
 import { parentPort } from "node:worker_threads";
-import { formatLineRef, parseLineRef } from "@vera/shared";
+import { decodeRegisterArgsSchema, formatLineRef, parseLineRef } from "@vera/shared";
 import type { GrepFileResult, GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary, utf16Bom, validUtf8 } from "./binary.js";
@@ -29,6 +29,28 @@ async function execute(task: WorkerTask) {
         task.scope,
       );
       port.postMessage({ type: "done", value });
+      return;
+    }
+    if (task.kind === "decode_register") {
+      const { DecodeFailure, loadDefinition } = await import("./decode-register/definition.js");
+      try {
+        const { decodeRegister } = await import("./decode-register/decode.js");
+        const args = decodeRegisterArgsSchema.parse(task.args);
+        const { definition, source } = await loadDefinition(
+          task.root,
+          args.definitionPath,
+          args.expectedSha256,
+          task.excludedRoots,
+          task.scope,
+        );
+        port.postMessage({ type: "done", value: decodeRegister(definition, args, source) });
+      } catch (error) {
+        if (!(error instanceof DecodeFailure)) throw error;
+        port.postMessage({
+          type: "error",
+          failure: { code: error.code, reason: error.reason, message: error.message },
+        });
+      }
       return;
     }
     const args = grepParams.parse(task.args);

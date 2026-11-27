@@ -75,6 +75,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Stop waiting on Help promptly, page long Help and skill text, and open Help citations in the cited language.
 - Warn about invalid draft skills, check trial replacement before approval, and honor Stop before installation.
 - Preserve browser citations, release empty sessions, and report tab selection and scroll movement accurately.
+- Preserve log counts and citation revisions, make register decoding cancellable, and clarify invalid arguments.
 
 ## [0.4.0] - 2026-11-26
 

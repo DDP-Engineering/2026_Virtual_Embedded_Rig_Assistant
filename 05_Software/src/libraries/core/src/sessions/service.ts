@@ -50,7 +50,7 @@ import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
-import { addIssuedCitationRefs, issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
+import { addIssuedCitationRefs, citationLogSource, validateCitations } from "../agent/citations.js";
 import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths, imageRequestMessage } from "../agent/message-images.js";
@@ -1017,11 +1017,13 @@ export class SessionService {
         mime: artifact.mime,
       };
     }
+    const log = citationLogSource(ref, messages);
     const content = await new DocumentViewer(this.host.root, this.host.db).open(
       ref,
       snippet,
       false,
-      withinIssued(ref, issuedLogRefs(messages)),
+      !!log,
+      log?.sha256 ?? undefined,
     );
     this.row(id);
     return content;
@@ -1864,12 +1866,18 @@ export class SessionService {
         ...tool,
         publish: (args: unknown, output: string) => {
           const authorized = tool.publish?.(args, output) ?? output;
-          return maskToolOutput(
+          const masked = maskToolOutput(
             tool.name,
             authorized,
             (text) => this.maskContent("agent", text),
             this.resolveAdvanced(id, "toolResultChars"),
           );
+          if (
+            (tool.name === "parse_log" || tool.name === "decode_register") &&
+            masked.startsWith('{"isError":true,')
+          )
+            throw Error(masked);
+          return masked;
         },
         execute: async (args: unknown, signal: AbortSignal, callId?: string) => {
           await durable();

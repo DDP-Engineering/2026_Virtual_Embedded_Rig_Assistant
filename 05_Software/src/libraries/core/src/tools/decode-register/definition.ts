@@ -63,17 +63,15 @@ export async function loadDefinition(
   root: string,
   path: string,
   expectedSha256: string | undefined,
-  signal: AbortSignal,
   excludedRoots: readonly string[] = [],
-  inputGuard?: PathGuard,
+  scope: "filesystem" | "workbench" = "workbench",
 ) {
-  signal.throwIfAborted();
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
   let sourcePath = posix.normalize(path.replaceAll("\\", "/"));
   let local = true;
   try {
-    guard = inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots));
+    guard = await PathGuard.create(root, root, scope, undefined, excludedRoots);
     target = await guard.resolve(path);
     sourcePath = target.relative;
     local = !sourcePath.startsWith("/") && !/^[A-Za-z]:/.test(sourcePath);
@@ -118,7 +116,6 @@ export async function loadDefinition(
     const bytes = Buffer.alloc(MAX_BYTES + 1);
     let size = 0;
     while (size < bytes.length) {
-      signal.throwIfAborted();
       const { bytesRead } = await handle.read(bytes, size, Math.min(65536, bytes.length - size), size);
       if (!bytesRead) break;
       size += bytesRead;
@@ -167,7 +164,6 @@ export async function loadDefinition(
         "invalid_definition",
         "Check definition version1, names, widths, field masks, enums and source references.",
       );
-    signal.throwIfAborted();
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     return {
       definition: parsed.data,
@@ -178,7 +174,6 @@ export async function loadDefinition(
       },
     };
   } catch (error) {
-    signal.throwIfAborted();
     if (error instanceof DecodeFailure) throw error;
     throw denied();
   } finally {

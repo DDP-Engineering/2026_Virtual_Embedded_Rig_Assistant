@@ -23,6 +23,7 @@ export interface ToolDef {
   description: string;
   requiresImages?: true;
   params: z.ZodType;
+  invalidArguments?: string | undefined;
   /** The runtime supplies callId separately from model arguments. */
   execute(args: unknown, signal: AbortSignal, callId?: string): Promise<ToolOutput>;
 }

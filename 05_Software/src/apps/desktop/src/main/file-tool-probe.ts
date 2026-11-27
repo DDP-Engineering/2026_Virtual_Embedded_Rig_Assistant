@@ -1,4 +1,4 @@
-import type { WorkerResult } from "@vera/core";
+import type { WorkerResult, WorkerTask } from "@vera/core";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 /** Instrumented acceptance uses production host capacity with an injected test deadline. */
 export function createFileToolProbe() {
@@ -7,7 +7,7 @@ export function createFileToolProbe() {
   let outcome: Promise<WorkerResult> | undefined;
   let partials = 0;
   return {
-    async start(root: string, args: unknown, deadlineMs?: number, kind: "grep" | "parse_log" = "grep") {
+    async start(root: string, args: unknown, deadlineMs?: number, kind: WorkerTask["kind"] = "grep") {
       if (outcome) await outcome;
       if (deadlineMs !== undefined) {
         await pool.dispose();

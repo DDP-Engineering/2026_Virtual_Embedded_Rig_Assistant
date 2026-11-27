@@ -13,6 +13,9 @@ export function workerFixture() {
     outfile: output,
     platform: "node",
     format: "esm",
+    banner: {
+      js: 'import { createRequire as fixtureRequire } from "node:module"; const require = fixtureRequire(import.meta.url);',
+    },
     bundle: true,
     target: "node24",
   });
