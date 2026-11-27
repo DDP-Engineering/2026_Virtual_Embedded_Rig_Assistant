@@ -25,7 +25,7 @@ class FakePage extends EventEmitter {
     return {
       url: () => destination,
       headers: () => ({ "content-type": "text/html" }),
-      status: () => 200,
+      status: (): number => 200,
     };
   });
   isClosed = () => this.closed;
@@ -241,6 +241,53 @@ it("rechecks the tool gate after startup before navigating the new tab", async (
   await expect(a.run("browser_open", { url })).resolves.toMatchObject({ code: "policy-denied" });
   expect(a.all[0]?.goto).not.toHaveBeenCalled();
   expect(a.all[0]?.closed).toBe(true);
+});
+
+it.each([false, true])(
+  "discards a failed page and keeps the session only if a tab remains (%s)",
+  async (keepTab) => {
+    const a = harness();
+    if (keepTab) await a.run("browser_open", { url });
+    a.prepareTab.mockImplementationOnce((page) => {
+      page.goto.mockResolvedValueOnce({
+        url: () => nextUrl,
+        headers: () => ({ "content-type": "text/html" }),
+        status: () => 404,
+      });
+    });
+    await expect(a.run("browser_open", { url: nextUrl })).resolves.toMatchObject({
+      code: "navigation-failed",
+    });
+    expect(a.discardTab).toHaveBeenCalledOnce();
+    expect(a.host.closeSession).toHaveBeenCalledTimes(keepTab ? 0 : 1);
+    expect(a.browser.view(0)).toMatchObject({
+      open: keepTab,
+      currentUrl: keepTab ? url : null,
+      failure: "navigation-failed",
+    });
+    expect(a.grant.signal.aborted).toBe(!keepTab);
+  },
+);
+
+it("uses the same remaining tab for the chat view, tab list and snapshot after the selected tab closes", async () => {
+  const a = harness();
+  const first = await a.run("browser_open", { url });
+  if (!("tabId" in first)) throw Error("Missing first tab");
+  await a.run("browser_open", { url: nextUrl });
+  await a.all[1]?.close();
+  expect(a.browser.view(0).currentUrl).toBe(url);
+  await expect(a.run("browser_tabs")).resolves.toEqual({
+    activeTabId: first.tabId,
+    tabs: [{ tabId: first.tabId, url }],
+  });
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "First tab",
+    text: "",
+    links: [],
+    truncated: false,
+  });
+  await expect(a.run("browser_snapshot")).resolves.toMatchObject({ tabId: first.tabId, url });
 });
 
 it("reports a page that closes halfway through switching tabs", async () => {

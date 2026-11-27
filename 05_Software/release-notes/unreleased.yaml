@@ -130,10 +130,10 @@ entries:
   - category: fixed
     topic: { en: Web access, ro: Acces web, de: Webzugriff, fr: Accès web }
     text:
-      en: Web links stay intact and Exa is faster. Downloads stream to disk and report timeouts.
-      ro: Linkurile web rămân întregi. Exa e mai rapid, iar descărcările scriu pe disc și anunță timeoutul.
-      de: Weblinks bleiben intakt, Exa wird schneller. Downloads nutzen die Platte und melden Zeitlimits.
-      fr: Exa accélère et les liens restent intacts. Téléchargements sur disque et délais signalés.
+      en: Browser and web citations stay intact. Exa is faster. Downloads stream to disk and report timeouts.
+      ro: Citările web și din browser rămân întregi. Exa e mai rapid. Descărcările pe disc anunță timeoutul.
+      de: Browser- und Webzitate bleiben intakt. Exa ist schneller. Downloads melden Zeitlimits.
+      fr: Citations web et navigateur intactes. Exa accélère. Téléchargements sur disque et délais signalés.
   - category: fixed
     topic: { en: Documents, ro: Documente, de: Dokumente, fr: Documents }
     text:

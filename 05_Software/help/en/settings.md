@@ -95,6 +95,8 @@ In Chat, enter the exact public origin, such as `https://example.com`, under **P
 
 Ask the agent to open and read a page or follow a link. Chat displays activity and the current authorized page. **Show browser** brings the tab forward. **Stop browsing** stops the active turn and cancels its outstanding browser operation. **Revoke access** and **Close browser** both release the temporary browser session and its grants. Closing the window, switching either setting off or removing the runtime also revokes access. Use the managed download tool for supported files.
 
+If a failed navigation closes the browser, grant access again before retrying.
+
 ## About
 
 **About** shows the application version, platform, architecture, whether VERA runs as a portable version, the system locale, the runtime versions, the license and the list of third-party components with their licenses.

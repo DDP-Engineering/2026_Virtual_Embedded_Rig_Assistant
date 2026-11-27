@@ -95,6 +95,8 @@ Geben Sie im Chat unter **Öffentlicher Ursprung** den genauen Ursprung ein, etw
 
 Bitten Sie den Agenten, eine Seite zu lesen oder einem Link zu folgen. Der Chat zeigt die Aktivität und die freigegebene Seite. **Browser anzeigen** bringt den Tab nach vorn. **Surfen stoppen** beendet den laufenden Agentenvorgang und bricht den Browser-Vorgang ab. **Zugriff widerrufen** und **Browser schließen** beenden die temporäre Sitzung und löschen die Freigaben. Das Schließen des Fensters, das Ausschalten eines Schalters oder das Entfernen der Laufzeit widerruft den Zugriff. Verwenden Sie den verwalteten Download für unterstützte Dateien.
 
+Wenn der Browser nach einem Ladefehler geschlossen wird, geben Sie den Zugriff vor dem nächsten Versuch erneut frei.
+
 ## Über
 
 **Über** zeigt die Anwendungsversion, Plattform, Architektur, ob VERA als portable Version läuft, das Gebietsschema des Systems, die Laufzeitversionen, die Lizenz und die Liste der Drittanbieterkomponenten mit ihren Lizenzen.

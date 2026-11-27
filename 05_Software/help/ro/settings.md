@@ -95,6 +95,8 @@ Dezactivarea accesului web oprește și căutările și descărcările în curs.
 
 Cere agentului să deschidă și să citească o pagină sau să urmeze un link. Chatul arată activitatea și pagina autorizată. **Arată browserul** aduce fila în prim-plan. **Oprește navigarea** oprește tura și anulează operația în curs. **Revocă accesul** și **Închide browserul** închid sesiunea temporară și șterg autorizările. Închiderea ferestrei, dezactivarea oricărei opțiuni sau eliminarea browserului revocă accesul. Pentru fișierele acceptate, folosește descărcarea gestionată.
 
+Dacă browserul se închide după o navigare eșuată, acordă din nou acces înainte de a reîncerca.
+
 ## Despre
 
 **Despre** afișează versiunea aplicației, platforma, arhitectura, dacă VERA rulează ca versiune portabilă, setările regionale ale sistemului, versiunile runtime, licența și lista componentelor terțe cu licențele lor.

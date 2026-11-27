@@ -77,7 +77,9 @@ export async function inspectPage(page: Page) {
 }
 
 export async function scrollPage(page: Page, direction: "up" | "down") {
-  if ((await inDocument(page, direction)) !== true) throw new BrowserError("unsupported-content");
+  const moved = await inDocument(page, direction);
+  if (typeof moved !== "boolean") throw new BrowserError("unsupported-content");
+  return moved;
 }
 
 async function inDocument(page: Page, action: "snapshot" | "up" | "down"): Promise<unknown> {
@@ -116,8 +118,9 @@ function readDocument(action: "snapshot" | "up" | "down") {
     ["text/html", "text/plain", "application/xhtml+xml"].includes(document.contentType);
   if (!supported) return { supported: false };
   if (action !== "snapshot") {
+    const before = window.scrollY;
     window.scrollBy({ top: innerHeight * (action === "up" ? -0.85 : 0.85), behavior: "instant" });
-    return true;
+    return window.scrollY !== before;
   }
 
   function onScreen(rect: DOMRect): boolean {
