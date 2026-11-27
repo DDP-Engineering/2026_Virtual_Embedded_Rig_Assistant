@@ -14,6 +14,18 @@ export type OfficeExtractor = (
   signal: AbortSignal,
 ) => Promise<Extraction>;
 
+/** An open file descriptor owned by the caller until the PDF worker has exited. */
+export interface OpenPdfFile {
+  fd: number;
+  size: number;
+}
+
+export type PdfPageCounter = (
+  file: OpenPdfFile,
+  signal: AbortSignal,
+  options?: { baseMs?: number },
+) => Promise<number>;
+
 /** One disposable thread per request, with bounded abort/exit cleanup and an absolute deadline. */
 function runWorker<T>(
   entry: URL,
@@ -106,6 +118,28 @@ export function createPdfExtractor(
       (value) => {
         const parsed = extractionSchema.safeParse(value);
         if (parsed.success && parsed.data.kind === "pdf") return parsed.data;
+        throw Error("PDF processing failed.");
+      },
+      resourceLimits,
+    );
+}
+
+/** Validate a staged PDF in the worker without copying its file or page text through the host. */
+export function createPdfPageCounter(
+  entry: URL,
+  deadlineMs: number,
+  resourceLimits: ResourceLimits,
+): PdfPageCounter {
+  checkDeadline(deadlineMs, "PDF");
+  return (file, signal, options) =>
+    runWorker(
+      entry,
+      "PDF",
+      { file },
+      signal,
+      pdfDeadline(currentDeadline(deadlineMs, options?.baseMs), file.size),
+      (value) => {
+        if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return value;
         throw Error("PDF processing failed.");
       },
       resourceLimits,

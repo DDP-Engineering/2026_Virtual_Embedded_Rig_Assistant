@@ -84,7 +84,7 @@ export async function createDownloadTunnel(
 export function createDesktopDownloadTransfer(): typeof transferFile {
   const idle: Session[] = [];
   let number = 0;
-  return async (source, signal, ports = {}) => {
+  return async (source, signal, ports) => {
     signal.throwIfAborted();
     const client = idle.pop() ?? session.fromPartition(`vera-web-download-${++number}`, { cache: false });
     const tunnel = await createDownloadTunnel();
@@ -131,6 +131,7 @@ export function createDesktopDownloadTransfer(): typeof transferFile {
       };
       // The approved size and the time limit travel with the request (REQ-FUNC-17f34e4b).
       return await transferFile(source, signal, {
+        write: ports.write,
         connect,
         ...(ports.maxBytes === undefined ? {} : { maxBytes: ports.maxBytes }),
         ...(ports.deadlineMs === undefined ? {} : { deadlineMs: ports.deadlineMs }),

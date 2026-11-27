@@ -15,6 +15,7 @@ const searchReply = z.object({
   results: z.array(z.object({ url: z.string(), title: z.string(), content: z.string() })),
 });
 const extractReply = z.object({ results: z.array(z.object({ url: z.string(), raw_content: z.string() })) });
+const withoutFragment = (url: string) => url.replace(/#.*$/, "");
 export class TavilyWebProvider implements WebProvider {
   constructor(private readonly options: WebHttpOptions = {}) {}
   private call(path: "search" | "extract", body: unknown, signal: AbortSignal) {
@@ -68,13 +69,14 @@ export class TavilyWebProvider implements WebProvider {
   async read(request: WebReadRequest, signal: AbortSignal) {
     const args = webReadSchema.parse(request);
     const requested = publicWebUrl(args.url);
+    const page = withoutFragment(requested);
     const parsed = extractReply.safeParse(
-      await this.call("extract", { urls: [requested], extract_depth: "basic", format: "markdown" }, signal),
+      await this.call("extract", { urls: [page], extract_depth: "basic", format: "markdown" }, signal),
     );
     if (!parsed.success) throw Error("Web service returned an invalid extraction response.");
     const source = parsed.data.results.find((s) => {
       try {
-        return publicWebUrl(s.url) === requested && !!s.raw_content.trim();
+        return withoutFragment(publicWebUrl(s.url)) === page && !!s.raw_content.trim();
       } catch {
         return false;
       }
@@ -85,8 +87,8 @@ export class TavilyWebProvider implements WebProvider {
       retrievedAt: (this.options.now?.() ?? new Date()).toISOString(),
       sources: [
         {
-          url: publicWebUrl(source.url),
-          title: source.url,
+          url: requested,
+          title: page.slice(0, 500),
           content: source.raw_content.slice(0, args.maxCharacters),
         },
       ],

@@ -1368,6 +1368,7 @@
     "openTerminalDesc": "Deschide și focalizează terminalul utilizatorului."
   },
   "downloads": {
+    "timedOut": "Descărcarea a depășit limita de {{seconds}} s. Reîncearcă sau mărește limita în setările avansate.",
     "revealNamed": "Arată în Explorer: {{name}}",
     "reveal": "Arată în Explorer",
     "title": "Fișiere descărcate",

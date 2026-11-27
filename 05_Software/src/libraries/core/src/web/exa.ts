@@ -18,17 +18,36 @@ const endpoint = "https://mcp.exa.ai/mcp";
 const responseLimit = 1048576;
 
 class WebFailure extends Error {}
+class ExpiredExaSession extends WebFailure {}
+
+interface ExaConnection {
+  client: Client;
+  transport: StreamableHTTPClientTransport;
+  request?: { signal: AbortSignal; reused: boolean; fail: (error: WebFailure) => WebFailure };
+}
 
 /** Restricted Exa client: no configurable server, OAuth, billing, sampling or server instructions. */
 export class ExaWebProvider implements WebProvider {
+  private idle?: ExaConnection;
+  private closed = false;
+
   constructor(
     private readonly options: {
       fetch?: typeof fetch;
       now?: () => Date;
       timeoutMs?: number;
       apiKey?: string;
+      reuseConnection?: boolean;
     } = {},
   ) {}
+
+  /** Release the idle connection when the owning Web access configuration changes. */
+  async close() {
+    this.closed = true;
+    const idle = this.idle;
+    delete this.idle;
+    await idle?.client.close().catch(() => {});
+  }
 
   async search(request: WebSearchRequest, signal: AbortSignal): Promise<WebResult> {
     const args = searchSchema.parse(request);
@@ -112,8 +131,105 @@ export class ExaWebProvider implements WebProvider {
     };
   }
 
+  private connection(): ExaConnection {
+    const connection: ExaConnection = {
+      client: new Client({ name: "VERA", version: "0.0.0" }, { capabilities: {} }),
+      transport: new StreamableHTTPClientTransport(new URL(endpoint), {
+        ...(this.options.apiKey
+          ? { requestInit: { headers: { "x-api-key": webApiKeySchema.parse(this.options.apiKey) } } }
+          : {}),
+        fetch: async (input, init) => {
+          const active = connection.request;
+          if (!active) throw new WebFailure("Web request cancelled.");
+          const { signal, fail } = active;
+          signal.throwIfAborted();
+          const request = new Request(input, init);
+          if (request.url !== endpoint) throw new WebFailure("Web transport destination was rejected.");
+          const requestSignal = init?.signal ? AbortSignal.any([signal, init.signal]) : signal;
+          const response = await (this.options.fetch ?? fetch)(input, {
+            ...init,
+            redirect: "error",
+            signal: requestSignal,
+          });
+          if (requestSignal.aborted) {
+            void response.body?.cancel().catch(() => {});
+            requestSignal.throwIfAborted();
+          }
+          if (!response.ok) {
+            await response.body?.cancel();
+            if (
+              active.reused &&
+              request.method === "POST" &&
+              response.status === 404 &&
+              request.headers.has("mcp-session-id")
+            )
+              throw fail(new ExpiredExaSession("Web provider session expired."));
+            if ([402, 429].includes(response.status))
+              throw new WebFailure(
+                "Web search service limit reached. Try again later or check the selected account quota.",
+              );
+            if ([401, 403].includes(response.status))
+              throw new WebFailure(
+                "Web search authentication failed. Check the selected access mode or API key.",
+              );
+            // An optional SSE listening stream is not supported by stateless Exa.
+            if (request.method === "GET" && response.status === 405) return response;
+            throw new WebFailure("Web search service is unavailable. Try again later.");
+          }
+          if (Number(response.headers.get("content-length")) > responseLimit) {
+            await response.body?.cancel();
+            throw new WebFailure("Web provider response exceeds the size limit. Narrow the request.");
+          }
+          if (!response.body) return response;
+          const reader = response.body.getReader();
+          let bytes = 0;
+          const body = new ReadableStream<Uint8Array>({
+            async pull(controller) {
+              try {
+                const chunk = await reader.read();
+                requestSignal.throwIfAborted();
+                if (chunk.done) {
+                  controller.close();
+                  return;
+                }
+                bytes += chunk.value.byteLength;
+                if (bytes > responseLimit) {
+                  await reader.cancel();
+                  controller.error(
+                    fail(new WebFailure("Web provider response exceeds the size limit. Narrow the request.")),
+                  );
+                } else controller.enqueue(chunk.value);
+              } catch (error) {
+                controller.error(error);
+              }
+            },
+            cancel: (reason) => reader.cancel(reason),
+          });
+          return new Response(body, { status: response.status, headers: response.headers });
+        },
+      }),
+    };
+    return connection;
+  }
+
   private async call(name: string, args: Record<string, unknown>, caller: AbortSignal): Promise<string> {
     const deadline = AbortSignal.timeout(this.options.timeoutMs ?? 30000);
+    try {
+      return await this.runCall(name, args, caller, deadline, true);
+    } catch (error) {
+      if (!(error instanceof ExpiredExaSession)) throw error;
+      return this.runCall(name, args, caller, deadline, false);
+    }
+  }
+
+  private async runCall(
+    name: string,
+    args: Record<string, unknown>,
+    caller: AbortSignal,
+    deadline: AbortSignal,
+    reuse: boolean,
+  ): Promise<string> {
+    if (this.closed) throw new WebFailure("Web request cancelled.");
     const failed = new AbortController();
     let failure: WebFailure | undefined;
     const fail = (error: WebFailure) => {
@@ -122,65 +238,12 @@ export class ExaWebProvider implements WebProvider {
       return error;
     };
     const signal = AbortSignal.any([caller, deadline, failed.signal]);
-    const client = new Client({ name: "VERA", version: "0.0.0" }, { capabilities: {} });
-    const transport = new StreamableHTTPClientTransport(new URL(endpoint), {
-      ...(this.options.apiKey
-        ? { requestInit: { headers: { "x-api-key": webApiKeySchema.parse(this.options.apiKey) } } }
-        : {}),
-      fetch: async (input, init) => {
-        signal.throwIfAborted();
-        const request = new Request(input, init);
-        if (request.url !== endpoint) throw new WebFailure("Web transport destination was rejected.");
-        const response = await (this.options.fetch ?? fetch)(input, {
-          ...init,
-          redirect: "error",
-          signal: AbortSignal.any([signal, ...(init?.signal ? [init.signal] : [])]),
-        });
-        if (!response.ok) {
-          await response.body?.cancel();
-          if ([402, 429].includes(response.status))
-            throw new WebFailure(
-              "Web search service limit reached. Try again later or check the selected account quota.",
-            );
-          if ([401, 403].includes(response.status))
-            throw new WebFailure(
-              "Web search authentication failed. Check the selected access mode or API key.",
-            );
-          // An optional SSE listening stream is not supported by stateless Exa.
-          if (request.method === "GET" && response.status === 405) return response;
-          throw new WebFailure("Web search service is unavailable. Try again later.");
-        }
-        if (Number(response.headers.get("content-length")) > responseLimit) {
-          await response.body?.cancel();
-          throw new WebFailure("Web provider response exceeds the size limit. Narrow the request.");
-        }
-        if (!response.body) return response;
-        const reader = response.body.getReader();
-        let bytes = 0;
-        const body = new ReadableStream<Uint8Array>({
-          async pull(controller) {
-            try {
-              const chunk = await reader.read();
-              if (chunk.done) {
-                controller.close();
-                return;
-              }
-              bytes += chunk.value.byteLength;
-              if (bytes > responseLimit) {
-                await reader.cancel();
-                controller.error(
-                  fail(new WebFailure("Web provider response exceeds the size limit. Narrow the request.")),
-                );
-              } else controller.enqueue(chunk.value);
-            } catch (error) {
-              controller.error(error);
-            }
-          },
-          cancel: (reason) => reader.cancel(reason),
-        });
-        return new Response(body, { status: response.status, headers: response.headers });
-      },
-    });
+    const idle = reuse ? this.idle : undefined;
+    if (idle) delete this.idle;
+    const connection = idle ?? this.connection();
+    const { client, transport } = connection;
+    connection.request = { signal, reused: idle !== undefined, fail };
+    let reusable = false;
     // Ensure pending initialize/stream reads terminate even if the server never responds.
     const abort = () => {
       void client.close().catch(() => {});
@@ -188,7 +251,7 @@ export class ExaWebProvider implements WebProvider {
     signal.addEventListener("abort", abort, { once: true });
     try {
       signal.throwIfAborted();
-      await client.connect(transport, { signal, timeout: this.options.timeoutMs ?? 30000 });
+      if (!idle) await client.connect(transport, { signal, timeout: this.options.timeoutMs ?? 30000 });
       const result = (await client.callTool({ name, arguments: args }, undefined, {
         signal,
         timeout: this.options.timeoutMs ?? 30000,
@@ -203,6 +266,7 @@ export class ExaWebProvider implements WebProvider {
         .map((block) => block.text)
         .join("\n\n---\n\n");
       if (!text.trim()) throw new WebFailure("Web provider returned an empty response. Refine the request.");
+      reusable = this.options.reuseConnection === true;
       return text;
     } catch (error) {
       if (caller.aborted) throw new WebFailure("Web request cancelled.");
@@ -214,7 +278,9 @@ export class ExaWebProvider implements WebProvider {
       );
     } finally {
       signal.removeEventListener("abort", abort);
-      await client.close().catch(() => {});
+      delete connection.request;
+      if (reusable && !this.closed && !signal.aborted && !this.idle) this.idle = connection;
+      else await client.close().catch(() => {});
     }
   }
 }

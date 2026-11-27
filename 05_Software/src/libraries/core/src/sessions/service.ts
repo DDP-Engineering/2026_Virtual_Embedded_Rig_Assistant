@@ -87,7 +87,7 @@ import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { TerminalReader } from "../tools/terminal-read.js";
 import { todoTool } from "../tools/todo.js";
-import type { WebDownloads } from "../web/downloads.js";
+import { DownloadTimeoutError, type WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import {
   type CaptureNavigationContext,
@@ -1666,6 +1666,7 @@ export class SessionService {
     const ctx = review
       ? createToolContext(this.host.root)
       : (this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers));
+    const webTurn = !review && !delegated ? this.host.web?.forTurn?.() : undefined;
     const mode = () => this.row(id).permission_mode;
     // Tool limits resolve at each call, so a saved change applies to the next call (ADV-03).
     ctx.advanced = (key) => this.resolveAdvanced(id, key);
@@ -1737,7 +1738,7 @@ export class SessionService {
       if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
       if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
       if (this.host.browser) ctx.browser ??= this.host.browser(id);
-      if (this.host.web) ctx.web = this.host.web;
+      if (this.host.web) ctx.web = webTurn ?? this.host.web;
       else delete ctx.web;
       if (this.host.parts) ctx.parts = this.host.parts;
       else delete ctx.parts;
@@ -1882,6 +1883,15 @@ export class SessionService {
               const text = JSON.stringify(result);
               return text;
             } catch (error) {
+              if (error instanceof DownloadTimeoutError)
+                throw Error(
+                  JSON.stringify({
+                    isError: true,
+                    timedOut: true,
+                    timeoutSeconds: error.timeoutSeconds,
+                    error: error.message,
+                  }),
+                );
               throw Error(
                 this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
                   (error instanceof Error ? error.message : "Tool failed."),
@@ -2253,6 +2263,7 @@ export class SessionService {
       if (discarded) return;
       discarded = true;
       imageReader = undefined;
+      webTurn?.close();
       artifactCitationResults.length = 0;
       failed = true;
       turn.failed = true;
@@ -2309,6 +2320,7 @@ export class SessionService {
           artifactCitationResults.length = 0;
           imageReader = undefined;
           if (discarded) return;
+          webTurn?.close();
           this.active.delete(id);
           // The turn has ended; a background compaction after it takes no slot (RULING-005 of TASK-d3a3049f).
           turn.slot?.release();

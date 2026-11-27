@@ -1368,6 +1368,7 @@
     "openTerminalDesc": "Ouvre et cible le terminal utilisateur."
   },
   "downloads": {
+    "timedOut": "Le téléchargement a dépassé la limite de {{seconds}} s. Réessayez ou augmentez la limite dans les paramètres avancés.",
     "revealNamed": "Afficher dans l’Explorateur : {{name}}",
     "reveal": "Afficher dans l’Explorateur",
     "title": "Fichiers téléchargés",

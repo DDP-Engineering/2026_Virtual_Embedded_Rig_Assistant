@@ -25,6 +25,8 @@ export interface WebReadRequest {
 export interface WebProvider {
   search(request: WebSearchRequest, signal: AbortSignal): Promise<WebResult>;
   read(request: WebReadRequest, signal: AbortSignal): Promise<WebResult>;
+  /** Leases a provider connection for calls belonging to one agent turn. */
+  forTurn?(): WebProvider & { close(): void };
 }
 
 // Node matches IPv4 addresses against mapped IPv6 ranges too; keep the families separate.

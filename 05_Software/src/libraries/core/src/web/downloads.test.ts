@@ -5,15 +5,25 @@ import { link, mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
+import type { PdfPageCounter } from "../knowledge/worker-host.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { ConfiguredWebProvider } from "./configured-provider.js";
-import { createDownloadPdfExtractor, WebDownloads } from "./downloads.js";
+import type { transferFile } from "./download-transfer.js";
+import { createDownloadPdfExtractor, DownloadTimeoutError, WebDownloads } from "./downloads.js";
 
 const cleanups: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
 });
 const bytes = Buffer.from("%PDF-1.7\n\x00\xfflocal PDF fixture\n%%EOF");
+const sendBytes =
+  (data: Buffer, finalUrl: string, mime: string): typeof transferFile =>
+  async (_url, signal, ports) => {
+    // Split the signature across chunks to exercise the staging prefix check.
+    await ports.write(data.subarray(0, 3), signal);
+    await ports.write(data.subarray(3), signal);
+    return { bytes: data.length, finalUrl, mime };
+  };
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "vera-pdf-store-"));
   cleanups.push(() => rm(root, { recursive: true, force: true }));
@@ -22,15 +32,11 @@ async function fixture() {
   const getKey = vi.fn(async () => undefined);
   const access = new ConfiguredWebProvider({ config: () => settings, getKey });
   cleanups.push(() => access.close());
-  const pdf = vi.fn(async (_bytes: Uint8Array, _signal: AbortSignal, _options?: unknown) => ({
-    kind: "pdf" as const,
-    pages: ["Page one", "Page two"],
-  }));
-  const transfer = vi.fn(async (_url: string, _signal: AbortSignal, _budget?: unknown) => ({
-    data: bytes,
-    finalUrl: "https://cdn.example.org/chip.pdf",
-    mime: "application/pdf",
-  }));
+  const pdf = {
+    read: vi.fn(async () => ({ kind: "pdf" as const, pages: ["Page one", "Page two"] })),
+    count: vi.fn<PdfPageCounter>(async () => 2),
+  };
+  const transfer = vi.fn(sendBytes(bytes, "https://cdn.example.org/chip.pdf", "application/pdf"));
   const store = new WebDownloads(root, { access, pdf, transfer });
   cleanups.push(() => store.close());
   const context = {
@@ -69,24 +75,21 @@ it("stores exact immutable binary/provenance, reopens offline, and never creates
 // REQ-FUNC-17f34e4b
 it("refuses a response above the approved size and saves no file", async () => {
   const f = await fixture();
-  f.transfer.mockResolvedValueOnce({
-    data: Buffer.alloc(12 * 1024 * 1024, 0x61),
-    finalUrl: "https://cdn.example.org/big.bin",
-    mime: "application/octet-stream",
-  });
+  const large = sendBytes(
+    Buffer.alloc(12 * 1024 * 1024, 0x61),
+    "https://cdn.example.org/big.bin",
+    "application/octet-stream",
+  );
+  f.transfer.mockImplementationOnce(large);
   const target = f.store.allocate("https://datasheets.example.org/big.bin");
   const budget = { maxBytes: 10 * 1024 * 1024, deadlineMs: 120_000 };
   await expect(f.store.save(target, f.context, new AbortController().signal, budget)).rejects.toThrow(
     "Download exceeds the size limit.",
   );
   expect(existsSync(join(f.root, target.path))).toBe(false);
-  expect(f.transfer.mock.calls[0]?.[2]).toEqual(budget);
+  expect(f.transfer.mock.calls[0]?.[2]).toMatchObject(budget);
   // Within a larger approved size the same response is saved.
-  f.transfer.mockResolvedValueOnce({
-    data: Buffer.alloc(12 * 1024 * 1024, 0x61),
-    finalUrl: "https://cdn.example.org/big.bin",
-    mime: "application/octet-stream",
-  });
+  f.transfer.mockImplementationOnce(large);
   const wider = f.store.allocate("https://datasheets.example.org/big.bin");
   const saved = await f.store.save(wider, f.context, new AbortController().signal, {
     maxBytes: 20 * 1024 * 1024,
@@ -102,7 +105,7 @@ it("parses a downloaded PDF with the session's Document extraction time limit", 
     deadlineMs: 120_000,
     extractionMs: 900_000,
   });
-  expect(f.pdf.mock.calls[0]?.[2]).toEqual({ baseMs: 900_000 });
+  expect(f.pdf.count.mock.calls[0]?.[2]).toEqual({ baseMs: 900_000 });
 });
 // REQ-FUNC-dfe84577
 it("ends a stalled download at its time limit and saves no file", async () => {
@@ -114,8 +117,32 @@ it("ends a stalled download at its time limit and saves no file", async () => {
   const target = f.store.allocate("https://datasheets.example.org/slow.pdf");
   await expect(
     f.store.save(target, f.context, new AbortController().signal, { maxBytes: 1024, deadlineMs: 50 }),
-  ).rejects.toThrow();
+  ).rejects.toMatchObject({
+    constructor: DownloadTimeoutError,
+    message: expect.stringContaining("Download timed out after 0.05 s."),
+    timeoutSeconds: 0.05,
+  });
   expect(existsSync(join(f.root, target.path))).toBe(false);
+});
+
+it("reports cancellation separately from the transfer deadline", async () => {
+  const f = await fixture();
+  const controller = new AbortController();
+  f.transfer.mockImplementationOnce(async (_url, signal, ports) => {
+    await ports.write(bytes.subarray(0, 8), signal);
+    expect(
+      await readFile(join(f.root, ".vera/downloads", `.pending-${f.target.downloadId}`, f.target.name)),
+    ).toEqual(bytes.subarray(0, 8));
+    expect(await f.store.list()).toEqual([]);
+    controller.abort();
+    signal.throwIfAborted();
+    throw Error("Expected the transfer signal to be aborted");
+  });
+  await expect(f.store.save(f.target, f.context, controller.signal)).rejects.toMatchObject({
+    reason: "cancelled",
+  });
+  expect(existsSync(join(f.root, f.target.path))).toBe(false);
+  expect(await readdir(join(f.root, ".vera/downloads"))).toEqual([]);
 });
 it("uses fresh identities for repeated names and refuses overwriting an existing identity", async () => {
   const f = await fixture();
@@ -139,14 +166,15 @@ it.each([
   ["empty.txt", "text/plain", Buffer.alloc(0)],
 ])("stores and lists %s exactly without invoking the PDF parser", async (name, mime, data) => {
   const f = await fixture();
-  f.transfer.mockResolvedValue({ data, mime, finalUrl: `https://cdn.example.org/${name}` });
+  f.transfer.mockImplementation(sendBytes(data, `https://cdn.example.org/${name}`, mime));
   const target = f.store.allocate(`https://example.org/${name}`);
   const record = await f.store.save(target, f.context, new AbortController().signal);
   expect(record).toMatchObject({ name, mime, bytes: data.length });
   expect(record.pages).toBeUndefined();
   expect(await readFile(join(f.root, record.path))).toEqual(data);
   expect(await f.store.list()).toEqual([record]);
-  expect(f.pdf).not.toHaveBeenCalled();
+  expect(f.pdf.count).not.toHaveBeenCalled();
+  expect(f.pdf.read).not.toHaveBeenCalled();
   await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "INVALID" });
 });
 it.each([
@@ -189,9 +217,9 @@ it("rejects hard-linked PDF bytes before parsing", async () => {
   const f = await fixture();
   const record = await f.store.save(f.target, f.context, new AbortController().signal);
   await link(join(f.root, record.path), join(f.root, "outside.pdf"));
-  f.pdf.mockClear();
+  f.pdf.read.mockClear();
   await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "DENIED" });
-  expect(f.pdf).not.toHaveBeenCalled();
+  expect(f.pdf.read).not.toHaveBeenCalled();
 });
 it("cleans unpublished files when live ownership is lost during publication", async () => {
   const f = await fixture();
@@ -212,11 +240,9 @@ it("rechecks authority at the completed rename and removes an unaccepted publica
 });
 it("locates a stored non-PDF download for the file manager and refuses unverifiable files", async () => {
   const f = await fixture();
-  f.transfer.mockResolvedValue({
-    data: Buffer.from("PK\x03\x04\x00\xff"),
-    mime: "application/zip",
-    finalUrl: "https://cdn.example.org/firmware.zip",
-  });
+  f.transfer.mockImplementation(
+    sendBytes(Buffer.from("PK\x03\x04\x00\xff"), "https://cdn.example.org/firmware.zip", "application/zip"),
+  );
   const record = await f.store.save(
     f.store.allocate("https://example.org/firmware.zip"),
     f.context,
@@ -274,7 +300,7 @@ it("validates real PDF pages before saving and rejects corrupt or fake PDF bodie
   const store = new WebDownloads(f.root, {
     access: f.access,
     pdf,
-    transfer: async () => ({ data: valid, finalUrl: f.target.sourceUrl, mime: "application/pdf" }),
+    transfer: sendBytes(valid, f.target.sourceUrl, "application/pdf"),
   });
   cleanups.push(() => store.close());
   const record = await store.save(f.target, f.context, new AbortController().signal);
@@ -285,7 +311,7 @@ it("validates real PDF pages before saving and rejects corrupt or fake PDF bodie
     const invalid = new WebDownloads(f.root, {
       access: f.access,
       pdf,
-      transfer: async () => ({ data, finalUrl: f.target.sourceUrl, mime: "application/pdf" }),
+      transfer: sendBytes(data, f.target.sourceUrl, "application/pdf"),
     });
     cleanups.push(() => invalid.close());
     await expect(
@@ -296,7 +322,7 @@ it("validates real PDF pages before saving and rejects corrupt or fake PDF bodie
 }, 20_000);
 it("publishes nothing when the PDF parser requests a password", async () => {
   const f = await fixture();
-  f.pdf.mockRejectedValueOnce(Object.assign(Error("Password required"), { name: "PasswordException" }));
+  f.pdf.count.mockRejectedValueOnce(Object.assign(Error("Password required"), { name: "PasswordException" }));
   await expect(f.store.save(f.target, f.context, new AbortController().signal)).rejects.toThrow(/password/i);
   expect(await f.store.list()).toEqual([]);
 });

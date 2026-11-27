@@ -1368,6 +1368,7 @@
     "openTerminalDesc": "Open and focus the user terminal."
   },
   "downloads": {
+    "timedOut": "The download exceeded its time limit of {{seconds}} s. Retry or increase the limit in Advanced settings.",
     "revealNamed": "Show in Explorer: {{name}}",
     "reveal": "Show in Explorer",
     "title": "Downloaded files",

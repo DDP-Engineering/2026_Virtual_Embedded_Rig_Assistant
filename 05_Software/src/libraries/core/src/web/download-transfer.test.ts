@@ -24,21 +24,30 @@ function reply(
   };
 }
 function fixture(responses: DownloadHttpResponse[] = [reply()]) {
+  const chunks: Uint8Array[] = [];
   const resolve = vi.fn(async () => [{ address: "93.184.215.14", family: 4 }]);
   const connect = vi.fn<NonNullable<DownloadTransferPorts["connect"]>>(async () => {
     const response = responses.shift();
     if (!response) throw Error("Unexpected HTTP request");
     return response;
   });
-  return { resolve, connect };
+  return {
+    resolve,
+    connect,
+    chunks,
+    write: async (chunk: Uint8Array) => {
+      chunks.push(chunk);
+    },
+  };
 }
 it("preserves PDF bytes and pins validated DNS without sending credentials", async () => {
   const f = fixture();
   expect(await transferFile("https://datasheets.example.org/file.pdf", signal(), f)).toEqual({
-    data: bytes,
+    bytes: bytes.length,
     finalUrl: "https://datasheets.example.org/file.pdf",
     mime: "application/pdf",
   });
+  expect(Buffer.concat(f.chunks)).toEqual(bytes);
   expect(f.resolve).toHaveBeenCalledExactlyOnceWith("datasheets.example.org");
   expect(f.connect.mock.calls[0]?.slice(0, 3)).toEqual([
     new URL("https://datasheets.example.org/file.pdf"),
@@ -125,7 +134,8 @@ it("bounds redirect loops", async () => {
 });
 it("preserves a binary-download MIME and its original bytes", async () => {
   const f = fixture([reply(200, [bytes], { "content-type": "application/octet-stream" })]);
-  expect((await transferFile("https://datasheets.example.org/chip", signal(), f)).data).toEqual(bytes);
+  expect((await transferFile("https://datasheets.example.org/chip", signal(), f)).bytes).toBe(bytes.length);
+  expect(Buffer.concat(f.chunks)).toEqual(bytes);
 });
 it.each([
   ["application/zip", Buffer.from("PK\x03\x04\x00\xff")],
@@ -133,24 +143,28 @@ it.each([
   ["text/csv; charset=utf-8", Buffer.from("time,voltage\n1,3.3\n")],
   ["text/plain", Buffer.alloc(0)],
 ])("transfers %s without imposing a PDF signature", async (mime, data) => {
-  const result = await transferFile(
-    "https://example.org/file",
-    signal(),
-    fixture([reply(200, [data], { "content-type": mime })]),
-  );
-  expect(result.data).toEqual(data);
+  const f = fixture([reply(200, [data], { "content-type": mime })]);
+  const result = await transferFile("https://example.org/file", signal(), f);
+  expect(Buffer.concat(f.chunks)).toEqual(data);
+  expect(result.bytes).toBe(data.length);
   expect(result.mime).toBe(mime.split(";")[0]);
 });
 it("bounds stalled DNS and honors an already cancelled caller", async () => {
   const connect = vi.fn(),
-    resolve = vi.fn(() => new Promise<never>(() => {}));
+    resolve = vi.fn(() => new Promise<never>(() => {})),
+    write = vi.fn(async () => {});
   await expect(
-    transferFile("https://datasheets.example.org/a.pdf", signal(), { resolve, connect, deadlineMs: 10 }),
+    transferFile("https://datasheets.example.org/a.pdf", signal(), {
+      resolve,
+      connect,
+      write,
+      deadlineMs: 10,
+    }),
   ).rejects.toThrow();
   const controller = new AbortController();
   controller.abort();
   await expect(
-    transferFile("https://datasheets.example.org/a.pdf", controller.signal, { resolve, connect }),
+    transferFile("https://datasheets.example.org/a.pdf", controller.signal, { resolve, connect, write }),
   ).rejects.toThrow();
   expect(connect).not.toHaveBeenCalled();
 });

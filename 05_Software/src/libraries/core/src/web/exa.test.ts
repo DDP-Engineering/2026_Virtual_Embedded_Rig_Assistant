@@ -5,8 +5,11 @@ import * as api from "../index.js";
 function mcp(
   reply: (name: string, args: Record<string, unknown>, signal: AbortSignal) => unknown,
   key?: string,
+  withSession = false,
 ) {
   const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const methods: string[] = [];
+  let session = 0;
   const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
     const request = new Request(input, init);
     expect(request.url).toBe("https://mcp.exa.ai/mcp");
@@ -25,9 +28,11 @@ function mcp(
         arguments: Record<string, unknown>;
       };
     };
+    methods.push(body.method);
     if (body.id === undefined) return new Response(null, { status: 202 });
     let result: unknown;
     if (body.method === "initialize") {
+      session++;
       expect(body.params.capabilities).toEqual({});
       result = {
         protocolVersion: body.params.protocolVersion,
@@ -40,9 +45,14 @@ function mcp(
       result = await reply(body.params.name, body.params.arguments, request.signal);
       if (result instanceof Response) return result;
     }
-    return Response.json({ jsonrpc: "2.0", id: body.id, result });
+    return Response.json(
+      { jsonrpc: "2.0", id: body.id, result },
+      withSession && body.method === "initialize"
+        ? { headers: { "Mcp-Session-Id": `test-${session}` } }
+        : undefined,
+    );
   });
-  return { calls, fetch };
+  return { calls, fetch, methods };
 }
 const text = (value: string) => ({ content: [{ type: "text", text: value }] });
 const source =
@@ -200,7 +210,7 @@ it("settles cancellation and a total deadline without retaining in-flight transp
         );
       }),
   );
-  const provider = new api.ExaWebProvider({ fetch: fixture.fetch, timeoutMs: 80 });
+  const provider = new api.ExaWebProvider({ fetch: fixture.fetch, timeoutMs: 500 });
   await expect(provider.search({ query: "deadline" }, new AbortController().signal)).rejects.toThrow(
     /timed out/i,
   );
@@ -210,6 +220,89 @@ it("settles cancellation and a total deadline without retaining in-flight transp
   controller.abort();
   await expect(pending).rejects.toThrow(/cancel/i);
   expect(aborted).toHaveBeenCalledTimes(2);
+});
+
+it("reuses an idle stateless connection, then reconnects after a cancelled call", async () => {
+  const fixture = mcp((_name, args, signal) => {
+    if (args.query !== "wait") return text(source);
+    return new Promise((_resolve, reject) => {
+      signal.throwIfAborted();
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    });
+  });
+  const provider = new api.ExaWebProvider({ fetch: fixture.fetch, reuseConnection: true });
+  const controller = new AbortController();
+  const initializations = () => fixture.methods.filter((method) => method === "initialize").length;
+  try {
+    await provider.search({ query: "first" }, controller.signal);
+    await provider.search({ query: "second" }, controller.signal);
+    expect(initializations()).toBe(1);
+    const pending = provider.search({ query: "wait" }, controller.signal);
+    const cancelled = expect(pending).rejects.toThrow(/cancel/i);
+    await vi.waitFor(() => expect(fixture.calls).toHaveLength(3));
+    controller.abort();
+    await cancelled;
+    expect(initializations()).toBe(1);
+    await provider.search({ query: "after Stop" }, new AbortController().signal);
+    expect(initializations()).toBe(2);
+  } finally {
+    await provider.close();
+  }
+});
+
+it("discards the idle Exa connection when the Web access configuration is revoked", async () => {
+  const fixture = mcp(() => text(source));
+  vi.stubGlobal("fetch", fixture.fetch);
+  const provider = new api.ConfiguredWebProvider({
+    config: () => ({ enabled: true, provider: "exa", authentication: "anonymous" }),
+    getKey: async () => undefined,
+  });
+  const turn = provider.forTurn();
+  const signal = new AbortController().signal;
+  const initializations = () => fixture.methods.filter((method) => method === "initialize").length;
+  try {
+    await turn.search({ query: "first" }, signal);
+    await turn.search({ query: "second" }, signal);
+    expect(initializations()).toBe(1);
+    provider.revoke();
+    await turn.search({ query: "after revocation" }, signal);
+    expect(initializations()).toBe(2);
+    turn.close();
+    await expect(turn.search({ query: "closed" }, signal)).rejects.toThrow(/cancel/i);
+    const next = provider.forTurn();
+    await next.search({ query: "another turn" }, signal);
+    expect(initializations()).toBe(3);
+    next.close();
+  } finally {
+    turn.close();
+    await provider.close();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("reopens an expired MCP session once before completing the web request", async () => {
+  let expired = false;
+  const fixture = mcp(
+    (_name, args) => {
+      if (args.query === "retry" && !expired) {
+        expired = true;
+        return new Response(null, { status: 404 });
+      }
+      return text(source);
+    },
+    undefined,
+    true,
+  );
+  const provider = new api.ExaWebProvider({ fetch: fixture.fetch, reuseConnection: true });
+  const signal = new AbortController().signal;
+  try {
+    await provider.search({ query: "first" }, signal);
+    expect((await provider.search({ query: "retry" }, signal)).sources).toHaveLength(1);
+    expect(fixture.methods.filter((method) => method === "initialize")).toHaveLength(2);
+    expect(fixture.calls.map(({ args }) => args.query)).toEqual(["first", "retry", "retry"]);
+  } finally {
+    await provider.close();
+  }
 });
 
 it("cancels initialization before any tool call and rejects redirects", async () => {

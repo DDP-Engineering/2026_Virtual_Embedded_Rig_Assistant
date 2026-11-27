@@ -1368,6 +1368,7 @@
     "openTerminalDesc": "Öffnet und fokussiert das Benutzerterminal."
   },
   "downloads": {
+    "timedOut": "Der Download hat das Zeitlimit von {{seconds}} s überschritten. Erneut versuchen oder das Limit in den erweiterten Einstellungen erhöhen.",
     "revealNamed": "Im Explorer anzeigen: {{name}}",
     "reveal": "Im Explorer anzeigen",
     "title": "Heruntergeladene Dateien",

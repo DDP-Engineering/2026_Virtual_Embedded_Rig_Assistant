@@ -1,7 +1,17 @@
 // REQ-FUNC-b975a8b5, REQ-DATA-fd1933a1, REQ-FUNC-4c3f4f0c, REQ-REL-39e8cc78
 import { createHash, randomUUID } from "node:crypto";
-import { realpathSync } from "node:fs";
-import { lstat, mkdir, open, readdir, realpath, rename, rmdir, unlink } from "node:fs/promises";
+import { realpathSync, type Stats } from "node:fs";
+import {
+  type FileHandle,
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  realpath,
+  rename,
+  rmdir,
+  unlink,
+} from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
   advancedSettings,
@@ -13,7 +23,12 @@ import {
   type WebDownload,
   webDownloadSchema,
 } from "@vera/shared";
-import { createPdfExtractor, type PdfExtractor } from "../knowledge/worker-host.js";
+import {
+  createPdfExtractor,
+  createPdfPageCounter,
+  type PdfExtractor,
+  type PdfPageCounter,
+} from "../knowledge/worker-host.js";
 import type { WriteQueue } from "../workbench/write-queue.js";
 import { DOWNLOAD_DEADLINE_MS, transferFile } from "./download-transfer.js";
 import { publicWebUrl } from "./provider.js";
@@ -43,13 +58,28 @@ export interface DownloadBudget {
   readonly deadlineMs: number;
   readonly extractionMs?: number;
 }
+export class DownloadTimeoutError extends Error {
+  readonly timeoutSeconds: number;
+
+  constructor(deadlineMs: number) {
+    const seconds = deadlineMs / 1000;
+    super(
+      `Download timed out after ${seconds} s. Retry or increase the Download time limit in Advanced settings.`,
+    );
+    this.timeoutSeconds = seconds;
+  }
+}
 const defaultBudget: DownloadBudget = {
   maxBytes: advancedSettings.downloadMB.default * 1024 * 1024,
   deadlineMs: DOWNLOAD_DEADLINE_MS,
 };
 /** Public document parsing has a disposable worker, a deadline and a bounded JS heap. */
-export function createDownloadPdfExtractor(entry: URL): PdfExtractor {
-  return createPdfExtractor(entry, DOWNLOAD_DEADLINE_MS, { maxOldGenerationSizeMb: 256 });
+export function createDownloadPdfExtractor(entry: URL) {
+  const limits = { maxOldGenerationSizeMb: 256 };
+  return {
+    read: createPdfExtractor(entry, DOWNLOAD_DEADLINE_MS, limits),
+    count: createPdfPageCounter(entry, DOWNLOAD_DEADLINE_MS, limits),
+  };
 }
 
 /** Provider-neutral workbench data. Neither downloaded bytes nor extracted text enter RAG/model results. */
@@ -61,7 +91,7 @@ export class WebDownloads {
     root: string,
     private readonly host: {
       access: DownloadAccess;
-      pdf: PdfExtractor;
+      pdf: { read: PdfExtractor; count: PdfPageCounter };
       transfer?: typeof transferFile;
     },
   ) {
@@ -106,101 +136,135 @@ export class WebDownloads {
           signal.throwIfAborted();
           assertCurrent();
           context.assertWritable();
-          const { data, finalUrl, mime } = await (this.host.transfer ?? transferFile)(
-            target.sourceUrl,
-            AbortSignal.any([signal, AbortSignal.timeout(budget.deadlineMs)]),
-            { maxBytes: budget.maxBytes, deadlineMs: budget.deadlineMs },
-          );
-          signal.throwIfAborted();
-          assertCurrent();
-          context.assertWritable();
-          if (data.length > budget.maxBytes) throw Error("Download exceeds the size limit.");
-          const pdfSignature = data.subarray(0, 1024).includes(Buffer.from("%PDF-"));
-          const isPdf = mime === "application/pdf" || /\.pdf$/i.test(target.name) || pdfSignature;
-          if (isPdf && !pdfSignature) throw Error("The response is not a supported PDF document.");
-          const parsed = isPdf
-            ? await this.host.pdf(
-                data,
-                signal,
-                budget.extractionMs === undefined ? undefined : { baseMs: budget.extractionMs },
-              )
-            : undefined;
-          signal.throwIfAborted();
-          if (parsed && !parsed.pages.length) throw Error("The PDF contains no pages.");
-          const record = webDownloadSchema.parse({
-            ...target,
-            sourceUrl: publicWebUrl(target.sourceUrl),
-            finalUrl: publicWebUrl(finalUrl),
-            sessionId: context.sessionId,
-            callId: context.callId,
-            mime: isPdf ? "application/pdf" : mime,
-            bytes: data.length,
-            sha256: hash(data),
-            createdAt: context.now(),
-            ...(parsed ? { pages: parsed.pages.length } : {}),
-          });
-          return context.queue.run(async () => {
+          const parent = await this.directory(true);
+          const staging = join(parent, `.pending-${target.downloadId}`);
+          const final = join(parent, target.downloadId);
+          await mkdir(staging, { mode: 0o700 });
+          const owned = await this.ordinaryDirectory(staging);
+          let location = staging;
+          let published = false;
+          try {
             signal.throwIfAborted();
             assertCurrent();
             context.assertWritable();
-            const parent = await this.directory(true);
-            const staging = join(parent, `.pending-${target.downloadId}`);
-            const final = join(parent, target.downloadId);
-            let created = false,
-              renamed = false,
-              published = false;
-            try {
-              await mkdir(staging, { mode: 0o700 });
-              created = true;
-              await this.ordinaryDirectory(staging);
-              for (const [name, bytes] of [
-                [target.name, data],
-                [manifestName, Buffer.from(JSON.stringify(record))],
-              ] as const) {
-                signal.throwIfAborted();
+            const path = join(staging, target.name);
+            const file = await open(path, "wx+", 0o600);
+            const { transfer, pages, identity } = await (async () => {
+              try {
+                const transfer = await this.receive(target.sourceUrl, file, signal, budget);
                 assertCurrent();
                 context.assertWritable();
-                await this.directory();
-                await this.ordinaryDirectory(staging);
-                const file = await open(join(staging, name), "wx", 0o600);
-                try {
-                  await file.writeFile(bytes, { signal });
-                  await file.sync();
-                } finally {
-                  await file.close();
-                }
+                await file.sync();
+                const identity = await file.stat();
+                if (!identity.isFile() || identity.nlink !== 1 || identity.size !== transfer.bytes)
+                  throw veraError("CONFLICT");
+                const isPdf =
+                  transfer.mime === "application/pdf" || /\.pdf$/i.test(target.name) || transfer.pdfSignature;
+                if (isPdf && !transfer.pdfSignature)
+                  throw Error("The response is not a supported PDF document.");
+                const pages = isPdf
+                  ? await this.host.pdf.count(
+                      { fd: file.fd, size: identity.size },
+                      signal,
+                      budget.extractionMs === undefined ? undefined : { baseMs: budget.extractionMs },
+                    )
+                  : undefined;
+                if (pages === 0) throw Error("The PDF contains no pages.");
+                return { transfer, pages, identity };
+              } finally {
+                await file.close();
               }
+            })();
+            const record = webDownloadSchema.parse({
+              ...target,
+              finalUrl: publicWebUrl(transfer.finalUrl),
+              sessionId: context.sessionId,
+              callId: context.callId,
+              mime: pages === undefined ? transfer.mime : "application/pdf",
+              bytes: transfer.bytes,
+              sha256: transfer.sha256,
+              createdAt: context.now(),
+              ...(pages === undefined ? {} : { pages }),
+            });
+            const assertStaged = async (directory: string) => {
               await this.directory();
-              await this.ordinaryDirectory(staging);
+              await this.ordinaryDirectory(directory, owned);
+              const current = await lstat(join(directory, target.name));
+              if (
+                !current.isFile() ||
+                current.nlink !== 1 ||
+                current.dev !== identity.dev ||
+                current.ino !== identity.ino ||
+                current.size !== identity.size ||
+                current.mtimeMs !== identity.mtimeMs ||
+                current.ctimeMs !== identity.ctimeMs
+              )
+                throw veraError("CONFLICT");
               signal.throwIfAborted();
               assertCurrent();
               context.assertWritable();
+            };
+            await assertStaged(staging);
+            const manifest = await open(join(staging, manifestName), "wx", 0o600);
+            try {
+              await manifest.writeFile(JSON.stringify(record), { signal });
+              await manifest.sync();
+            } finally {
+              await manifest.close();
+            }
+            return await context.queue.run(async () => {
               try {
                 await lstat(final);
                 throw veraError("CONFLICT");
               } catch (error) {
                 if (!missing(error)) throw error;
               }
-              signal.throwIfAborted();
-              assertCurrent();
-              context.assertWritable();
+              await assertStaged(staging);
               await rename(staging, final);
-              renamed = true;
-              signal.throwIfAborted();
-              assertCurrent();
-              context.assertWritable();
+              location = final;
+              await assertStaged(final);
               published = true;
               return record;
-            } finally {
-              if (created && !published) {
-                const unpublished = renamed ? final : staging;
-                await this.cleanup(unpublished, target.name);
-              }
-            }
-          });
+            });
+          } finally {
+            if (!published) await this.cleanup(location, target.name, owned);
+          }
         }, lifetime),
       caller,
     );
+  }
+
+  private async receive(url: string, file: FileHandle, signal: AbortSignal, budget: DownloadBudget) {
+    const deadline = AbortSignal.timeout(budget.deadlineMs);
+    const transferSignal = AbortSignal.any([signal, deadline]);
+    const checksum = createHash("sha256");
+    const prefix = Buffer.alloc(1024);
+    let bytes = 0;
+    try {
+      const result = await (this.host.transfer ?? transferFile)(url, transferSignal, {
+        maxBytes: budget.maxBytes,
+        deadlineMs: budget.deadlineMs,
+        write: async (chunk, signal) => {
+          signal.throwIfAborted();
+          const end = bytes + chunk.byteLength;
+          if (end > budget.maxBytes) throw Error("Download exceeds the size limit.");
+          await file.writeFile(chunk, { signal });
+          checksum.update(chunk);
+          if (bytes < prefix.length) prefix.set(chunk.subarray(0, prefix.length - bytes), bytes);
+          bytes = end;
+        },
+      });
+      transferSignal.throwIfAborted();
+      if (result.bytes !== bytes) throw Error("Incomplete download.");
+      return {
+        ...result,
+        sha256: checksum.digest("hex"),
+        pdfSignature: prefix.subarray(0, bytes).includes(Buffer.from("%PDF-")),
+      };
+    } catch (error) {
+      if (deadline.aborted && !signal.aborted) throw new DownloadTimeoutError(budget.deadlineMs);
+      throw error;
+    }
   }
 
   list(caller: AbortSignal = new AbortController().signal): Promise<WebDownload[]> {
@@ -240,7 +304,7 @@ export class WebDownloads {
       await this.ordinaryDirectory(directory);
       const data = await this.read(join(directory, record.name), DOWNLOAD_MAX_BYTES, signal);
       if (data.length !== record.bytes || hash(data) !== record.sha256) throw veraError("CONFLICT");
-      const extracted = await this.host.pdf(data, signal);
+      const extracted = await this.host.pdf.read(data, signal);
       signal.throwIfAborted();
       await this.directory();
       await this.ordinaryDirectory(directory);
@@ -302,11 +366,11 @@ export class WebDownloads {
     );
     return pending;
   }
-  private async cleanup(directory: string, name: string): Promise<void> {
+  private async cleanup(directory: string, name: string, owned: Stats): Promise<void> {
     // Only our two exact files in an ordinary, unpublished managed directory are eligible.
     try {
       await this.directory();
-      await this.ordinaryDirectory(directory);
+      await this.ordinaryDirectory(directory, owned);
       for (const file of [name, manifestName]) {
         try {
           await unlink(join(directory, file));
@@ -319,10 +383,12 @@ export class WebDownloads {
       /* Never follow a substituted filesystem path for cleanup. */
     }
   }
-  private async ordinaryDirectory(path: string) {
+  private async ordinaryDirectory(path: string, owned?: Stats) {
     const stat = await lstat(path);
     if (!stat.isDirectory() || stat.isSymbolicLink() || key(await realpath(path)) !== key(path))
       throw veraError("DENIED");
+    if (owned && (stat.dev !== owned.dev || stat.ino !== owned.ino)) throw veraError("CONFLICT");
+    return stat;
   }
   private async directory(create = false) {
     await this.ordinaryDirectory(this.root);

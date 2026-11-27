@@ -16,12 +16,18 @@ export class WebAccessBlocked extends Error {
   }
 }
 
+interface WebTurn {
+  closed: boolean;
+  exa?: { key: string | undefined; timeoutMs: number | undefined; provider: ExaWebProvider };
+}
+
 /** The application gate remains authoritative even for tools bound before a settings change. */
 export class ConfiguredWebProvider implements WebProvider {
   private readonly active = new Set<AbortController>();
   private readonly pending = new Set<Promise<unknown>>();
   private generation = 0;
   private closed = false;
+  private readonly exaTurns = new Set<WebTurn>();
   constructor(
     private readonly host: {
       config(): WebAccessSettings;
@@ -40,6 +46,17 @@ export class ConfiguredWebProvider implements WebProvider {
   }
   read(args: WebReadRequest, signal: AbortSignal) {
     return this.run("read", args, signal);
+  }
+  forTurn(): WebProvider & { close(): void } {
+    const turn: WebTurn = { closed: false };
+    return {
+      search: (args, signal) => this.run("search", args, signal, undefined, turn),
+      read: (args, signal) => this.run("read", args, signal, undefined, turn),
+      close: () => {
+        turn.closed = true;
+        this.closeExaTurn(turn);
+      },
+    };
   }
   /** Direct downloads share global authorization/lifetime, never search-provider keys or capabilities. */
   withAccess<T>(
@@ -91,7 +108,25 @@ export class ConfiguredWebProvider implements WebProvider {
   }
   revoke() {
     this.generation++;
+    for (const turn of this.exaTurns) this.closeExaTurn(turn);
     for (const controller of this.active) controller.abort(new WebAccessBlocked("cancelled"));
+  }
+  private closeExaTurn(turn: WebTurn) {
+    void turn.exa?.provider.close();
+    delete turn.exa;
+    this.exaTurns.delete(turn);
+  }
+
+  private exaProvider(key: string | undefined, timeoutMs: number | undefined, turn: WebTurn | undefined) {
+    const timing = timeoutMs === undefined ? {} : { timeoutMs };
+    const options = { ...(key ? { apiKey: key } : {}), ...timing };
+    if (!turn) return new ExaWebProvider(options);
+    if (!turn.exa || turn.exa.key !== key || turn.exa.timeoutMs !== timeoutMs) {
+      this.closeExaTurn(turn);
+      turn.exa = { key, timeoutMs, provider: new ExaWebProvider({ ...options, reuseConnection: true }) };
+      this.exaTurns.add(turn);
+    }
+    return turn.exa.provider;
   }
   async close() {
     this.closed = true;
@@ -107,8 +142,9 @@ export class ConfiguredWebProvider implements WebProvider {
       authentication: "anonymous" | "api-key";
       apiKey?: string | undefined;
     },
+    turn?: WebTurn,
   ) {
-    const operation = this.perform(kind, args, caller, override);
+    const operation = this.perform(kind, args, caller, override, turn);
     this.pending.add(operation);
     void operation.then(
       () => this.pending.delete(operation),
@@ -125,8 +161,10 @@ export class ConfiguredWebProvider implements WebProvider {
       authentication: "anonymous" | "api-key";
       apiKey?: string | undefined;
     },
+    turn?: WebTurn,
   ): Promise<WebResult> {
     if (this.closed || !this.host.config().enabled) throw new WebAccessBlocked("disabled");
+    if (turn?.closed) throw new WebAccessBlocked("cancelled");
     caller.throwIfAborted();
     const controller = new AbortController(),
       revision = this.generation;
@@ -142,7 +180,7 @@ export class ConfiguredWebProvider implements WebProvider {
       const key =
         mode === "api-key" ? (override?.apiKey ?? (await this.host.getKey(providerId, signal))) : undefined;
       signal.throwIfAborted();
-      if (revision !== this.generation || !this.host.config().enabled)
+      if (revision !== this.generation || !this.host.config().enabled || turn?.closed)
         throw new WebAccessBlocked("cancelled");
       if (mode === "api-key" && !key) throw new WebAccessBlocked("key-required");
       const timeoutMs = this.host.timeoutMs?.();
@@ -150,7 +188,7 @@ export class ConfiguredWebProvider implements WebProvider {
       const provider =
         this.host.create?.(providerId, key, timing) ??
         (providerId === "exa"
-          ? new ExaWebProvider({ ...(key ? { apiKey: key } : {}), ...timing })
+          ? this.exaProvider(key, timeoutMs, turn)
           : providerId === "tavily"
             ? new TavilyWebProvider({ ...(key ? { apiKey: key } : {}), ...timing })
             : // Brave has no anonymous mode, so the checks above leave a key here.
