@@ -20,6 +20,7 @@ import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import type { WebSource } from "../web/provider.js";
 import { applyCandidateTool } from "./apply-candidate.js";
+import { artifactListTool } from "./artifact-list.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import { askUserTool } from "./ask-user.js";
 import { browserTools } from "./browser.js";
@@ -59,6 +60,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   write: writeTool,
   edit: editTool,
   artifact_save: artifactSaveTool,
+  artifact_list: artifactListTool,
   todo: todoTool,
   search_docs: searchDocsTool,
   read_doc: readDocTool,

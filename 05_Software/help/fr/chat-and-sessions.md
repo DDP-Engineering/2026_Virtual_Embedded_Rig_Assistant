@@ -120,8 +120,8 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 
 Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans un onglet à côté du Chat.
 
-Pour demander à l’agent de réutiliser un artefact texte enregistré, donnez sa référence exacte
-`artifact:...` dans la même session. Vous pouvez le faire après avoir rouvert la session.
+Demandez à l’agent de trouver et de réutiliser un artefact texte enregistré dans la même session,
+même après l’avoir rouverte. Pour choisir un artefact précis, donnez sa référence exacte `artifact:...`.
 
 ## Onglets ouverts
 

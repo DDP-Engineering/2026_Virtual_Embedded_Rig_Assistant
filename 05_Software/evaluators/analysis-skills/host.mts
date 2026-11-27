@@ -32,7 +32,9 @@ async function main() {
   const receiptPath = join(output, "run.json");
   const logger = new ConsoleLogger(() => {});
   const requested = process.env.VERA_ANALYSIS_MODEL;
+  const discoverReport = process.env.VERA_ANALYSIS_DISCOVER_REPORT === "1";
   const allowed = new Set(["load_skill", "read", "list", "glob", "grep", "parse_log", "artifact_save"]);
+  if (discoverReport) allowed.add("artifact_list");
   const disabledTools = [...builtinToolNames, ...delegatedSessionToolNames].filter(
     (name) => !allowed.has(name),
   );
@@ -222,7 +224,7 @@ async function main() {
     const planning = await turn(
       planner,
       session.id,
-      `From the saved comparison [[${reportRef}]], prepare and save exactly two manual test cases for candidate 1.1.0. Make one a boot regression with baseline 1.0.0 as a control and one an I2C recovery timing observation. Apply only the documented criteria. Include the status of each case and cite the report and sources.`,
+      `${discoverReport ? "Find the latest saved firmware comparison in this conversation. From that report" : `From the saved comparison [[${reportRef}]]`}, prepare and save exactly two manual test cases for candidate 1.1.0. Make one a boot regression with baseline 1.0.0 as a control and one an I2C recovery timing observation. Apply only the documented criteria. Include the status of each case and cite the report and sources.`,
     );
     const plans = planner.listArtifacts(session.id).filter(({ name }) => name.startsWith("test-plan-"));
     const plan = plans[0] ? await planner.openArtifact(plans[0].artifactId) : undefined;
@@ -246,6 +248,7 @@ async function main() {
       plan,
       planCount: plans.length,
       reportRef,
+      discoverReport,
     });
     receipt.execution = execution;
     receipt.checks = checks;

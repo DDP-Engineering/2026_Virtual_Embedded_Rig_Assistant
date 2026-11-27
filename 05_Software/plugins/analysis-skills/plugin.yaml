@@ -1,6 +1,6 @@
 format: 1
 id: analysis-skills
-version: 0.4.1
+version: 0.4.2
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Firmware Analysis & Test Planning
 summary: Skills to compare captured firmware runs and plan targeted manual tests from cited evidence.

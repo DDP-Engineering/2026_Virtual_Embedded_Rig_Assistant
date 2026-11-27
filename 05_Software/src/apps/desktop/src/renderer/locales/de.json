@@ -1224,6 +1224,7 @@
     "write": "Textdateien erstellen oder ihren Inhalt ersetzen.",
     "edit": "Exakte Textstellen in einer zuvor gelesenen Datei ersetzen.",
     "artifact_save": "Ein Textergebnis als Sitzungsartefakt speichern.",
+    "artifact_list": "Gespeicherte Artefakte in der aktuellen Sitzung finden.",
     "todo": "Die Aufgabenliste der Sitzung im Plan verwalten.",
     "search_docs": "Die indexierten Dokumente des Workbenchs durchsuchen.",
     "read_doc": "Extrahierte Dokumentseiten, Abschnitte oder Textzeilen lesen.",

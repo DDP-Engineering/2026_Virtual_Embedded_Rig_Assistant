@@ -8,6 +8,13 @@ entries:
       ro: Configurează limitele imaginilor și retrimite cu mai puține atașamente după un refuz.
       de: Bildlimits einstellen und nach einer Ablehnung mit weniger Anhängen erneut senden.
       fr: Réglez les limites d’images et renvoyez avec moins de pièces jointes après un refus.
+  - category: new
+    topic: { en: Artifacts, ro: Artefacte, de: Artefakte, fr: Artefacts }
+    text:
+      en: Ask for a test plan from the latest comparison saved in the reopened chat.
+      ro: Cere un plan de test din ultima comparație salvată în conversația redeschisă.
+      de: Nach erneutem Öffnen des Chats einen Testplan aus dem letzten Vergleich anfordern.
+      fr: Demandez un plan de test à partir de la dernière comparaison enregistrée dans le chat rouvert.
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

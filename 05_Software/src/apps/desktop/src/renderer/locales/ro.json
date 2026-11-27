@@ -1224,6 +1224,7 @@
     "write": "Creează fișiere text sau le înlocuiește conținutul.",
     "edit": "Înlocuiește exact fragmente de text într-un fișier citit anterior.",
     "artifact_save": "Salvează un rezultat text ca artefact al sesiunii.",
+    "artifact_list": "Găsește artefactele salvate în conversația curentă.",
     "todo": "Gestionează lista de sarcini a sesiunii din Plan.",
     "search_docs": "Caută în documentele indexate ale workbench-ului.",
     "read_doc": "Citește pagini, secțiuni sau linii de text extrase din documente.",

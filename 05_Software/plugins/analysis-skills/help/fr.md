@@ -15,7 +15,8 @@ Le plugin Compétences d’analyse donne à l’agent deux procédures pour trav
 - « Planifiez jusqu’à trois tests manuels pour la modification du timing I2C de la version 1.1.0. »
 - « Transformez le rapport de comparaison en plan de test avec un contrôle de référence. »
 
-Après avoir rouvert le chat, indiquez la référence exacte `artifact:...` dans la même session.
+Après avoir rouvert le chat, demandez un plan à partir de la dernière comparaison enregistrée dans cette session.
+Pour choisir un rapport précis, indiquez sa référence exacte `artifact:...`.
 Le plan indique l’état de chaque cas. Avec un montage documenté et un seuil d’acceptation inconnu,
 le cas précise la mesure à relever et reste une observation.
 Les citations enregistrées reprennent la plus petite plage renvoyée par un outil qui couvre les lignes citées.

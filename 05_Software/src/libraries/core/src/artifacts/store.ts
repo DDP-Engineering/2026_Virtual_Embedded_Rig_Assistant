@@ -16,7 +16,7 @@ import {
 } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
-import { type ArtifactRow, ArtifactsRepository } from "../storage/repos/artifacts.js";
+import { type ArtifactPage, type ArtifactRow, ArtifactsRepository } from "../storage/repos/artifacts.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 
 export interface ArtifactHost {
@@ -153,8 +153,8 @@ export class ArtifactStore {
       createdAt: row.created_at,
     });
   }
-  list(sessionId: string): ArtifactSummary[] {
-    return this.repository.list(sessionId).map((row) => this.summary(row));
+  list(sessionId: string, page?: ArtifactPage): ArtifactSummary[] {
+    return this.repository.list(sessionId, page).map((row) => this.summary(row));
   }
   private row(id: string): ArtifactRow {
     if (!artifactIdSchema.safeParse(id).success) throw veraError("INVALID");

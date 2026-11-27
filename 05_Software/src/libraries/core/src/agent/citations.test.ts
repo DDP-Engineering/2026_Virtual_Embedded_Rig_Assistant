@@ -5,7 +5,27 @@ import { join } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
 import { captureCitation } from "../wireshark/citations.js";
-import { validateCitations } from "./citations.js";
+import { addIssuedCitationRefs, validateCitations } from "./citations.js";
+
+it("uses artifact listing references for discovery without issuing citation evidence", () => {
+  const ref = "artifact:report.md";
+  const message: Message = {
+    role: "toolResult",
+    toolName: "artifact_list",
+    toolCallId: "list",
+    content: [{ type: "text", text: JSON.stringify({ artifacts: [{ ref }] }) }],
+    isError: false,
+    timestamp: 0,
+  };
+  const issued = new Set<string>();
+  addIssuedCitationRefs(message, issued);
+  expect(issued.size).toBe(0);
+  addIssuedCitationRefs(
+    { ...message, toolName: "read", content: [{ type: "text", text: JSON.stringify({ ref }) }] },
+    issued,
+  );
+  expect(issued).toEqual(new Set([ref]));
+});
 
 it("accepts capture citations only from matching verified offline evidence", async () => {
   const capture = {

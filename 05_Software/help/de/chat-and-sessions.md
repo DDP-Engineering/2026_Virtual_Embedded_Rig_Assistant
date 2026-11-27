@@ -116,8 +116,8 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 
 ## Der rechte Bereich
 
-Geben Sie die genaue Referenz `artifact:...` in derselben Sitzung an, damit der Agent ein
-gespeichertes Textartefakt erneut verwendet. Das funktioniert auch nach dem erneuten Öffnen der Sitzung.
+Bitten Sie den Agenten, ein gespeichertes Textartefakt in derselben Sitzung zu finden und erneut zu
+verwenden. Das geht auch nach dem erneuten Öffnen. Für ein bestimmtes Artefakt geben Sie seine genaue Referenz `artifact:...` an.
 
 **Rechten Bereich ein- oder ausblenden** zeigt Tabs für die geöffnete Sitzung: **Anweisungen und Skills** (Workbench-Anweisungen und verfügbare Skills), **Dateien**, **Änderungen**, **Artefakte** (Textergebnisse, die der Agent gespeichert hat, mit **Exportieren** und **Im Ordner anzeigen**), **Plan** (die Aufgabenliste des Agenten) und **Läufe** (Programmläufe von Plugins).
 

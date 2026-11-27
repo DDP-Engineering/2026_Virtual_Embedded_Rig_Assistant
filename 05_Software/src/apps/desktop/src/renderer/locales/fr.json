@@ -1224,6 +1224,7 @@
     "write": "Créer des fichiers texte ou remplacer leur contenu.",
     "edit": "Remplacer un texte exact dans un fichier lu auparavant.",
     "artifact_save": "Enregistrer un résultat texte comme artefact de la session.",
+    "artifact_list": "Trouver les artefacts enregistrés dans la session en cours.",
     "todo": "Gérer la liste de tâches de la session dans Plan.",
     "search_docs": "Rechercher dans les documents indexés du banc de travail.",
     "read_doc": "Lire les pages, sections ou lignes de texte extraites d’un document.",

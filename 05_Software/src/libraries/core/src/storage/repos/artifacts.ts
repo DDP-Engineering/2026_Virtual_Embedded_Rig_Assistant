@@ -10,6 +10,12 @@ export interface ArtifactRow {
   description: string | null;
   created_at: string;
 }
+
+export interface ArtifactPage {
+  namePrefix: string;
+  offset: number;
+  limit: number;
+}
 /** Existing schema1 storage; session FK cascades and unique(session_id,name). */
 export class ArtifactsRepository {
   constructor(private readonly db: Database.Database) {}
@@ -21,7 +27,13 @@ export class ArtifactsRepository {
       | ArtifactRow
       | undefined;
   }
-  list(sessionId: string): ArtifactRow[] {
+  list(sessionId: string, page?: ArtifactPage): ArtifactRow[] {
+    if (page)
+      return this.db
+        .prepare(
+          "SELECT * FROM artifacts WHERE session_id=? AND substr(name,1,length(?))=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+        )
+        .all(sessionId, page.namePrefix, page.namePrefix, page.limit, page.offset) as ArtifactRow[];
     return this.db
       .prepare("SELECT * FROM artifacts WHERE session_id=? ORDER BY created_at,id")
       .all(sessionId) as ArtifactRow[];

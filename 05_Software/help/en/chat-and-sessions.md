@@ -120,8 +120,8 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 
 Select an edit in **Changes** to open its recorded diff in a tab beside Chat.
 
-To ask the agent to reuse a saved text artifact, include its exact `artifact:...` reference in
-the same session. This also works after you reopen the session.
+Ask the agent to find and reuse a saved text artifact in the same session, including after you reopen
+it. To select a specific artifact, give its exact `artifact:...` reference.
 
 ## Open tabs
 

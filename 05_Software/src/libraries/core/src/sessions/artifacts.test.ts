@@ -114,10 +114,14 @@ it("continues escaped artifact pages from the last complete delivered line", asy
   expect(result).toMatchObject({ ref, nextOffset: visible.length + 1, truncated: true });
 });
 
-it("reads verified artifact lines after reopening, only in the owning session", async () => {
+it("finds and reads verified artifact lines after reopening, only in the owning session", async () => {
   const ref = "artifact:comparison.md";
   const { service, root, handle, host } = await setup([
-    save({ name: "comparison.md", content: "Scope\r\nObserved I2C timeout\nEvidence pending\n" }),
+    save({
+      name: "comparison.md",
+      description: "Boot comparison",
+      content: "Scope\r\nObserved I2C timeout\nEvidence pending\n",
+    }),
   ]);
   const session = service.create(null, "read-only");
   service.send(session.id, "Save comparison");
@@ -128,6 +132,7 @@ it("reads verified artifact lines after reopening, only in the owning session", 
   await writeFile(
     join(root, "scripts/read.jsonl"),
     [
+      { toolCalls: [{ name: "artifact_list", args: { namePrefix: "comparison" } }] },
       { toolCalls: [{ name: "read", args: { path: ref, offset: 2, limit: 1 } }] },
       { text: `Evidence [[${ref}]].` },
     ]
@@ -142,12 +147,23 @@ it("reads verified artifact lines after reopening, only in the owning session", 
       status: string;
       result_json: string;
     };
+  const lastList = () => {
+    const row = handle.db
+      .prepare("SELECT result_json FROM tool_calls WHERE name='artifact_list' ORDER BY rowid DESC LIMIT 1")
+      .get() as { result_json: string };
+    return JSON.parse(JSON.parse(row.result_json).content[0].text);
+  };
   async function read(id: string) {
     reopened.send(id, "Read the saved report");
     await reopened.waitIdle(id);
     return lastCall();
   }
   const saved = await read(session.id);
+  expect(lastList()).toEqual({
+    artifacts: [
+      { name: "comparison.md", ref, description: "Boot comparison", createdAt: artifact?.createdAt },
+    ],
+  });
   expect(saved.status).toBe("ok");
   expect(saved.result_json).toContain("2: Observed I2C timeout");
   expect(saved.result_json).toContain(artifact?.sha256);
@@ -158,10 +174,59 @@ it("reads verified artifact lines after reopening, only in the owning session", 
   });
   const other = reopened.create(null, "read-only");
   expect(await read(other.id)).toMatchObject({ status: "error" });
+  expect(lastList()).toEqual({ artifacts: [] });
   await writeFile(join(root, ".vera/artifacts", session.id, "comparison.md"), "tampered");
   const changed = await read(session.id);
   expect(changed.status).toBe("error");
   expect(changed.result_json).not.toContain("tampered");
+});
+
+it("lists newest matching artifact metadata in pages and refuses a caller-supplied session", async () => {
+  let time = Date.now();
+  const { service, handle } = await setup(
+    [
+      save({ name: "boot_old.md", content: "old report" }),
+      save({ name: "boot_new.md", content: "new report" }),
+      save({ name: "boot-plan.md", content: "unrelated" }),
+      { name: "artifact_list", args: { namePrefix: "boot_", limit: 1 } },
+      { name: "artifact_list", args: { namePrefix: "boot_", limit: 1, offset: 1 } },
+      { name: "artifact_list", args: { sessionId: "ses_other" } },
+    ],
+    { clock: { now: () => new Date(time++), sleep: async () => {} } },
+  );
+  const session = service.create(null, "read-only");
+  service.send(session.id, "List my saved boot reports");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  const rows = handle.db
+    .prepare("SELECT status,result_json FROM tool_calls WHERE name='artifact_list' ORDER BY rowid")
+    .all() as { status: string; result_json: string }[];
+  expect(rows.map(({ status }) => status)).toEqual(["ok", "ok", "error"]);
+  const pages = rows
+    .slice(0, 2)
+    .map(({ result_json }) => JSON.parse(JSON.parse(result_json).content[0].text));
+  expect(pages).toEqual([
+    {
+      artifacts: [
+        {
+          name: "boot_new.md",
+          ref: "artifact:boot_new.md",
+          description: null,
+          createdAt: expect.any(String),
+        },
+      ],
+      nextOffset: 1,
+    },
+    {
+      artifacts: [
+        {
+          name: "boot_old.md",
+          ref: "artifact:boot_old.md",
+          description: null,
+          createdAt: expect.any(String),
+        },
+      ],
+    },
+  ]);
 });
 
 it("saves the script output, metadata/event and valid/missing citations without approval in ask and read-only session modes", async () => {

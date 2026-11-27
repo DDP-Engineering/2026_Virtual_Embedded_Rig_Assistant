@@ -21,7 +21,13 @@ function refs(value: unknown, out: Set<string>): void {
 
 /** Collect references from successful structured tool results, never from prose. */
 export function addIssuedCitationRefs(message: Message, issued: Set<string>): void {
-  if (message.role !== "toolResult" || message.isError || message.toolName === "wireshark_capture") return;
+  if (
+    message.role !== "toolResult" ||
+    message.isError ||
+    message.toolName === "wireshark_capture" ||
+    message.toolName === "artifact_list"
+  )
+    return;
   for (const block of message.content) {
     if (block.type !== "text") continue;
     try {
