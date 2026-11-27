@@ -378,7 +378,11 @@ export class ToolRegistry {
     signal.throwIfAborted();
     const tool = this.availableFor(ctx, disabled).find((definition) => definition.name === name);
     if (!tool?.prepare) throw Error("Prepared tool is unavailable.");
-    return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
+    return tool.prepare(
+      ctx,
+      tool.params.parse(tool.repair ? tool.repair(raw) : raw),
+      toolSignal(ctx, signal),
+    );
   }
   async execute(
     ctx: ToolContext,
@@ -409,7 +413,7 @@ export class ToolRegistry {
           };
         throw Error(`Tool ${name} is unavailable. Choose an enabled tool.`);
       }
-      const parsed = tool.params.safeParse(raw);
+      const parsed = tool.params.safeParse(tool.repair ? tool.repair(raw) : raw);
       if (!parsed.success && (name === "parse_log" || name === "decode_register"))
         return {
           text: JSON.stringify({

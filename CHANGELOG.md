@@ -85,6 +85,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Keep plan steps valid after masking and let the agent read the complete saved plan in pages.
 - Track delivery of queued delegated instructions and read status without replaying the full child conversation.
 - Keep the opening and conclusion when shortening delegated replies and clarify the scope of delegated Stop.
+- Wait up to five minutes for a delegated turn by default, so a parent no longer spends its tool calls polling a working child.
+- Report a delegated child's approval request once and then wait for the user's decision instead of returning at once on every wait.
+- Tell the parent why a delegated turn failed and whether trying again can help.
+- Take a question's recommendation written as text, so its mark and automatic answer are kept.
+- Ask a plan decision as an ordinary question when the session has no plan, instead of an unexplained tool failure.
+- Accept a plan with another word for a status or a step that is too long, and drop blank steps.
 
 ## [0.4.0] - 2026-11-26
 

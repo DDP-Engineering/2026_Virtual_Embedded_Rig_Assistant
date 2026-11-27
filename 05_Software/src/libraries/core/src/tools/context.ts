@@ -76,6 +76,12 @@ export interface ToolDefinition {
   description: string;
   requiresImages?: true;
   params: z.ZodType;
+  /**
+   * Rewrite arguments into what the model plainly meant, before validation. A refusal makes the model send
+   * the whole call again, so a harmless slip (another word for a status, a text slightly too long) is
+   * accepted here while `params` stays the exact schema the model is shown.
+   */
+  repair?(args: unknown): unknown;
   prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;
   /** With deferred publication, onPublish commits the result after its final checks. */
   execute(

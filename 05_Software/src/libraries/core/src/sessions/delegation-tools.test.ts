@@ -485,3 +485,64 @@ it.each(["session_status", "session_wait"])(
     expect(JSON.parse(published ?? "{}").reply).toContain("Conclusion [redacted]");
   },
 );
+
+it("reports an approval request once, then stays with the child until the user decides", async () => {
+  const h = await setup();
+  await h.scenario("child", [
+    { toolCalls: [{ name: "write", args: { path: "approval.txt", content: "approved" } }] },
+    { text: "Wrote the file." },
+  ]);
+  const parent = h.service.create();
+  h.service.send(parent.id, "Parent tool host.");
+  await h.service.waitIdle(parent.id);
+  const child = await h.service.launchDelegated(parent.id, { ...childRequest, requestId: "approval" });
+  const wait = h.tool("replay/parent", "session_wait");
+  const signal = new AbortController().signal;
+  const args = { sessionId: child.sessionId, waitMs: 5000 };
+  expect(JSON.parse(await wait.execute(args, signal))).toMatchObject({ status: "awaiting_approval" });
+  // The same request is not news: a short wait runs out instead of returning at once.
+  expect(JSON.parse(await wait.execute({ ...args, waitMs: 50 }, signal))).toMatchObject({
+    status: "awaiting_approval",
+    timedOut: true,
+  });
+  // Reading the state never waits.
+  expect(JSON.parse(await wait.execute({ ...args, waitMs: 0 }, signal))).toMatchObject({
+    status: "awaiting_approval",
+  });
+  const staying = wait.execute(args, signal);
+  const approval = h.service.get(child.sessionId).snapshot.approvals[0];
+  if (!approval) throw Error("Missing pending approval");
+  h.service.decideApproval({
+    sessionId: child.sessionId,
+    approvalId: approval.approvalId,
+    requestSha256: approval.requestSha256,
+    decision: "approved",
+  });
+  expect(JSON.parse(await staying)).toMatchObject({ status: "completed", reply: "Wrote the file." });
+});
+
+it("tells the parent why a child turn failed and whether trying again can help", async () => {
+  const h = await setup();
+  const releaseChild = h.hold("replay/child");
+  const parent = h.service.create();
+  h.service.send(parent.id, "Parent tool host.");
+  await h.service.waitIdle(parent.id);
+  const child = await h.service.launchDelegated(parent.id, { ...childRequest, requestId: "failure" });
+  await h.scenario("child", []);
+  releaseChild();
+  const signal = new AbortController().signal;
+  const outcome = JSON.parse(
+    await h
+      .tool("replay/parent", "session_wait")
+      .execute({ sessionId: child.sessionId, waitMs: 3000 }, signal),
+  );
+  expect(outcome).toMatchObject({
+    status: "error",
+    error: { code: expect.any(String), retryable: expect.any(Boolean) },
+  });
+  expect(
+    JSON.parse(
+      await h.tool("replay/parent", "session_status").execute({ sessionId: child.sessionId }, signal),
+    ),
+  ).toMatchObject({ status: "error", error: outcome.error });
+});

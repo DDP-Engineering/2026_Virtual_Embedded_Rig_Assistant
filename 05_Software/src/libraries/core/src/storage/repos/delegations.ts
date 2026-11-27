@@ -95,7 +95,7 @@ export class DelegationsRepository {
     const rows = this.db
       .prepare(`SELECT payload_json FROM events WHERE session_id=? AND seq BETWEEN ? AND ?
         AND type IN ('turn.started','turn.done','session.interrupted','tool.started',
-          'approval.requested','approval.decided','message.done') ORDER BY seq`)
+          'approval.requested','approval.decided','message.done','error') ORDER BY seq`)
       .all(id, fromSeq, terminal.seq ?? throughSeq) as { payload_json: string }[];
     return rows.map((row) => JSON.parse(row.payload_json) as SessionEvent);
   }

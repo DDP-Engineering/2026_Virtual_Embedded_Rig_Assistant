@@ -18,14 +18,24 @@ const statusParams = childParams.extend({ messageId: z.string().min(1).max(200).
 const sendParams = delegatedSendRequestSchema.omit({ requestId: true }).extend(child);
 const configureParams = delegatedConfigureRequestSchema.omit({ requestId: true }).extend(child);
 const maxWaitMs = 600_000;
-const defaultWaitMs = 10_000;
-const waitParams = childParams.extend({ waitMs: z.number().int().min(0).max(maxWaitMs).optional() });
+// A wait returns as soon as the turn ends or asks for an approval, so a long default costs nothing; a
+// short one made the parent spend a tool call every few seconds of a child's work.
+const defaultWaitMs = 300_000;
+const waitParams = childParams.extend({
+  waitMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(maxWaitMs)
+    .optional()
+    .describe("Milliseconds to wait, at most 600000; 300000 when omitted. 0 only reads the state."),
+});
 
 const failureText = {
   INVALID: "Use a nonempty task, a configured model and a reasoning level supported by that model.",
   NOT_FOUND: "The requested model or owned delegated session is unavailable.",
   CONFLICT: "The child settings changed or the delegation request conflicts with an earlier request.",
-  BUSY: "The child is not eligible for this action, or turn capacity is busy.",
+  BUSY: "The child cannot take this action in its current state. Read session_status, then try again.",
   TURN_LIMIT: "The application's concurrent turn limit is reached; try again after a running turn ends.",
   DENIED: "The current session cannot perform this delegation operation.",
   CONTEXT_LIMIT: "The delegated task exceeds the available model context.",
@@ -60,6 +70,8 @@ export function bindDelegatedSessionHost(
     if (!turnId || !callId) throw veraError("INVALID");
     return delegationDigest([turnId, callId]);
   };
+  // Approvals this binding has already returned from a wait: the next wait stays with the child.
+  const reportedApprovals = new Set<string>();
   return {
     resultSecrets: knownSecrets,
     async launch(args: z.infer<typeof launchParams>, signal: AbortSignal, callId?: string) {
@@ -99,6 +111,7 @@ export function bindDelegatedSessionHost(
           mask,
           ms,
           signal,
+          reportedApprovals,
         )),
       };
     },
@@ -182,7 +195,7 @@ export const delegatedSessionTools: readonly ToolDefinition[] = [
     name: waitName,
     class: "session",
     description:
-      "Wait for an owned turn's outcome or user approval. Omit turnId for the first turn. Timeout or parent cancellation leaves the child running.",
+      "Wait for an owned turn's outcome or an approval request; returns at once when either happens. An approval request is reported once: tell the user, then wait again to stay with the child until the user decides. A failed turn reports its error code and whether a retry can help. Omit turnId for the first turn. Timeout or parent cancellation leaves the child running.",
     params: waitParams,
     publish: publishCompleted,
     execute: (ctx, raw, signal) => {

@@ -138,8 +138,8 @@ it("validates registry and repository boundaries, clears, and rolls back failed 
   expect(published).toBe(1);
   for (const items of [
     Array.from({ length: 51 }, () => old[0]),
-    [{ text: "a".repeat(201), status: "done" }],
     [{ text: "wrong", status: "unknown" }],
+    [{ content: "wrong key", status: "pending" }],
   ]) {
     const result = await registry.execute(ctx, "todo", { items }, signal);
     expect(result.isError).toBe(true);
@@ -153,6 +153,28 @@ it("validates registry and repository boundaries, clears, and rolls back failed 
     totalItems: 0,
   });
   expect(JSON.parse(repository.get(s.id)?.items_json ?? "null")).toEqual([]);
+  // The repository still holds the exact limits; the tool repairs what the model plainly meant.
+  expect(() => repository.replace(s.id, [{ text: "a".repeat(201), status: "done" }], "now")).toThrow();
+  handle.db.prepare("DELETE FROM events WHERE session_id=? AND seq=999").run(s.id);
+  const repaired = await registry.execute(
+    ctx,
+    "todo",
+    {
+      items: [
+        { text: "Read the schematic", status: "completed" },
+        { text: "a".repeat(260), status: "In Progress" },
+        { text: "   ", status: "pending" },
+        { id: "report", text: "Report", status: "todo" },
+      ],
+    },
+    signal,
+  );
+  expect(repaired.isError).toBe(false);
+  expect(JSON.parse(repaired.text).items).toEqual([
+    { text: "Read the schematic", status: "done" },
+    { text: `${"a".repeat(199)}…`, status: "in_progress" },
+    { id: "report", text: "Report", status: "pending" },
+  ]);
 });
 
 it("denies aborted and unowned mutation and scrubs user fields before storage/events", async () => {

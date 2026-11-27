@@ -20,6 +20,41 @@ const params = z
     message: "Use offset to read the plan, or items to replace the whole plan.",
   });
 
+const statusWords: Record<string, TodoItem["status"]> = {
+  pending: "pending",
+  in_progress: "in_progress",
+  done: "done",
+  completed: "done",
+  complete: "done",
+  finished: "done",
+  todo: "pending",
+  open: "pending",
+  not_started: "pending",
+  "in-progress": "in_progress",
+  inprogress: "in_progress",
+  active: "in_progress",
+  doing: "in_progress",
+};
+/**
+ * The plan the model plainly meant: another word for a status is mapped, a step that is too long is
+ * shortened and a blank step is dropped. A refused plan has to be sent again whole.
+ */
+function repairPlan(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null || !Array.isArray((raw as { items?: unknown }).items))
+    return raw;
+  const items = (raw as { items: unknown[] }).items.flatMap((item) => {
+    if (typeof item !== "object" || item === null) return [item];
+    const step = item as { text?: unknown; status?: unknown };
+    if (typeof step.text !== "string") return [item];
+    if (!step.text.trim()) return [];
+    const text =
+      step.text.length > 200 ? `${step.text.slice(0, 199).replace(/[\uD800-\uDBFF]$/, "")}…` : step.text;
+    const word = typeof step.status === "string" ? step.status.trim().toLowerCase().replaceAll(" ", "_") : "";
+    return [{ ...step, text, status: statusWords[word] ?? step.status }];
+  });
+  return { ...raw, items };
+}
+
 function planPage(items: readonly TodoItem[], offset: number, limit: number) {
   const totalItems = items.length;
   const page: TodoItem[] = [];
@@ -54,6 +89,7 @@ export const todoTool: ToolDefinition = {
   description:
     "Pass items to replace the whole session Plan (up to 50 steps, each text up to 200 characters). Use pending, in_progress or done; items:[] clears it. Pass {} to read the current plan. Both return totalItems and a page; read again with the returned nextOffset to get the rest before replacing the plan. Optional IDs are stored; idsOmitted flags IDs too large for a response page.",
   params,
+  repair: repairPlan,
   async execute(ctx, raw, signal) {
     const host = ctx.todos;
     if (!host) throw Error("Session Plan storage is unavailable.");

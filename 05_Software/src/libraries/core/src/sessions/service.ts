@@ -1721,11 +1721,15 @@ export class SessionService {
       const timeout = this.host.questionTimeoutMinutes;
       if (timeout) {
         const mask = (text: string) => this.maskContent("agent", text);
-        ctx.askUser = (input, callId, signal) => {
+        ctx.askUser = (asked, callId, signal) => {
+          let input = asked;
           if (input.aboutPlan) {
+            // With no plan to decide on, the question is still worth asking: as an ordinary one.
             const plan = ctx.todos?.repository.get(id);
-            if (!plan || todoItemsSchema.parse(JSON.parse(plan.items_json)).length === 0)
-              throw veraError("INVALID");
+            if (!plan || todoItemsSchema.parse(JSON.parse(plan.items_json)).length === 0) {
+              const { aboutPlan: _aboutPlan, ...plain } = input;
+              input = plain;
+            }
           }
           return this.questions.ask(
             id,

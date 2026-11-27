@@ -7,6 +7,22 @@ import {
 } from "@vera/shared";
 import { ulid } from "ulid";
 
+/**
+ * The one-based choice a recommendation names: its number, the number written as text, or the text of the
+ * choice itself. A recommendation lost here loses its mark and the automatic answer after the timeout.
+ */
+export function recommendedChoice(value: unknown, choices: readonly string[]): number | null {
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    const named = choices.findIndex((choice) => choice.trim().toLowerCase() === text);
+    if (named >= 0) return named + 1;
+  }
+  const number = typeof value === "string" && /^\s*\d+\s*$/.test(value) ? Number(value) : value;
+  return typeof number === "number" && Number.isInteger(number) && number >= 1 && number <= choices.length
+    ? number
+    : null;
+}
+
 interface Pending {
   request: QuestionRequest;
   expires: () => boolean;
@@ -39,14 +55,7 @@ export class Questions {
   ): Promise<QuestionOutcome> {
     signal.throwIfAborted();
     if (this.pending.has(sessionId)) throw veraError("BUSY");
-    const recommendation = input.recommended;
-    const recommended =
-      typeof recommendation === "number" &&
-      Number.isInteger(recommendation) &&
-      recommendation >= 1 &&
-      recommendation <= input.choices.length
-        ? recommendation
-        : null;
+    const recommended = recommendedChoice(input.recommended, input.choices);
     const automatic = recommended === null ? undefined : input.choices[recommended - 1];
     const expiry = automatic === undefined || minutes === null ? null : this.now() + minutes * 60_000;
     const request: QuestionRequest = {

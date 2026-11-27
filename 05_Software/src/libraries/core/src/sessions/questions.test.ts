@@ -104,17 +104,27 @@ it("marks a pending plan decision in the snapshot and live observation until set
   expect(service.list().find((item) => item.id === id)?.pendingPlanDecision).toBeUndefined();
 });
 
-it("rejects a plan decision request when the session has no plan", async () => {
-  const { service, live } = await setup(2, null, false, true, false);
-  const { id } = service.create();
-  service.send(id, "Ask for a decision about the plan");
+it("asks a plan decision as an ordinary question when the session has no plan", async () => {
+  const { service, ask } = await setup(2, null, false, true, false);
+  const { id, question } = await ask();
+  expect(question.aboutPlan).toBeUndefined();
+  expect(service.list().find((item) => item.id === id)?.pendingPlanDecision).toBeUndefined();
+  service.answerQuestion(id, question.questionId, { kind: "choice", choice: 1 });
   await service.waitIdle(id);
-  const snapshot = service.get(id).snapshot;
-  expect(snapshot.questions).toEqual([]);
-  expect(snapshot.items).toContainEqual(
-    expect.objectContaining({ kind: "tool", name: "ask_user", status: "error" }),
-  );
-  expect(live.mock.calls.some(([, event]) => event.type === "question.requested")).toBe(false);
+  expect(service.get(id).snapshot.questions[0]?.outcome).toMatchObject({ answer: "Quiet", source: "user" });
+});
+
+it.each([
+  ["2", 2],
+  [" fast ", 2],
+  ["Quiet", 1],
+] as const)("takes a recommendation written as %j for choice %s", async (recommended, choice) => {
+  const { service, ask } = await setup(recommended, 1);
+  const { id, question } = await ask();
+  expect(question.recommended).toBe(choice);
+  expect(question.deadline).not.toBeNull();
+  service.answerQuestion(id, question.questionId, { kind: "cancel" });
+  await service.waitIdle(id);
 });
 
 it.each([
@@ -207,7 +217,8 @@ it.each([
   [1, 0],
   [1, 3],
   [1, 1.5],
-  [1, "2"],
+  [1, "Neither"],
+  [1, "7"],
   [1, null],
 ] as const)(
   "does not apply an ineligible recommendation (timeout %s, choice %s)",

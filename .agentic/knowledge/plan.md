@@ -10,13 +10,13 @@ Core owns validated ordered session task lists and atomic database/event updates
 
 ## Public interface
 
-- Shared todoItemSchema/todoItemsSchema require text<=200 UTF16 code units, count<=50 and pending/in_progress/done; optional string IDs, duplicate rows, empty text and empty lists are preserved.
+- Shared todoItemSchema/todoItemsSchema require text<=200 UTF16 code units, count<=50 and pending/in_progress/done; optional string IDs, duplicate rows, empty text and empty lists are preserved. The `todo` tool repairs a plan before validation (`repairPlan`): other words for a status (completed, in-progress, todo and the like, in any letter case) are mapped, a step over 200 is cut to 199 plus an ellipsis and a blank step is dropped, because a refused plan is sent again whole.
 - Registered todo is session class. `{items}` replaces the whole list, `{}` reads the current list, and `{offset}` reads the next page from a one-based offset. Results carry the total count and `nextOffset` when more steps fit on another page. Optional IDs too large for a response page stay in storage and are flagged in the response.
 - TodosRepository.get(sessionId) reads its row; replace(sessionId,items,updatedAt) independently validates and parameterizes the existing schema1 upsert. SQLite session deletion cascades todos.
 - SessionService binds TodoHost database/repository/session/Clock/ownership/scrub/hub callbacks. Todo bounds text after masking, checks abort and authority, and upserts the list and records one event in a synchronous transaction. It publishes after commit.
 - PlanTab keys workbench/session identity and consumes the shared session view (useSessionView over useSessionEvents). List text is escaped, order is authoritative; Circle/CircleDot/CircleCheck expose localized status image names and visible status labels. Empty/loading/retry states share application conventions.
 - Chat shows a nonempty plan's current step count at every detail level. Open plan selects the right Plan pane for the current workbench folder and session, temporarily revealing a configured-hidden tab without editing workbench preferences.
-- Ordinary Desktop `ask_user` calls can mark a pending decision with `aboutPlan: true` only when the current session has a nonempty plan. The question event carries the tag. Activity and eligible native alerts route to the exact pending question, then open Plan.
+- Ordinary Desktop `ask_user` calls can mark a pending decision with `aboutPlan: true` only when the current session has a nonempty plan; with no plan the tag is dropped and the question is asked as an ordinary one. `recommendedChoice` (sessions/questions.ts) takes the recommendation as a number, a number written as text or the text of a choice. The question event carries the tag. Activity and eligible native alerts route to the exact pending question, then open Plan.
 
 ## Feedback and review backend
 
