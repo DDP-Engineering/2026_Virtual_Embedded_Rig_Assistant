@@ -123,7 +123,7 @@ it("distinguishes a disabled skill from an unavailable skill", async () => {
     expect(JSON.parse(result.text)).toMatchObject({
       isError: true,
       code,
-      error: expect.stringContaining(name === "disabled" ? "disabled" : "unavailable"),
+      error: expect.stringContaining(name === "disabled" ? "disabled" : "There is no skill missing"),
     });
   }
 });
@@ -163,3 +163,80 @@ it.each(["help", "load_skill"])(
     expect(returned).toBe(ctx.maskText(text));
   },
 );
+
+it("names the pages when a help page does not exist and takes a page name written another way", async () => {
+  const { ctx } = context("en");
+  const registry = new ToolRegistry();
+  const signal = new AbortController().signal;
+  const missing = await registry.execute(ctx, "help", { page: "permission" }, signal);
+  expect(missing.isError).toBe(true);
+  expect(missing.text).toContain("Help page permission does not exist. Pages: index, permissions.");
+  for (const page of ["Permissions", "permissions.md", " PERMISSIONS "]) {
+    const result = await registry.execute(ctx, "help", { page }, signal);
+    expect(JSON.parse(result.text)).toMatchObject({ ref: "help:permissions#lang=en", title: "Permissions" });
+  }
+});
+
+it("loads a skill by a name or file written another way and says which of the two is missing", async () => {
+  const skill = join(temporary, ".vera/skills/pin-check");
+  await mkdir(join(skill, "reference"), { recursive: true });
+  await writeFile(
+    join(skill, "SKILL.md"),
+    "---\nname: pin-check\ndescription: Checks pins.\n---\nSee ./reference/pins.md.\n",
+  );
+  await writeFile(join(skill, "reference/pins.md"), "PA0 is VBAT.\n");
+  const ctx = createToolContext(temporary);
+  ctx.skills = new SkillCatalog({ root: temporary, disabled: () => [] });
+  const registry = new ToolRegistry();
+  const signal = new AbortController().signal;
+  const load = async (args: Record<string, unknown>) =>
+    JSON.parse((await registry.execute(ctx, "load_skill", args, signal)).text);
+  for (const name of ["Pin-Check", "pin_check", "pin check"])
+    expect(await load({ name })).toEqual({ name: "pin-check", text: "See ./reference/pins.md.\n" });
+  // The file as the instructions cite it.
+  for (const file of ["./reference/pins.md", "reference/./pins.md", "reference/pins.md"])
+    expect(await load({ name: "pin-check", file })).toEqual({
+      name: "pin-check",
+      file: "reference/pins.md",
+      text: "PA0 is VBAT.\n",
+    });
+  expect(await load({ name: "pin-check", file: "reference/missing.md" })).toMatchObject({
+    code: "NOT_FOUND",
+    error: expect.stringContaining("Skill pin-check has no file reference/missing.md"),
+  });
+  expect(await load({ name: "pincheck" })).toMatchObject({
+    code: "NOT_FOUND",
+    error: "There is no skill pincheck. Enabled skills: create-plugin, pin-check.",
+  });
+  // Leaving the skill folder is still refused.
+  expect(await load({ name: "pin-check", file: "../other/SKILL.md" })).toMatchObject({ code: "DENIED" });
+});
+
+it("reads a skill saved as UTF-16 or in the ANSI code page, as Windows tools write it", async () => {
+  const text = (name: string) =>
+    `---\nname: ${name}\ndescription: Checks measurements.\n---\nV\u00e9rifier les mesures \u00e0 3,3 V.\n`;
+  const files: [string, Buffer][] = [
+    [
+      "from-powershell",
+      Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text("from-powershell"), "utf16le")]),
+    ],
+    ["ansi-text", Buffer.from(text("ansi-text"), "latin1")],
+  ];
+  for (const [name, bytes] of files) {
+    await mkdir(join(temporary, ".vera/skills", name), { recursive: true });
+    await writeFile(join(temporary, ".vera/skills", name, "SKILL.md"), bytes);
+  }
+  const ctx = createToolContext(temporary);
+  const skills = new SkillCatalog({ root: temporary, disabled: () => [] });
+  ctx.skills = skills;
+  expect((await skills.list()).filter((skill) => skill.error)).toEqual([]);
+  for (const [name] of files) {
+    const result = await new ToolRegistry().execute(
+      ctx,
+      "load_skill",
+      { name },
+      new AbortController().signal,
+    );
+    expect(JSON.parse(result.text)).toEqual({ name, text: "V\u00e9rifier les mesures \u00e0 3,3 V.\n" });
+  }
+});

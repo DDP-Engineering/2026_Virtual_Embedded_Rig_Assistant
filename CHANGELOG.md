@@ -93,6 +93,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Accept a plan with another word for a status or a step that is too long, and drop blank steps.
 - Keep each skill's metadata and files tied to the selected source, skip plugin scans for local skills, and report missing and disabled skills distinctly.
 - Stop waiting on Help promptly, page long Help and skill text, and open Help citations in the cited language.
+- Load a skill file cited with a leading `./`, which was refused as restricted.
+- Read skills saved as UTF-16 or in the ANSI code page, as PowerShell and older editors write them.
+- Say whether a skill or its file is missing and list the enabled skills, and name the help pages when one does not exist.
+- Take a skill or help page name written in another letter case, with spaces or with `.md`.
 
 ## [0.4.0] - 2026-11-26
 

@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { SKILL_BYTES, type SkillSource, type SkillSummary, skillNameSchema, veraError } from "@vera/shared";
 import { parseDocument } from "yaml";
 import { waitForAbort } from "../abort.js";
-import { isBinary } from "../tools/binary.js";
+import { decodeDocumentText, isBinaryDocumentText } from "../knowledge/text-source.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard, validateRelativePath } from "../workbench/path-guard.js";
 import { createPluginSkill } from "./create-plugin.js";
@@ -192,8 +192,10 @@ export class SkillCatalog {
       )
         throw veraError("CONFLICT");
       const contentBytes = bytes.subarray(0, count);
-      if (isBinary(contentBytes)) throw veraError("INVALID");
-      const content = new TextDecoder("utf-8", { fatal: true }).decode(contentBytes);
+      // A skill written by hand on Windows is often UTF-16 (PowerShell's redirection) or in the ANSI code
+      // page (Set-Content, an older editor): it is read the way workbench documents are.
+      if (isBinaryDocumentText(contentBytes)) throw veraError("INVALID");
+      const content = decodeDocumentText(contentBytes);
       return { content, sha256: createHash("sha256").update(contentBytes).digest("hex") };
     } finally {
       await handle.close();

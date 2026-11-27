@@ -36,7 +36,7 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
 ## Public interface
 
 - SkillCatalog.list/metadata/load/read/path use current roots and admission callback.
-- `load_skill {name,file?,offset?}` is read-class. Long results use the configured tool result budget and return a one-based `nextOffset` for the next page of the projected text.
+- `load_skill {name,file?,offset?}` is read-class. Long results use the configured tool result budget and return a one-based `nextOffset` for the next page of the projected text. Its `repair` lower-cases the name, turns spaces and underscores into hyphens and drops `./` segments from `file`, the way SKILL.md cites its files. A missing skill and a missing file get their own messages; the first lists the enabled skills. `help` repairs a page name the same way (letter case, `.md`) and names the pages when one does not exist.
 - skills.list/open/create/save/toggle carry workbenchId; open/create/save targets use only
   workbench/user source (`skillEditableSourceSchema`; plugin is INVALID) and folder name, never
   an arbitrary root. save requires original SHA256. Summaries carry `plugin` for plugin skills.
@@ -58,7 +58,7 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
   YAML duplicate keys/aliases fail. Markdown has no reference-only body-line restriction.
 - Invalid names/content/path appear with diagnostics and are omitted from metadata.
   Disabled names are omitted from metadata and denied by the loader.
-- File reads cap256KiB, require ordinary single-link UTF8 text, stable descriptor/path
+- File reads cap256KiB, require ordinary single-link text decoded like workbench documents (`decodeDocumentText`: UTF-16 with a byte order mark, UTF-8, else windows-1252, so a skill written from PowerShell or in the ANSI code page loads), stable descriptor/path
   identity and reject redirects, escaping/ambiguous/device/absolute paths. Extra paths
   stay under the selected skill folder. Each root caps1024folders/4096entries.
 - Agent content applies permanent .git/.vera/node_modules exclusions to both roots

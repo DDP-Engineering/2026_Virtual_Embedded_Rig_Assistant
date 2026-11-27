@@ -34,6 +34,21 @@ const params = z
     "Use offset when reading a page or plugin.",
   );
 
+/** The page the model plainly meant: its name in another letter case, with spaces or with `.md`. */
+function repairHelpCall(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const { page } = raw as { page?: unknown };
+  if (typeof page !== "string") return raw;
+  return {
+    ...raw,
+    page: page
+      .trim()
+      .toLowerCase()
+      .replace(/\.md$/, "")
+      .replace(/[\s_]+/g, "-"),
+  };
+}
+
 /** Read-only VERA help for questions about the application itself (REQ-FUNC-2a87401e, REQ-SEC-3cb78ea6). */
 export const helpTool: ToolDefinition = {
   name: "help",
@@ -41,6 +56,7 @@ export const helpTool: ToolDefinition = {
   description:
     "Read VERA's own user help: screens, settings, permissions, providers and plugins. Without arguments, list app help and help for enabled plugins. Read Markdown by page or plugin; when nextOffset is present, repeat the request with offset set to that value. Cite the exact returned ref, including its language, for example [[help:permissions#lang=en]].",
   params,
+  repair: repairHelpCall,
   async execute(ctx, raw, signal) {
     signal.throwIfAborted();
     const host = ctx.help;
@@ -48,12 +64,11 @@ export const helpTool: ToolDefinition = {
     const args = params.parse(raw);
     const language = args.language ?? host.language();
     if (args.page) {
-      const page = await host.app.read(args.page, language, signal).catch((error: unknown) => {
-        if (veraErrorSchema.safeParse(error).data?.code === "NOT_FOUND")
-          throw Error(
-            `Help page ${args.page} does not exist. Call help without arguments to list the pages.`,
-          );
-        throw error;
+      const page = await host.app.read(args.page, language, signal).catch(async (error: unknown) => {
+        if (veraErrorSchema.safeParse(error).data?.code !== "NOT_FOUND") throw error;
+        // The names are few: giving them here saves the call that would list them.
+        const pages = (await host.app.list(language, signal)).map((entry) => entry.page);
+        throw Error(`Help page ${args.page} does not exist. Pages: ${pages.join(", ")}.`);
       });
       const ref = formatRef({ kind: "help", page: page.page, language: page.language });
       return textPage(
