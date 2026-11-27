@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { constants, realpathSync, type Stats } from "node:fs";
 import { lstat, mkdir, open, realpath, rename, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import {
   ARTIFACT_MAX_BYTES,
   type ArtifactContent,
@@ -52,6 +53,24 @@ function shortenDescription(text: string): string {
     end += character.length;
   }
   return text;
+}
+
+/**
+ * Rename over the stored file. On Windows another program that has the artifact open (a spreadsheet, a
+ * preview, a scanner) refuses the rename: a scanner lets go within moments, so the rename is tried again
+ * briefly, and a file that stays open is named as the cause instead of the system's message and paths.
+ */
+export async function replaceFile(from: string, to: string): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await rename(from, to);
+    } catch (error) {
+      if (!["EPERM", "EBUSY", "EACCES"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
+      if (attempt === 2)
+        throw Error("The artifact is open in another program. Close it there and save again.");
+      await delay(100 * (attempt + 1));
+    }
+  }
 }
 
 function missing(error: unknown) {
@@ -220,12 +239,12 @@ export class ArtifactStore {
   ) {
     if (!validArtifactName(args.name))
       throw Error(
-        "Invalid artifact name. Use a portable file name of1–100 ASCII letters, digits, dot, underscore or hyphen.",
+        "Invalid artifact name. Use a portable file name of 1–100 ASCII letters, digits, dot, underscore or hyphen.",
       );
     if (Buffer.byteLength(args.content, "utf8") > ARTIFACT_MAX_BYTES)
-      throw Error("Artifact content exceeds the5MiB UTF8 limit.");
+      throw Error("Artifact content exceeds the 5 MiB UTF8 limit.");
     if (host.scrub && host.scrub(args.name) !== args.name)
-      throw Error("Artifact content contains protected credential data.");
+      throw Error("Artifact name contains protected credential data.");
     return host.queue.run(async () => {
       signal.throwIfAborted();
       host.assertWritable();
@@ -234,18 +253,19 @@ export class ArtifactStore {
         signal.throwIfAborted();
         host.assertWritable();
       }
-      const path = await this.path(host.sessionId, args.name, true);
-      const old = this.repository.named(host.sessionId, args.name);
+      // A name that differs only in letter case names the artifact that exists: one file on Windows and
+      // macOS, and the same artifact everywhere.
+      const old = this.repository.aliased(host.sessionId, args.name);
+      const name = old?.name ?? args.name;
+      const path = await this.path(host.sessionId, name, true);
       let previous: Awaited<ReturnType<ArtifactStore["read"]>> | undefined;
       try {
         previous = await this.read(path, signal);
       } catch (error) {
         if (!missing(error)) throw error;
       }
-      if ((old || previous) && !args.overwrite)
-        throw Error("Artifact name already exists. Set overwrite:true to replace it.");
       if (previous && !old)
-        throw Error("Artifact storage contains an untracked file or name alias. Choose another name.");
+        throw Error("Artifact storage contains an untracked file of that name. Choose another name.");
       const project = (text: string) => host.scrubContent?.(text) ?? host.scrub?.(text) ?? text;
       const projectedDescription = () =>
         args.description === undefined ? null : shortenDescription(project(args.description));
@@ -259,10 +279,10 @@ export class ArtifactStore {
       const description = projectedDescription();
       if (options.exactContent && content !== args.content) throw new ArtifactMaskingConflict();
       const bytes = Buffer.from(content, "utf8");
-      if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
+      if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the 5 MiB UTF8 limit.");
       const sha256 = hash(bytes);
-      const mime = /\.(md|markdown)$/i.test(args.name) ? "text/markdown" : "text/plain";
-      const result = { ref: formatArtifactRef(args.name), bytes: bytes.length };
+      const mime = /\.(md|markdown)$/i.test(name) ? "text/markdown" : "text/plain";
+      const result = { ref: formatArtifactRef(name), bytes: bytes.length };
       if (
         old?.sha256 === sha256 &&
         old.bytes === bytes.length &&
@@ -270,13 +290,16 @@ export class ArtifactStore {
         old.mime === mime &&
         previous?.bytes.equals(bytes)
       ) {
+        // Nothing to replace: saving what is already stored succeeds, with or without overwrite.
         host.assertWritable();
         return result;
       }
+      if (old && !args.overwrite)
+        throw Error(`Artifact ${name} already exists. Set overwrite:true to replace it.`);
       const row: ArtifactRow = {
         id: old?.id ?? `art_${ulid()}`,
         session_id: host.sessionId,
-        name: args.name,
+        name,
         mime,
         bytes: bytes.length,
         sha256,
@@ -309,7 +332,7 @@ export class ArtifactStore {
           if (previous ? !current || !sameFile(previous.stat, current) : current) throw veraError("CONFLICT");
           signal.throwIfAborted();
           host.assertWritable();
-          await rename(temporary, path);
+          await replaceFile(temporary, path);
           ownsTemporary = false;
 
           let publish: () => void;
@@ -335,7 +358,7 @@ export class ArtifactStore {
               await stage(previous.bytes);
               await this.directory(host.sessionId);
               host.assertWritable();
-              await rename(temporary, path);
+              await replaceFile(temporary, path);
               ownsTemporary = false;
             } else await rm(path, { force: true });
             throw error;

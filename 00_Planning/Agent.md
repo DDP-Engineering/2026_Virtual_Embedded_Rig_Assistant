@@ -118,7 +118,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `parts_search` | read | Mouser, DigiKey, TME, Farnell, Rutronik search by keyword or part number | parts-search plugin; never orders |
 | `write` | write | Creates a UTF-8 file or overwrites a file, keeping its CRLF, BOM and Latin-1 encoding | overwrite needs a current read |
 | `edit` | write | Replaces exact text, keeps CRLF, mixed line endings and BOM | one match or `replaceAll`; current read |
-| `artifact_save` | session | Session artifact, ref `artifact:<name>` | 5 MiB; name 1–100 portable characters |
+| `artifact_save` | session | Session artifact, ref `artifact:<name>`; an unportable name is saved under a portable one | 5 MiB; name 1–100 portable characters |
 | `todo` | session | Replaces the session Plan | 50 items, 200 characters |
 | `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed; a failed command lists the credential variables it ran without |
 | `run_program` | program | Declared plugin program with an argument array, no shell | plugin risk rules and timeout |

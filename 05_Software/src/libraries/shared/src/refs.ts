@@ -38,6 +38,46 @@ export function validArtifactName(name: string): boolean {
     !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)
   );
 }
+const plainLetters: Record<string, string> = {
+  ß: "ss",
+  æ: "ae",
+  Æ: "AE",
+  œ: "oe",
+  Œ: "OE",
+  ø: "o",
+  Ø: "O",
+  ł: "l",
+  Ł: "L",
+  đ: "d",
+  Đ: "D",
+};
+/**
+ * The portable name an artifact is saved under when the name asked for only needs its accents removed
+ * and its spaces, punctuation or folder separators replaced. A refused name costs the model the whole
+ * content again, so only a name that is not a file name at all returns nothing: an empty one, a device
+ * name, a traversal or a drive, and one with no letter or digit left.
+ */
+export function portableArtifactName(name: string): string | undefined {
+  if (validArtifactName(name)) return name;
+  if (name.includes(":") || /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(name)) return undefined;
+  let text = name
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/[ßæÆœŒøØłŁđĐ]/g, (letter) => plainLetters[letter] ?? letter)
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/-+\./g, ".")
+    .replace(/\.-+/g, ".")
+    .replace(/^-+/, "")
+    .replace(/[-.]+$/, "");
+  if (text.startsWith(".") && !name.startsWith(".")) return undefined;
+  if (text.length > 100) {
+    const dot = text.lastIndexOf(".");
+    const extension = dot > 0 && text.length - dot <= 16 ? text.slice(dot) : "";
+    text = `${text.slice(0, 100 - extension.length).replace(/[-.]+$/, "")}${extension}`;
+  }
+  return validArtifactName(text) ? text : undefined;
+}
 export function formatArtifactRef(name: string): string {
   if (!validArtifactName(name)) throw Error("Invalid artifact name.");
   return `artifact:${name}`;

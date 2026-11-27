@@ -40,6 +40,24 @@ it("round trips every reference kind and labels its exact locator", () => {
     expect(api.referenceLabel(ref)).toBe(label);
   }
 });
+it("makes an artifact name portable or refuses what is not a file name", () => {
+  for (const [name, portable] of [
+    ["summary.md", "summary.md"],
+    [".notes", ".notes"],
+    ["Test Plan.md", "Test-Plan.md"],
+    ["résumé  final (2).md", "resume-final-2.md"],
+    ["Übersicht/Maße.csv", "Ubersicht-Masse.csv"],
+    ["a\\b", "a-b"],
+    ["  draft  .txt", "draft.txt"],
+    ["x".repeat(140), "x".repeat(100)],
+  ] as const) {
+    expect(api.portableArtifactName(name)).toBe(portable);
+    expect(api.validArtifactName(portable)).toBe(true);
+  }
+  for (const name of ["", ".", "..", "../a.md", "a/../b", "C:evil", "CON", "nul.txt", "报告.md", "???"])
+    expect(api.portableArtifactName(name)).toBeUndefined();
+});
+
 it("rejects malformed page/heading/artifact refs and escaping paths", () => {
   expect(api.parseRef).toBeTypeOf("function");
   for (const ref of [

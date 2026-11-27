@@ -220,20 +220,8 @@ it("saves the script output, metadata/event and valid/missing citations without 
 });
 
 it("explains rejected names, byte limits and duplicate artifact saves", { timeout: 15_000 }, async () => {
-  const bad = [
-    "",
-    ".",
-    "..",
-    "../summary.md",
-    "a/b",
-    "a\\b",
-    "C:evil",
-    "CON",
-    "NUL.txt",
-    "trailing.",
-    "ă.md",
-    "a".repeat(101),
-  ];
+  // Not file names at all: empty, traversal, a drive, a device, or no letter or digit left.
+  const bad = ["", ".", "..", "../summary.md", "a/../b.md", "C:evil", "CON", "NUL.txt", "报告.md"];
   const { service, handle } = await setup([
     ...bad.map((name) => save({ name, content: "bad" })),
     save({ name: "large.txt", content: "ă".repeat((5 * 1024 * 1024) / 2 + 1) }),
@@ -256,6 +244,75 @@ it("explains rejected names, byte limits and duplicate artifact saves", { timeou
   expect(rows[bad.length + 1]?.status).toBe("ok");
   expect(rows.at(-1)?.result_json).toMatch(/overwrite/i);
   expect(service.listArtifacts(s.id)).toHaveLength(1);
+});
+
+it("saves an unportable name under a portable one and says which", async () => {
+  const names = [
+    ["Test Plan.md", "Test-Plan.md"],
+    ["raport-măsurători.md", "raport-masuratori.md"],
+    ["reports/plan(v2).md", "reports-plan-v2.md"],
+    ["Maß und Größe.txt", "Mass-und-Grosse.txt"],
+    ["trailing.", "trailing"],
+    [`${"long name ".repeat(12)}.md`, `${"long-name-".repeat(10).slice(0, 97)}.md`],
+  ] as const;
+  const { service, handle } = await setup([
+    ...names.map(([name]) => save({ name, content: "body" })),
+    save({ name: "plain.md", content: "body" }),
+  ]);
+  const s = service.create();
+  service.send(s.id, "save");
+  await service.waitIdle(s.id);
+  const results = (
+    handle.db.prepare("SELECT status,result_json FROM tool_calls ORDER BY rowid").all() as {
+      status: string;
+      result_json: string;
+    }[]
+  ).map((row) => ({ status: row.status, result: JSON.parse(JSON.parse(row.result_json).content[0].text) }));
+  for (const [index, [, saved]] of names.entries())
+    expect(results[index]).toEqual({
+      status: "ok",
+      result: { ref: `artifact:${saved}`, bytes: 4, savedAs: saved },
+    });
+  // A name that needs no change reports none.
+  expect(results.at(-1)?.result).toEqual({ ref: "artifact:plain.md", bytes: 4 });
+  expect(service.listArtifacts(s.id).map(({ name }) => name)).toEqual([
+    ...names.map(([, saved]) => saved),
+    "plain.md",
+  ]);
+});
+
+it("treats a name that differs only in letter case as the artifact that exists", async () => {
+  const { store, artifactHost: host, session } = await direct();
+  const signal = new AbortController().signal;
+  await store.save(host, { name: "Report.md", content: "one" }, signal);
+  // The refusal names the artifact, so the next call can replace it instead of meeting a second refusal.
+  await expect(store.save(host, { name: "report.md", content: "two" }, signal)).rejects.toThrow(
+    "Artifact Report.md already exists. Set overwrite:true to replace it.",
+  );
+  expect(await store.save(host, { name: "REPORT.MD", content: "two", overwrite: true }, signal)).toEqual({
+    ref: "artifact:Report.md",
+    bytes: 3,
+  });
+  expect(store.list(session.id).map(({ name }) => name)).toEqual(["Report.md"]);
+  expect((await store.openNamed(session.id, "Report.md")).content).toBe("two");
+});
+
+it("accepts saving what is already stored without overwrite and still guards a different content", async () => {
+  const { store, artifactHost: host, session, path } = await direct();
+  const signal = new AbortController().signal;
+  const first = await store.save(host, { name: "summary.md", content: "same", description: "d" }, signal);
+  const before = (await stat(path)).mtimeMs;
+  expect(await store.save(host, { name: "summary.md", content: "same", description: "d" }, signal)).toEqual(
+    first,
+  );
+  expect((await stat(path)).mtimeMs).toBe(before);
+  await expect(store.save(host, { name: "summary.md", content: "other" }, signal)).rejects.toThrow(
+    /overwrite:true/,
+  );
+  await expect(
+    store.save(host, { name: "summary.md", content: "same", description: "changed" }, signal),
+  ).rejects.toThrow(/overwrite:true/);
+  expect(store.list(session.id)).toHaveLength(1);
 });
 
 it("saves the full artifact with a shortened Unicode description and preserves descriptions at the limit", async () => {
@@ -443,7 +500,7 @@ it("accepts empty/exact5MiB UTF8 content, refuses overlimit and restores bytes a
     bytes: 5 * 1024 * 1024,
   });
   await expect(store.save(host, { name: "large.txt", content: `${content}x` }, signal)).rejects.toThrow(
-    /5MiB/,
+    /5 MiB/,
   );
   const original = store.list(session.id);
   handle.db.exec(

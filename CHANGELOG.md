@@ -76,6 +76,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Suggest adding an API key when a web provider's limit is reached without one.
 - Save and verify session artifacts asynchronously, skipping identical overwrites.
 - Shorten long session artifact descriptions while still saving the full artifact content.
+- Save a session artifact whose name has spaces, accents or a folder separator under a portable name instead of refusing it.
+- Replace an artifact when its name is given in another letter case, instead of two contradictory refusals on Windows.
+- Accept saving an artifact's stored content again without `overwrite`.
+- Retry and explain an artifact save refused because another program has the file open.
+- Name the artifact name, not its content, when the name holds protected data, and correct spacing in artifact messages.
 
 ## [0.4.0] - 2026-11-26
 

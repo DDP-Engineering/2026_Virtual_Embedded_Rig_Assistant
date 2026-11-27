@@ -10,7 +10,9 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 
 ## Public interface
 
-- artifact_save(name,content,description?,overwrite?) is session class and sequential, returns {ref:"artifact:<name>",bytes}; asks no approval, including read-only session permission mode. Disabled names and explicitly injected host policies remain effective; read-only workbench mutation is denied.
+- artifact_save(name,content,description?,overwrite?) is session class and sequential, returns {ref:"artifact:<name>",bytes} plus savedAs when the stored name differs from the one asked for; asks no approval, including read-only session permission mode. Disabled names and explicitly injected host policies remain effective; read-only workbench mutation is denied.
+- Names: `portableArtifactName` (shared/refs.ts) turns the name asked for into a valid one (NFKD without marks, a few letters such as ß mapped, other characters and separators to `-`, cut to 100 keeping the extension) and returns nothing for an empty name, a traversal, a drive, a device name or one with no letter or digit left; only that is refused, because a refused save makes the model send the whole content again. `ArtifactsRepository.aliased` finds the artifact whose name differs only in letter case, and the save then uses the existing name. Saving the stored content and description again succeeds without overwrite and rewrites nothing; other content needs overwrite:true and the refusal names the artifact.
+- `replaceFile` renames over the stored file and retries EPERM/EBUSY/EACCES twice (100 ms, 200 ms): on Windows a program holding the artifact open refuses the rename. A file that stays open is reported as such. The tool maps VeraError codes and remaining system errors to messages without paths.
 - When `artifact_save` receives `exactLineRefs:true`, it keeps exact line citations and replaces
   covered subranges with the narrowest line window issued by a successful tool in the current turn.
   The save uses in-memory tool results. Uncovered references remain as written. Artifact hashes describe the saved text.

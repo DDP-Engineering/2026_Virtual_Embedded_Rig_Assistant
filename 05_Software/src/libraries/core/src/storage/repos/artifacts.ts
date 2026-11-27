@@ -21,6 +21,20 @@ export class ArtifactsRepository {
       | ArtifactRow
       | undefined;
   }
+  /**
+   * The artifact of that name, or the one whose name differs only in letter case: Windows and macOS keep
+   * one file for both, and an artifact exported from Linux must not collide there.
+   */
+  aliased(sessionId: string, name: string): ArtifactRow | undefined {
+    return (
+      this.named(sessionId, name) ??
+      (this.db
+        .prepare(
+          "SELECT * FROM artifacts WHERE session_id=? AND name=? COLLATE NOCASE ORDER BY created_at,id",
+        )
+        .get(sessionId, name) as ArtifactRow | undefined)
+    );
+  }
   list(sessionId: string): ArtifactRow[] {
     return this.db
       .prepare("SELECT * FROM artifacts WHERE session_id=? ORDER BY created_at,id")
