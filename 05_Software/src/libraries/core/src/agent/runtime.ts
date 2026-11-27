@@ -609,7 +609,8 @@ export class ReferenceRuntime implements AgentRuntime {
             throw Error(
               `At most ${maxImages} images can be inspected in one step. Try the remaining files in a later step.`,
             );
-          const parsed = tool.params.safeParse(call.arguments);
+          // The runtime validates before the registry runs, so a tool's repair is applied here too.
+          const parsed = tool.params.safeParse(tool.repair ? tool.repair(call.arguments) : call.arguments);
           if (!parsed.success)
             throw Error(tool.invalidArguments?.(parsed.error.issues) ?? parsed.error.message);
           const args = parsed.data;

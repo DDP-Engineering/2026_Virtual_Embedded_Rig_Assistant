@@ -518,6 +518,7 @@ export class ToolRegistry {
       class: tool.class,
       description: tool.description,
       params: tool.params,
+      ...(tool.repair ? { repair: tool.repair } : {}),
       invalidArguments: (issues) => analysisArgumentError(tool.name, issues),
       ...(tool.available ? { available: () => tool.available?.(ctx) === true } : {}),
       ...(tool.requiresImages && { requiresImages: true as const }),

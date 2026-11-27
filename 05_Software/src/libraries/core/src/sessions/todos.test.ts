@@ -47,7 +47,7 @@ it("registers a session todo and rejects count/text/status boundaries without re
   const { service, handle } = await setup([
     todo(valid),
     todo([...valid, valid[0]]),
-    todo([{ text: "ă".repeat(201), status: "done" }]),
+    todo([{ content: "Wrong key", status: "done" }]),
     todo([{ text: "Invalid", status: "unknown" }]),
   ]);
   const s = service.create();
@@ -62,11 +62,28 @@ it("registers a session todo and rejects count/text/status boundaries without re
   expect(calls.map((x) => x.status)).toEqual(["ok", "error", "error", "error"]);
   expect(JSON.parse(calls[0]?.result_json ?? "{}").content[0].text).toContain('"items"');
   expect(calls[1]?.result_json).toMatch(/50/);
-  expect(calls[2]?.result_json).toMatch(/200/);
+  expect(calls[2]?.result_json).toMatch(/content/);
   expect(calls[3]?.result_json).toMatch(/pending.*in_progress.*done/);
   for (const row of calls.slice(1)) expect(JSON.parse(row.result_json).isError).toBe(true);
   expect(handle.db.prepare("SELECT * FROM events WHERE type='todo.updated'").all()).toHaveLength(1);
 });
+it("repairs a plan in a session, where the runtime validates before the registry", async () => {
+  const { service } = await setup([
+    todo([
+      { text: "Read the schematic", status: "completed" },
+      { text: "ă".repeat(260), status: "In Progress" },
+      { text: "  ", status: "pending" },
+    ]),
+  ]);
+  const s = service.create();
+  service.send(s.id, "plan");
+  await service.waitIdle(s.id);
+  expect(service.get(s.id).snapshot.todos).toEqual([
+    { text: "Read the schematic", status: "done" },
+    { text: `${"ă".repeat(199)}…`, status: "in_progress" },
+  ]);
+});
+
 it("atomically publishes each sequential replacement and restores the final list after service restart", async () => {
   const a = [
     { id: "a", text: "Inspect", status: "pending" as const },

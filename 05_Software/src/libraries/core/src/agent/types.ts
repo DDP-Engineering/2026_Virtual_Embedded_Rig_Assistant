@@ -23,6 +23,8 @@ export interface ToolDef {
   description: string;
   requiresImages?: true;
   params: z.ZodType;
+  /** Rewrite arguments into what the model plainly meant, before the runtime validates them. */
+  repair?(args: unknown): unknown;
   /** The tool's own wording for refused arguments, given what was wrong with them. */
   invalidArguments?(issues: readonly { path: readonly PropertyKey[]; message: string }[]): string | undefined;
   /** The runtime supplies callId separately from model arguments. */
