@@ -46,6 +46,8 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Résultats grep | application | 50–2000 | 500 | Immédiatement |
 | Taille de fichier pour grep (Mio) | application | 1–50 | 5 | Immédiatement |
 | Résultats glob | application | 100–5000 | 500 | Immédiatement |
+| Images par message | application | 1–32 | 8 | Immédiatement |
+| Taille maximale du fichier image (Mio) | application | 1–64 | 20 | Immédiatement |
 | Délai des workers (s) | application | 5–120 | 10 | Au prochain terminal, worker, exécution ou session ouverte |
 | Résultats de recherche web | application | 1–8 | 5 | Immédiatement |
 | Taille de lecture web (caractères) | application | 1000–16000 | 12000 | Immédiatement |

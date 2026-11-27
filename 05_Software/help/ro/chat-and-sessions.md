@@ -36,11 +36,11 @@ Lipește sau trage o imagine în caseta de mesaj sau alege **Atașează imagine*
 
 Selectează miniatura dintr-un mesaj trimis pentru a deschide imaginea în vizualizatorul de fișiere. Dacă imaginea lipsește, mesajul afișează calea salvată în workbench.
 
-Un mesaj poate indica până la opt imagini PNG, JPEG, GIF sau WebP din workbench, cu o limită de 20 MiB pe fișier. VERA redimensionează copia trimisă unui model care acceptă imagini la cel mult 2048 de pixeli pe latura lungă și păstrează fișierul original. Un model care acceptă doar text primește căile. Compactarea păstrează căile imaginilor mai vechi în note text. Exporturile sesiunii includ aceste căi.
+Implicit, un mesaj poate include până la opt imagini PNG, JPEG, GIF sau WebP, cu o limită de 20 MiB pe fișier. Poți schimba limitele în **Setări** → **Avansat** → **Imagini**. Furnizorul poate refuza o cerere care îi depășește propriile limite. VERA redimensionează copia trimisă unui model care acceptă imagini la cel mult 2048 de pixeli pe latura lungă și păstrează fișierul original. Un model care acceptă doar text primește căile. Compactarea păstrează căile imaginilor mai vechi în note text. Exporturile sesiunii includ aceste căi.
 
 Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.
 
-Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativă. Cu un model care acceptă imagini, agentul poate folosi `view_image` pentru fișiere PNG, JPEG, GIF sau WebP de până la 20 MiB. Latura cea mai lungă a copiei trimise modelului are cel mult 2048 de pixeli. Instrumentul cere o cale permisă din workbench, fără linkuri, inclusiv în modul Bypass. Rezultatul din istoricul sesiunii păstrează calea. Comutatorul apare în **Editează workbench-ul** → **Instrumente** dacă modelul implicit al workbench-ului acceptă imagini.
+Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativă. Cu un model care acceptă imagini, agentul poate folosi `view_image` pentru fișiere PNG, JPEG, GIF sau WebP în limita de mărime configurată. Latura cea mai lungă a copiei trimise modelului are cel mult 2048 de pixeli. Instrumentul cere o cale permisă din workbench, fără linkuri, inclusiv în modul Bypass. Rezultatul din istoricul sesiunii păstrează calea. Comutatorul apare în **Editează workbench-ul** → **Instrumente** dacă modelul implicit al workbench-ului acceptă imagini.
 
 Agentul poate redeschide o imagine trimisă din caseta de mesaj a acestei sesiuni folosind calea salvată. Poate examina până la opt imagini într-un pas și păstrează în turul curent ultimele opt imagini obținute cu instrumentul.
 
@@ -99,6 +99,8 @@ Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** ș
 Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Între timp indicatorul se rotește și păstrează ultimul procent, care se actualizează când următoarea cerere este pregătită. Transcriptul complet rămâne salvat și vizibil.
 
 Dacă ultima tură eșuează din cauza unei erori temporare a furnizorului, alege **Reîncearcă** pentru a retrimite mesajul. La o eroare de limită de context, alege **Compactează acum** când butonul este disponibil. Dacă tura atinge limita de răspuns sau limita de apeluri ale instrumentelor, **Continuă** pornește o tură nouă.
+
+Dacă furnizorul refuză cererea din cauza dimensiunii, alege **Schimbă imaginile și reîncearcă**, debifează atașamentele de scos și alege **Retrimite mesajul**. Atașamentele inițiale rămân vizibile în conversație.
 
 **Caută în conversație** caută în sesiunea curentă. Apasă Enter pentru potrivirea următoare și Shift+Enter pentru cea anterioară. Trimiterea unui mesaj sau acțiunea **Mergi la ultimul mesaj** te duce la final. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
 

@@ -43,6 +43,7 @@ const keysByGroup = {
     "terminalScrollback",
     "terminalAgentChars",
   ],
+  images: ["imagesPerMessage", "imageFileMB"],
   documents: [
     "docVolumeFiles",
     "docVolumeMB",
@@ -93,6 +94,7 @@ export function AdvancedSettingsPanel({
   const groups = [
     { id: "agent", name: t("advanced.groups.agent") },
     { id: "tools", name: t("advanced.groups.tools") },
+    { id: "images", name: t("advanced.groups.images") },
     { id: "documents", name: t("advanced.groups.documents") },
     { id: "providers", name: t("advanced.groups.providers") },
     { id: "dictation", name: t("advanced.groups.dictation") },

@@ -145,7 +145,7 @@
   },
   "errors": {
     "IMAGE_FORMAT": "Wählen Sie ein gültiges PNG-, JPEG-, GIF- oder WebP-Bild. SVG wird nicht unterstützt.",
-    "IMAGE_TOO_LARGE": "Ein Bild darf höchstens 20 MiB groß sein.",
+    "IMAGE_TOO_LARGE": "Ein Bild darf höchstens {{maxMB}} MiB groß sein.",
     "INVALID": "Die Anfrage ist ungültig.",
     "NOT_FOUND": "Der angeforderte Vorgang {{operation}} wurde nicht gefunden.",
     "CONFLICT": "Der Vorgang steht im Konflikt mit dem aktuellen Zustand.",
@@ -445,6 +445,7 @@
     "rateLimit": "Anbieterlimit erreicht.",
     "rateLimitWithRetry": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
     "context": "Der Anbieter hat die Kontextgröße abgelehnt. Eingabe reduzieren oder das konfigurierte Fenster prüfen.",
+    "requestTooLarge": "Der Anbieter hat die Anfrage abgelehnt, weil sie zu groß war. Versuchen Sie es mit weniger Text oder weniger und kleineren Bildern.",
     "failure": "Anbieterfehler: {{message}}",
     "timeout": "Das Modell hat nicht innerhalb von {{seconds}} s geantwortet.",
     "discoveryTimeout": "Die Modellsuche wurde nicht innerhalb von {{seconds}} s abgeschlossen."
@@ -494,6 +495,8 @@
     "attachImage": "Bild anhängen",
     "imagesTextOnly": "Dieses Modell akzeptiert nur Text. Es erhält die Dateipfade der Bilder.",
     "imagesLimit": "Du kannst bis zu {{count}} Bilder anhängen.",
+    "changeImagesAndRetry": "Bilder ändern und erneut versuchen",
+    "retrySelectedImages": "Nachricht erneut senden",
     "openImage": "Bild {{path}} öffnen",
     "imageUnavailable": "Bild nicht verfügbar",
     "removeAttachment": "Anhang entfernen: {{path}}",
@@ -1836,6 +1839,7 @@
     "groups": {
       "agent": "Agent und Kontext",
       "tools": "Werkzeuge und Terminals",
+      "images": "Bilder",
       "documents": "Dokumente",
       "providers": "Anbieter und Browser",
       "dictation": "Diktat",
@@ -1859,6 +1863,8 @@
       "restart": "Gilt nach einem Neustart von VERA"
     },
     "settings": {
+      "imagesPerMessage": "Bilder pro Nachricht",
+      "imageFileMB": "Maximale Bilddateigröße (MiB)",
       "providerDiscoveryTimeout": "Zeitlimit für Modellsuche (s)",
       "browserNavigationTimeout": "Zeitlimit für Browser-Navigation (s)",
       "dictationTranscriptionTimeout": "Zeitlimit für Transkription (s)",
@@ -1911,6 +1917,8 @@
       "pageSize": "Zeilen pro Seite"
     },
     "about": {
+      "imagesPerMessage": "Höchstzahl der Anhänge pro Nachricht und der Bilder, die der Agent in einem Schritt prüfen kann.",
+      "imageFileMB": "Maximale Größe der Originaldatei für Chat-Anhänge und vom Agenten geöffnete Bilder.",
       "providerDiscoveryTimeout": "Zeit zum Ermitteln von Modellen in LM Studio und Anbieterkatalogen einschließlich Laden der Liste.",
       "browserNavigationTimeout": "Zeit zum Öffnen einer Seite oder Folgen eines Links. Automatisch behält die eingebauten Fristen bei.",
       "dictationTranscriptionTimeout": "Höchstdauer für eine lokale Transkription einschließlich Laden des Whisper-Modells.",

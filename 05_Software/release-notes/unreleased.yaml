@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Images, ro: Imagini, de: Bilder, fr: Images }
+    text:
+      en: Set image limits and resend with fewer attachments when the provider rejects the request.
+      ro: Configurează limitele imaginilor și retrimite cu mai puține atașamente după un refuz.
+      de: Bildlimits einstellen und nach einer Ablehnung mit weniger Anhängen erneut senden.
+      fr: Réglez les limites d’images et renvoyez avec moins de pièces jointes après un refus.
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

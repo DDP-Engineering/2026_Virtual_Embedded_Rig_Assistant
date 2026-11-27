@@ -1,13 +1,8 @@
 // REQ-UX-c3961c76 REQ-FUNC-4436607c
-import {
-  type ComposerImage,
-  type ComposerImageSource,
-  MAX_MESSAGE_IMAGE_BYTES,
-  MAX_MESSAGE_IMAGES,
-  veraError,
-} from "@vera/shared";
+import { type ComposerImage, type ComposerImageSource, veraError } from "@vera/shared";
 import { useCallback, useRef, useState } from "react";
 import { api } from "../api/index.js";
+import { appAdvancedValue } from "./app-advanced.js";
 
 const empty: readonly ComposerImage[] = [];
 interface Draft {
@@ -19,7 +14,8 @@ interface Draft {
 const blank: Draft = { images: empty, pending: false };
 
 async function imageSource(file: File): Promise<ComposerImageSource> {
-  if (file.size > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
+  const maxMB = appAdvancedValue("imageFileMB");
+  if (file.size > maxMB * 1024 * 1024) throw { ...veraError("IMAGE_TOO_LARGE"), params: { maxMB } };
   if (!file.size) throw veraError("IMAGE_FORMAT");
   const data = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -65,7 +61,7 @@ export function useImageDrafts() {
         for (const input of inputs) {
           const { images } = imageDraft(workbenchId, sessionId);
           if (typeof input === "string" && images.some((image) => image.path === input)) continue;
-          if (images.length >= MAX_MESSAGE_IMAGES) {
+          if (images.length >= appAdvancedValue("imagesPerMessage")) {
             update(workbenchId, sessionId, { full: true });
             break;
           }

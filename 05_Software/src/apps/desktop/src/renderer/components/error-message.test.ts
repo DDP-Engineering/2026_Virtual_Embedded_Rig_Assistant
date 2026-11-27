@@ -26,3 +26,13 @@ it("shows an unknown key by its code, and anything that is not an error as an in
   expect((await shown({ code: "PROVIDER", messageKey: "provider.someNewKey" })).key).toBe("errors.PROVIDER");
   expect((await shown(new Error("boom"))).key).toBe("errors.INTERNAL");
 });
+
+it("distinguishes a provider size refusal from the local file limit", async () => {
+  expect(await shown({ code: "PROVIDER", messageKey: "provider.requestTooLarge" })).toMatchObject({
+    key: "provider.requestTooLarge",
+    text: expect.stringContaining("provider rejected the request because it was too large"),
+  });
+  expect(
+    await shown({ code: "IMAGE_TOO_LARGE", messageKey: "errors.IMAGE_TOO_LARGE", params: { maxMB: 41 } }),
+  ).toMatchObject({ text: "An image can be at most 41 MiB." });
+});

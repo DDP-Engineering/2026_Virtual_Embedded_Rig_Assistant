@@ -122,6 +122,11 @@ export function AdvancedField({
       about: t("advanced.about.webSearchResults"),
     },
     webReadChars: { name: t("advanced.settings.webReadChars"), about: t("advanced.about.webReadChars") },
+    imagesPerMessage: {
+      name: t("advanced.settings.imagesPerMessage"),
+      about: t("advanced.about.imagesPerMessage"),
+    },
+    imageFileMB: { name: t("advanced.settings.imageFileMB"), about: t("advanced.about.imageFileMB") },
     webTimeout: { name: t("advanced.settings.webTimeout"), about: t("advanced.about.webTimeout") },
     browserNavigationTimeout: {
       name: t("advanced.settings.browserNavigationTimeout"),

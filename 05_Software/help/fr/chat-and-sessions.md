@@ -36,11 +36,11 @@ Collez ou déposez une image dans le champ de message, ou choisissez **Joindre u
 
 Sélectionnez la vignette d’un message envoyé pour ouvrir l’image dans la visionneuse de fichiers. Si l’image est introuvable, le message affiche son chemin enregistré dans le banc de travail.
 
-Un message peut référencer jusqu’à huit images PNG, JPEG, GIF ou WebP du banc de travail, dans la limite de 20 Mio par fichier. VERA réduit la copie envoyée au modèle à 2048 pixels au maximum sur le côté le plus long et conserve le fichier original. Un modèle qui accepte uniquement du texte reçoit les chemins. La synthèse des anciens messages conserve les chemins des images sous forme de notes textuelles. Les exports de session incluent ces chemins.
+Par défaut, un message peut inclure jusqu’à huit images PNG, JPEG, GIF ou WebP, dans la limite de 20 Mio par fichier. Modifiez ces limites dans **Paramètres** → **Avancé** → **Images**. Le fournisseur peut refuser une requête qui dépasse ses propres limites. VERA réduit la copie envoyée au modèle à 2048 pixels au maximum sur le côté le plus long et conserve le fichier original. Un modèle qui accepte uniquement du texte reçoit les chemins. La synthèse des anciens messages conserve les chemins des images sous forme de notes textuelles. Les exports de session incluent ces chemins.
 
 Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
 
-Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF ou WebP de 20 Mio maximum. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil exige un chemin autorisé du banc, sans lien, même en mode Contournement. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
+Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF ou WebP dans la limite de taille configurée. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil exige un chemin autorisé du banc, sans lien, même en mode Contournement. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
 
 L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
 
@@ -99,6 +99,8 @@ Pour les modèles qui le prennent en charge, **Niveau de raisonnement** propose 
 L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). Pendant ce temps, l’indicateur tourne et garde le dernier pourcentage, mis à jour dès que la requête suivante est prête. La transcription complète reste enregistrée et visible.
 
 Si le dernier tour échoue à cause d’une erreur temporaire du fournisseur, sélectionnez **Réessayer** pour renvoyer son message. En cas de dépassement du contexte, utilisez **Compacter maintenant** si le bouton est proposé. Quand le tour atteint la limite de sortie ou d’appels d’outils, **Continuer** lance un nouveau tour.
+
+Si le fournisseur refuse la requête à cause de sa taille, choisissez **Modifier les images et réessayer**. Décochez les pièces jointes à retirer et choisissez **Renvoyer le message**. Les pièces jointes initiales restent visibles dans la conversation.
 
 **Rechercher dans la conversation** effectue une recherche dans la session en cours. Appuyez sur Entrée pour le résultat suivant et Maj+Entrée pour le précédent. Envoyez un message ou sélectionnez **Aller au dernier message** pour revenir à la fin. La bande de repères au bord gauche de la conversation comporte un repère par message que vous avez envoyé ; survolez un repère pour avoir un aperçu du message et sélectionnez-le pour y accéder.
 

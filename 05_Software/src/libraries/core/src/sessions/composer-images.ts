@@ -6,7 +6,7 @@ import {
   type ComposerImage,
   type ComposerImageSource,
   composerRasterFormat,
-  MAX_MESSAGE_IMAGE_BYTES,
+  DEFAULT_IMAGE_FILE_BYTES,
   sessionIdSchema,
   veraError,
   veraErrorSchema,
@@ -97,6 +97,7 @@ export async function attachComposerImage(
   source: ComposerImageSource,
   managedRoots: readonly string[] | undefined,
   authorize: () => void,
+  maxBytes = DEFAULT_IMAGE_FILE_BYTES,
 ): Promise<ComposerImage> {
   if (!sessionIdSchema.safeParse(sessionId).success) throw veraError("INVALID");
   authorize();
@@ -112,15 +113,11 @@ export async function attachComposerImage(
   if ("path" in source) {
     let bytes: Buffer;
     try {
-      ({ bytes } = await readGuardedFile(
-        guard,
-        source.path,
-        MAX_MESSAGE_IMAGE_BYTES,
-        new AbortController().signal,
-      ));
+      ({ bytes } = await readGuardedFile(guard, source.path, maxBytes, new AbortController().signal));
     } catch (error) {
       if (veraErrorSchema.safeParse(error).success) throw error;
-      if (error instanceof FileReadLimitError) throw veraError("IMAGE_TOO_LARGE");
+      if (error instanceof FileReadLimitError)
+        throw { ...veraError("IMAGE_TOO_LARGE"), params: { maxMB: maxBytes / (1024 * 1024) } };
       if (missing(error)) throw veraError("NOT_FOUND");
       throw veraError("DENIED");
     }
@@ -133,7 +130,8 @@ export async function attachComposerImage(
   }
 
   const bytes = Buffer.from(source.data, "base64");
-  if (bytes.length > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
+  if (bytes.length > maxBytes)
+    throw { ...veraError("IMAGE_TOO_LARGE"), params: { maxMB: maxBytes / (1024 * 1024) } };
   const format = composerRasterFormat(source.name, bytes, false);
   if (!format) throw veraError("IMAGE_FORMAT");
   const thumbnail = await rasterThumbnail(bytes, format);

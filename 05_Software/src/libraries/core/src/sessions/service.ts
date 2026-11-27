@@ -51,7 +51,7 @@ import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/app
 import { addIssuedCitationRefs, issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
 import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
-import { imagePaths } from "../agent/message-images.js";
+import { imagePaths, imageRequestMessage } from "../agent/message-images.js";
 import type { ModelCalibrationStore } from "../agent/model-calibration.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
@@ -233,6 +233,7 @@ interface ActiveTurn {
   done: Promise<{ stopReason: StopReason }>;
   turnId: string;
   messageId: string;
+  historyLength?: number;
   failed?: boolean;
   accepting: boolean;
   approvalWait?: string;
@@ -1196,7 +1197,14 @@ export class SessionService {
       if (row.archived) throw veraError("DENIED");
       if (row.status === "awaiting_approval" || this.deleting.has(id)) throw veraError("BUSY");
     };
-    return attachComposerImage(this.host.root, id, source, this.host.managedRoots, authorize);
+    return attachComposerImage(
+      this.host.root,
+      id,
+      source,
+      this.host.managedRoots,
+      authorize,
+      this.resolveAdvanced(id, "imageFileMB") * 1024 * 1024,
+    );
   }
   async imageCapability(id: string) {
     const modelRef = this.host.model(this.row(id).model_ref);
@@ -1348,7 +1356,12 @@ export class SessionService {
     return this.hub.subscribe(id, sinceSeq, listener);
   }
   private transcript(id: string): Message[] {
-    return this.messages.list(id).map((row) => JSON.parse(row.content_json) as Message);
+    return this.messages.list(id).map((row) => {
+      const message = JSON.parse(row.content_json) as Message;
+      if (message.role === "user" && "imagesRejected" in message && message.imagesRejected === true)
+        return imageRequestMessage(message, imagePaths(message));
+      return message;
+    });
   }
   private sync(id: string, transcript: Message[]): void {
     const stored = this.messages.list(id);
@@ -1485,14 +1498,17 @@ export class SessionService {
     this.row(id);
     this.writable();
     if (this.isPlanReviewActive(id)) throw veraError("BUSY");
-    const paths = await new SessionImages(this.host.root, this.host.managedRoots).validate(images);
-    return this.admitMessage(id, text, paths.length ? paths : undefined);
+    const count = this.resolveAdvanced(id, "imagesPerMessage");
+    if (images.length > count) throw { code: "INVALID", messageKey: "chat.imagesLimit", params: { count } };
+    const reader = new SessionImages(this.host.root, this.host.managedRoots);
+    const paths = await reader.validate(images, this.resolveAdvanced(id, "imageFileMB") * 1024 * 1024);
+    return this.admitMessage(id, text, paths.length ? paths : undefined, { imageReader: reader });
   }
   private admitMessage(
     id: string,
     text: string,
     images?: string[],
-    options: { staged?: StagedTurn; review?: PlanReview } = {},
+    options: { staged?: StagedTurn; review?: PlanReview; imageReader?: SessionImages } = {},
   ): { turnId: string; messageId: string } {
     const { staged, review } = options;
     const current = this.row(id);
@@ -1538,6 +1554,7 @@ export class SessionService {
       staged,
       images,
       review,
+      options.imageReader,
     );
   }
 
@@ -1600,6 +1617,7 @@ export class SessionService {
     staged?: StagedTurn,
     images?: string[],
     review?: PlanReview,
+    imageReader?: SessionImages,
   ) {
     const id = row.id;
     // Delegated sessions that may run at once in this workbench (REQ-FUNC-261cdc27).
@@ -1615,7 +1633,7 @@ export class SessionService {
     const slot = admission?.acquire();
     if (admission && !slot) throw turnLimitError(admission.state().limit);
     try {
-      return this.runTurn(row, text, delegated, slot, staged, images, review);
+      return this.runTurn(row, text, delegated, slot, staged, images, review, imageReader);
     } catch (error) {
       slot?.release();
       throw error;
@@ -1629,6 +1647,7 @@ export class SessionService {
     staged?: StagedTurn,
     images?: string[],
     review?: PlanReview,
+    imageReader?: SessionImages,
   ) {
     const id = row.id;
     let processing = Promise.resolve();
@@ -1949,10 +1968,9 @@ export class SessionService {
           let capabilities = caps();
           let messages = request.messages;
           if (messages.some((message) => imagePaths(message).length)) {
-            const reader =
-              !review && acceptsImages(capabilities)
-                ? new SessionImages(self.host.root, self.host.managedRoots)
-                : undefined;
+            const useImages = !review && acceptsImages(capabilities);
+            if (useImages) imageReader ??= new SessionImages(self.host.root, self.host.managedRoots);
+            const reader = useImages ? imageReader : undefined;
             messages = await projectMessageImages(request.messages, request.signal, reader);
             capabilities = caps();
             if (reader && !acceptsImages(capabilities))
@@ -2136,6 +2154,7 @@ export class SessionService {
       contextCompactor,
       maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? this.resolveAdvanced(id, "toolCallsPerTurn"),
       maxToolResultChars: this.resolveAdvanced(id, "toolResultChars"),
+      maxImagesPerStep: this.resolveAdvanced(id, "imagesPerMessage"),
       ...(review ? { requestIdentity: { turnId: review.turnId, messageId: review.messageId } } : {}),
     });
     const seed = review
@@ -2161,6 +2180,7 @@ export class SessionService {
       done: Promise.resolve({ stopReason: "error" }),
       turnId: review?.turnId ?? "",
       messageId: review?.messageId ?? "",
+      historyLength: history.length,
       accepting: true,
       slot,
     };
@@ -2232,6 +2252,7 @@ export class SessionService {
     const discard = () => {
       if (discarded) return;
       discarded = true;
+      imageReader = undefined;
       artifactCitationResults.length = 0;
       failed = true;
       turn.failed = true;
@@ -2286,6 +2307,7 @@ export class SessionService {
         })
         .finally(() => {
           artifactCitationResults.length = 0;
+          imageReader = undefined;
           if (discarded) return;
           this.active.delete(id);
           // The turn has ended; a background compaction after it takes no slot (RULING-005 of TASK-d3a3049f).
@@ -2308,6 +2330,7 @@ export class SessionService {
             .then(() => processing)
             .catch(() => {})
             .finally(() => {
+              imageReader = undefined;
               off();
               if (this.compacting.get(id) === background) this.compacting.delete(id);
               this.workSettled();
@@ -2464,6 +2487,12 @@ export class SessionService {
             id,
           );
       if (event.type === "tool.done") this.syncToolResults(id, transcript);
+      if (
+        event.type === "error" &&
+        event.messageKey === "provider.requestTooLarge" &&
+        turn.historyLength !== undefined
+      )
+        this.messages.omitRejectedImages(id, turn.historyLength);
       if (event.type === "turn.done" && !turn.failed) this.sync(id, transcript);
       const status =
         event.type === "turn.started"

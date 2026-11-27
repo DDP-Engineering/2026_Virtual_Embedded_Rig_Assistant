@@ -1,10 +1,10 @@
 import { mkdir, mkdtemp, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import { builtinToolNames, MAX_MESSAGE_IMAGES } from "@vera/shared";
+import { advancedSettings, builtinToolNames } from "@vera/shared";
 import sharp from "sharp";
-import { expect, it } from "vitest";
-import { cleanups, maxBytes, raster, setup, userParts } from "./session-images.test-support.js";
+import { expect, it, vi } from "vitest";
+import { cleanups, raster, setup, userParts } from "./session-images.test-support.js";
 
 // IMG-05-A
 it("offers view_image only to vision models and sends a scaled tool image without saving pixels", async () => {
@@ -74,9 +74,13 @@ it("refuses outside, redirected, ignored and invalid files without sending an im
   await writeFile(join(root, "pretends.png"), "<svg/>");
   await writeFile(join(root, "broken.png"), png.subarray(0, 32));
   await writeFile(join(root, "large.png"), png);
-  await truncate(join(root, "large.png"), maxBytes + 1);
+  await truncate(join(root, "large.png"), 1024 * 1024 + 1);
 
-  const service = open({ managedRoots: [join(root, "managed")], additionalFolders: () => [outside] });
+  const service = open({
+    managedRoots: [join(root, "managed")],
+    additionalFolders: () => [outside],
+    advanced: { app: () => ({ imageFileMB: 1 }), workbench: () => undefined },
+  });
   const { id } = service.create("custom:local/vision", "bypass");
   const denied = [
     `../${basename(outside)}/outside.png`,
@@ -96,6 +100,7 @@ it("refuses outside, redirected, ignored and invalid files without sending an im
     ...[1, 2, 3].map(() => expect.stringContaining("IMAGE_FORMAT")),
     expect.stringContaining("IMAGE_TOO_LARGE"),
   ]);
+  expect(results?.at(-1)).toContain("at most 1 MiB");
   expect(userParts(requests[1]).every(({ type }) => type === "text")).toBe(true);
 });
 
@@ -130,14 +135,22 @@ it("reopens composer images delivered to this session and refuses unshared manag
   expect(userParts(requests[4]).every(({ type }) => type === "text")).toBe(true);
 });
 
-it("bounds image-tool batches and retains the eight most recent images for the turn", async () => {
-  const { root, open, requests, callViewImage } = await setup();
-  const service = open({ disabledTools: builtinToolNames.filter((name) => name !== "view_image") });
+it.each([undefined, 10])("bounds image-tool batches and retention with image count %s", async (limit) => {
+  const { root, open, requests, callViewImage } = await setup(undefined, 65536);
+  const service = open({
+    disabledTools: builtinToolNames.filter((name) => name !== "view_image"),
+    ...(limit === undefined
+      ? {}
+      : {
+          advanced: { app: () => ({ imagesPerMessage: limit }), workbench: () => undefined },
+        }),
+  });
   const { id } = service.create();
-  const paths = Array.from({ length: MAX_MESSAGE_IMAGES + 1 }, (_, index) => `board-${index}.png`);
+  const count = limit ?? advancedSettings.imagesPerMessage.default;
+  const paths = Array.from({ length: count + 1 }, (_, index) => `board-${index}.png`);
   for (const [index, path] of paths.entries()) await writeFile(join(root, path), await raster(5 + index));
   callViewImage(...paths);
-  callViewImage(paths[MAX_MESSAGE_IMAGES] ?? "");
+  callViewImage(paths[count] ?? "");
   service.send(id, "Look at this image series.");
   expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
 
@@ -152,9 +165,9 @@ it("bounds image-tool batches and retains the eight most recent images for the t
     );
   const results = requests[1]?.messages.filter(({ role }) => role === "tool");
   expect(results).toHaveLength(paths.length);
-  expect(results?.at(-1)?.content).toMatch(/at most 8 images/i);
-  expect(await imageWidths(requests[1])).toEqual([5, 6, 7, 8, 9, 10, 11, 12]);
-  expect(await imageWidths(requests[2])).toEqual([6, 7, 8, 9, 10, 11, 12, 13]);
+  expect(results?.at(-1)?.content).toContain(`At most ${count} images`);
+  expect(await imageWidths(requests[1])).toEqual(paths.slice(0, -1).map((_, index) => 5 + index));
+  expect(await imageWidths(requests[2])).toEqual(paths.slice(1).map((_, index) => 6 + index));
 });
 
 it("authorizes a queued attachment only after the runtime delivers its message", async () => {
@@ -193,4 +206,28 @@ it("authorizes a queued attachment only after the runtime delivers its message",
   expect(afterDelivery?.content).toContain(image.path);
   expect(userParts(requests[1]).filter(({ type }) => type === "image_url")).toHaveLength(1);
   expect(userParts(requests[2]).filter(({ type }) => type === "image_url")).toHaveLength(2);
+});
+
+it("stops the turn while a native raster decode is still pending", async () => {
+  const { root, open, requests, callViewImage } = await setup();
+  const service = open();
+  const { id } = service.create();
+  const png = await raster();
+  await writeFile(join(root, "board.png"), png);
+  let release = () => {};
+  const blocked = new Promise<Buffer>((resolve) => {
+    release = () => resolve(png);
+  });
+  const decode = vi.spyOn(sharp.prototype, "toBuffer").mockImplementationOnce(() => blocked);
+  try {
+    callViewImage("board.png");
+    service.send(id, "Inspect");
+    await expect.poll(() => decode.mock.calls.length).toBe(1);
+    expect(service.stop(id)).toBe(true);
+    expect(await service.waitIdle(id)).toEqual({ stopReason: "aborted" });
+    expect(requests).toHaveLength(1);
+  } finally {
+    release();
+    decode.mockRestore();
+  }
 });

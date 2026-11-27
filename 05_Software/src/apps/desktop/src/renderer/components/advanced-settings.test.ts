@@ -83,6 +83,27 @@ it("shows only the switch until Show advanced settings is on, and saves both wit
   expect(update).toHaveBeenLastCalledWith({ showAdvanced: true, advanced: { toolCallsPerTurn: 100 } });
 });
 
+it("saves the application image limits from the Images group", async () => {
+  const update = vi.fn();
+  const settings = { ...defaultSettings("00000000-0000-4000-8000-000000000000"), showAdvanced: true };
+  await act(async () =>
+    root.render(createElement(AdvancedSettingsPanel, { settings, disabled: false, update })),
+  );
+  const group = container.querySelector<HTMLDetailsElement>('[data-advanced-group="images"]')!;
+  const count = group.querySelector<HTMLInputElement>('[data-advanced-field="imagesPerMessage"] input')!;
+  const size = group.querySelector<HTMLInputElement>('[data-advanced-field="imageFileMB"] input')!;
+  expect(count.placeholder).toBe("8 (default)");
+  expect(size.placeholder).toBe("20 (default)");
+  const user = userEvent.setup();
+  await act(async () => {
+    await user.click(group.querySelector("summary")!);
+    await user.type(count, "10");
+    await user.type(size, "40");
+    await user.click(container.querySelector("[data-settings-save]")!);
+  });
+  expect(update).toHaveBeenLastCalledWith({ advanced: { imagesPerMessage: 10, imageFileMB: 40 } });
+});
+
 it("offers Inherit and the allowed values for a choice, and saves the picked one with Save", async () => {
   const update = vi.fn();
   const settings = { ...defaultSettings("00000000-0000-4000-8000-000000000000"), showAdvanced: true };

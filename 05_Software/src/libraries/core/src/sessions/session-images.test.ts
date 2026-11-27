@@ -1,11 +1,12 @@
-import { mkdtemp, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { channels } from "@vera/shared";
+import { advancedSettings, channels } from "@vera/shared";
 import sharp from "sharp";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { ContextPolicy, conservativeCounter } from "../agent/context.js";
 import { buildSessionMarkdown } from "./export.js";
+import { SessionImages } from "./session-images.js";
 import {
   cleanups,
   contextWindow,
@@ -211,6 +212,74 @@ it("keeps the path when a previously admitted file is unavailable", async () => 
   expect(JSON.stringify(parts)).toContain("removed.png (image unavailable)");
 });
 
+it("resends only the selected images from a refused message while keeping the original attachment history", async () => {
+  const { root, open, requests, refuseNextRequestForSize } = await setup();
+  for (const path of ["earlier.png", "keep.png", "remove.png"])
+    await writeFile(join(root, path), await raster());
+  const service = open();
+  const { id } = service.create();
+  await service.sendWithImages(id, "Earlier", ["earlier.png"]);
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+
+  refuseNextRequestForSize();
+  const original = await service.sendWithImages(id, "Inspect", ["keep.png", "remove.png"]);
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "error" });
+  expect(service.get(id).snapshot.items.at(-1)).toMatchObject({ messageKey: "provider.requestTooLarge" });
+  expect(userParts(requests[1]).filter(({ type }) => type === "image_url")).toHaveLength(3);
+  await service.close();
+
+  const restored = open();
+  await restored.sendWithImages(id, "Inspect", ["keep.png"]);
+  expect(await restored.waitIdle(id)).toEqual({ stopReason: "end" });
+  const messages = requests[2]?.messages.filter(({ role }) => role === "user") ?? [];
+  expect(
+    messages.map(({ content }) =>
+      typeof content === "string" ? 0 : content.filter(({ type }) => type === "image_url").length,
+    ),
+  ).toEqual([1, 0, 1]);
+  expect(restored.get(id).snapshot.items.find(({ id }) => id === original.messageId)).toMatchObject({
+    images: ["keep.png", "remove.png"],
+  });
+});
+
+it("decodes an unchanged attachment once across admission and provider continuations", async () => {
+  const { root, open, requests, callViewImage } = await setup();
+  const service = open();
+  const { id } = service.create();
+  await writeFile(join(root, "board.png"), await raster());
+  callViewImage("missing.png");
+  const decode = vi.spyOn(sharp.prototype, "toBuffer");
+  try {
+    await service.sendWithImages(id, "Inspect", ["board.png"]);
+    expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+    expect(requests).toHaveLength(2);
+    expect(
+      requests.map((request) => userParts(request).filter(({ type }) => type === "image_url").length),
+    ).toEqual([1, 1]);
+    expect(decode).toHaveBeenCalledTimes(1);
+  } finally {
+    decode.mockRestore();
+  }
+});
+
+it("checks the revision and current workbench rules before reusing image pixels", async () => {
+  const { root } = await setup();
+  const reader = new SessionImages(root, []);
+  const path = "board.png";
+  const full = join(root, path);
+  const signal = new AbortController().signal;
+  await writeFile(full, await raster());
+  const first = await reader.read(path, signal);
+  reader.beginRequest([[path]]);
+  expect(await reader.read(path, signal)).toBe(first);
+  await writeFile(full, await raster(42));
+  expect(await reader.read(path, signal)).not.toEqual(first);
+  await mkdir(join(root, ".vera"), { recursive: true });
+  await writeFile(join(root, ".vera", ".veraignore"), path);
+  reader.beginRequest([[path]]);
+  await expect(reader.read(path, signal)).rejects.toMatchObject({ code: "DENIED" });
+});
+
 // IMG-02-B
 it("admits eight paths and a raster at the byte cap, then refuses nine and a file one byte over", async () => {
   const { root, open } = await setup();
@@ -228,14 +297,51 @@ it("admits eight paths and a raster at the byte cap, then refuses nine and a fil
   expect(request.safeParse({ sessionId: id, text: "", images: paths }).success).toBe(true);
   expect(request.safeParse({ sessionId: id, text: "", images: [] }).success).toBe(false);
   const excessive = [...paths, "ninth.png"];
-  expect(request.safeParse({ sessionId: id, text: "Ask", images: excessive }).success).toBe(false);
+  expect(request.safeParse({ sessionId: id, text: "Ask", images: excessive }).success).toBe(true);
+  const aboveCeiling = Array<string>(advancedSettings.imagesPerMessage.max + 1).fill("image.png");
+  expect(request.safeParse({ sessionId: id, text: "Ask", images: aboveCeiling }).success).toBe(false);
   await service.sendWithImages(id, "", paths);
   expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
   const revision = service.revision(id);
-  await expect(service.sendWithImages(id, "Ask", excessive)).rejects.toMatchObject({ code: "INVALID" });
+  await expect(service.sendWithImages(id, "Ask", excessive)).rejects.toMatchObject({
+    code: "INVALID",
+    messageKey: "chat.imagesLimit",
+    params: { count: 8 },
+  });
   await truncate(exact, maxBytes + 1);
   await expect(service.sendWithImages(id, "Ask", paths)).rejects.toMatchObject({ code: "IMAGE_TOO_LARGE" });
   expect(service.revision(id)).toEqual(revision);
+});
+
+it("sends ten images and a file above the default size, then keeps their history when limits are lowered", async () => {
+  const { root, open, requests } = await setup(undefined, 65536);
+  const app = { imagesPerMessage: 10, imageFileMB: 21 };
+  const service = open({ advanced: { app: () => app, workbench: () => undefined } });
+  const { id } = service.create();
+  const paths = Array.from({ length: 10 }, (_, index) => `image-${index}.png`);
+  const png = await raster();
+  for (const path of paths) await writeFile(join(root, path), png);
+  const large = "image-0.png";
+  await truncate(join(root, large), maxBytes + 1);
+  await expect(service.attachImage(id, { path: large })).resolves.toMatchObject({ path: large });
+  await service.sendWithImages(id, "Inspect", paths);
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+  expect(userParts(requests[0]).filter(({ type }) => type === "image_url")).toHaveLength(10);
+
+  app.imagesPerMessage = 1;
+  app.imageFileMB = 1;
+  await expect(service.attachImage(id, { path: large })).rejects.toMatchObject({
+    code: "IMAGE_TOO_LARGE",
+    params: { maxMB: 1 },
+  });
+  await expect(service.sendWithImages(id, "Again", [large])).rejects.toMatchObject({
+    code: "IMAGE_TOO_LARGE",
+    params: { maxMB: 1 },
+  });
+  expect(service.get(id).snapshot.items.find(({ kind }) => kind === "user")).toMatchObject({ images: paths });
+  service.send(id, "Continue");
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+  expect(userParts(requests[1]).filter(({ type }) => type === "image_url")).toHaveLength(10);
 });
 
 it("types refusals for SVG, signature spoofing, corrupt rasters and paths outside the workbench", async () => {

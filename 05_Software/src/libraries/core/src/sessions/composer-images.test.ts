@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { MAX_MESSAGE_IMAGE_BYTES } from "@vera/shared";
+import { DEFAULT_IMAGE_FILE_BYTES } from "@vera/shared";
 import sharp from "sharp";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { attachComposerImage } from "./composer-images.js";
@@ -73,7 +73,7 @@ it("refuses spoofed, mismatched, corrupt and oversized images before creating at
   await expect(
     attach({
       name: "oversize.png",
-      data: Buffer.alloc(MAX_MESSAGE_IMAGE_BYTES + 1).toString("base64"),
+      data: Buffer.alloc(DEFAULT_IMAGE_FILE_BYTES + 1).toString("base64"),
     }),
   ).rejects.toMatchObject({ code: "IMAGE_TOO_LARGE" });
   await expect(readdir(join(workbench, ".vera"))).resolves.toEqual([]);

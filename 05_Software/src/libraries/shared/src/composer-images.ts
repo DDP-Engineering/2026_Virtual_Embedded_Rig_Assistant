@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { advancedSettings } from "./advanced-settings.js";
 
-export const MAX_MESSAGE_IMAGES = 8;
-export const MAX_MESSAGE_IMAGE_BYTES = 20 * 1024 * 1024;
+export const DEFAULT_IMAGE_FILE_BYTES = advancedSettings.imageFileMB.default * 1024 * 1024;
+export const MAX_IMAGE_FILE_BYTES = advancedSettings.imageFileMB.max * 1024 * 1024;
 export const COMPOSER_IMAGE_ACCEPT = "image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp";
 export const WORKBENCH_IMAGE_DRAG = "application/x-vera-workbench-image";
 
@@ -43,9 +44,10 @@ export const composerImageSourceSchema = z.union([
       .max(255)
       .refine((value) => printable(value) && !/[\\/]/.test(value)),
     data: z
-      .base64()
+      .string()
       .min(4)
-      .max(4 * Math.ceil(MAX_MESSAGE_IMAGE_BYTES / 3)),
+      .max(4 * Math.ceil(MAX_IMAGE_FILE_BYTES / 3))
+      .pipe(z.base64()),
   }),
   z.strictObject({
     path: z.string().min(1).max(4096).refine(printable),

@@ -1,9 +1,9 @@
-import { composerRasterFormat, MAX_MESSAGE_IMAGE_BYTES, veraError } from "@vera/shared";
+import { composerRasterFormat, veraError } from "@vera/shared";
 
 /** The browser mock decodes fixture files locally; native storage is exercised by Electron. */
-export async function mockImageThumbnail(name: string, data: string) {
+export async function mockImageThumbnail(name: string, data: string, maxMB: number) {
   const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
-  if (bytes.length > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
+  if (bytes.length > maxMB * 1024 * 1024) throw { ...veraError("IMAGE_TOO_LARGE"), params: { maxMB } };
   const format = composerRasterFormat(name, bytes, false);
   if (!format) throw veraError("IMAGE_FORMAT");
   const image = await createImageBitmap(new Blob([bytes], { type: `image/${format}` })).catch(() => {

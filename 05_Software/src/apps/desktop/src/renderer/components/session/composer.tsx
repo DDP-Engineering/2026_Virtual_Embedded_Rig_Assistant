@@ -4,7 +4,6 @@ import {
   COMPOSER_IMAGE_ACCEPT,
   type DictationRecordingMode,
   defaultDictationRecordingMode,
-  MAX_MESSAGE_IMAGES,
   rasterExtension,
   type SessionState,
   WORKBENCH_IMAGE_DRAG,
@@ -15,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { insertDictation } from "../../dictation/draft-insertion.js";
 import { useComposerDictation } from "../../dictation/use-composer-dictation.js";
+import { useAppAdvanced } from "../../hooks/app-advanced.js";
 import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
@@ -113,6 +113,8 @@ export function Composer({
   const attached = sessionId ? (attachments?.list(sessionId) ?? []) : [];
   const imageDraft = sessionId && workbenchId ? attachments?.imageDraft?.(workbenchId, sessionId) : undefined;
   const images = imageDraft?.images ?? [];
+  const maxImages = useAppAdvanced("imagesPerMessage");
+  const tooManyImages = images.length > maxImages;
   useLayoutEffect(() => {
     const element = input.current;
     if (!element || element.value !== text) return;
@@ -195,6 +197,7 @@ export function Composer({
     sendingBlocked ||
     imageDraft?.pending ||
     imageModelPending ||
+    tooManyImages ||
     (!text.trim() && !attached.length && !images.length);
   useEffect(() => {
     let cancelled = false;
@@ -298,7 +301,9 @@ export function Composer({
         </p>
       )}
       {imageDraft?.error !== undefined && <ErrorMessage error={imageDraft.error} />}
-      {imageDraft?.full && <p role="alert">{t("chat.imagesLimit", { count: MAX_MESSAGE_IMAGES })}</p>}
+      {(tooManyImages || (imageDraft?.full && images.length >= maxImages)) && (
+        <p role="alert">{t("chat.imagesLimit", { count: maxImages })}</p>
+      )}
       <div ref={setReasoningNotice} className="composer-reasoning-notice" />
       <form
         onDragOver={(event) => {

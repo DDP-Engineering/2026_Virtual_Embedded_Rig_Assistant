@@ -46,6 +46,8 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Rezultate grep | aplicație | 50–2000 | 500 | Imediat |
 | Mărimea fișierelor pentru grep (MiB) | aplicație | 1–50 | 5 | Imediat |
 | Rezultate glob | aplicație | 100–5000 | 500 | Imediat |
+| Imagini per mesaj | aplicație | 1–32 | 8 | Imediat |
+| Mărimea maximă a fișierului imagine (MiB) | aplicație | 1–64 | 20 | Imediat |
 | Termen pentru procese worker (s) | aplicație | 5–120 | 10 | La următorul terminal, proces, rulare sau sesiune deschisă |
 | Rezultate căutare web | aplicație | 1–8 | 5 | Imediat |
 | Mărimea citirii web (caractere) | aplicație | 1000–16000 | 12000 | Imediat |

@@ -36,11 +36,11 @@ Paste or drop an image into the message box, or choose **Attach image** to pick 
 
 Select a thumbnail in a sent message to open the image in the file viewer. If the image is missing, the message shows its saved workbench path.
 
-A message can reference up to eight workbench images in PNG, JPEG, GIF or WebP, with a limit of 20 MiB per file. VERA scales the copy sent to an image-capable model to a maximum of 2048 pixels on its longest side and keeps the original file. A text-only model receives the paths. Compaction keeps older image paths as text notes. Session exports include those paths.
+By default, a message can include up to eight PNG, JPEG, GIF or WebP images, with a limit of 20 MiB per file. Change either limit under **Settings** → **Advanced** → **Images**. The provider can still refuse a request that exceeds its own limits. VERA scales the copy sent to an image-capable model to a maximum of 2048 pixels on its longest side and keeps the original file. A text-only model receives the paths. Compaction keeps older image paths as text notes. Session exports include those paths.
 
 See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
 
-Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF or WebP files up to 20 MiB. The copy sent to the model is at most 2048 pixels on its longest side. The tool requires an allowed workbench path without links, including in Bypass. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
+Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF or WebP files within the configured file size limit. The copy sent to the model is at most 2048 pixels on its longest side. The tool requires an allowed workbench path without links, including in Bypass. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
 
 The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
 
@@ -99,6 +99,8 @@ For models that support it, **Reasoning level** offers **Default** and the level
 The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). Meanwhile the indicator spins and keeps the last percentage, which updates when the next request is ready. The full transcript stays saved and visible.
 
 If the latest turn fails with a temporary provider error, select **Retry** to resend its message. On a context-limit error, use **Compact now** when available. When a turn reaches the output or tool-call limit, **Continue** starts another turn.
+
+If the provider rejects the request because of its size, select **Change images and retry**, uncheck the attachments to remove, and select **Resend message**. The original attachments stay visible in the conversation.
 
 **Find in conversation** searches the current session. Use Enter for the next match and Shift+Enter for the previous one. Sending a message or selecting **Jump to latest message** returns you to the end. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
 

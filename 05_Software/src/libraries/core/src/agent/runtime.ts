@@ -9,7 +9,6 @@ import type {
 import {
   acceptsImages,
   advancedSettings,
-  MAX_MESSAGE_IMAGES,
   type ModelCapabilities,
   providerRetryAfterSchema,
   type VeraError,
@@ -349,6 +348,7 @@ export class ReferenceRuntime implements AgentRuntime {
   ): Promise<StopReason> {
     let callsUsed = 0;
     const maxCalls = init.maxToolCallsPerTurn ?? advancedSettings.toolCallsPerTurn.default;
+    const maxImages = init.maxImagesPerStep ?? advancedSettings.imagesPerMessage.default;
     // After the tool-call limit, one last request without tools lets the model say what is done and what remains.
     let summarizing = false;
     const system = () => (summarizing ? `${init.systemPrompt}\n\n${TOOL_LIMIT_SUMMARY}` : init.systemPrompt);
@@ -605,9 +605,9 @@ export class ReferenceRuntime implements AgentRuntime {
           const tool = offered.find((t) => t.name === call.name);
           if (!tool) throw Error("Unknown tool");
           if (tool.available?.() === false) throw Error("Tool is unavailable.");
-          if (tool.requiresImages && imagesInStep >= MAX_MESSAGE_IMAGES)
+          if (tool.requiresImages && imagesInStep >= maxImages)
             throw Error(
-              `At most ${MAX_MESSAGE_IMAGES} images can be inspected in one step. Try the remaining files in a later step.`,
+              `At most ${maxImages} images can be inspected in one step. Try the remaining files in a later step.`,
             );
           const args = tool.params.parse(call.arguments);
           // Program commands ask the gate per command line, like file changes.
@@ -642,7 +642,7 @@ export class ReferenceRuntime implements AgentRuntime {
         const result = toolResult(call, output, failed, this.host.now());
         if (!failed && image) {
           imagesInStep++;
-          if (resultImages.size === MAX_MESSAGE_IMAGES) {
+          if (resultImages.size === maxImages) {
             const oldest = resultImages.keys().next();
             if (!oldest.done) resultImages.delete(oldest.value);
           }

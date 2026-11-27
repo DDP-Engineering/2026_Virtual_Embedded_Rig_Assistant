@@ -1,8 +1,8 @@
 import { createMaskingResolver, type WorkbenchService } from "@vera/core";
 import {
   channels,
+  DEFAULT_IMAGE_FILE_BYTES,
   DOCS_BYTE_WINDOW_LIMIT,
-  MAX_MESSAGE_IMAGE_BYTES,
   type Settings,
   type ViewerContent,
   veraError,
@@ -622,7 +622,7 @@ describe("transcript image thumbnails", () => {
       path,
       offset: 0,
       start: 0,
-      size: MAX_MESSAGE_IMAGE_BYTES + 1,
+      size: DEFAULT_IMAGE_FILE_BYTES + 1,
       bytes: Buffer.alloc(0),
     }));
     expect((await f.display.imageThumbnail(id, path)).preview).toBeUndefined();

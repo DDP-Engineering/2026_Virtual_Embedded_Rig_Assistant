@@ -145,7 +145,7 @@
   },
   "errors": {
     "IMAGE_FORMAT": "Alege o imagine PNG, JPEG, GIF sau WebP validă. Formatul SVG nu este acceptat.",
-    "IMAGE_TOO_LARGE": "O imagine poate avea cel mult 20 MiB.",
+    "IMAGE_TOO_LARGE": "O imagine poate avea cel mult {{maxMB}} MiB.",
     "INVALID": "Cererea nu este validă.",
     "NOT_FOUND": "Operația solicitată {{operation}} nu a fost găsită.",
     "CONFLICT": "Operația intră în conflict cu starea curentă.",
@@ -445,6 +445,7 @@
     "rateLimit": "Limita de cereri a furnizorului a fost atinsă.",
     "rateLimitWithRetry": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
+    "requestTooLarge": "Furnizorul a refuzat cererea fiindcă este prea mare. Încearcă mai puțin text sau imagini mai puține și mai mici.",
     "failure": "Eroare furnizor: {{message}}",
     "timeout": "Modelul nu a răspuns în {{seconds}} s.",
     "discoveryTimeout": "Detectarea modelelor nu s-a încheiat în {{seconds}} s."
@@ -494,6 +495,8 @@
     "attachImage": "Atașează imagine",
     "imagesTextOnly": "Acest model acceptă doar text. Va primi căile fișierelor de imagine.",
     "imagesLimit": "Poți atașa cel mult {{count}} imagini.",
+    "changeImagesAndRetry": "Schimbă imaginile și reîncearcă",
+    "retrySelectedImages": "Retrimite mesajul",
     "openImage": "Deschide imaginea {{path}}",
     "imageUnavailable": "Imagine indisponibilă",
     "removeAttachment": "Elimină atașamentul: {{path}}",
@@ -1836,6 +1839,7 @@
     "groups": {
       "agent": "Agent și context",
       "tools": "Instrumente și terminale",
+      "images": "Imagini",
       "documents": "Documente",
       "providers": "Furnizori și browser",
       "dictation": "Dictare",
@@ -1859,6 +1863,8 @@
       "restart": "Se aplică după repornirea VERA"
     },
     "settings": {
+      "imagesPerMessage": "Imagini per mesaj",
+      "imageFileMB": "Mărimea maximă a fișierului imagine (MiB)",
       "providerDiscoveryTimeout": "Timp maxim de detectare a modelelor (s)",
       "browserNavigationTimeout": "Timp maxim de navigare în browser (s)",
       "dictationTranscriptionTimeout": "Timp maxim de transcriere (s)",
@@ -1911,6 +1917,8 @@
       "pageSize": "Rânduri pe pagină"
     },
     "about": {
+      "imagesPerMessage": "Numărul maxim de atașamente per mesaj și de imagini pe care agentul le poate inspecta într-un pas.",
+      "imageFileMB": "Mărimea maximă a fișierului original pentru atașamentele din conversație și imaginile deschise de agent.",
       "providerDiscoveryTimeout": "Timp pentru detectarea modelelor din LM Studio și cataloagele furnizorilor, inclusiv încărcarea listei.",
       "browserNavigationTimeout": "Timp pentru deschiderea unei pagini sau urmarea unui link. Opțiunea automată păstrează limitele încorporate.",
       "dictationTranscriptionTimeout": "Timp maxim pentru o transcriere locală, inclusiv încărcarea modelului Whisper.",

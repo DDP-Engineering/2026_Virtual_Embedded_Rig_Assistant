@@ -145,7 +145,7 @@
   },
   "errors": {
     "IMAGE_FORMAT": "Choose a valid PNG, JPEG, GIF or WebP image. SVG is unsupported.",
-    "IMAGE_TOO_LARGE": "An image can be at most 20 MiB.",
+    "IMAGE_TOO_LARGE": "An image can be at most {{maxMB}} MiB.",
     "INVALID": "The request is invalid.",
     "NOT_FOUND": "The requested operation {{operation}} was not found.",
     "CONFLICT": "The operation conflicts with the current state.",
@@ -445,6 +445,7 @@
     "rateLimit": "Provider rate limit.",
     "rateLimitWithRetry": "Provider rate limit. Retry after: {{retryAfter}}.",
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
+    "requestTooLarge": "The provider rejected the request because it was too large. Try less text or fewer, smaller images.",
     "failure": "Provider error: {{message}}",
     "timeout": "The model did not respond within {{seconds}} s.",
     "discoveryTimeout": "Model discovery did not finish within {{seconds}} s."
@@ -494,6 +495,8 @@
     "attachImage": "Attach image",
     "imagesTextOnly": "This model only accepts text. It will receive the image file paths.",
     "imagesLimit": "You can attach up to {{count}} images.",
+    "changeImagesAndRetry": "Change images and retry",
+    "retrySelectedImages": "Resend message",
     "openImage": "Open image {{path}}",
     "imageUnavailable": "Image unavailable",
     "removeAttachment": "Remove attachment: {{path}}",
@@ -1836,6 +1839,7 @@
     "groups": {
       "agent": "Agent and context",
       "tools": "Tools and terminals",
+      "images": "Images",
       "documents": "Documents",
       "providers": "Providers and browser",
       "dictation": "Dictation",
@@ -1859,6 +1863,8 @@
       "restart": "Applies after restarting VERA"
     },
     "settings": {
+      "imagesPerMessage": "Images per message",
+      "imageFileMB": "Maximum image file size (MiB)",
       "providerDiscoveryTimeout": "Model discovery timeout (s)",
       "browserNavigationTimeout": "Browser navigation timeout (s)",
       "dictationTranscriptionTimeout": "Transcription timeout (s)",
@@ -1911,6 +1917,8 @@
       "pageSize": "Rows per page"
     },
     "about": {
+      "imagesPerMessage": "Maximum attachments per message and images the agent can inspect in one step.",
+      "imageFileMB": "Maximum original file size for chat attachments and images opened by the agent.",
       "providerDiscoveryTimeout": "Time to detect models in LM Studio and provider catalogs, including loading the list.",
       "browserNavigationTimeout": "Time to open a page or follow a link. Automatic keeps the built-in deadlines.",
       "dictationTranscriptionTimeout": "Maximum time for a local transcription, including loading the Whisper model.",

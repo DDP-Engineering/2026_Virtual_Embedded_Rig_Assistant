@@ -1,7 +1,7 @@
 import { type VeraError, veraErrorSchema } from "@vera/shared";
 import { z } from "zod";
 import { PathGuard } from "../workbench/path-guard.js";
-import { type ToolDefinition, toolExcludedRoots } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots, toolLimit } from "./context.js";
 import { readRasterFile } from "./raster-file.js";
 
 const params = z.strictObject({ path: z.string().min(1) });
@@ -11,10 +11,11 @@ export const viewImageTool: ToolDefinition = {
   class: "read",
   requiresImages: true,
   description:
-    "Inspect a PNG, JPEG, GIF or WebP image in the workbench (up to 20 MiB). Supply a workbench-relative file path without links.",
+    "Inspect a PNG, JPEG, GIF or WebP image in the workbench. Supply a workbench-relative file path without links.",
   params,
   async execute(ctx, raw, signal) {
     const { path } = params.parse(raw);
+    const maxMB = toolLimit(ctx, "imageFileMB");
     const relative = path.replaceAll("\\", "/");
     const sharedAttachment =
       relative.startsWith(".vera/attachments/") && ctx.hasDeliveredImage?.(relative) === true;
@@ -23,7 +24,7 @@ export const viewImageTool: ToolDefinition = {
       allowSessionAttachments: sharedAttachment,
     });
     try {
-      const image = await readRasterFile(guard, path, signal);
+      const { image } = await readRasterFile(guard, path, signal, maxMB * 1024 * 1024);
       return { path, image };
     } catch (error) {
       signal.throwIfAborted();
@@ -33,7 +34,7 @@ export const viewImageTool: ToolDefinition = {
         DENIED: "Use an allowed workbench-relative path without links.",
         NOT_FOUND: "The image file was not found.",
         IMAGE_FORMAT: "Use a valid PNG, JPEG, GIF or WebP image.",
-        IMAGE_TOO_LARGE: "Choose an image of at most 20 MiB.",
+        IMAGE_TOO_LARGE: `Choose an image of at most ${maxMB} MiB.`,
       };
       const code = parsed.data.code;
       return {
