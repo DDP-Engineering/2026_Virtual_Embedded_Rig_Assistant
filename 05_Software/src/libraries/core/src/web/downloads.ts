@@ -149,7 +149,11 @@ export class WebDownloads {
             context.assertWritable();
             const path = join(staging, target.name);
             const file = await open(path, "wx+", 0o600);
-            const { transfer, pages, identity } = await (async () => {
+            const {
+              transfer,
+              pages,
+              identity: written,
+            } = await (async () => {
               try {
                 const transfer = await this.receive(target.sourceUrl, file, signal, budget);
                 assertCurrent();
@@ -175,6 +179,17 @@ export class WebDownloads {
                 await file.close();
               }
             })();
+            // NTFS stamps the change time when the handle closes, so the times to hold on to are read after
+            // it; device, inode, size and link count tie that path to the bytes just written.
+            const identity = await lstat(path);
+            if (
+              !identity.isFile() ||
+              identity.nlink !== 1 ||
+              identity.dev !== written.dev ||
+              identity.ino !== written.ino ||
+              identity.size !== written.size
+            )
+              throw veraError("CONFLICT");
             const record = webDownloadSchema.parse({
               ...target,
               finalUrl: publicWebUrl(transfer.finalUrl),
