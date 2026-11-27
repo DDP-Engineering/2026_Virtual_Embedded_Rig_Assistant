@@ -1,6 +1,7 @@
 // REQ-SEC-6c43bda5, REQ-REL-45112294, REQ-FUNC-17f34e4b
 import { describe, expect, it, vi } from "vitest";
 import {
+  CONNECT_PATIENCE_MS,
   type DownloadHttpResponse,
   type DownloadTransferPorts,
   publicDownloadAddress,
@@ -114,7 +115,81 @@ describe("public destination boundary", () => {
   });
 });
 it.each([
-  ["encoding", reply(200, [bytes], { "content-type": "application/pdf", "content-encoding": "gzip" })],
+  ["a missing content type", {}],
+  ["an empty content type", { "content-type": "" }],
+  ["a malformed content type", { "content-type": "pdf" }],
+  ["a repeated content type", { "content-type": "application/pdf, application/pdf" }],
+] as const)("stores a reply with %s as a file of unknown kind", async (_name, headers) => {
+  const f = fixture([reply(200, [bytes], headers)]);
+  expect(await transferFile("https://files.example.org/board.bin", signal(), f)).toMatchObject({
+    bytes: bytes.length,
+    mime: "application/octet-stream",
+  });
+  expect(Buffer.concat(f.chunks)).toEqual(bytes);
+});
+it("stores a reply that carries a Content-Encoding as it was sent", async () => {
+  // Identity was asked for; a server that marks its .tar.gz files as gzip-encoded still sends the archive.
+  const archive = Buffer.from([0x1f, 0x8b, 8, 0, 0, 0, 0, 0]);
+  const f = fixture([
+    reply(200, [archive], { "content-type": "application/x-tar", "content-encoding": "x-gzip" }),
+  ]);
+  expect((await transferFile("https://files.example.org/sdk.tar.gz", signal(), f)).bytes).toBe(8);
+  expect(Buffer.concat(f.chunks)).toEqual(archive);
+});
+describe("several resolved addresses", () => {
+  const v6 = { address: "2606:2800:220:1:248:1893:25c8:1946", family: 6 };
+  const v4 = { address: "93.184.215.14", family: 4 };
+  it("downloads from the next address when the first cannot be reached", async () => {
+    const f = fixture();
+    f.resolve.mockResolvedValue([v6, v4]);
+    f.connect.mockRejectedValueOnce(Object.assign(Error("connect ENETUNREACH"), { code: "ENETUNREACH" }));
+    expect((await transferFile("https://files.example.org/a.pdf", signal(), f)).bytes).toBe(bytes.length);
+    expect(f.connect.mock.calls.map((call) => call[1])).toEqual([v6, v4]);
+  });
+  it("moves on from an address that does not answer and gives the last one the whole budget", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture();
+      f.resolve.mockResolvedValue([v6, v4]);
+      const abandoned = vi.fn();
+      f.connect.mockImplementationOnce(
+        (_url, _address, _headers, attempt) =>
+          new Promise((_resolve, reject) => {
+            attempt.addEventListener("abort", () => {
+              abandoned();
+              reject(attempt.reason);
+            });
+          }),
+      );
+      const pending = transferFile("https://files.example.org/a.pdf", signal(), f);
+      await vi.advanceTimersByTimeAsync(CONNECT_PATIENCE_MS);
+      expect((await pending).bytes).toBe(bytes.length);
+      expect(abandoned).toHaveBeenCalledOnce();
+      // The address that answered is not cut off when the patience of an earlier one would have run out.
+      expect(f.connect.mock.calls[1]?.[3].aborted).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("reports the last failure when no address can be reached", async () => {
+    const f = fixture([]);
+    f.resolve.mockResolvedValue([v6, v4]);
+    f.connect
+      .mockRejectedValueOnce(Error("connect ENETUNREACH"))
+      .mockRejectedValueOnce(Error("connect ETIMEDOUT"));
+    await expect(transferFile("https://files.example.org/a.pdf", signal(), f)).rejects.toThrow("ETIMEDOUT");
+  });
+});
+it("names run_command for a destination on the local network", async () => {
+  const f = fixture();
+  await expect(transferFile("http://192.168.1.50/log.csv", signal(), f)).rejects.toThrow(/run_command/);
+  f.resolve.mockResolvedValue([{ address: "10.0.0.7", family: 4 }]);
+  await expect(transferFile("https://build.example.org/fw.bin", signal(), f)).rejects.toThrow(
+    /public network destination.*run_command/,
+  );
+  expect(f.connect).not.toHaveBeenCalled();
+});
+it.each([
   ["oversize header", reply(200, [bytes], { "content-type": "application/pdf", "content-length": "1000" })],
   ["oversize stream", reply(200, [bytes, bytes, bytes])],
   ["short response", reply(200, [bytes], { "content-type": "application/pdf", "content-length": "50" })],

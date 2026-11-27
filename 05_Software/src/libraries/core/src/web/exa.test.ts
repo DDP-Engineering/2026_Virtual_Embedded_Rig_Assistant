@@ -221,7 +221,12 @@ it.each([402, 429, 401, 503])(
     expect(error).toBeInstanceOf(Error);
     expect(String(error)).not.toContain("sensitive");
     expect(String(error)).toMatch(
-      status === 402 || status === 429 ? /limit/i : status === 401 ? /authentication/i : /unavailable/i,
+      // No key is configured here: the limit is that of access without one.
+      status === 402 || status === 429
+        ? /limit reached for access without an API key/i
+        : status === 401
+          ? /authentication/i
+          : /unavailable/i,
     );
     fail = false;
     expect((await provider.search({ query: "retry" }, new AbortController().signal)).sources).toHaveLength(1);

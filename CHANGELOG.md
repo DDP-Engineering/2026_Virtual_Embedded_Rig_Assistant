@@ -70,6 +70,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Continue a long web page or document with `web_read`: a shortened result gives the position to continue from and the page's length, and `offset` reads from any position.
 - Report a web page as shortened when its text was cut at the requested size.
 - Read large documents through Tavily instead of failing on the reply size.
+- Download from a host's next address when the first cannot be reached, as on a network that announces IPv6 without routing it.
+- Save a download whose server states no content type or a malformed one, or marks the reply as encoded, instead of refusing it.
+- Tell the agent to use `run_command` for a device or server on the local network when a web tool refuses the address.
+- Suggest adding an API key when a web provider's limit is reached without one.
 
 ## [0.4.0] - 2026-11-26
 

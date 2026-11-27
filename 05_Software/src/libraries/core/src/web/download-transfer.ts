@@ -4,13 +4,15 @@ import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP } from "node:net";
 import { advancedSettings, DOWNLOAD_MAX_BYTES } from "@vera/shared";
-import { publicWebUrl } from "./provider.js";
+import { LOCAL_NETWORK_HINT, publicWebUrl } from "./provider.js";
 
 /** The default Download time limit; also the PDF extraction base deadline, which ADV-04 owns. */
 export const DOWNLOAD_DEADLINE_MS = advancedSettings.downloadTimeout.default * 1000;
 const DEFAULT_MAX_BYTES = advancedSettings.downloadMB.default * 1024 * 1024;
 const MAX_DEADLINE_MS = advancedSettings.downloadTimeout.max * 1000;
 const headers = { Accept: "*/*", "Accept-Encoding": "identity", "User-Agent": "VERA" } as const;
+/** How long one resolved address may take to answer while another is left to try. */
+export const CONNECT_PATIENCE_MS = 10_000;
 export interface PublicAddress {
   address: string;
   family: number;
@@ -101,14 +103,9 @@ export async function transferFile(source: string, caller: AbortSignal, ports: D
       ? [{ address: hostname, family: isIP(hostname) }]
       : await cancellable((ports.resolve ?? ((host) => lookup(host, { all: true })))(hostname), signal);
     signal.throwIfAborted();
-    const address = addresses[0];
-    if (!address || addresses.some((address) => !publicDownloadAddress(address)))
-      throw Error("Downloads require a public network destination.");
-    const response = await cancellable(
-      (ports.connect ?? connectDownload)(url, address, headers, signal),
-      signal,
-      (late) => late.close(),
-    );
+    if (!addresses.length || addresses.some((address) => !publicDownloadAddress(address)))
+      throw Error(`Downloads require a public network destination. ${LOCAL_NETWORK_HINT}`);
+    const response = await firstReachable(url, addresses, ports.connect ?? connectDownload, signal);
     try {
       signal.throwIfAborted();
       if ([301, 302, 303, 307, 308].includes(response.status)) {
@@ -118,15 +115,15 @@ export async function transferFile(source: string, caller: AbortSignal, ports: D
         continue;
       }
       if (response.status !== 200) throw Error(`Download failed (HTTP ${response.status}).`);
+      // A missing or malformed content type is a file of unknown kind, not a failed download. A reply that
+      // carries a Content-Encoding although identity was asked for is stored as sent, as curl stores it.
       const contentType = response.headers["content-type"];
+      const stated =
+        typeof contentType === "string" ? contentType.split(";", 1)[0]?.trim().toLowerCase() : "";
       const mime =
-        typeof contentType === "string"
-          ? (contentType.split(";", 1)[0]?.trim().toLowerCase() ?? "application/octet-stream")
+        stated && stated.length <= 160 && /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(stated)
+          ? stated
           : "application/octet-stream";
-      const encoding = response.headers["content-encoding"];
-      if (!/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(mime) || mime.length > 160)
-        throw Error("The URL returned an invalid content type.");
-      if (encoding && encoding !== "identity") throw Error("Compressed Download responses are unavailable.");
       const length = response.headers["content-length"];
       if (
         length !== undefined &&
@@ -152,6 +149,36 @@ export async function transferFile(source: string, caller: AbortSignal, ports: D
     }
   }
   throw Error("Download redirect limit exceeded.");
+}
+
+/**
+ * The reply of the first address that answers. A host often resolves to an IPv6 and an IPv4 address, and
+ * a network that announces IPv6 without routing it would otherwise fail the download a browser completes.
+ * Every address but the last gets CONNECT_PATIENCE_MS to answer; the last has the whole download budget.
+ */
+async function firstReachable(
+  url: URL,
+  addresses: PublicAddress[],
+  connect: NonNullable<DownloadTransferPorts["connect"]>,
+  signal: AbortSignal,
+): Promise<DownloadHttpResponse> {
+  let failure: unknown;
+  for (const [index, address] of addresses.entries()) {
+    const patience = new AbortController();
+    const timer =
+      index < addresses.length - 1 ? setTimeout(() => patience.abort(), CONNECT_PATIENCE_MS) : undefined;
+    const attempt = AbortSignal.any([signal, patience.signal]);
+    try {
+      return await cancellable(connect(url, address, headers, attempt), attempt, (late) => late.close());
+    } catch (error) {
+      signal.throwIfAborted();
+      failure = error;
+    } finally {
+      // Cleared once the reply's headers arrive: the transfer itself is bounded by the download budget.
+      clearTimeout(timer);
+    }
+  }
+  throw failure;
 }
 
 function cancellable<T>(operation: Promise<T>, signal: AbortSignal, late?: (value: T) => void): Promise<T> {

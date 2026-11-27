@@ -64,6 +64,11 @@ for (const [address, prefix] of [
 ] as const)
   privateAddresses.ipv6.addSubnet(address, prefix, "ipv6");
 
+/** What the agent can do instead: the web tools reach only the public internet. */
+export const LOCAL_NETWORK_HINT =
+  "For a device or server on the local network, use run_command, for example with curl.";
+export const PUBLIC_URL_REQUIRED = `Use a public HTTP or HTTPS URL without credentials or local addresses. ${LOCAL_NETWORK_HINT}`;
+
 /** URL destinations are resolved by the remote provider, never by VERA's local network. */
 export function publicWebUrl(value: string): string {
   try {
@@ -86,7 +91,7 @@ export function publicWebUrl(value: string): string {
       throw Error();
     return url.href;
   } catch {
-    throw Error("Use a public HTTP or HTTPS URL without credentials or local addresses.");
+    throw Error(PUBLIC_URL_REQUIRED);
   }
 }
 
@@ -115,7 +120,7 @@ export const webReadSchema = z.strictObject({
       } catch {
         return false;
       }
-    }, "Use a public HTTP or HTTPS URL without credentials or local addresses."),
+    }, PUBLIC_URL_REQUIRED),
   maxCharacters: z.number().int().min(1).max(16000).default(12000),
   offset: z.number().int().min(0).max(WEB_PAGE_CHARACTERS).default(0),
 });

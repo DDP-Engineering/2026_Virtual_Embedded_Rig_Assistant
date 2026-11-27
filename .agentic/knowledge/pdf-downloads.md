@@ -19,7 +19,7 @@ Download a public file independently of search-provider credentials and preserve
 
 ## Invariants
 
-Every HTTP(S) source/redirect is credential-free and resolved to public addresses; mixed/private DNS answers are rejected. Node HTTP lookup is pinned to a validated address while HTTPS keeps original-hostname certificate checks. Mapped/NAT64/tunneled IPv6 and local destinations are excluded. Source hosts receive only GET, PDF Accept, identity encoding and VERA user-agent headers; provider credentials and cookies are absent.
+Every HTTP(S) source/redirect is credential-free and resolved to public addresses; mixed/private DNS answers are rejected. Node HTTP lookup is pinned to a validated address while HTTPS keeps original-hostname certificate checks; `firstReachable` tries the addresses in order (CONNECT_PATIENCE_MS, 10 s, for every one but the last). A refused local destination names run_command (LOCAL_NETWORK_HINT in web/provider.ts). An unexpected Content-Encoding is stored as sent and a missing or malformed content type becomes application/octet-stream. Mapped/NAT64/tunneled IPv6 and local destinations are excluded. Source hosts receive only GET, PDF Accept, identity encoding and VERA user-agent headers; provider credentials and cookies are absent.
 
 A download detected or named as a PDF requires a PDF signature and worker validation. Transfer has at most five redirects, the approved size (default 100 MiB, range 10–1000 MiB, REQ-FUNC-8a1eea8b) and the configured Download time limit (default 120 s). The PDF validator uses the Document extraction time limit as its base (REQ-FUNC-aa35b135). DNS, connector and body waits are cancellable, including late-response cleanup. Invalid, oversized, failed or revoked attempts publish nothing.
 

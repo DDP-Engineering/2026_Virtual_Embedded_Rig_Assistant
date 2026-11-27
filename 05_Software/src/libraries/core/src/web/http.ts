@@ -33,7 +33,9 @@ export async function webJson(
         throw new WebHttpFailure("Web authentication failed. Check the selected provider API key.");
       if ([402, 429, 432, 433].includes(response.status))
         throw new WebHttpFailure(
-          "Web service limit reached. Check the selected account quota or retry later.",
+          options.apiKey
+            ? "Web service limit reached. Check the selected account quota or retry later."
+            : "Web service limit reached for access without an API key. Retry later or add an API key in Settings > Web access.",
         );
       throw new WebHttpFailure("Web service unavailable. Retry later.");
     }

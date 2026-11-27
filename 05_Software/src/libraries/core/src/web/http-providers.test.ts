@@ -124,6 +124,15 @@ it.each([401, 429, 500, 302])("rejects HTTP%s safely then recovers", async (stat
   await expect(p.search({ query: "topic" }, signal())).rejects.not.toThrow(/sensitive-provider-detail/);
   expect((await p.search({ query: "topic" }, signal())).sources).toHaveLength(1);
 });
+it("names an API key as the way past the limit of access without one", async () => {
+  const limited = () => vi.fn().mockResolvedValue(new Response(null, { status: 429 }));
+  await expect(new Tavily({ fetch: limited() }).search({ query: "topic" }, signal())).rejects.toThrow(
+    /without an API key.*add an API key/,
+  );
+  await expect(
+    new Tavily({ fetch: limited(), apiKey: "owned-private-key" }).search({ query: "topic" }, signal()),
+  ).rejects.toThrow(/account quota/);
+});
 it("rejects oversized/malformed/private-only replies and cancels hanging body reads", async () => {
   for (const response of [
     new Response(new Uint8Array(1048577)),

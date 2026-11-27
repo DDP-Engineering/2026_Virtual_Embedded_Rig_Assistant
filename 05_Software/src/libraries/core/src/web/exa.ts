@@ -175,7 +175,9 @@ export class ExaWebProvider implements WebProvider {
               throw fail(new ExpiredExaSession("Web provider session expired."));
             if ([402, 429].includes(response.status))
               throw new WebFailure(
-                "Web search service limit reached. Try again later or check the selected account quota.",
+                this.options.apiKey
+                  ? "Web search service limit reached. Try again later or check the selected account quota."
+                  : "Web search service limit reached for access without an API key. Try again later or add an API key in Settings > Web access.",
               );
             if ([401, 403].includes(response.status))
               throw new WebFailure(

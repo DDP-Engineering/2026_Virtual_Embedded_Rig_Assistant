@@ -1,7 +1,7 @@
 // REQ-SEC-1a37ade3, REQ-FUNC-b975a8b5
 import { downloadFilenameSchema } from "@vera/shared";
 import { z } from "zod";
-import { publicWebUrl } from "../web/provider.js";
+import { PUBLIC_URL_REQUIRED, publicWebUrl } from "../web/provider.js";
 import type { PreparedChange } from "./changes.js";
 import { type ToolContext, type ToolDefinition, toolLimit, toolSignal } from "./context.js";
 
@@ -17,7 +17,7 @@ const params = z.strictObject({
       } catch {
         return false;
       }
-    }),
+    }, PUBLIC_URL_REQUIRED),
   filename: downloadFilenameSchema.optional(),
 });
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
