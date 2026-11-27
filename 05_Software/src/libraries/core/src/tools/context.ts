@@ -114,7 +114,7 @@ export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
 export async function toolPathGuard(
   ctx: ToolContext,
   additional = false,
-  options: { allowRunLogs?: boolean } = {},
+  options: { allowRunLogs?: boolean; allowSessionAttachments?: boolean } = {},
 ): Promise<PathGuard> {
   const bypass = ctx.permissionMode?.() === "bypass" && (!ctx.delegated || !!ctx.bypassSignal);
   const grantedFolders = additional && !ctx.delegated;
@@ -148,5 +148,7 @@ export async function toolPathGuard(
         throw Error("Bypass file access was revoked. Retry under the current permission mode.");
     },
     excluded,
+    [],
+    options,
   );
 }

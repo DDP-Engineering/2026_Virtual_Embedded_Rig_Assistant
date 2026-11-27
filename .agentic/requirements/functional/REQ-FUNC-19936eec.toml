@@ -7,10 +7,10 @@ title = "Return workbench rasters as tool images"
 status = "active"
 
 requirement = """
-When an image-capable model calls the enabled view_image tool on a permitted PNG, JPEG, GIF or WebP file of at most 20 MiB among the first eight successfully prepared images of a model step, VERA shall deliver an image part in the tool result for the current turn with its longest side limited to 2048 pixels and retain the path as text in session history.
+When an image-capable model calls the enabled view_image tool on a permitted PNG, JPEG, GIF, WebP, TIFF or BMP file of at most 20 MiB among the first eight successfully prepared images of a model step, VERA shall deliver an image part in the tool result for the current turn with its longest side limited to 2048 pixels and retain the path as text in session history. A TIFF or BMP file is delivered as PNG. A path is permitted where read may open it: the workbench, the folders added to it and, in Bypass, the file system; a managed attachment path is permitted once it was delivered to the current session.
 """
 
-verification = "Use a loopback compatible provider to request a 2560-pixel PNG and distinguish its tool result from user attachments. Decode the resulting image, assert the dimensions, verify the original and verify that session storage/export retain path text. Request nine files in one step and check the ninth textual refusal, then inspect it in a later step and check that only the eight most recent image parts remain."
+verification = "Request a picture in an added folder by its absolute path, one through a link inside the workbench, one in a folder that was not added and, in Bypass, that same one. Request a bottom-up 24-bit BMP and a TIFF and decode the delivered PNG. Use a loopback compatible provider to request a 2560-pixel PNG and distinguish its tool result from user attachments. Decode the resulting image, assert the dimensions, verify the original and verify that session storage/export retain path text. Request nine files in one step and check the ninth textual refusal, then inspect it in a later step and check that only the eight most recent image parts remain."
 
 affected_paths = ["05_Software/src/libraries/core/src/tools/view-image.ts", "05_Software/src/libraries/core/src/tools/raster-file.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/shared/src/tools.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-27

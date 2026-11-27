@@ -141,7 +141,7 @@ Facts that span components:
   catalog fields or exact published model profiles. Hugging Face Inference Providers and Vercel
   AI Gateway route requests upstream. NVIDIA NIM runs hosted models. The three services have
   separate model catalogs and credential scopes.
-- The composer takes pasted, dropped and picked raster images, retains imported originals in the workbench and attaches existing Files images by reference. Chat messages keep primary-workbench image paths in the transcript. Session dispatch loads bounded raster parts for image-capable models, and exports and compacted history retain the paths. The model-gated `view_image` tool uses a strictly confined workbench path and sends the image as a current-turn tool result. The workbench Tools editor resolves support for its draft default model.
+- The composer takes pasted, dropped and picked raster images, retains imported originals in the workbench and attaches existing Files images by reference. Chat messages keep primary-workbench image paths in the transcript. Session dispatch loads bounded raster parts for image-capable models, and exports and compacted history retain the paths. The model-gated `view_image` tool opens the paths `read` opens and sends the image as a current-turn tool result. The workbench Tools editor resolves support for its draft default model.
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
 - The official Wireshark plugin enables offline capture inspection, traffic statistics, diagnostics,
   response timing, bounded TCP/UDP follow evidence, general networking profiles, Automotive Ethernet

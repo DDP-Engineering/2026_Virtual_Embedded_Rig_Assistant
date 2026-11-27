@@ -131,7 +131,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 - REQ-SEC-b86a7502 — captured register decoding contract; see specs/decode-register.md.
 - REQ-UX-c3aceaf8 — captured register decoding contract; see specs/decode-register.md.
 
-- `view_image {path}` reads an ordinary primary-workbench raster through the shared file guard and IMG-02 transform (PNG, JPEG, GIF, WebP; 20 MiB; longest side 2048 px). Relative paths honor ignore rules and protected application roots, and symbolic links and junctions are refused even in Bypass. The tool can reopen managed attachment paths found in the current session's durable user messages after delivery (REQ-FUNC-19936eec, REQ-SEC-1d25462f, REQ-FUNC-33cb0bb1).
+- `view_image {path}` reads a raster through `toolPathGuard`, the guard `read` uses, and the IMG-02 transform (PNG, JPEG, GIF, WebP; 20 MiB; longest side 2048 px). It opens what `read` opens: the workbench, added folders by absolute path and, in Bypass, the file system; ignore rules and protected application roots apply as for `read`. TIFF and uncompressed 8, 24 or 32-bit BMP files are decoded in `raster-file.ts` and sent as PNG. The decoder runs with `failOn: "none"`, so a picture cut short after its header is shown as far as it arrived; a cut inside the header is IMAGE_FORMAT. A recognised SVG, HEIC, AVIF or PDF is named in the error (`params.found`). The tool can reopen managed attachment paths found in the current session's durable user messages after delivery, in Bypass too (REQ-FUNC-19936eec, REQ-FUNC-33cb0bb1).
 - REQ-SEC-c370e45b — Confine tool paths.
 - REQ-FUNC-f558632e — Detect binary samples.
 - REQ-FUNC-091ba439 — Read numbered bounded text.

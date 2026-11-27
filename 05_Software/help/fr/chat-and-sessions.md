@@ -40,7 +40,7 @@ Par défaut, un message peut inclure jusqu’à huit images PNG, JPEG, GIF ou We
 
 Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
 
-Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF ou WebP dans la limite de taille configurée. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil exige un chemin autorisé du banc, sans lien, même en mode Contournement. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
+Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF, WebP, TIFF ou BMP dans la limite de taille configurée. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil ouvre les fichiers que `read` ouvre : dans le banc, dans les dossiers qui lui sont ajoutés et, en mode Contournement, partout sur l’ordinateur. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
 
 L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
 

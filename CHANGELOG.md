@@ -13,6 +13,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Let `view_image` open the pictures `read` can: in folders added to the workbench and, in Bypass, anywhere.
 - Open session search on demand from a magnifier next to New session.
 - Move delegated access and desktop notification settings to Data & privacy.
 - Simplify plugin cards, group help under Details, and keep dependency actions on applicable cards.
@@ -34,6 +35,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Show TIFF and BMP pictures and pictures cut short with `view_image`, and name a format it cannot show.
 - analysis-skills 0.4.1: Save exact tool-issued line citations in firmware reports and manual test plans.
 - Keep the chat controls in place when the provider returns a reasoning error.
 - Continue file and artifact reads from the last line delivered when a page is shortened.

@@ -40,7 +40,7 @@ By default, a message can include up to eight PNG, JPEG, GIF or WebP images, wit
 
 See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
 
-Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF or WebP files within the configured file size limit. The copy sent to the model is at most 2048 pixels on its longest side. The tool requires an allowed workbench path without links, including in Bypass. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
+Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF, WebP, TIFF or BMP files within the configured file size limit. The copy sent to the model is at most 2048 pixels on its longest side. The tool opens the files `read` opens: in the workbench, in the folders added to it and, in Bypass, anywhere on the computer. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
 
 The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
 

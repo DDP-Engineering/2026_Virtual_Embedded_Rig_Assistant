@@ -7,10 +7,10 @@ title = "Refuse unsupported or oversized image tool inputs"
 status = "active"
 
 requirement = """
-If a view_image file exceeds 20 MiB or has an unsupported or malformed raster format, VERA shall return a tool error without image data.
+If a view_image file exceeds 20 MiB or is not a readable PNG, JPEG, GIF, WebP, TIFF or BMP picture, VERA shall return a tool error without image data; for a recognised SVG, HEIC, AVIF or PDF file the error names the format and asks for a PNG or JPEG. A picture whose data ends early after a complete header is not an error: VERA shall deliver what arrived.
 """
 
-verification = "Request an oversized file, SVG, invalid raster and corrupt PNG. Verify the IMG-02 error codes and absence of image data."
+verification = "Request an oversized file, SVG, HEIC, invalid raster and corrupt PNG. Verify the IMG-02 error codes, the named format and absence of image data. Request a JPEG cut inside its picture data and verify that an image is delivered."
 
 affected_paths = ["05_Software/src/libraries/core/src/tools/view-image.ts", "05_Software/src/libraries/core/src/tools/raster-file.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-27

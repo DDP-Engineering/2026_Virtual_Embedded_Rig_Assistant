@@ -55,7 +55,7 @@ it("offers view_image only to vision models and sends a scaled tool image withou
 });
 
 // IMG-05-B
-it("refuses outside, redirected, ignored and invalid files without sending an image", async () => {
+it("opens what read opens and refuses ignored, managed and invalid files", async () => {
   const { root, open, requests, callViewImage } = await setup();
   const outside = await mkdtemp(join(tmpdir(), "vera-view-image-outside-"));
   cleanups.push(() => rm(outside, { recursive: true, force: true }));
@@ -65,6 +65,9 @@ it("refuses outside, redirected, ignored and invalid files without sending an im
   const png = await raster();
   await writeFile(join(root, "captures", "board.png"), png);
   await writeFile(join(outside, "outside.png"), png);
+  const elsewhere = await mkdtemp(join(tmpdir(), "vera-view-image-elsewhere-"));
+  cleanups.push(() => rm(elsewhere, { recursive: true, force: true }));
+  await writeFile(join(elsewhere, "elsewhere.png"), png);
   await writeFile(join(root, ".vera", ".veraignore"), "private.png\n");
   await writeFile(join(root, "private.png"), png);
   await writeFile(join(root, "managed", "internal.png"), png);
@@ -81,27 +84,44 @@ it("refuses outside, redirected, ignored and invalid files without sending an im
     additionalFolders: () => [outside],
     advanced: { app: () => ({ imageFileMB: 1 }), workbench: () => undefined },
   });
-  const { id } = service.create("custom:local/vision", "bypass");
+  const toolResults = (request: (typeof requests)[number] | undefined) =>
+    request?.messages.filter(({ role }) => role === "tool").map(({ content }) => content);
+  const pictures = (request: (typeof requests)[number] | undefined) =>
+    userParts(request).filter(({ type }) => type === "image_url").length;
+
+  // Outside Bypass: the workbench and the folders added to it, through links too.
+  const { id } = service.create("custom:local/vision");
+  const shown = [join(outside, "outside.png"), "inside-link/board.png"];
+  // A relative path names the workbench only; an added folder is reached by its absolute path.
   const denied = [
     `../${basename(outside)}/outside.png`,
-    join(outside, "outside.png"),
     "outside-link/outside.png",
-    "inside-link/board.png",
+    join(elsewhere, "elsewhere.png"),
     "private.png",
     "managed/internal.png",
   ];
-  callViewImage(...denied, "drawing.svg", "pretends.png", "broken.png", "large.png");
+  callViewImage(...shown, ...denied, "drawing.svg", "pretends.png", "broken.png", "large.png");
   service.send(id, "Inspect these files.");
   expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
-  const results = requests[1]?.messages.filter(({ role }) => role === "tool").map(({ content }) => content);
-  expect(results).toHaveLength(denied.length + 4);
-  expect(results?.slice(0, denied.length)).toEqual(denied.map(() => expect.stringContaining("DENIED")));
-  expect(results?.slice(denied.length)).toEqual([
+  const results = toolResults(requests[1]);
+  expect(results).toHaveLength(shown.length + denied.length + 4);
+  expect(results?.slice(shown.length, shown.length + denied.length)).toEqual(
+    denied.map(() => expect.stringContaining("DENIED")),
+  );
+  expect(results?.slice(shown.length + denied.length)).toEqual([
     ...[1, 2, 3].map(() => expect.stringContaining("IMAGE_FORMAT")),
     expect.stringContaining("IMAGE_TOO_LARGE"),
   ]);
   expect(results?.at(-1)).toContain("at most 1 MiB");
-  expect(userParts(requests[1]).every(({ type }) => type === "text")).toBe(true);
+  expect(pictures(requests[1])).toBe(shown.length);
+
+  // In Bypass: any picture on the machine, ignored files too, as for read; never what the application owns.
+  const bypass = service.create("custom:local/vision", "bypass");
+  callViewImage(join(elsewhere, "elsewhere.png"), "private.png", "managed/internal.png");
+  service.send(bypass.id, "Inspect these files.");
+  expect(await service.waitIdle(bypass.id)).toEqual({ stopReason: "end" });
+  expect(toolResults(requests[3])?.at(-1)).toContain("DENIED");
+  expect(pictures(requests[3])).toBe(2);
 });
 
 it("reopens composer images delivered to this session and refuses unshared managed images", async () => {
@@ -230,4 +250,68 @@ it("stops the turn while a native raster decode is still pending", async () => {
     release();
     decode.mockRestore();
   }
+});
+
+it("shows BMP and TIFF screenshots and a picture cut short, and names a format it cannot show", async () => {
+  const { root, open, requests, callViewImage } = await setup();
+  // A 2x2 bitmap as an oscilloscope saves it: 24 bits, rows bottom-up and padded to four bytes, BGR.
+  const header = Buffer.alloc(54);
+  header.write("BM");
+  header.writeUInt32LE(54 + 16, 2);
+  header.writeUInt32LE(54, 10);
+  header.writeUInt32LE(40, 14);
+  header.writeInt32LE(2, 18);
+  header.writeInt32LE(2, 22);
+  header.writeUInt16LE(1, 26);
+  header.writeUInt16LE(24, 28);
+  const bottomRow = [255, 0, 0, 0, 255, 0, 0, 0]; // blue, green
+  const topRow = [0, 0, 255, 255, 255, 255, 0, 0]; // red, white
+  await writeFile(join(root, "scope.bmp"), Buffer.concat([header, Buffer.from([...bottomRow, ...topRow])]));
+  await writeFile(
+    join(root, "layout.tiff"),
+    await sharp(await raster(8, 6))
+      .tiff()
+      .toBuffer(),
+  );
+  // Cut inside the picture data, as an interrupted transfer leaves it; the header arrived whole.
+  const jpeg = await sharp(await raster(800, 600))
+    .jpeg()
+    .toBuffer();
+  await writeFile(join(root, "cut.jpg"), jpeg.subarray(0, Math.floor(jpeg.length * 0.9)));
+  await writeFile(
+    join(root, "photo.heic"),
+    Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypheic"), Buffer.alloc(32)]),
+  );
+  await writeFile(join(root, "drawing.svg"), "<svg/>");
+  await writeFile(join(root, "notes.png"), "plain text");
+
+  const service = open();
+  const { id } = service.create("custom:local/vision");
+  callViewImage("scope.bmp", "layout.tiff", "cut.jpg", "photo.heic", "drawing.svg", "notes.png");
+  service.send(id, "Inspect these captures.");
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+  const images = userParts(requests[1])
+    .filter((part) => part.type === "image_url")
+    .map((part) => Buffer.from(part.image_url.url.split(",")[1] ?? "", "base64"));
+  expect(images).toHaveLength(3);
+  const bitmap = await sharp(images[0]).raw().toBuffer({ resolveWithObject: true });
+  expect(bitmap.info).toMatchObject({ format: "raw", width: 2, height: 2 });
+  const pixel = (index: number) => [...bitmap.data.subarray(index * bitmap.info.channels).subarray(0, 3)];
+  // The top row comes first in the picture the model gets.
+  expect([pixel(0), pixel(1), pixel(2), pixel(3)]).toEqual([
+    [255, 0, 0],
+    [255, 255, 255],
+    [0, 0, 255],
+    [0, 255, 0],
+  ]);
+  expect(await sharp(images[1]).metadata()).toMatchObject({ format: "png", width: 8, height: 6 });
+  expect(await sharp(images[2], { failOn: "none" }).metadata()).toMatchObject({
+    format: "jpeg",
+    width: 800,
+    height: 600,
+  });
+  const results = requests[1]?.messages.filter(({ role }) => role === "tool").map(({ content }) => content);
+  expect(results?.[3]).toContain("HEIC pictures cannot be shown. Convert the file to PNG or JPEG.");
+  expect(results?.[4]).toContain("SVG pictures cannot be shown. Convert the file to PNG or JPEG.");
+  expect(results?.[5]).toContain("The file is not a readable PNG, JPEG, GIF, WebP, TIFF or BMP picture.");
 });

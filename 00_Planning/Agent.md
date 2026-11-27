@@ -104,7 +104,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | Tool | Class | What it does | Main limit |
 |---|---|---|---|
 | `read` | read | Numbered text lines; records the read fingerprint | 2 000 lines, 30 000 characters; no binary; PDFs via `read_doc` |
-| `view_image` | read | Gives a PNG, JPEG, GIF or WebP file to the model | 20 MiB, scaled to 2 048 px; image models only; workbench path, also in Bypass |
+| `view_image` | read | Gives a PNG, JPEG, GIF, WebP, TIFF or BMP file to the model | 20 MiB, scaled to 2 048 px; image models only; the paths `read` opens; TIFF and BMP sent as PNG |
 | `list` / `glob` | read | Entries / paths newest first | depth 1–3 / 500 paths; `glob` and `grep` skip `.vera`, `.git` and `node_modules` unless named, also in Bypass |
 | `grep` | read | JavaScript regex search in a worker | 500 matches; skips binary and files over 5 MB; 10 s |
 | `parse_log` | read | Counts and cited events of an `esp-idf`, `zephyr`, `iso` or pattern log | 50 MiB; 10 s; 200 events |
