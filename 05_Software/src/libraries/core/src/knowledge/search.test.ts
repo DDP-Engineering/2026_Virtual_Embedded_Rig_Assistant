@@ -496,6 +496,35 @@ it.each(["semantic", "hybrid"] as const)("cancels blocked %s ranking without fal
   }
 });
 
+it("shows the passage that holds the searched terms, not the start of the fragment", async () => {
+  const h = await harness();
+  try {
+    // A datasheet page: common words of the question ("of", "the") occur in its first line, the answer
+    // far below it.
+    const filler =
+      "This section of the datasheet describes the electrical characteristics of the device. " +
+      "Values apply over the full temperature range unless a note states otherwise. ".repeat(8);
+    const answer = "The maximum SPI clock frequency of the sensor is 10 MHz in mode 0.";
+    await h.add("docs/sensor.pdf", "sensor pdf source", [`${filler}${answer} Timing follows in table 7.`]);
+    const hits = await h.knowledge.search(
+      { query: "maximum SPI clock frequency of the sensor", mode: "keyword" },
+      h.signal,
+    );
+    expect(hits.results[0]?.snippet).toContain("maximum SPI clock frequency of the sensor is 10 MHz");
+    expect(hits.results[0]?.snippet.length).toBeLessThanOrEqual(300);
+    // An identifier outweighs the common words around it.
+    await h.add("docs/regs.pdf", "regs pdf source", [
+      `${"The value of the field is in the table of the register map. ".repeat(12)}Set I2C1_CR1 bit 0 to enable the peripheral.`,
+    ]);
+    const register = await h.knowledge.search(
+      { query: "the value of I2C1_CR1", mode: "keyword", pathGlob: "docs/regs.pdf" },
+      h.signal,
+    );
+    expect(register.results[0]?.snippet).toContain("I2C1_CR1 bit 0");
+  } finally {
+    await h.close();
+  }
+});
 it("pins one-based fusion ties/dedup, modes, pre-top50 glob filtering and bounded snippets", async () => {
   expect(
     fuseRanks([

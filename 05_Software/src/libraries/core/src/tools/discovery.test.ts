@@ -137,6 +137,24 @@ it("globs newest first with relative base and caps at500", async () => {
   expect(JSON.stringify(all)).not.toMatch(/node_modules|\.vera\/|\.git\/|hidden\/|escape\//);
   await expect(api.globTool.execute(ctx, { pattern: "../**/*" }, signal())).rejects.toThrow();
 });
+it("leaves runtime, VCS and dependency folders out of a Bypass search unless they are asked for", async () => {
+  const ctx = { ...api.createToolContext(root), permissionMode: () => "bypass" as const };
+  const paths = async (args: { pattern: string; path?: string }) =>
+    ((await api.globTool.execute(ctx, args, signal())).paths as string[]).map((path) =>
+      path.replaceAll("\\", "/"),
+    );
+  // A search of everything finds the sources; these folders sort first and would fill the result.
+  const everything = await paths({ pattern: "**/*" });
+  expect(everything.some((path) => path.endsWith("docs/new.md"))).toBe(true);
+  expect(everything.join("\n")).not.toMatch(/(^|\/)(node_modules|\.git|\.vera)\//m);
+  // Named in the pattern or as the search path, each is still searched in Bypass.
+  expect(await paths({ pattern: "node_modules/**" })).toEqual([
+    expect.stringMatching(/node_modules\/test\.txt$/),
+  ]);
+  expect(await paths({ pattern: "*.txt", path: ".git" })).toEqual([
+    expect.stringMatching(/\.git\/test\.txt$/),
+  ]);
+});
 // REQ-FUNC-da830c44
 it("globs up to the session's Glob results, newest first", async () => {
   const limits: Record<string, number> = { globResults: 100 };

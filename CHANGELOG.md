@@ -41,6 +41,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Return the page or line count from `read_doc`, the next heading of a section, and all headings when no heading is given, so Word, spreadsheet and HTML documents can be read from start to end.
 - Say why `read_doc` cannot read a document by its index state: not in the workbench documents, waiting to be indexed, scanned without text, too large, unsupported type or failed.
 - Let `program_output` wait up to 10 minutes for a background run in one call.
+- Show the passage that holds the searched terms in `search_docs` snippets instead of the start of the fragment.
+- Leave `.vera`, `.git` and `node_modules` out of `grep` and `glob` searches in Bypass unless the search path or pattern names them, so a search finds the sources instead of timing out in dependencies.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.

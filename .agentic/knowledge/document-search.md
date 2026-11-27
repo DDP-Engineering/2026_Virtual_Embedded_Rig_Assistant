@@ -52,7 +52,7 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),
   else 8/hybrid; explicit arguments win (REQ-FUNC-724d3fcc). Strict schemas
   bound k1..20, query1000 and prevent unknown fields. Results carry ref/path/
-  typed locator/snippet<=300/score. Each result envelope records scope coverage
+  typed locator/snippet<=300/score. The snippet is the 300-character window (80 before a term) holding the highest sum of distinct query-term weights: term length, doubled for identifiers (digit, underscore or all capitals). Each result envelope records scope coverage
   and actual ranking usage. An absent semantic port, missing current-model vectors,
   indexer interruptions and embedding deadlines use keyword fallback when published
   chunks exist. Empty unsettled indexes suggest grep.

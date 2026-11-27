@@ -2,6 +2,7 @@ import { lstat } from "node:fs/promises";
 import { basename, isAbsolute } from "node:path";
 import picomatch from "picomatch";
 import { glob } from "tinyglobby";
+import { permanentIgnoreDirectories } from "../workbench/ignore.js";
 import { type GuardedPath, type PathGuard, validateRelativePath } from "../workbench/path-guard.js";
 
 export function validateGlob(pattern: string): void {
@@ -50,23 +51,20 @@ export async function discoverFilePaths(
     return [base.relative];
   }
   if (!own.isDirectory()) throw Error("Search path must be an ordinary file or directory.");
+  // Runtime, VCS and dependency folders are not walked by a search of everything. In Bypass they stay
+  // reachable when asked for, as the search path or by name in the pattern; walked by default they held
+  // the whole result (they sort before the sources) and the whole deadline.
+  const named = anywhere.toLowerCase().split(/[\\/]/);
+  const skipped = permanentIgnoreDirectories.filter(
+    (folder) => guard.scope !== "filesystem" || !named.includes(folder),
+  );
   const paths = await glob(anywhere, {
     cwd: base.absolute,
     signal,
     dot: true,
     onlyFiles: true,
     followSymbolicLinks: false,
-    ignore:
-      guard.scope === "filesystem"
-        ? []
-        : [
-            "**/.vera/**",
-            "**/.git/**",
-            "**/node_modules/**",
-            "**/.VERA/**",
-            "**/.GIT/**",
-            "**/NODE_MODULES/**",
-          ],
+    ignore: skipped.flatMap((folder) => [`**/${folder}/**`, `**/${folder.toUpperCase()}/**`]),
   });
   signal.throwIfAborted();
   guard.assertAuthorized();

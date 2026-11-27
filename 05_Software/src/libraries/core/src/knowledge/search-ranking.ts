@@ -97,13 +97,42 @@ export function fuseRanks(lists: readonly (readonly number[])[]): { id: number; 
     .slice(0, 50);
 }
 
+const SNIPPET_CHARS = 300;
+const SNIPPET_LEAD = 80;
+
+/**
+ * The 300 characters of a fragment that hold the most of the query: every place a query term occurs is a
+ * candidate window, scored by the distinct terms inside it. A term counts by its length, and twice when it
+ * is an identifier (digits, an underscore or all capitals), so `I2C1_CR1` or `SPI` outweighs the common
+ * words around it in any language. The first occurrence of any term used to decide, and that was nearly
+ * always "the" or "of" in the first line.
+ */
 function snippet(text: string, query: string): string {
   const lower = text.toLowerCase();
-  const offsets = (query.match(/[\p{L}\p{N}_]+/gu) ?? [])
-    .map((term) => lower.indexOf(term.toLowerCase()))
-    .filter((at) => at >= 0);
-  const at = Math.max(0, (offsets.length ? Math.min(...offsets) : 0) - 80);
-  let value = text.slice(at, at + 300);
+  const weights = new Map<string, number>();
+  for (const term of query.match(/[\p{L}\p{N}_]+/gu) ?? []) {
+    const identifier = /[\d_]/.test(term) || (term.length > 1 && term === term.toUpperCase());
+    weights.set(term.toLowerCase(), term.length * (identifier ? 2 : 1));
+  }
+  const found: { term: string; at: number }[] = [];
+  for (const term of weights.keys())
+    for (let at = lower.indexOf(term), n = 0; at >= 0 && n < 50; at = lower.indexOf(term, at + 1), n++)
+      found.push({ term, at });
+  let at = 0;
+  let best = 0;
+  for (const candidate of found) {
+    const start = Math.max(0, candidate.at - SNIPPET_LEAD);
+    const inside = new Set<string>();
+    for (const other of found)
+      if (other.at >= start && other.at + other.term.length <= start + SNIPPET_CHARS) inside.add(other.term);
+    let score = 0;
+    for (const term of inside) score += weights.get(term) ?? 0;
+    if (score > best || (score === best && start < at)) {
+      best = score;
+      at = start;
+    }
+  }
+  let value = text.slice(at, at + SNIPPET_CHARS);
   if (/[\uD800-\uDBFF]$/.test(value)) value = value.slice(0, -1);
   return value;
 }
