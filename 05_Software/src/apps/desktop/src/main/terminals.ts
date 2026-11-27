@@ -70,6 +70,9 @@ const defaultLimits: TerminalLimits = {
   bufferChars: advancedSettings.terminalBufferK.default * 1024,
   agentChars: advancedSettings.terminalAgentChars.default,
 };
+/** Names the switch as the Terminal tab labels it (terminal.consent in the locales). */
+const NO_SHARED_TERMINAL =
+  'No terminal is shared with the agent. The user can open one in the Terminal tab and turn on "Allow agent to read this terminal".';
 const leaseSchema = z.strictObject({ id: terminalIdSchema, grant: z.number().int().nonnegative() });
 const readSchema = z.strictObject({
   truncated: z.literal(true).optional(),
@@ -420,6 +423,9 @@ export class TerminalService {
               running: entry.running,
             })),
             ...(selected ? this.recent(selected, this.host.maskAgentOutput?.() !== false) : {}),
+            // An empty list alone reads as "there is no terminal"; the usual case is one the user has
+            // not shared yet, and the agent can say how.
+            ...(entries.length === 0 ? { message: NO_SHARED_TERMINAL } : {}),
           },
           [],
           limit,

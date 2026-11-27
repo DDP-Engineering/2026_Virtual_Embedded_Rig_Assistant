@@ -119,10 +119,10 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `edit` | write | Replaces exact text, keeps CRLF, mixed line endings and BOM | one match or `replaceAll`; current read |
 | `artifact_save` | session | Session artifact, ref `artifact:<name>` | 5 MiB; name 1–100 portable characters |
 | `todo` | session | Replaces the session Plan | 50 items, 200 characters |
-| `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed |
+| `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed; a failed command lists the credential variables it ran without |
 | `run_program` | program | Declared plugin program with an argument array, no shell | plugin risk rules and timeout |
 | `program_output`, `program_stop` | read | New output or stop of a background run | `waitMs` ≤ 600 000, `until` regex |
-| `terminal_read` | read | Recent output of a user terminal | terminals the user shared |
+| `terminal_read` | read | Recent output of a user terminal | terminals the user shared; with none shared it says how to share one |
 | `plugin_validate` | read | Validates a plugin draft folder | installs nothing |
 | `plugin_install` | program | Installs a reviewed draft as trial | always asks, also in Bypass |
 | `apply_candidate` | write | Writes a `kicad-layout` candidate over its board | kicad-layout plugin |

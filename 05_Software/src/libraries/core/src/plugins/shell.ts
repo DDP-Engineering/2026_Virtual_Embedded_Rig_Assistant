@@ -12,7 +12,14 @@ export interface CommandShell {
 export interface CommandShellHost {
   resolve(signal?: AbortSignal): Promise<CommandShell>;
   environment(): Record<string, string>;
+  /** Names of the user's variables `environment` leaves out as credentials, sorted. */
+  withheld?(): string[];
 }
+
+/** VERA's and Electron's own state, never part of a command's environment. */
+const internalVariable = /^(?:VERA(?:_|$)|ELECTRON_|NODE_OPTIONS$|NODE_EXTRA_CA_CERTS$)/i;
+const credentialVariable =
+  /(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTHORIZATION|PRIVATE[_-]?KEY)/i;
 
 /** Inherit user configuration, excluding VERA state and credential-bearing variables or values. */
 export function commandEnvironment(
@@ -23,13 +30,31 @@ export function commandEnvironment(
     Object.entries(env).filter(
       (entry): entry is [string, string] =>
         entry[1] !== undefined &&
-        !/^(?:VERA(?:_|$)|ELECTRON_|NODE_OPTIONS$|NODE_EXTRA_CA_CERTS$)/i.test(entry[0]) &&
-        !/(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTHORIZATION|PRIVATE[_-]?KEY)/i.test(
-          entry[0],
-        ) &&
+        !internalVariable.test(entry[0]) &&
+        !credentialVariable.test(entry[0]) &&
         scrub(entry[1]) === entry[1],
     ),
   );
+}
+
+/**
+ * The names (never the values) of the user's variables `commandEnvironment` leaves out as credentials. A
+ * failed command reports them: a tool that needs `GH_TOKEN` fails with its own "not signed in" message, and
+ * without the name nobody can tell that VERA did not pass it on.
+ */
+export function withheldEnvironment(
+  env: Readonly<Record<string, string | undefined>>,
+  scrub: (value: string) => string,
+): string[] {
+  return Object.entries(env)
+    .filter(
+      ([name, value]) =>
+        value !== undefined &&
+        !internalVariable.test(name) &&
+        (credentialVariable.test(name) || scrub(value) !== value),
+    )
+    .map(([name]) => name)
+    .sort();
 }
 
 async function executable(path: string, windows: boolean): Promise<boolean> {
@@ -231,5 +256,6 @@ export function createCommandShellHost(
       return shell;
     },
     environment: () => commandEnvironment(host.env, scrub),
+    withheld: () => withheldEnvironment(host.env, scrub),
   };
 }

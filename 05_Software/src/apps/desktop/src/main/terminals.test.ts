@@ -241,6 +241,21 @@ describe("user terminal host", () => {
     expect(result.text.length).toBeLessThanOrEqual(12000);
     expect(result.text).toContain("0123456789");
   });
+  it("says how to share a terminal when none is shared, and nothing once one is", async () => {
+    const f = fixture(),
+      a = await f.service.create("bench-a", 80, 24);
+    const reader = f.service.reader("bench-a");
+    const listed = () => JSON.parse(reader.publish(JSON.stringify(reader.read())));
+    // An open terminal the user has not shared: an empty list alone would read as "no terminal".
+    expect(listed()).toMatchObject({
+      terminals: [],
+      message: expect.stringContaining("Allow agent to read this terminal"),
+    });
+    f.service.consent("bench-a", a.id, true);
+    const shared = listed();
+    expect(shared.terminals).toHaveLength(1);
+    expect(shared).not.toHaveProperty("message");
+  });
   it("reports how many characters a full buffer dropped so a poll can append the new tail", async () => {
     const f = fixture(),
       a = await f.service.create("bench-a", 80, 24);

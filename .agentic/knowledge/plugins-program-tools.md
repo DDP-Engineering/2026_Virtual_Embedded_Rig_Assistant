@@ -48,7 +48,7 @@ normal command approvals and removal rechecked at apply/spawn. This does not wid
 plugin arguments, indexing or fixed storage authority;
 background lifetime excludes the completed turn signal. Commands are arbitrary shell syntax under
 OS-account permissions, not a filesystem sandbox. `RunRequest.commandEnvironment` is host-only and
-used by built-in commands; declared plugins retain the minimal environment policy. NodeProcessHost
+used by built-in commands; declared plugins retain the minimal environment policy. A foreground run_command that exits with a nonzero code adds `environmentNotPassed`: at most 12 sorted names (never values) of the user's variables the host left out as credentials (`CommandShellHost.withheld`, `withheldEnvironment`); VERA's own variables are not listed. NodeProcessHost
 keeps stdin closed; logs remain local raw Program runs logs and output disclosure is scrubbed.
 Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals.test.ts`,
 `sessions/programs.test.ts` and `tests/integration/commands.test.ts`.

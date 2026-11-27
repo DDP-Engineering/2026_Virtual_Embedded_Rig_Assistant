@@ -43,6 +43,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Let `program_output` wait up to 10 minutes for a background run in one call.
 - Show the passage that holds the searched terms in `search_docs` snippets instead of the start of the fragment.
 - Leave `.vera`, `.git` and `node_modules` out of `grep` and `glob` searches in Bypass unless the search path or pattern names them, so a search finds the sources instead of timing out in dependencies.
+- Name the credential environment variables a failed `run_command` ran without, so the agent can say why a tool reports that it is not signed in.
+- Tell the agent how a terminal is shared when `terminal_read` finds none shared.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.

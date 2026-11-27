@@ -6,6 +6,7 @@ import {
   interactiveShellArguments,
   resolveCommandShell,
   shellArguments,
+  withheldEnvironment,
 } from "./shell.js";
 
 const find = (files: string[]) => async (path: string) => files.includes(path);
@@ -180,6 +181,22 @@ it("filters secret names and stored-secret aliases while inheriting ordinary use
     (value) => value.replaceAll("stored-secret", "[redacted]"),
   );
   expect(env).toEqual({ Path: "tools", USER_BUILD_MODE: "fast", HOME: "/home/user", EMPTY: "" });
+});
+it("names the user's credential variables it leaves out, never their values or VERA's own", () => {
+  const names = withheldEnvironment(
+    {
+      Path: "tools",
+      GH_TOKEN: "ghp_value",
+      PLATFORMIO_AUTH_TOKEN: "pio_value",
+      OTHER_ALIAS: "prefix stored-secret suffix",
+      VERA_OPENAI_KEY: "a",
+      ELECTRON_RUN_AS_NODE: "1",
+      UNSET_TOKEN: undefined,
+    },
+    (value) => value.replaceAll("stored-secret", "[redacted]"),
+  );
+  expect(names).toEqual(["GH_TOKEN", "OTHER_ALIAS", "PLATFORMIO_AUTH_TOKEN"]);
+  expect(JSON.stringify(names)).not.toMatch(/ghp_value|pio_value|stored-secret/);
 });
 it("validates the shell setting and permits an empty automatic selection", () => {
   expect(settingsPatchSchema.parse({ shell: "  pwsh  " })).toEqual({ shell: "pwsh" });

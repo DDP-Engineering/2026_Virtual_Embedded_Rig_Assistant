@@ -39,7 +39,7 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   window before taking the tail when on, preserving split-secret and partial VT prefix holding.
   Off uses the bounded clean OutputDecoder projection; raw authority stays in main. Finished user snapshots also
   resolve the live choice on every poll.
-- `terminal_read {terminalId?}` lists only shared terminals when omitted; an ID returns at most the resolved
+- `terminal_read {terminalId?}` lists only shared terminals when omitted, with a `message` naming the consent switch when none is shared; an ID returns at most the resolved
   Terminal output for the agent (2000-64000, default 12000) recent plain characters, capped by the session's
   resolved Tool result size passed to `publish(output, limit)` (REQ-FUNC-ef931b1f). The view's xterm scrollback is
   the resolved Terminal scrollback when it opens (1000-50000 lines, default 3000, REQ-UX-996ae06e). Consent starts false and applies to one terminal in its workbench.
