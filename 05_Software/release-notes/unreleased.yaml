@@ -88,10 +88,10 @@ entries:
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Terminal reads keep the latest diagnostic and indicate when output was shortened.
-      ro: Citirea terminalului păstrează ultimul diagnostic și semnalează trunchierea.
-      de: Das Terminal behält die letzte Diagnose und zeigt an, wenn die Ausgabe gekürzt wurde.
-      fr: Le terminal conserve le dernier diagnostic et signale la sortie tronquée.
+      en: Terminal reads keep the latest output and flag cuts. Idle terminals skip repeated snapshots.
+      ro: Terminalul păstrează finalul și semnalează trunchierea. Capturile identice nu se retrimit.
+      de: Das Terminal behält das Ende, meldet Kürzungen und sendet unveränderte Ausgaben nur einmal.
+      fr: Le terminal garde la fin, signale les coupes et évite de renvoyer la même sortie.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

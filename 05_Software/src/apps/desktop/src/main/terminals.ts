@@ -12,7 +12,8 @@ import {
   type CommandBlockShell,
   commandBlockShellSchema,
   commandBlockTextSchema,
-  type TerminalSnapshot,
+  type TerminalOutput,
+  type TerminalRevision,
   type TerminalSummary,
   terminalIdSchema,
   terminalSizeSchema,
@@ -48,6 +49,7 @@ type Entry = {
   running: boolean;
   exitCode?: number;
   output: string;
+  outputRevision: number;
   /** Characters trimmed from the head of `output` so far. */
   dropped: number;
   /** Escape state immediately before a retained line fragment. */
@@ -111,6 +113,7 @@ export class TerminalService {
   private entries = new Map<string, Entry>();
   private generation = 0;
   private number = 0;
+  private outputRevision = 0;
   private creating = 0;
   private suspended = false;
   constructor(
@@ -123,6 +126,7 @@ export class TerminalService {
       maskUserOutput(): boolean;
       maskAgentOutput?(): boolean;
       secrets(): readonly string[];
+      secretRevision(): number;
       /** The resolved Advanced terminal limits; the registry defaults when absent. */
       limits?(): TerminalLimits;
     },
@@ -215,6 +219,7 @@ export class TerminalService {
         grant: 0,
         running: true,
         output: "",
+        outputRevision: ++this.outputRevision,
         dropped: 0,
         buffer: this.limits().bufferChars,
         listeners: [],
@@ -223,9 +228,12 @@ export class TerminalService {
       entry.listeners.push(
         pty.onData((data) => {
           if (this.entries.get(entry.id) !== entry) return;
-          entry.output += entry.commandPrompt
+          const visible = entry.commandPrompt
             ? entry.commandPrompt.output(data, (reply) => pty.write(reply))
             : data;
+          if (!visible) return;
+          entry.output += visible;
+          entry.outputRevision = ++this.outputRevision;
           if (entry.output.length > entry.buffer) {
             let cut = entry.output.length - entry.buffer;
             const newline = entry.output.indexOf("\n", cut);
@@ -266,7 +274,18 @@ export class TerminalService {
           }
         }
       }
-      return { text: held ? value.slice(0, -held) : value, held };
+      if (!held) return { text: value, held };
+      // Holding a possible prefix must not split a complete credential before scrubbing.
+      let cut = value.length - held;
+      let previous: number;
+      do {
+        previous = cut;
+        for (const secret of secrets) {
+          const at = value.indexOf(secret, Math.max(0, cut - secret.length + 1));
+          if (at >= 0 && at < cut) cut = at;
+        }
+      } while (cut < previous);
+      return { text: value.slice(0, cut), held: value.length - cut };
     };
     if (entry.headDecoder) {
       const plain = entry.headDecoder.previewText(text);
@@ -281,17 +300,20 @@ export class TerminalService {
       ? this.host.scrub(plain.text)
       : masked;
   }
-  output(owner: string, id: string): TerminalSnapshot {
+  output(owner: string, id: string, since?: TerminalRevision): TerminalOutput {
     const entry = this.entry(owner, id);
+    const masked = this.host.maskUserOutput();
+    const revision = { output: entry.outputRevision, masking: masked ? 1 + this.host.secretRevision() : 0 };
+    const snapshot = { ...this.summary(entry), start: entry.dropped, revision };
+    if (since?.output === revision.output && since.masking === revision.masking)
+      return { ...snapshot, unchanged: true, output: "" };
     return {
-      ...this.summary(entry),
-      output: this.host.maskUserOutput()
+      ...snapshot,
+      output: masked
         ? this.publicOutput(entry)
             .slice(-entry.buffer)
             .replace(/^[\uDC00-\uDFFF]/, "")
         : entry.output,
-      // Lets the renderer tell a trimmed head from changed content and append only the new tail.
-      start: entry.dropped,
     };
   }
   input(owner: string, id: string, data: string): void {

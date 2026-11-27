@@ -219,6 +219,7 @@ export function createMockApi(
   /** Program runs and their logs by workbench id, seeded with one running and one ended run. */
   const runs = new Map<string, { run: ProgramRunInfo; log: string }[]>();
   const terminals = new Map<string, { owner: string; snapshot: TerminalSnapshot }>();
+  let terminalOutputRevision = 0;
   const userTerminal = (owner: string, id: string) => {
     if (owner !== current().snapshot.config.id) throw veraError("CONFLICT");
     const entry = terminals.get(id);
@@ -742,7 +743,9 @@ export function createMockApi(
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         value = [...terminals.values()]
           .filter((entry) => entry.owner === workbenchId)
-          .map(({ snapshot: { output: _output, start: _start, ...summary } }) => summary);
+          .map(
+            ({ snapshot: { output: _output, start: _start, revision: _revision, ...summary } }) => summary,
+          );
         break;
       }
       case "terminal.create": {
@@ -759,15 +762,20 @@ export function createMockApi(
           running: true,
           output: "$ ",
           start: 0,
+          revision: { output: ++terminalOutputRevision, masking: 0 },
         };
         terminals.set(snapshot.id, { owner: workbenchId, snapshot });
-        const { output: _output, start: _start, ...summary } = snapshot;
+        const { output: _output, start: _start, revision: _revision, ...summary } = snapshot;
         value = summary;
         break;
       }
       case "terminal.output": {
-        const { workbenchId, id } = channels["terminal.output"].request.parse(input.data);
-        value = userTerminal(workbenchId, id);
+        const { workbenchId, id, revision } = channels["terminal.output"].request.parse(input.data);
+        const terminal = userTerminal(workbenchId, id);
+        value =
+          revision?.output === terminal.revision.output && revision.masking === terminal.revision.masking
+            ? { ...terminal, unchanged: true, output: "" }
+            : terminal;
         break;
       }
       case "terminal.input": {
@@ -777,6 +785,7 @@ export function createMockApi(
         const output = terminal.output + data.replaceAll("\r", "\r\n$ ");
         terminal.start += Math.max(0, output.length - 262144);
         terminal.output = output.slice(-262144);
+        terminal.revision = { ...terminal.revision, output: ++terminalOutputRevision };
         value = {};
         break;
       }
@@ -788,6 +797,7 @@ export function createMockApi(
           throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
         terminal.dispatchEligible = false;
         terminal.output = `${terminal.output}${text}\r\n$ `.slice(-262144);
+        terminal.revision = { ...terminal.revision, output: ++terminalOutputRevision };
         value = {};
         break;
       }
@@ -801,7 +811,7 @@ export function createMockApi(
         const { workbenchId, id, shared } = channels["terminal.consent"].request.parse(input.data);
         const terminal = userTerminal(workbenchId, id);
         terminal.shared = shared;
-        const { output: _output, start: _start, ...summary } = terminal;
+        const { output: _output, start: _start, revision: _revision, ...summary } = terminal;
         value = summary;
         break;
       }

@@ -1,4 +1,4 @@
-import { type TerminalSummary, typographyDefaults } from "@vera/shared";
+import { type TerminalRevision, type TerminalSummary, typographyDefaults } from "@vera/shared";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { Plus, X } from "lucide-react";
@@ -35,6 +35,7 @@ function TerminalSurface({
     const available = () => live && closingTerminal.current !== terminal.id;
     let previous = "";
     let start = 0;
+    let revision: TerminalRevision | undefined;
     let initial = true;
     let timer: ReturnType<typeof setTimeout>;
     const element = container.current;
@@ -103,12 +104,22 @@ function TerminalSurface({
       polling = true;
       try {
         if (!available()) return;
-        const snapshot = await api.invoke("terminal.output", { workbenchId, id: terminal.id });
+        const snapshot = await api.invoke("terminal.output", {
+          workbenchId,
+          id: terminal.id,
+          ...(revision && { revision }),
+        });
         if (!available()) return;
+        if ("unchanged" in snapshot) {
+          term.options.disableStdin = !snapshot.running;
+          return;
+        }
         // A full host buffer drops its head on new output: compare only the part of the last
         // snapshot that the host still holds, so a trimmed head is an append and not a redraw.
         const kept = previous.slice(Math.max(0, snapshot.start - start));
-        const append = snapshot.output.startsWith(kept);
+        // Older scrollback can also contain text that the new masking policy hides.
+        const append =
+          (!revision || revision.masking === snapshot.revision.masking) && snapshot.output.startsWith(kept);
         const replay = !append || (initial && !freshTerminals.has(terminal.id));
         // Parsing historical VT queries must not inject old device/cursor replies into the live shell.
         term.options.disableStdin = replay || !snapshot.running;
@@ -118,6 +129,7 @@ function TerminalSurface({
         if (!live) return;
         previous = snapshot.output;
         start = snapshot.start;
+        revision = snapshot.revision;
         freshTerminals.delete(terminal.id);
         initial = false;
         term.options.disableStdin = !snapshot.running;

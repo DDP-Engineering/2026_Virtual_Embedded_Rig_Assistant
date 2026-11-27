@@ -29,7 +29,9 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   default 256 Ki, REQ-FUNC-240f4e02). It drops a cut leading line when a line break remains, and
   retains the tail of a line that fills the window. User snapshots follow the live Program runs choice, default off. With masking on,
   current known credentials are masked and split secret prefixes are held. The renderer appends
-  snapshot deltas and reconstructs a bounded view when truncation or masking changes the prefix.
+  snapshot deltas. Polls send the last output and masking revisions so unchanged captures skip projection
+  and transfer, while the response still carries live terminal status. Masking revisions rebuild the visible
+  scrollback so it reflects the current policy and newly known credentials.
   Plain projection keeps incomplete VT sequences pending so partial CSI/OSC/DCS cannot bypass
   known-secret prefix holding between callbacks.
 - Agent recent output follows the live Agent and model choice independently of user runs masking.

@@ -79,6 +79,7 @@ setTimeout(() => process.exit(2), 15000);
     scrub: (text) => text,
     maskUserOutput: () => false,
     secrets: () => [],
+    secretRevision: () => 0,
   });
   try {
     const outbound: string[] = [];
@@ -101,7 +102,7 @@ setTimeout(() => process.exit(2), 15000);
       }
       if (channel === "terminal.output") {
         const a = channels[channel].request.parse(input);
-        return service.output(a.workbenchId, a.id);
+        return service.output(a.workbenchId, a.id, a.revision);
       }
       if (channel === "terminal.resize") {
         const a = channels[channel].request.parse(input);

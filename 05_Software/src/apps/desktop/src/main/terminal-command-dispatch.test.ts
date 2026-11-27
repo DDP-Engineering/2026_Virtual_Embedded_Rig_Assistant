@@ -30,6 +30,7 @@ function fixture(kind: CommandBlockShell = "bash") {
     pty: { spawn, stop: async () => {} },
     scrub: (text) => text,
     secrets: () => [],
+    secretRevision: () => 0,
     maskUserOutput: () => false,
   });
   return {

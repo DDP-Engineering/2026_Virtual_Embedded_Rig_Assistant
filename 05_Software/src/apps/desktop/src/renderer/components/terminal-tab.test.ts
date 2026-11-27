@@ -64,6 +64,7 @@ vi.stubGlobal(
   },
 );
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+const initialRevision = { output: 1, masking: 0 };
 afterEach(() => {
   vi.clearAllMocks();
   vi.useRealTimers();
@@ -81,7 +82,8 @@ it("updates the mounted terminal font and refits immediately when code text size
   };
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
     if (channel === "terminal.list") return [row] as never;
-    if (channel === "terminal.output") return { ...row, output: "retained shell history" } as never;
+    if (channel === "terminal.output")
+      return { ...row, output: "retained shell history", start: 0, revision: initialRevision } as never;
     return {} as never;
   });
   const documentRoot = document.documentElement;
@@ -149,7 +151,12 @@ it.each(["en", "ro", "de", "fr"])(
         return { ...row } as never;
       }
       if (channel === "terminal.output")
-        return { ...rows.find((row) => row.id === args.id), output: "shell output" } as never;
+        return {
+          ...rows.find((row) => row.id === args.id),
+          output: "shell output",
+          start: 0,
+          revision: initialRevision,
+        } as never;
       if (channel === "terminal.consent") {
         rows = rows.map((row) => (row.id === args.id ? { ...row, shared: args.shared === true } : row));
         return { ...rows.find((row) => row.id === args.id) } as never;
@@ -229,7 +236,8 @@ it("renders restored and replaced history without resending terminal replies, wh
   let output = "history\x1b[c";
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
     if (channel === "terminal.list") return [row] as never;
-    if (channel === "terminal.output") return { ...row, output } as never;
+    if (channel === "terminal.output")
+      return { ...row, output, start: 0, revision: initialRevision } as never;
     return {} as never;
   });
   const container = document.createElement("div");
@@ -271,7 +279,13 @@ it("appends only the new tail when the host trims the head of a full buffer", as
     dispatchEligible: false,
     running: true,
   };
-  let snapshot = { output: "line 1\nline 2\n", start: 0 };
+  let snapshot: {
+    output: string;
+    start: number;
+    revision: typeof initialRevision;
+    unchanged?: true;
+    running?: boolean;
+  } = { output: "line 1\nline 2\n", start: 0, revision: initialRevision };
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
     if (channel === "terminal.list") return [row] as never;
     if (channel === "terminal.output") return { ...row, ...snapshot } as never;
@@ -289,14 +303,26 @@ it("appends only the new tail when the host trims the head of a full buffer", as
   try {
     await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
     expect(native.write).toHaveBeenLastCalledWith("line 1\nline 2\n");
-    await next({ output: "line 2\nline 3\n", start: 7 });
+    await next({ output: "", start: 0, revision: initialRevision, unchanged: true });
+    expect(api.invoke).toHaveBeenLastCalledWith("terminal.output", {
+      workbenchId: owner,
+      id: row.id,
+      revision: initialRevision,
+    });
+    expect(native.write).toHaveBeenCalledTimes(1);
+    expect(native.reset).not.toHaveBeenCalled();
+    await next({ output: "line 2\nline 3\n", start: 7, revision: { output: 2, masking: 0 } });
     expect(native.write).toHaveBeenLastCalledWith("line 3\n");
-    await next({ output: "line 9\n", start: 60 });
+    await next({ output: "line 9\n", start: 60, revision: { output: 3, masking: 0 } });
     expect(native.write).toHaveBeenLastCalledWith("line 9\n");
     expect(native.reset).not.toHaveBeenCalled();
-    await next({ output: "masked\n", start: 60 });
+    const maskedRevision = { output: 3, masking: 1 };
+    await next({ output: "line 9\n", start: 60, revision: maskedRevision });
     expect(native.reset).toHaveBeenCalledTimes(1);
-    expect(native.write).toHaveBeenLastCalledWith("masked\n");
+    expect(native.write).toHaveBeenLastCalledWith("line 9\n");
+    await next({ output: "", start: 60, revision: maskedRevision, unchanged: true, running: false });
+    expect(native.write).toHaveBeenCalledTimes(4);
+    expect(native.created.mock.calls[0]?.[0]).toMatchObject({ options: { disableStdin: true } });
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -334,7 +360,8 @@ it.each(["panel", "chat"])(
         created = true;
         return row as never;
       }
-      if (channel === "terminal.output") return { ...row, output: "startup\x1b[c" } as never;
+      if (channel === "terminal.output")
+        return { ...row, output: "startup\x1b[c", start: 0, revision: initialRevision } as never;
       return {} as never;
     });
     const container = document.createElement("div");
@@ -393,7 +420,7 @@ it.each([true, false])(
         });
       if (["terminal.output", "terminal.input", "terminal.resize"].includes(channel)) {
         if (!finished) return await new Promise<never>((_resolve, reject) => failures.push(reject));
-        return { ...rows[0], output: "ready" } as never;
+        return { ...rows[0], output: "ready", start: 0, revision: initialRevision } as never;
       }
       return {} as never;
     });
@@ -464,7 +491,8 @@ it("opens a view with the resolved scrollback and disables New at the resolved c
   };
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
     if (channel === "terminal.list") return [row] as never;
-    if (channel === "terminal.output") return { ...row, output: "", start: 0 } as never;
+    if (channel === "terminal.output")
+      return { ...row, output: "", start: 0, revision: initialRevision } as never;
     return {} as never;
   });
   const newButton = (container: HTMLElement) =>

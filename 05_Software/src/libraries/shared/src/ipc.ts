@@ -145,9 +145,10 @@ import {
 import {
   commandBlockShellSchema,
   commandBlockTextSchema,
+  terminalOutputSchema,
   terminalOwnerSchema,
+  terminalRevisionSchema,
   terminalSizeSchema,
-  terminalSnapshotSchema,
   terminalSummarySchema,
   terminalTargetSchema,
 } from "./terminals.js";
@@ -269,7 +270,11 @@ export const channels = {
     terminalOwnerSchema.extend({ ...terminalSizeSchema.shape, shell: commandBlockShellSchema.optional() }),
     terminalSummarySchema,
   ),
-  "terminal.output": defineChannel("terminal.output", terminalTargetSchema, terminalSnapshotSchema),
+  "terminal.output": defineChannel(
+    "terminal.output",
+    terminalTargetSchema.extend({ revision: terminalRevisionSchema.optional() }),
+    terminalOutputSchema,
+  ),
   "terminal.input": defineChannel(
     "terminal.input",
     terminalTargetSchema.extend({ data: z.string().min(1).max(16384) }),

@@ -543,6 +543,7 @@ const terminals = new TerminalService({
   ),
   scrub: (text) => credentials.scrub(text),
   secrets: () => credentials.knownSecrets(),
+  secretRevision: () => credentials.redactionRevision,
   maskUserOutput: () => maskingFor(workbench().getSnapshot().config, "runs"),
   maskAgentOutput: () => maskingFor(workbench().getSnapshot().config, "agent"),
   // Read as a terminal opens (count, buffer) and as the agent reads one (output size).
@@ -1048,7 +1049,7 @@ ipcMain.handle(
         await terminals.execute(workbenchId, id, shell, text);
         return {};
       },
-      "terminal.output": ({ workbenchId, id }) => terminals.output(workbenchId, id),
+      "terminal.output": ({ workbenchId, id, revision }) => terminals.output(workbenchId, id, revision),
       "terminal.input": ({ workbenchId, id, data }) => {
         terminals.input(workbenchId, id, data);
         return {};

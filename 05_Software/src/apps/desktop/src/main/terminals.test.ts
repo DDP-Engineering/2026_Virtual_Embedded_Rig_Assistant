@@ -6,6 +6,11 @@ function fixture() {
   const limits = { terminals: 8, bufferChars: 262144, agentChars: 12000 };
   let masking = true;
   let agent = true;
+  const secrets = ["private-token-123"];
+  const scrub = vi.fn((text: string) => {
+    for (const secret of secrets) text = text.replaceAll(secret, "[REDACTED]");
+    return text;
+  });
   let current = { id: "bench-a", folder: "/workbench" };
   const processes: ReturnType<typeof pty>[] = [];
   function pty() {
@@ -51,13 +56,16 @@ function fixture() {
     maskAgentOutput: () => agent,
     shell,
     pty: { spawn, stop },
-    scrub: (text) => text.replaceAll("private-token-123", "[REDACTED]"),
-    secrets: () => ["private-token-123"],
+    scrub,
+    secrets: () => secrets,
+    secretRevision: () => secrets.length,
     limits: () => limits,
   });
   return {
     service,
     limits,
+    secrets,
+    scrub,
     agent: (value: boolean) => {
       agent = value;
     },
@@ -246,6 +254,51 @@ describe("user terminal host", () => {
     const next = f.service.output("bench-a", a.id);
     expect(next.start).toBeGreaterThan(full.start);
     expect(next.output).toBe(`${full.output.slice(next.start - full.start)}tail\n`);
+  });
+  it("skips projecting an unchanged capture while reporting live terminal state", async () => {
+    const f = fixture();
+    const a = await f.service.create("bench-a", 80, 24);
+    f.processes[0]?.print("history with newly-known-token\nlast newly-known-token");
+    const first = f.service.output("bench-a", a.id);
+    expect(first.output).toContain("newly-known-token");
+    f.scrub.mockClear();
+    expect(f.service.output("bench-a", a.id, first.revision)).toMatchObject({
+      revision: first.revision,
+      unchanged: true,
+      output: "",
+      running: true,
+    });
+    f.service.consent("bench-a", a.id, true);
+    f.processes[0]?.finish();
+    expect(f.service.output("bench-a", a.id, first.revision)).toMatchObject({
+      unchanged: true,
+      running: false,
+      exitCode: 7,
+      shared: true,
+    });
+    expect(f.scrub).not.toHaveBeenCalled();
+
+    f.secrets.push("newly-known-token");
+    const redacted = f.service.output("bench-a", a.id, first.revision);
+    expect(redacted.revision.output).toBe(first.revision.output);
+    expect(redacted.revision.masking).not.toBe(first.revision.masking);
+    expect(redacted.output).toBe("history with [REDACTED]\nlast ");
+    f.masking(false);
+    const unmasked = f.service.output("bench-a", a.id, redacted.revision);
+    expect(unmasked.output).toBe(first.output);
+    expect(unmasked.revision.masking).not.toBe(redacted.revision.masking);
+    f.switch();
+    expect(() => f.service.output("bench-a", a.id, unmasked.revision)).toThrow();
+  });
+  it("returns a full snapshot after new terminal output even with the previous revision", async () => {
+    const f = fixture();
+    const a = await f.service.create("bench-a", 80, 24);
+    const first = f.service.output("bench-a", a.id);
+    f.processes[0]?.print("new output");
+    const second = f.service.output("bench-a", a.id, first.revision);
+    expect(second.output).toBe("new output");
+    expect(second.revision.output).not.toBe(first.revision.output);
+    expect(f.service.output("bench-a", a.id, second.revision)).toMatchObject({ unchanged: true });
   });
   it("keeps a long line's tail, advances the snapshot offset, and marks agent truncation", async () => {
     const f = fixture();

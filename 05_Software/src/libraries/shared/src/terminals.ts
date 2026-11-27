@@ -28,10 +28,24 @@ export const terminalSummarySchema = z.strictObject({
   dispatchEligible: z.boolean(),
   exitCode: z.number().int().optional(),
 });
-/** `start` counts the characters the host dropped before `output`; it only grows as the buffer trims its head. */
-export const terminalSnapshotSchema = terminalSummarySchema.extend({
-  output: z.string().max(advancedSettings.terminalBufferK.max * 1024),
-  start: z.number().int().nonnegative(),
+export const terminalRevisionSchema = z.strictObject({
+  output: z.number().int().nonnegative(),
+  /** Zero is raw output. Positive values identify the current masked projection. */
+  masking: z.number().int().nonnegative(),
 });
+/** `start` counts the characters the host dropped before `output`. */
+const terminalSnapshotState = terminalSummarySchema.extend({
+  start: z.number().int().nonnegative(),
+  revision: terminalRevisionSchema,
+});
+export const terminalSnapshotSchema = terminalSnapshotState.extend({
+  output: z.string().max(advancedSettings.terminalBufferK.max * 1024),
+});
+export const terminalOutputSchema = z.union([
+  terminalSnapshotSchema,
+  terminalSnapshotState.extend({ unchanged: z.literal(true), output: z.literal("") }),
+]);
 export type TerminalSummary = z.infer<typeof terminalSummarySchema>;
 export type TerminalSnapshot = z.infer<typeof terminalSnapshotSchema>;
+export type TerminalRevision = z.infer<typeof terminalRevisionSchema>;
+export type TerminalOutput = z.infer<typeof terminalOutputSchema>;

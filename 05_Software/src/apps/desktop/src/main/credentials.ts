@@ -111,6 +111,10 @@ export class CredentialFile implements CredentialStore {
   knownSecrets(): readonly string[] {
     return [...this.secrets];
   }
+  /** Advances when a new credential can change the redaction of retained output. */
+  get redactionRevision(): number {
+    return this.secrets.size;
+  }
   /** Compare public data values, not protocol/schema field names. Low-entropy keys match whole values. */
   containsSecret(value: unknown): boolean {
     if (typeof value === "string")

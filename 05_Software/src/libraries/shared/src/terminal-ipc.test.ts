@@ -35,10 +35,17 @@ describe("user terminal IPC", () => {
     };
     for (const dispatchEligible of [true, false]) {
       const terminal = { ...summary, dispatchEligible };
+      const revision = { output: 7, masking: 1 };
       expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(true);
       expect(
-        channels["terminal.output"].response.safeParse({ ...terminal, output: "$ ", start: 0 }).success,
+        channels["terminal.output"].response.safeParse({ ...terminal, output: "$ ", start: 0, revision })
+          .success,
       ).toBe(true);
+      const unchanged = { ...terminal, revision, start: 0, output: "", unchanged: true };
+      expect(channels["terminal.output"].response.safeParse(unchanged).success).toBe(true);
+      expect(channels["terminal.output"].response.safeParse({ ...unchanged, output: "buffer" }).success).toBe(
+        false,
+      );
     }
     for (const terminal of [summary, { ...summary, dispatchEligible: "yes" }])
       expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(false);
@@ -73,5 +80,15 @@ describe("user terminal IPC", () => {
     expect(channels["terminal.consent"].request.safeParse({ ...target, shared: "yes" }).success).toBe(false);
     expect(channels["terminal.output"].request.safeParse({ ...target, id: "../other" }).success).toBe(false);
     expect(channels["terminal.output"].request.safeParse({ ...target, agent: true }).success).toBe(false);
+    expect(
+      channels["terminal.output"].request.safeParse({ ...target, revision: { output: 2, masking: 0 } })
+        .success,
+    ).toBe(true);
+    for (const revision of [
+      { output: -1, masking: 0 },
+      { output: 1 },
+      { output: 1, masking: 0, agent: true },
+    ])
+      expect(channels["terminal.output"].request.safeParse({ ...target, revision }).success).toBe(false);
   });
 });
