@@ -34,6 +34,8 @@ Ein Workbench kann auch Plugin-Pakete in `.vera/plugins/` mitbringen. Sie werden
 
 Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench bearbeiten** → **Plugins**, wählen Sie das Plugin aus und wählen Sie **Speichern**. Nur aktivierte Plugins werden dem Agenten in diesem Workbench angeboten.
 
+Bei der Aktualisierung eines Test-Plugins bleibt seine Auswahl in jedem Workbench erhalten.
+
 ## Werkzeuge und Plugin-Funktionen
 
 **Werkzeuge** enthält allgemeine VERA-Funktionen, darunter `run_program`, `run_command`, `program_output`, `program_stop` und Terminalzugriff. Plugin-Programme einschließlich der eigenen Git-Integration stehen beim Plugin unter **Plugins**. Die Ausführung benötigt weiterhin die allgemeine Werkzeugfreigabe, Befehlsrisikoregeln und Sitzungsberechtigungen.

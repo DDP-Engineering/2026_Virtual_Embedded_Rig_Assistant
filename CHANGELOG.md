@@ -97,6 +97,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Read skills saved as UTF-16 or in the ANSI code page, as PowerShell and older editors write them.
 - Say whether a skill or its file is missing and list the enabled skills, and name the help pages when one does not exist.
 - Take a skill or help page name written in another letter case, with spaces or with `.md`.
+- Warn about invalid draft skills, check trial replacement before approval, and honor Stop before installation.
 
 ## [0.4.0] - 2026-11-26
 

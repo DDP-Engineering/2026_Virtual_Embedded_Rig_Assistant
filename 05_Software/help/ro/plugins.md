@@ -34,6 +34,8 @@ Un workbench poate conține și pachete de pluginuri în `.vera/plugins/`. Acest
 
 Instalarea nu activează un plugin. Deschide **Editează workbench-ul** → **Pluginuri**, bifează pluginul și selectează **Salvează**. Doar pluginurile activate îi sunt oferite agentului în acel workbench.
 
+Actualizarea unui plugin de probă păstrează selecția lui în fiecare workbench.
+
 ## Instrumente și capabilități ale plugin-urilor
 
 **Instrumente** conține capabilitățile VERA generale, inclusiv `run_program`, `run_command`, `program_output`, `program_stop` și accesul la terminal. Programele plugin-urilor, inclusiv integrarea dedicată Git, apar lângă plugin în **Pluginuri**. Execuția necesită în continuare permisiunea instrumentului general, regulile de risc ale comenzilor și permisiunile sesiunii.

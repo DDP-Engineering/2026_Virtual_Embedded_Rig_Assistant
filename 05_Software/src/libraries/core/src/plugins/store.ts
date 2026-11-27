@@ -135,7 +135,12 @@ function admit(files: Files, seen: Names, path: string, data: Uint8Array): void 
   files.set(path, data);
 }
 /** Reads the file lstat saw: a link or another file swapped in after lstat is DENIED. */
-async function readSeen(path: string, seen: Awaited<ReturnType<typeof lstat>>): Promise<Uint8Array> {
+async function readSeen(
+  path: string,
+  seen: Awaited<ReturnType<typeof lstat>>,
+  signal?: AbortSignal,
+): Promise<Uint8Array> {
+  signal?.throwIfAborted();
   let handle: Awaited<ReturnType<typeof open>>;
   try {
     handle = await open(path, READ_FLAGS);
@@ -146,21 +151,24 @@ async function readSeen(path: string, seen: Awaited<ReturnType<typeof lstat>>): 
   try {
     const opened = await handle.stat();
     if (!opened.isFile() || opened.ino !== seen.ino || opened.dev !== seen.dev) throw fails("DENIED");
-    return await handle.readFile();
+    return await handle.readFile(signal ? { signal } : undefined);
   } finally {
     await handle.close();
   }
 }
 
 /** Ordinary files and folders only; a link or any other entry is DENIED. */
-async function readFolder(root: string, installed: boolean): Promise<Files> {
+async function readFolder(root: string, installed: boolean, signal?: AbortSignal): Promise<Files> {
+  signal?.throwIfAborted();
   const files: Files = new Map();
   const seen = names();
   let scanned = 0;
   const top = await lstat(root);
   if (top.isSymbolicLink() || !top.isDirectory()) throw fails("DENIED");
   const walk = async (relative: string) => {
+    signal?.throwIfAborted();
     for await (const entry of await opendir(relative ? join(root, ...relative.split("/")) : root)) {
+      signal?.throwIfAborted();
       if (++scanned > PLUGIN_LIMITS.files * 2) throw fails("INVALID");
       const path = relative ? `${relative}/${entry.name}` : entry.name;
       if (path === RECORD) {
@@ -174,7 +182,7 @@ async function readFolder(root: string, installed: boolean): Promise<Files> {
         if (!isPluginRelativePath(path)) throw fails("INVALID");
         await walk(path);
       } else if (info.isFile()) {
-        admit(files, seen, path, await readSeen(full, info));
+        admit(files, seen, path, await readSeen(full, info, signal));
       } else throw fails("DENIED");
     }
   };
@@ -369,7 +377,8 @@ async function readRecord(path: string): Promise<PluginRecord | undefined> {
  * Reads a package folder or .zip file with the install checks and examines its manifest; nothing is
  * written. A folder or one top zip folder must be named as the manifest id.
  */
-export async function readPluginPackage(path: string): Promise<PluginPackage> {
+export async function readPluginPackage(path: string, signal?: AbortSignal): Promise<PluginPackage> {
+  signal?.throwIfAborted();
   const source = resolve(path);
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
@@ -381,10 +390,18 @@ export async function readPluginPackage(path: string): Promise<PluginPackage> {
   if (info.isSymbolicLink()) throw fails("DENIED");
   let pkg: Package;
   if (info.isDirectory())
-    pkg = { source, files: await readFolder(source, false), folder: basename(source), kind: "folder" };
+    pkg = {
+      source,
+      files: await readFolder(source, false, signal),
+      folder: basename(source),
+      kind: "folder",
+    };
   else if (info.isFile() && /\.zip$/i.test(source)) {
-    pkg = { source, ...readZip(await readFile(source)), kind: "zip" };
+    const bytes = await readFile(source, signal ? { signal } : undefined);
+    signal?.throwIfAborted();
+    pkg = { source, ...readZip(bytes), kind: "zip" };
   } else throw fails("INVALID");
+  signal?.throwIfAborted();
   const { manifest, composition, issues } = examine(pkg.files, pkg.folder);
   return {
     ...pkg,
@@ -763,6 +780,28 @@ export class PluginStore {
         : {}),
     };
   }
+
+  /** Trial installation may introduce an ID or replace another trial. */
+  async assertTrialReplaceable(id: string, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
+    if (!pluginIdSchema.safeParse(id).success) throw fails("INVALID");
+    await this.recover();
+    signal?.throwIfAborted();
+    const folder = join(this.installed, id);
+    const info = await lstat(folder).catch((error: unknown) => {
+      if (errno(error) !== "ENOENT") throw error;
+      return undefined;
+    });
+    if (!info) {
+      if (this.options.workbench && (await this.scopedIds()).some((scoped) => this.sameId(id, scoped)))
+        throw fails("DENIED");
+    } else {
+      if (!info.isDirectory() || info.isSymbolicLink()) throw fails("DENIED");
+      const record = await readRecord(join(folder, RECORD));
+      if (record?.id !== id || record.tier !== "trial") throw fails("DENIED");
+    }
+    signal?.throwIfAborted();
+  }
   /**
    * Installs a folder or a .zip file, replacing an installed one of the same id: a local plugin, or
    * with `origin` a catalog plugin of that tier. With `sha256` (the hash the user reviewed), a package
@@ -774,9 +813,11 @@ export class PluginStore {
     origin?: PluginOrigin,
     trial = false,
     assertCurrent?: () => void,
+    signal?: AbortSignal,
   ): Promise<PluginInstalled> {
     return this.serial(async () => {
-      const pkg = await readPluginPackage(path);
+      signal?.throwIfAborted();
+      const pkg = await readPluginPackage(path, signal);
       assertCurrent?.();
       if (sha256 !== undefined && pkg.sha256 !== sha256) throw fails("CONFLICT");
       const { manifest, issues } = pkg;
@@ -786,11 +827,6 @@ export class PluginStore {
           ...fails("INVALID"),
           params: { issue: first?.code ?? "manifest", ...(first?.path ? { path: first.path } : {}) },
         };
-      // The agent may iterate on trials, but cannot replace a plugin the user already trusts.
-      if (trial && (await this.ids()).includes(manifest.id)) {
-        const previous = await this.inspect(manifest.id);
-        if (previous.record?.tier !== "trial") throw fails("DENIED");
-      }
       const record: PluginRecord = {
         format: 1,
         id: manifest.id,
@@ -804,15 +840,19 @@ export class PluginStore {
       await mkdir(this.staging, { recursive: true });
       const stage = join(this.staging, this.uuid());
       try {
+        const writeOptions = { flag: "wx", ...(signal && { signal }) };
         for (const [relative, data] of pkg.files) {
+          signal?.throwIfAborted();
           const target = join(stage, ...relative.split("/"));
           await mkdir(dirname(target), { recursive: true });
-          await writeFile(target, data, { flag: "wx" });
+          await writeFile(target, data, writeOptions);
         }
-        await writeFile(join(stage, RECORD), `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
+        await writeFile(join(stage, RECORD), `${JSON.stringify(record, null, 2)}\n`, writeOptions);
         await mkdir(this.installed, { recursive: true });
         const target = join(this.installed, manifest.id);
         const previous = join(this.staging, `${this.uuid()}${PREVIOUS}`);
+        if (trial) await this.assertTrialReplaceable(manifest.id, signal);
+        signal?.throwIfAborted();
         assertCurrent?.();
         let replaced = false;
         try {
@@ -836,8 +876,13 @@ export class PluginStore {
     });
   }
   /** Agent installation path; trust can only be raised by the separate user action. */
-  installTrial(path: string, sha256: string, assertCurrent?: () => void): Promise<PluginInstalled> {
-    return this.install(path, sha256, undefined, true, assertCurrent);
+  installTrial(
+    path: string,
+    sha256: string,
+    assertCurrent?: () => void,
+    signal?: AbortSignal,
+  ): Promise<PluginInstalled> {
+    return this.install(path, sha256, undefined, true, assertCurrent, signal);
   }
   /** User action bound to the healthy trial package displayed on the Plugins page. */
   promote(id: string, sha256: string): Promise<PluginInstalled> {

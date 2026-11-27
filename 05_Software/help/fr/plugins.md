@@ -34,6 +34,8 @@ Un banc de travail peut aussi contenir des paquets de plugins dans `.vera/plugin
 
 L’installation n’active pas un plugin. Ouvrez **Modifier le banc** → **Plugins**, cochez le plugin et sélectionnez **Enregistrer**. Seuls les plugins activés sont proposés à l’agent dans ce banc de travail.
 
+La mise à jour d’un plugin d’essai conserve sa sélection dans chaque banc de travail.
+
 ## Outils et capacités des plugins
 
 **Outils** contient les capacités VERA générales, dont `run_program`, `run_command`, `program_output`, `program_stop` et l’accès au terminal. Les programmes des plugins, y compris l’intégration dédiée Git, figurent avec leur plugin sous **Plugins**. Leur exécution nécessite toujours l’autorisation de l’outil général, les règles de risque des commandes et les autorisations de session.
