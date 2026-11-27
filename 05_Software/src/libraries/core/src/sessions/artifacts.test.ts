@@ -710,3 +710,52 @@ it("resolves artifact content masking inside the write queue after a live change
   expect(await save).toMatchObject({ bytes: 10 });
   expect(await readFile(path, "utf8")).toBe("[REDACTED]");
 });
+
+it("finds an artifact by any part of its name, in any letter case and as it was asked to be saved", async () => {
+  const list = (args: Record<string, unknown>) => ({ name: "artifact_list", args });
+  const { service, handle } = await setup([
+    save({ name: "Test Plan.md", content: "plan" }),
+    save({ name: "Report.md", content: "report" }),
+    save({ name: "firmware-comparison-1.2.md", content: "comparison" }),
+    list({ namePrefix: "report" }),
+    list({ namePrefix: "Test Plan" }),
+    list({ namePrefix: "comparison" }),
+    list({ namePrefix: "" }),
+    list({ namePrefix: "schematic" }),
+    { name: "read", args: { path: "artifact:report.md" } },
+    { name: "read", args: { path: "artifact:Test Plan.md" } },
+    { name: "read", args: { path: "artifact:schematic.md" } },
+  ]);
+  const session = service.create(null, "read-only");
+  service.send(session.id, "Find my reports");
+  await service.waitIdle(session.id);
+  const results = (
+    handle.db.prepare("SELECT name,status,result_json FROM tool_calls ORDER BY rowid").all() as {
+      name: string;
+      status: string;
+      result_json: string;
+    }[]
+  )
+    .slice(3)
+    .map((row) => ({ status: row.status, value: JSON.parse(JSON.parse(row.result_json).content[0].text) }));
+  const names = (index: number) =>
+    ((results[index]?.value.artifacts ?? []) as { name: string }[]).map((artifact) => artifact.name);
+  expect(names(0)).toEqual(["Report.md"]);
+  expect(names(1)).toEqual(["Test-Plan.md"]);
+  expect(names(2)).toEqual(["firmware-comparison-1.2.md"]);
+  // An empty filter lists everything, newest first.
+  expect(names(3)).toEqual(["firmware-comparison-1.2.md", "Report.md", "Test-Plan.md"]);
+  // No match is told apart from nothing saved.
+  expect(results[4]?.value).toEqual({ artifacts: [], savedInSession: 3 });
+  expect(results[5]).toMatchObject({ status: "ok", value: { text: "1: report", ref: "artifact:Report.md" } });
+  expect(results[6]).toMatchObject({
+    status: "ok",
+    value: { text: "1: plan", ref: "artifact:Test-Plan.md" },
+  });
+  expect(results[7]).toMatchObject({
+    status: "error",
+    value: {
+      error: "There is no artifact schematic.md in this session. Call artifact_list to see the saved ones.",
+    },
+  });
+});

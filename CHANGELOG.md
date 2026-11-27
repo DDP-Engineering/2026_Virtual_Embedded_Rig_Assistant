@@ -113,6 +113,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Open and validate citations to a log that holds stray bytes, was saved as UTF-16 or kept growing after its analysis.
 - Number log lines the way `read` and the viewer do, so a cited line is the reported one in captures with CR CR LF endings or rewritten progress lines.
 - Apply the tolerant reading of tool arguments in sessions as well: plan statuses, skill and help names, register values and log levels were still refused there.
+- Find a session artifact by any part of its name, in any letter case and by the name it was asked to be saved under; a filter that matches nothing says how many artifacts the session has.
+- Read an artifact by its name in another letter case, and say that an artifact does not exist instead of a bare tool failure.
 
 ## [0.4.0] - 2026-11-26
 

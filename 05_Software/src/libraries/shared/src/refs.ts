@@ -59,15 +59,22 @@ const plainLetters: Record<string, string> = {
  * content again, so only a name that is not a file name at all returns nothing: an empty one, a device
  * name, a traversal or a drive, and one with no letter or digit left.
  */
-export function portableArtifactName(name: string): string | undefined {
-  if (validArtifactName(name)) return name;
-  if (name.includes(":") || /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(name)) return undefined;
-  let text = name
+/**
+ * Text in the characters an artifact name is made of: accents removed, anything else a hyphen. A whole
+ * name and a part of one typed to find it go through the same rule, so what was saved can be found.
+ */
+export function portableArtifactText(text: string): string {
+  return text
     .normalize("NFKD")
     .replace(/\p{M}+/gu, "")
     .replace(/[ßæÆœŒøØłŁđĐ]/g, (letter) => plainLetters[letter] ?? letter)
     .replace(/[^A-Za-z0-9._-]+/g, "-")
-    .replace(/-{2,}/g, "-")
+    .replace(/-{2,}/g, "-");
+}
+export function portableArtifactName(name: string): string | undefined {
+  if (validArtifactName(name)) return name;
+  if (name.includes(":") || /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(name)) return undefined;
+  let text = portableArtifactText(name)
     .replace(/-+\./g, ".")
     .replace(/\.-+/g, ".")
     .replace(/^-+/, "")

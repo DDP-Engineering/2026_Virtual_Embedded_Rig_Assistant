@@ -12,7 +12,8 @@ export interface ArtifactRow {
 }
 
 export interface ArtifactPage {
-  namePrefix: string;
+  /** Part of the name, matched anywhere in it and without regard to letter case; empty lists all. */
+  nameContains: string;
   offset: number;
   limit: number;
 }
@@ -45,12 +46,19 @@ export class ArtifactsRepository {
     if (page)
       return this.db
         .prepare(
-          "SELECT * FROM artifacts WHERE session_id=? AND substr(name,1,length(?))=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+          "SELECT * FROM artifacts WHERE session_id=? AND (?='' OR instr(lower(name),lower(?))>0) ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
         )
-        .all(sessionId, page.namePrefix, page.namePrefix, page.limit, page.offset) as ArtifactRow[];
+        .all(sessionId, page.nameContains, page.nameContains, page.limit, page.offset) as ArtifactRow[];
     return this.db
       .prepare("SELECT * FROM artifacts WHERE session_id=? ORDER BY created_at,id")
       .all(sessionId) as ArtifactRow[];
+  }
+  count(sessionId: string): number {
+    return (
+      this.db.prepare("SELECT count(*) AS total FROM artifacts WHERE session_id=?").get(sessionId) as {
+        total: number;
+      }
+    ).total;
   }
   save(row: ArtifactRow): void {
     this.db

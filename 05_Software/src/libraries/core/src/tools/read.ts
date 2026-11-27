@@ -1,6 +1,14 @@
 import { lstat } from "node:fs/promises";
 import { isAbsolute } from "node:path";
-import { advancedSettings, formatLineRef, parseArtifactRef, parseLineRef, veraError } from "@vera/shared";
+import {
+  advancedSettings,
+  formatArtifactRef,
+  formatLineRef,
+  parseArtifactRef,
+  parseLineRef,
+  portableArtifactName,
+  veraError,
+} from "@vera/shared";
 import { z } from "zod";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolLimit, toolPathGuard } from "./context.js";
@@ -15,10 +23,16 @@ async function readArtifact(
   maxChars: number,
   signal: AbortSignal,
 ) {
-  const ref = parseArtifactRef(path);
-  if (!ref) throw veraError("INVALID");
+  // The name as it was saved: with the spaces or accents it was asked for, or in another letter case.
+  const asked = path.slice("artifact:".length);
+  const name = parseArtifactRef(path)?.name ?? portableArtifactName(asked);
+  if (!name) throw Error("Use artifact:<name> with a name artifact_list or artifact_save returned.");
   signal.throwIfAborted();
-  const { content, sha256 } = await host.store.openNamed(host.sessionId, ref.name, signal);
+  const artifact = await host.store.openNamed(host.sessionId, name, signal).catch((error: unknown) => {
+    if ((error as { code?: unknown } | undefined)?.code !== "NOT_FOUND") throw error;
+    throw Error(`There is no artifact ${name} in this session. Call artifact_list to see the saved ones.`);
+  });
+  const { content, sha256 } = artifact;
   const lines = content.split(/\r\n|[\r\n]/);
   if (lines.at(-1) === "") lines.pop();
   const selected: string[] = [];
@@ -47,7 +61,7 @@ async function readArtifact(
     truncated: lineClipped || index < lines.length,
     ...(lineClipped ? { lineClipped } : {}),
     ...(index < lines.length ? { nextOffset: index + 1 } : {}),
-    ref: path,
+    ref: formatArtifactRef(artifact.name),
     sha256,
   };
 }

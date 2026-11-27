@@ -175,6 +175,9 @@ export class ArtifactStore {
   list(sessionId: string, page?: ArtifactPage): ArtifactSummary[] {
     return this.repository.list(sessionId, page).map((row) => this.summary(row));
   }
+  count(sessionId: string): number {
+    return this.repository.count(sessionId);
+  }
   private row(id: string): ArtifactRow {
     if (!artifactIdSchema.safeParse(id).success) throw veraError("INVALID");
     const row = this.repository.get(id);
@@ -217,8 +220,9 @@ export class ArtifactStore {
       }
     });
   }
+  /** The artifact of that name; a name that differs only in letter case names it too, as at saving. */
   async openNamed(sessionId: string, name: string, signal?: AbortSignal): Promise<ArtifactContent> {
-    const row = this.repository.named(sessionId, name);
+    const row = this.repository.aliased(sessionId, name);
     if (!row) throw veraError("NOT_FOUND");
     return (await this.verified(row.id, signal)).artifact;
   }
