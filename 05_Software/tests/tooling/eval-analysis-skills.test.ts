@@ -74,6 +74,21 @@ it("accepts the issued report and original sources for a grounded plan", () => {
   expect(Object.values(scoreAnalysisWorkflow(run))).toEqual(Array(8).fill(true));
 });
 
+it("requires the saved report to be listed before it is opened in discovery mode", () => {
+  const run = { ...receipt(), discoverReport: true };
+  expect(scoreAnalysisWorkflow(run).discoveredSavedReport).toBe(false);
+  run.planning.calls.splice(1, 0, call("artifact_list", {}, { artifacts: [{ ref }] }));
+  expect(scoreAnalysisWorkflow(run).discoveredSavedReport).toBe(true);
+});
+
+it("recognizes readiness labels written as shown in the plan template", () => {
+  const run = receipt();
+  run.plan.content = run.plan.content
+    .replace("Overall readiness:", "Overall readiness (ready_for_review / blocked):")
+    .replaceAll("Case readiness:", "Case readiness (ready_for_review / observation-only / blocked):");
+  expect(scoreAnalysisWorkflow(run).individualReadiness).toBe(true);
+});
+
 it("rejects misleading skill, reference, readiness and execution evidence", () => {
   const run = receipt();
   run.comparison.calls.push(call("load_skill", { name: "test-planner" }));

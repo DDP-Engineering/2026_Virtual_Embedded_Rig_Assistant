@@ -15,9 +15,10 @@ Analysis skills gives the agent two procedures for work on evidence you have alr
 - "Plan up to three manual tests for the I2C timing change in release 1.1.0."
 - "Turn the comparison report into a test plan with a baseline control."
 
-To use a saved report after reopening the chat, give its exact `artifact:...` reference in that
-same session. The plan shows readiness for each case. A case with a documented setup and an unknown
-acceptance limit can still describe what to measure and mark the result as observation-only.
+After reopening the chat, ask for a plan from the latest saved comparison in that session.
+Give its exact `artifact:...` reference to choose a specific report. The plan shows readiness for
+each case. With a documented setup and an unknown acceptance limit, the case says what to measure
+and remains observation-only.
 Saved line citations use the exact reference from the smallest tool result that covers the cited lines.
 
 When several runs match, the agent asks you to choose; it never picks the newest one silently. A missing board, revision, setup or criterion keeps the report or plan marked blocked, and the agent asks for the missing facts. A numeric limit that no source states is never invented.

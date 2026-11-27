@@ -6,6 +6,9 @@ same session through a new service and reads the exact report reference to prepa
 A separate execution-only prompt tests that the agent does not substitute a plan. The fixture
 uses local, unindexed documents and only read and session-report tools.
 
+Set `VERA_ANALYSIS_DISCOVER_REPORT=1` to omit the exact reference from the planning prompt. The
+evaluator then requires `artifact_list` to find the saved comparison before the verified `read`.
+
 From `05_Software` on the Windows development host:
 
 ```powershell

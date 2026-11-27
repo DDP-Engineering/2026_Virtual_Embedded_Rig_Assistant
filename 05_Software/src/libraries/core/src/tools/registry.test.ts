@@ -23,6 +23,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     write: { path: "notes.txt", content: "hello" },
     edit: { path: "notes.txt", oldString: "hello", newString: "world" },
     artifact_save: { name: "summary.md", content: "hello" },
+    artifact_list: {},
     todo: { items: [{ text: "Verify", status: "pending" }] },
     search_docs: { query: "I2C1_CR1" },
     read_doc: { path: "docs/a.pdf", page: 1 },

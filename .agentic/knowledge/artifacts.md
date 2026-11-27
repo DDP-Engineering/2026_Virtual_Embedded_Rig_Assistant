@@ -20,6 +20,9 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
   session and name, verifies stored bytes, returns the SHA-256 and uses the configured text and line
   limits. Pagination reports a next offset and marks clipped lines. Ordinary workbench file access
   continues to refuse the managed storage path.
+- `artifact_list` gives the agent a bounded page of current-session names, description previews,
+  timestamps and references, newest first. It can filter by a literal filename prefix. The list
+  reads stored metadata. A verified `read` of the returned reference supplies citation evidence.
 - ArtifactsRepository get/named/list/save uses schema1 session FK and unique(session_id,name); overwrite preserves art_ULID. List sorts UTC creation time/id ascending; rows retain MIME/bytes/SHA256/description/time.
 - ArtifactStore saves through the shared WriteQueue and uses asynchronous file I/O with an exclusive same-directory temporary file and atomic rename. Reads of the same artifact wait for its metadata commit or rollback. Identical verified bytes and description reuse the reference and metadata. A failed commit restores the previous bytes while ownership is still held. Verified reads check stable file identity, UTF8 and the stored hash. Missing files return NOT_FOUND and changed bytes return CONFLICT.
 - Shared formatArtifactRef/parseArtifactRef/validArtifactName and strict ArtifactSummary/Content schemas have no host imports. Portable1..100 ASCII name characters exclude dot/dotdot, trailing dot and device stems;5MiB means5*1024*1024 UTF8 bytes.

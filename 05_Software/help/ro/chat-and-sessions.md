@@ -120,8 +120,8 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 
 Selectează o editare din **Modificări** pentru a-i deschide diferențele într-un tab lângă Chat.
 
-Pentru ca agentul să refolosească un artefact text salvat, dă-i referința exactă `artifact:...`
-în aceeași sesiune. Poți face asta și după ce redeschizi sesiunea.
+Cere agentului să găsească și să refolosească un artefact text salvat în aceeași sesiune, inclusiv după
+ce o redeschizi. Pentru a alege un anumit artefact, dă-i referința exactă `artifact:...`.
 
 ## File deschise
 

@@ -9,6 +9,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - Configure chat image count and file size in Advanced settings, with a clear message for provider size refusals.
+- Let the agent find saved artifacts in the current session with `artifact_list`.
 
 ### Changed
 
@@ -18,6 +19,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Install verified official skills-only plugins directly and show a compact confirmation when needed.
 - Simplify workbench plugin selection and group agent tools and program setup in Details.
 - analysis-skills 0.4.0: Route firmware analysis by intent and build manual plans from saved comparisons.
+- analysis-skills 0.4.2: Find a saved comparison for manual test planning after reopening the session.
 - Read verified text artifacts by reference in their owning session.
 - Speed up paged reads of large files while retaining line counts and file verification.
 - Reduce filesystem work when listing and searching large directories.

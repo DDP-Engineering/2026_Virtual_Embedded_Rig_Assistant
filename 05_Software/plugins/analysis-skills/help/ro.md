@@ -15,9 +15,10 @@ Skill-urile de analiză îi oferă agentului două proceduri pentru lucrul cu do
 - „Planifică cel mult trei teste manuale pentru modificarea de timing I2C din versiunea 1.1.0.”
 - „Transformă raportul de comparație într-un plan de test cu un control de referință.”
 
-Pentru a folosi un raport după redeschiderea conversației, indică referința exactă `artifact:...`
-în aceeași sesiune. Planul arată starea fiecărui caz. Dacă pregătirea este documentată, dar lipsește
-limita de acceptare, cazul spune ce să măsori și rămâne doar pentru observație.
+După redeschiderea conversației, poți cere un plan din ultimul raport de comparație salvat în sesiune.
+Pentru un anumit raport, indică referința exactă `artifact:...`. Planul arată starea fiecărui caz.
+Dacă pregătirea este documentată, dar lipsește limita de acceptare, cazul spune ce să măsori și
+rămâne doar pentru observație.
 Citările salvate folosesc referința exactă din cel mai mic interval returnat care acoperă liniile citate.
 
 Când se potrivesc mai multe rulări, agentul îți cere să alegi; nu o alege niciodată în tăcere pe cea mai nouă. Dacă lipsește placa, revizia, pregătirea sau criteriul, raportul sau planul rămâne marcat ca blocat, iar agentul îți cere faptele care lipsesc. O limită numerică pe care nu o declară nicio sursă nu este niciodată inventată.

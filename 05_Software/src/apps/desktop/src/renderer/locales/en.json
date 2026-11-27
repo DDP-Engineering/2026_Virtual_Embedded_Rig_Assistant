@@ -1224,6 +1224,7 @@
     "write": "Create text files or replace their contents.",
     "edit": "Replace exact text in a previously read file.",
     "artifact_save": "Save a text result as a session artifact.",
+    "artifact_list": "Find saved artifacts in the current session.",
     "todo": "Manage the session's task list in Plan.",
     "search_docs": "Search the workbench's indexed documents.",
     "read_doc": "Read extracted document pages, sections or text lines.",

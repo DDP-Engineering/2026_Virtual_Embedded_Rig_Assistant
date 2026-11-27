@@ -19,6 +19,7 @@ interface Workflow {
   plan?: { name: string; content: string } | null | undefined;
   planCount: number;
   reportRef: string;
+  discoverReport?: boolean;
 }
 
 function payloads(call: Call): unknown[] {
@@ -48,7 +49,12 @@ function artifactRefs(content: string): string[] {
 
 function exactCitations(content: string, calls: readonly Call[]) {
   const refs = artifactRefs(content);
-  const issued = new Set(calls.flatMap(payloads).flatMap(resultRefs));
+  const issued = new Set(
+    calls
+      .filter(({ name }) => name !== "artifact_list")
+      .flatMap(payloads)
+      .flatMap(resultRefs),
+  );
   return refs.length > 0 && refs.every((ref) => issued.has(ref));
 }
 
@@ -90,7 +96,10 @@ function status(sectionText: string, field: string) {
   const plain = sectionText.replace(/[*\x60]/g, "");
   const values = [
     ...plain.matchAll(
-      new RegExp(`^\\s*(?:- *)?(?:${field}):\\s*(ready_for_review|observation-only|blocked)\\b`, "gim"),
+      new RegExp(
+        `^\\s*(?:- *)?(?:${field})(?: *\\([^\\n)]+\\))?:\\s*(ready_for_review|observation-only|blocked)\\b`,
+        "gim",
+      ),
     ),
   ].map((match) => match[1]?.toLowerCase());
   return values.length === 1 ? values[0] : undefined;
@@ -132,6 +141,7 @@ export function scoreAnalysisWorkflow({
   plan,
   planCount,
   reportRef,
+  discoverReport,
 }: Workflow) {
   const comparisonSources = beforeSave(comparison.calls, report.name);
   const reportRefs = artifactRefs(report.content);
@@ -172,6 +182,15 @@ export function scoreAnalysisWorkflow({
       ) &&
       artifactRefs(criterion).some((ref) => ref.startsWith("docs/boot-test.md#")),
     plannerSkill: planning.outcome?.stopReason === "end" && selectedSkill(planning.calls, "test-planner"),
+    ...(discoverReport && {
+      discoveredSavedReport:
+        reportReadIndex >= 0 &&
+        planSources
+          .slice(0, reportReadIndex)
+          .some(
+            (call) => call.name === "artifact_list" && payloads(call).flatMap(resultRefs).includes(reportRef),
+          ),
+    }),
     exactSavedReportRead: reportReadIndex >= 0,
     planCitations:
       reportReadIndex >= 0 &&

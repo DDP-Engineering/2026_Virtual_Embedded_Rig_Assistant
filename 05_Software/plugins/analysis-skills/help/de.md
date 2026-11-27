@@ -15,9 +15,10 @@ Analyse-Skills gibt dem Agenten zwei Verfahren für die Arbeit mit bereits erfas
 - „Planen Sie bis zu drei manuelle Tests für die Änderung am I2C-Timing in Release 1.1.0.“
 - „Machen Sie aus dem Vergleichsbericht einen Testplan mit einer Referenzkontrolle.“
 
-Geben Sie nach dem erneuten Öffnen des Chats die genaue Referenz `artifact:...` in derselben
-Sitzung an. Der Plan zeigt den Status jedes Falls. Bei dokumentiertem Aufbau und fehlendem
-Abnahmegrenzwert hält der Fall fest, was zu messen ist, und dient der Beobachtung.
+Bitten Sie nach dem erneuten Öffnen des Chats um einen Plan aus dem neuesten gespeicherten Vergleich dieser Sitzung.
+Für einen bestimmten Bericht geben Sie seine genaue Referenz `artifact:...` an. Der Plan zeigt den
+Status jedes Falls. Bei dokumentiertem Aufbau und fehlendem Abnahmegrenzwert hält der Fall fest,
+was zu messen ist, und dient der Beobachtung.
 Gespeicherte Zeilenverweise übernehmen den kleinsten vom Werkzeug gelieferten Bereich, der die zitierten Zeilen abdeckt.
 
 Wenn mehrere Läufe passen, bittet der Agent Sie um eine Auswahl; er nimmt nie stillschweigend den neuesten. Fehlen Board, Revision, Aufbau oder Kriterium, bleibt der Bericht oder Plan als blockiert markiert, und der Agent fragt nach den fehlenden Angaben. Ein Zahlengrenzwert, den keine Quelle nennt, wird nie erfunden.

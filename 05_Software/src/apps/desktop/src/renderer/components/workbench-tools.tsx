@@ -51,6 +51,7 @@ export function WorkbenchTools({
     write: t("workbenchTools.write"),
     edit: t("workbenchTools.edit"),
     artifact_save: t("workbenchTools.artifact_save"),
+    artifact_list: t("workbenchTools.artifact_list"),
     todo: t("workbenchTools.todo"),
     search_docs: t("workbenchTools.search_docs"),
     read_doc: t("workbenchTools.read_doc"),

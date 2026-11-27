@@ -10,6 +10,7 @@ export const builtinToolNames = [
   "write",
   "edit",
   "artifact_save",
+  "artifact_list",
   "todo",
   "search_docs",
   "read_doc",
