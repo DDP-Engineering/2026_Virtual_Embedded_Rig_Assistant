@@ -39,6 +39,21 @@ export class ArtifactMaskingConflict extends Error {
 }
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+const maxDescriptionCharacters = 1024;
+
+function shortenDescription(text: string): string {
+  if (text.length <= maxDescriptionCharacters) return text;
+  let characters = 0;
+  let end = 0;
+  for (const character of text) {
+    characters += 1;
+    if (characters === maxDescriptionCharacters)
+      return end + character.length === text.length ? text : `${text.slice(0, end)}…`;
+    end += character.length;
+  }
+  return text;
+}
+
 function missing(error: unknown) {
   return (error as NodeJS.ErrnoException | undefined)?.code === "ENOENT";
 }
@@ -232,7 +247,8 @@ export class ArtifactStore {
       if (previous && !old)
         throw Error("Artifact storage contains an untracked file or name alias. Choose another name.");
       const project = (text: string) => host.scrubContent?.(text) ?? host.scrub?.(text) ?? text;
-      const projectedDescription = () => (args.description === undefined ? null : project(args.description));
+      const projectedDescription = () =>
+        args.description === undefined ? null : shortenDescription(project(args.description));
       const assertName = () => {
         if (host.scrub && host.scrub(args.name) !== args.name)
           throw Error("Artifact name contains protected credential data.");

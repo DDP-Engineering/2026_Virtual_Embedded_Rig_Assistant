@@ -258,6 +258,24 @@ it("explains rejected names, byte limits and duplicate artifact saves", { timeou
   expect(service.listArtifacts(s.id)).toHaveLength(1);
 });
 
+it("saves the full artifact with a shortened Unicode description and preserves descriptions at the limit", async () => {
+  const description = "🙂".repeat(1024);
+  const content = "# Résumé\n===\nRezultat integral.\n";
+  const { service } = await setup([
+    save({ name: "summary.md", content, description: `${description} extra` }),
+    save({ name: "exact.md", content, description }),
+  ]);
+  const session = service.create();
+  service.send(session.id, "save");
+  await service.waitIdle(session.id);
+  const rows = service.listArtifacts(session.id);
+  expect(rows).toHaveLength(2);
+  const shortened = rows.find((row) => row.name === "summary.md")!;
+  expect(shortened.description).toBe(`${"🙂".repeat(1023)}…`);
+  expect((await service.openArtifact(shortened.artifactId)).content).toBe(content);
+  expect(rows.find((row) => row.name === "exact.md")?.description).toBe(description);
+});
+
 it("overwrites sequentially with stable identity, updated metadata and immutable session isolation", async () => {
   const { service, handle } = await setup([
     save({ name: "summary.md", content: "old" }),
@@ -353,6 +371,27 @@ it("keeps the file and metadata on an identical masked overwrite, and repairs ch
   await store.save(host, { ...retry, description: "New note" }, signal);
   expect(store.list(session.id)[0]?.description).toBe("New note");
   expect(events).toBe(3);
+});
+
+it("masks a description before shortening it and skips overwrites that only change its discarded tail", async () => {
+  const { store, artifactHost: host, path, session } = await direct();
+  const signal = new AbortController().signal;
+  let events = 0;
+  host.record = () => () => {
+    events++;
+  };
+  host.scrubContent = (text) => text.replaceAll("private-token", "[REDACTED]");
+  const prefix = "x".repeat(1013);
+  const args = { name: "summary.md", content: "x", description: `${prefix}private-token first tail` };
+  const first = await store.save(host, args, signal);
+  const original = store.list(session.id);
+  expect(original[0]?.description).toBe(`${prefix}[REDACTED]…`);
+  const before = await stat(path, { bigint: true });
+  const retry = { ...args, description: `${prefix}private-token second tail`, overwrite: true };
+  expect(await store.save(host, retry, signal)).toEqual(first);
+  expect(store.list(session.id)).toEqual(original);
+  expect((await stat(path, { bigint: true })).mtimeNs).toBe(before.mtimeNs);
+  expect(events).toBe(1);
 });
 
 it("rolls back a cancelled rename before a concurrent read can observe the new version", async () => {

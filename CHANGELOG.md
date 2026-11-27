@@ -66,6 +66,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Preserve web citations when results are shortened, including Tavily links to sections.
 - Report the configured time limit when a web download times out.
 - Save and verify session artifacts asynchronously, skipping identical overwrites.
+- Shorten long session artifact descriptions while still saving the full artifact content.
 
 ## [0.4.0] - 2026-11-26
 

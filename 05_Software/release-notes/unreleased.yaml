@@ -74,10 +74,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Unchanged files and artifacts skip rewriting. VERA confirms saves with history pending.
-      ro: Fișierele și artefactele identice nu se rescriu. Salvarea se confirmă și cu istoricul în așteptare.
-      de: Unveränderte Dateien und Artefakte bleiben erhalten. VERA meldet Speichern bei offenem Verlauf.
-      fr: Les fichiers et artefacts identiques restent intacts. VERA confirme même si l’historique attend.
+      en: Saves skip unchanged files, shorten long artifact notes, and confirm while history is pending.
+      ro: Notele lungi se scurtează. Salvările identice evită rescrierea. Confirmarea nu așteaptă istoricul.
+      de: Lange Notizen werden gekürzt. Identische Daten bleiben. Bestätigung auch bei offenem Verlauf.
+      fr: Fichiers identiques préservés. Notes longues abrégées. Confirmation même si l’historique attend.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
