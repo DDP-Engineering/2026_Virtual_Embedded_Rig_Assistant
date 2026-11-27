@@ -32,6 +32,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Limit diff calculation time while keeping large file changes available for approval.
 - Report when a file was saved and the change history is still pending.
 - Identify UTF-16 as an unsupported editing encoding in file write errors.
+- Classify large files from their first bytes and in parallel batches during `grep`, so a search over a workbench with a build folder no longer reads every object file.
+- Read and search a file that is being appended to, such as a serial capture or a running build's log; `read` marks it as growing.
+- Keep CRLF line endings, the UTF-8 BOM and a Latin-1 encoding when `write` overwrites a file.
+- Match an LF passage in a file with mixed line endings when `edit` receives it as written.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.

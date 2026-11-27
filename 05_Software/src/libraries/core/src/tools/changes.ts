@@ -155,31 +155,41 @@ export async function prepareChange(
   if (before !== null && isBinary(before)) throw Error("Cannot change a binary file with text tools.");
   let replacements = 0;
   let output: string;
-  // A file that is not valid UTF-8 (cp1252 vendor sources) is edited byte for byte as latin1; decoding it
-  // as UTF-8 would turn every such byte in the whole file into U+FFFD on save.
+  // A file that is not valid UTF-8 (cp1252 vendor sources) is changed byte for byte as latin1; decoding it
+  // as UTF-8 would turn every such byte in the whole file into U+FFFD on save. A rewrite keeps that
+  // encoding while its text fits it, and becomes UTF-8 only when it brings a character Latin-1 lacks.
+  const latin1Text = (value: string) => !Array.from(value).some((char) => char.charCodeAt(0) > 0xff);
+  const legacy = before !== null && !Buffer.from(before.toString("utf8"), "utf8").equals(before);
   const encoding: BufferEncoding =
-    before !== null && !("content" in args) && !Buffer.from(before.toString("utf8"), "utf8").equals(before)
-      ? "latin1"
-      : "utf8";
+    legacy && (!("content" in args) || latin1Text(args.content)) ? "latin1" : "utf8";
   const original = before?.toString(encoding) ?? "";
-  if (
-    encoding === "latin1" &&
-    "newString" in args &&
-    Array.from(args.newString).some((char) => char.charCodeAt(0) > 0xff)
-  )
+  if (encoding === "latin1" && "newString" in args && !latin1Text(args.newString))
     throw Error(
       "This file is not UTF-8. Use only Latin-1 characters in newString, or rewrite it with write.",
     );
-  if ("content" in args) output = args.content;
-  else {
+  if ("content" in args) {
+    output = args.content;
+    if (before !== null) {
+      // An overwrite keeps the file's format, as edit does: models write LF and no BOM, and a file that
+      // silently changes its line endings shows every line as changed in the approval and in Git.
+      const bom = encoding === "utf8" && original.startsWith("\ufeff") && !output.startsWith("\ufeff");
+      if (original.includes("\r\n") && !/(?<!\r)\n/.test(original) && !output.includes("\r"))
+        output = output.replace(/\n/g, "\r\n");
+      if (bom) output = `\ufeff${output}`;
+    }
+  } else {
     if (before === null) throw Error("File not found. Read an existing file before editing it.");
     const bom = original.startsWith("\ufeff") ? "\ufeff" : "";
     const text = bom ? original.slice(1) : original;
     const crlf = text.includes("\r\n");
     const normalize = (value: string) => (crlf ? value.replace(/\r?\n/g, "\r\n") : value);
-    const oldString = normalize(args.oldString),
-      newString = normalize(args.newString);
-    const parts = text.split(oldString);
+    // The exact text first: in a file with mixed line endings an LF passage matches only as written.
+    // Then the CRLF form, for a model that sends LF for a CRLF file.
+    const exact = text.split(args.oldString);
+    const parts = exact.length > 1 ? exact : text.split(normalize(args.oldString));
+    // The replacement follows the line endings of what it replaces.
+    const newString =
+      exact.length > 1 && /(?<!\r)\n/.test(args.oldString) ? args.newString : normalize(args.newString);
     replacements = parts.length - 1;
     if (!replacements)
       throw Error(

@@ -5,9 +5,14 @@ import type { GrepFileResult, GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary, utf16Bom, validUtf8 } from "./binary.js";
 import { discoverFilePaths, inspectDiscoveredFile } from "./discovery.js";
-import { readGuardedFile, textLines } from "./files.js";
+import { readFilePrefix, readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
 import { LogFailure } from "./log-failure.js";
+
+/** The sample `isBinary` classifies; files up to this size are simply read. */
+const SNIFF_BYTES = 8192;
+/** Candidates inspected at once; the same batch size as file discovery. */
+const CLASSIFY_BATCH = 16;
 
 /** Dedicated task entry, bundled independently by each host; never called by main-thread tools. */
 async function execute(task: WorkerTask) {
@@ -53,77 +58,98 @@ async function execute(task: WorkerTask) {
     const content = !args.output || args.output === "content";
     const reportedFiles = content ? undefined : new Set<string>();
     const maxFileBytes = task.maxFileBytes ?? 5 * 1024 * 1024;
-    for (const [index, candidate] of paths.entries()) {
+    // Whether a candidate is searched, counted as unsearched (`skip`) or dropped. A larger file is
+    // classified from its first bytes, so object files, images and archives are never read whole.
+    const classify = async (candidate: string) => {
       const file = await inspectDiscoveredFile(guard, candidate, signal);
-      if (!file || reportedFiles?.has(file.path)) continue;
-      if (file.size > maxFileBytes) {
-        skipped++;
-        continue;
-      }
-      let bytes: Buffer;
-      let path: string;
-      try {
-        const read = await readGuardedFile(guard, file.path, maxFileBytes, signal);
-        bytes = read.bytes;
-        path = read.target.relative;
-      } catch {
-        skipped++;
-        continue;
-      }
-      if (reportedFiles?.has(path)) continue;
-      const bom = utf16Bom(bytes);
-      if (!bom && isBinary(bytes)) {
-        skipped++;
-        continue;
-      }
-      let decoded: string;
-      try {
-        decoded = bom
-          ? new TextDecoder(bom, { fatal: true }).decode(bytes)
-          : bytes.toString(validUtf8(bytes) ? "utf8" : "latin1");
-      } catch {
-        skipped++;
-        continue;
-      }
-      const lines = textLines(decoded);
-      let fileMatches = 0;
-      for (let i = 0; i < lines.length; i++) {
-        const text = lines[i] ?? "";
-        if (!regex.test(text)) continue;
-        if (!content) {
-          fileMatches++;
-          if (args.output === "files") break;
+      if (!file) return undefined;
+      if (file.size > maxFileBytes) return { file, skip: true };
+      if (file.size > SNIFF_BYTES)
+        try {
+          const prefix = await readFilePrefix(file.absolute, SNIFF_BYTES, signal);
+          if (!utf16Bom(prefix) && isBinary(prefix)) return { file, skip: true };
+        } catch {
+          return { file, skip: true };
+        }
+      return { file, skip: false };
+    };
+    // Classification runs a batch at a time, as file discovery does: a build folder is mostly files to
+    // skip, and one at a time their checks alone approached the task deadline. Results keep path order.
+    search: for (let start = 0; start < paths.length; start += CLASSIFY_BATCH) {
+      const batch = await Promise.all(paths.slice(start, start + CLASSIFY_BATCH).map(classify));
+      for (const [offset, item] of batch.entries()) {
+        const index = start + offset;
+        if (!item || reportedFiles?.has(item.file.path)) continue;
+        if (item.skip) {
+          skipped++;
           continue;
         }
-        const match: GrepMatch = {
-          path,
-          line: i + 1,
-          text: text.slice(0, 16000),
-          ...(!isAbsolute(path) || parseLineRef(`${path}#L${i + 1}-L${i + 1}`)
-            ? { ref: formatLineRef({ path, start: i + 1, end: i + 1 }) }
-            : {}),
-        };
-        if (match.text.length < text.length) truncated = true;
-        const context = args.context;
-        if (context)
-          match.context = lines.slice(Math.max(0, i - context), i + context + 1).flatMap((line, n) => {
-            const number = Math.max(0, i - context) + n + 1;
-            if (number === i + 1) return [];
-            if (line.length > 2000) truncated = true;
-            return [{ line: number, text: line.slice(0, 2000) }];
-          });
-        port.postMessage({ type: "partial", match });
-        if (++returned >= maxResults) break;
-      }
-      if (reportedFiles && fileMatches) {
-        reportedFiles.add(path);
-        const file: GrepFileResult = { path, count: fileMatches };
-        port.postMessage({ type: "file", file });
-        returned++;
-      }
-      if (returned >= maxResults) {
-        truncated ||= content || index + 1 < paths.length;
-        break;
+        const file = item.file;
+        let bytes: Buffer;
+        let path: string;
+        try {
+          const read = await readGuardedFile(guard, file.path, maxFileBytes, signal, { allowGrowth: true });
+          bytes = read.bytes;
+          path = read.target.relative;
+        } catch {
+          skipped++;
+          continue;
+        }
+        if (reportedFiles?.has(path)) continue;
+        const bom = utf16Bom(bytes);
+        if (!bom && isBinary(bytes)) {
+          skipped++;
+          continue;
+        }
+        let decoded: string;
+        try {
+          decoded = bom
+            ? new TextDecoder(bom, { fatal: true }).decode(bytes)
+            : bytes.toString(validUtf8(bytes) ? "utf8" : "latin1");
+        } catch {
+          skipped++;
+          continue;
+        }
+        const lines = textLines(decoded);
+        let fileMatches = 0;
+        for (let i = 0; i < lines.length; i++) {
+          const text = lines[i] ?? "";
+          if (!regex.test(text)) continue;
+          if (!content) {
+            fileMatches++;
+            if (args.output === "files") break;
+            continue;
+          }
+          const match: GrepMatch = {
+            path,
+            line: i + 1,
+            text: text.slice(0, 16000),
+            ...(!isAbsolute(path) || parseLineRef(`${path}#L${i + 1}-L${i + 1}`)
+              ? { ref: formatLineRef({ path, start: i + 1, end: i + 1 }) }
+              : {}),
+          };
+          if (match.text.length < text.length) truncated = true;
+          const context = args.context;
+          if (context)
+            match.context = lines.slice(Math.max(0, i - context), i + context + 1).flatMap((line, n) => {
+              const number = Math.max(0, i - context) + n + 1;
+              if (number === i + 1) return [];
+              if (line.length > 2000) truncated = true;
+              return [{ line: number, text: line.slice(0, 2000) }];
+            });
+          port.postMessage({ type: "partial", match });
+          if (++returned >= maxResults) break;
+        }
+        if (reportedFiles && fileMatches) {
+          reportedFiles.add(path);
+          const file: GrepFileResult = { path, count: fileMatches };
+          port.postMessage({ type: "file", file });
+          returned++;
+        }
+        if (returned >= maxResults) {
+          truncated ||= content || index + 1 < paths.length;
+          break search;
+        }
       }
     }
     port.postMessage({ type: "done", truncated, skipped });

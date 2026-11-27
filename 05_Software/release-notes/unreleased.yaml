@@ -95,10 +95,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: VERA identifies UTF-16 text when the file encoding prevents editing.
-      ro: VERA identifică textul UTF-16 când această codare împiedică editarea.
-      de: VERA erkennt UTF-16-Text, wenn diese Kodierung eine Bearbeitung verhindert.
-      fr: VERA identifie le texte UTF-16 lorsque cet encodage empêche la modification.
+      en: Overwrites keep line endings, BOM and encoding. VERA identifies UTF-16 text it cannot edit.
+      ro: Suprascrierea păstrează sfârșiturile de linie, BOM-ul și codarea. Textul UTF-16 este semnalat.
+      de: Überschreiben erhält Zeilenenden, BOM und Kodierung. VERA meldet nicht editierbares UTF-16.
+      fr: L’écrasement garde fins de ligne, BOM et encodage. VERA signale l’UTF-16 non modifiable.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

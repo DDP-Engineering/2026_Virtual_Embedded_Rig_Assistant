@@ -87,7 +87,7 @@ export async function inspectDiscoveredFile(guard: PathGuard, path: string, sign
     throw error;
   });
   if (!info?.isFile()) return undefined;
-  return { path: target.relative, mtimeMs: info.mtimeMs, size: info.size };
+  return { path: target.relative, absolute: target.absolute, mtimeMs: info.mtimeMs, size: info.size };
 }
 
 /** Validate candidates in small batches while preserving the examined-file limit and order. */

@@ -115,8 +115,8 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `web_read` | read | A public page through the provider | 12 000 characters (max 16 000) |
 | `web_download` | write | Saves a public file under `.vera/downloads/`; content never reaches the model | 100 MiB, 120 s, 5 redirects |
 | `parts_search` | read | Mouser, DigiKey, TME, Farnell, Rutronik search by keyword or part number | parts-search plugin; never orders |
-| `write` | write | Creates or overwrites a UTF-8 file | overwrite needs a current read |
-| `edit` | write | Replaces exact text, keeps CRLF and BOM | one match or `replaceAll`; current read |
+| `write` | write | Creates a UTF-8 file or overwrites a file, keeping its CRLF, BOM and Latin-1 encoding | overwrite needs a current read |
+| `edit` | write | Replaces exact text, keeps CRLF, mixed line endings and BOM | one match or `replaceAll`; current read |
 | `artifact_save` | session | Session artifact, ref `artifact:<name>` | 5 MiB; name 1–100 portable characters |
 | `todo` | session | Replaces the session Plan | 50 items, 200 characters |
 | `run_command` | program | Shell command: PowerShell 7, Windows PowerShell or cmd; `bash -lc` or `sh -c` on Linux | 4 096 characters; foreground 600 s, exit code, last 12 000 characters, `.vera/runs` log; stdin closed |

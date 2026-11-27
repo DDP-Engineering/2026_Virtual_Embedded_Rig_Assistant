@@ -212,3 +212,18 @@ it("does not mark an excluded matching line as clipped context", async () => {
   );
   expect(result).toMatchObject({ truncated: false, matches: [{ context: [] }, { context: [] }] });
 });
+
+it("skips a large binary file from its first bytes and still searches a large text file", async () => {
+  root = await mkdtemp(join(tmpdir(), "vera-grep-sniff-"));
+  // An object file: binary at the start, with the searched text far past the classified sample.
+  await writeFile(join(root, "firmware.o"), Buffer.concat([Buffer.alloc(64 * 1024), Buffer.from("\nhit\n")]));
+  await writeFile(join(root, "notes.txt"), `${"filler line\n".repeat(4000)}hit\n`);
+  bundle = workerFixture();
+  pool = new api.NodeWorkerPool(bundle.url);
+  const result = await api.grepTool.execute(
+    api.createToolContext(root, pool),
+    { pattern: "^hit$" },
+    new AbortController().signal,
+  );
+  expect(result).toMatchObject({ matches: [{ path: "notes.txt", line: 4001 }], skippedFiles: 1 });
+});

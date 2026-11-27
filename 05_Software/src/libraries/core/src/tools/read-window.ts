@@ -13,7 +13,15 @@ class LegacyText extends Error {
     super("Legacy text encoding");
   }
 }
-type ReadWindowOptions = { utf8Log?: boolean; maxChars?: number };
+type ReadWindowOptions = {
+  utf8Log?: boolean;
+  maxChars?: number;
+  /**
+   * Accept a file that was only appended to while it was read (a serial capture, a running build's log):
+   * the window, line count and hash then describe the bytes it had when opened, and `growing` is set.
+   */
+  allowGrowth?: boolean;
+};
 
 /**
  * Full-file metadata scan stays streaming; only the requested source window is retained. `maxChars` bounds
@@ -128,7 +136,10 @@ async function scanWindow(
     };
     for (;;) {
       signal.throwIfAborted();
-      const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
+      // With growth allowed the read stops at the size the file had when opened, so the snapshot is stable.
+      const length = options.allowGrowth ? Math.min(buffer.length, before.size - position) : buffer.length;
+      if (length <= 0) break;
+      const { bytesRead } = await handle.read(buffer, 0, length, position);
       if (!bytesRead) break;
       if (options.utf8Log && position + bytesRead > 50 * 1024 * 1024)
         throw Error("Log exceeds the 50 MiB source limit.");
@@ -147,17 +158,24 @@ async function scanWindow(
       consume(decode(bytes));
       position += bytesRead;
     }
-    consume(decode());
-    if (hasContent) endLine();
     const after = await handle.stat();
+    const growing = options.allowGrowth === true && after.size > before.size;
+    try {
+      consume(decode());
+    } catch (error) {
+      // The snapshot of a growing file may end inside a character the writer has not finished.
+      if (!growing) throw error;
+    }
+    if (hasContent) endLine();
     const currentTarget = await guard.resolve(path);
     const currentStat = await lstat(currentTarget.absolute);
     signal.throwIfAborted();
     if (
       position !== before.size ||
-      before.size !== after.size ||
-      before.mtimeMs !== after.mtimeMs ||
-      before.ctimeMs !== after.ctimeMs ||
+      (!growing &&
+        (before.size !== after.size ||
+          before.mtimeMs !== after.mtimeMs ||
+          before.ctimeMs !== after.ctimeMs)) ||
       currentTarget.key !== target.key ||
       currentStat.ino !== before.ino ||
       currentStat.dev !== before.dev
@@ -171,6 +189,7 @@ async function scanWindow(
       totalLines,
       truncated: clipped || offset - 1 + limit < totalLines,
       lineClipped,
+      growing,
       sha256: hash.digest("hex"),
       mtimeMs: after.mtimeMs,
       modified: after.mtime.toISOString(),
