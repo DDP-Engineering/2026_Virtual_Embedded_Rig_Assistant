@@ -95,6 +95,8 @@ Dans le chat, saisissez l’origine exacte, par exemple `https://example.com`, s
 
 Demandez à l’agent de lire une page ou de suivre un lien. Le chat affiche l’activité et la page autorisée. **Afficher le navigateur** place l’onglet au premier plan. **Arrêter la navigation** arrête le tour et annule l’opération en cours. **Révoquer l’accès** et **Fermer le navigateur** mettent fin à la session temporaire et effacent les autorisations. Fermer la fenêtre, désactiver l’un des réglages ou supprimer le navigateur révoque aussi l’accès. Pour les fichiers pris en charge, utilisez le téléchargement géré.
 
+Si le navigateur se ferme après un échec de navigation, accordez de nouveau l’accès avant de réessayer.
+
 ## À propos
 
 **À propos** affiche la version de l’application, la plateforme, l’architecture, si VERA s’exécute en version portable, les paramètres régionaux du système, les versions des environnements d’exécution, la licence et la liste des composants tiers avec leurs licences.

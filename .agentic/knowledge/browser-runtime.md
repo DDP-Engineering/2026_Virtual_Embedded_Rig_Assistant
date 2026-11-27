@@ -70,7 +70,7 @@ both release the grant and window. Chat Stop uses the existing turn abort.
   from main, so renderer reload preserves the live window of its owner and
   cannot transfer grants or tabs between conversations. Closing the last
   visible tab externally also disposes the lease, including during navigation.
-  The adapter marks its own failed-navigation tab cleanup separately.
+  After a failed open, the adapter discards its tab and closes the browser if no tabs remain.
   Terminal browser notices are scoped to the current renderer and opt-ins.
 - The loopback proxy rechecks the exact HTTP(S) origin at every request and
   redirect. Every A and AAAA answer must be public. The request signal
@@ -89,6 +89,9 @@ both release the grant and window. Chat Stop uses the existing turn abort.
   or timeout closes the owned browser. A snapshot uses a fixed isolated-world reader for bounded top-level
   viewport text and links. The 24,000-byte result marks page content untrusted.
   Navigation, tab selection, scroll and a new snapshot retire prior references.
+  The tool result limit shortens snapshots while preserving the full citation URL.
+  Chat and the tools use the same fallback tab after the selected tab closes.
+  Scroll reports whether the document viewport moved.
 - Policy refusals and unsupported document responses produce a proxy-owned
   marker and preserve the currently displayed page. Upstream pages cannot set
   the marker. Search, provider reading and managed downloads remain separate.

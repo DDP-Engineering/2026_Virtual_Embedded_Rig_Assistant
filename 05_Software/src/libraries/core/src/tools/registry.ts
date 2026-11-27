@@ -251,12 +251,17 @@ export function capToolResult(
         : toolName && programToolNames.includes(toolName)
           ? "output"
           : undefined;
+    const browserSnapshot = toolName === "browser_snapshot";
     for (let round = 0; text.length > limit && round < 100; round++) {
       let best: { owner: Record<string, unknown>; key: string; size: number } | undefined;
       const visit = (owner: Record<string, unknown>) => {
         for (const [key, item] of Object.entries(owner)) {
           const shrinkable =
-            (typeof item === "string" && item.length > 32 && key !== "ref" && key !== "path") ||
+            (typeof item === "string" &&
+              item.length > 32 &&
+              key !== "ref" &&
+              key !== "path" &&
+              (!browserSnapshot || key === "title" || key === "text")) ||
             (Array.isArray(item) && item.length > 0);
           const size = shrinkable ? JSON.stringify(item).length : 0;
           if (size > (best?.size ?? 0)) best = { owner, key, size };

@@ -33,6 +33,7 @@ type BrowserPageLocation = {
 
 export type BrowserToolResult =
   | BrowserPageLocation
+  | (BrowserPageLocation & { moved: boolean })
   | (BrowserPageLocation & {
       snapshotId: string;
       title: string;
@@ -59,7 +60,7 @@ const descriptions: Record<BrowserToolName, string> = {
   browser_follow:
     "Navigate the selected tab to a link identified by a ref from its latest browser_snapshot. Returns the final citation URL. Read a fresh snapshot after navigating.",
   browser_scroll:
-    "Scroll the selected web page one viewport up or down. Read a fresh browser_snapshot for the new viewport.",
+    "Scroll the selected web page one viewport up or down. Reports whether the viewport moved. Read a fresh browser_snapshot for the new viewport.",
   browser_tabs: "List the tabs and selected tab in this session's browser.",
   browser_switch:
     "Select an owned tab using a tabId from browser_tabs. Read a fresh snapshot before following links.",

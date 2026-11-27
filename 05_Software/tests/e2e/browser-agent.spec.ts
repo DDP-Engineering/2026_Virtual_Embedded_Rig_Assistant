@@ -48,6 +48,7 @@ test("Desktop replay reads rendered public pages, cites the final URL and keeps 
       call("scroll", { direction: "down" }),
       call("snapshot"),
       call("scroll", { direction: "up" }),
+      call("scroll", { direction: "up" }),
       call("snapshot"),
       { text: "The source reports 3.3 V. [Reference voltage]({{url}})" },
     );
@@ -173,6 +174,8 @@ test("Desktop replay reads rendered public pages, cites the final URL and keeps 
     const firstState = await run(first);
     const scans = await results(first, firstState, "snapshot");
     const follows = await results(first, firstState, "follow");
+    const scrolls = await results(first, firstState, "scroll");
+    expect(scrolls.map(({ value }) => value.moved)).toEqual([true, true, false]);
     expect(scans[0]?.value).toMatchObject({
       title: "Rendered browser fixture",
       url: `${origin}/agent-page`,

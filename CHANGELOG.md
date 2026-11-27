@@ -101,6 +101,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Validate and install a plugin draft kept under version control: `.git`, compiled caches, a virtual environment and desktop files are left out of the package and listed.
 - Explain each plugin validation error and say why a draft cannot be read, instead of codes and a bare tool failure.
 - Say why a trial plugin was not installed after the approval, such as a draft changed since its review.
+- Preserve browser citations, release empty sessions, and report tab selection and scroll movement accurately.
 
 ## [0.4.0] - 2026-11-26
 

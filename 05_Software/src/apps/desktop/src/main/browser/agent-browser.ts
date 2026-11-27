@@ -186,9 +186,10 @@ export class AgentBrowser implements AgentBrowserPort {
       case "browser_open":
         return this.open(call.args.url, signal, navigationMs);
       case "browser_tabs": {
+        const selected = this.visiblePage();
         const tabs = this.ownedTabs();
         return {
-          activeTabId: tabs.find((tab) => tab === this.active)?.id ?? null,
+          activeTabId: tabs.find((tab) => tab.page === selected)?.id ?? null,
           tabs: tabs.map(({ id, page }) => ({ tabId: id, url: this.pageUrl(page) })),
         };
       }
@@ -214,9 +215,9 @@ export class AgentBrowser implements AgentBrowserPort {
         const tab = this.selected();
         const url = this.location(tab);
         tab.links.clear();
-        await scrollPage(tab.page, call.args.direction);
+        const moved = await scrollPage(tab.page, call.args.direction);
         signal.throwIfAborted();
-        return { tabId: tab.id, url: this.location(tab, url) };
+        return { tabId: tab.id, url: this.location(tab, url), moved };
       }
       case "browser_snapshot":
         return this.snapshot(this.selected(), signal);
@@ -253,18 +254,21 @@ export class AgentBrowser implements AgentBrowserPort {
         { once: true },
       );
     }
-    const page = await browser.newTab();
-    signal.throwIfAborted();
-    const tab = this.remember(page);
+    let page: Page | undefined;
     try {
+      page = await browser.newTab();
+      signal.throwIfAborted();
       if (!this.available("browser_open")) throw new BrowserError("policy-denied");
+      const tab = this.remember(page);
       const location = await this.navigate(tab, url, signal, navigationMs);
       this.select(tab);
       return location;
     } catch (error) {
       // The operation deadline owns session cancellation and cannot wait for tab disposal.
-      if (!signal.aborted && !page.isClosed() && !configuredNavigationTimeout(error, navigationMs))
-        await browser.discardTab(page);
+      if (!signal.aborted && !browser.closed.aborted && !configuredNavigationTimeout(error, navigationMs)) {
+        if (page && !page.isClosed()) await browser.discardTab(page);
+        if (!browser.tabs().some((tab) => !tab.isClosed())) await this.host.closeSession(this.owner);
+      }
       throw error;
     }
   }
@@ -351,8 +355,11 @@ export class AgentBrowser implements AgentBrowserPort {
   }
 
   private selected(): Tab {
-    if (!this.active || this.active.page.isClosed()) throw new BrowserError("page-closed");
-    return this.active;
+    const page = this.visiblePage();
+    if (!page) throw new BrowserError("page-closed");
+    const tab = this.remember(page);
+    if (this.active !== tab) this.select(tab);
+    return tab;
   }
 
   private ownedTabs() {
