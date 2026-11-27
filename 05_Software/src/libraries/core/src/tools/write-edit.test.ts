@@ -193,6 +193,43 @@ it("preserves CRLF and BOM while matching LF arguments", async () => {
   expect(await edit(ctx, "one\ntwo\n", "three\nfour\n")).toMatchObject({ added: 2, removed: 2 });
   expect(await readFile(join(root, "file.txt"))).toEqual(Buffer.from("\ufeffthree\r\nfour\r\n"));
 });
+it("matches an LF passage of a file with mixed line endings as it is written", async () => {
+  await writeFile(join(root, "file.txt"), "int a;\r\nint b;\nint c;\nint d;\r\n");
+  const ctx = context();
+  await read(ctx);
+  expect(await edit(ctx, "int b;\nint c;", "int b;\nint C;")).toMatchObject({ replacements: 1 });
+  expect(await readFile(join(root, "file.txt"), "utf8")).toBe("int a;\r\nint b;\nint C;\nint d;\r\n");
+  // A one-line match in the CRLF part still gets CRLF in a multi-line replacement.
+  ctx.change.callId = crypto.randomUUID();
+  await edit(ctx, "int a;", "int a;\nint e;");
+  expect(await readFile(join(root, "file.txt"), "utf8")).toBe(
+    "int a;\r\nint e;\r\nint b;\nint C;\nint d;\r\n",
+  );
+});
+it("keeps CRLF, the BOM and a Latin-1 encoding when a file is overwritten", async () => {
+  const ctx = context();
+  const overwrite = async (before: string | Buffer, content: string) => {
+    await writeFile(join(root, "file.txt"), before);
+    await read(ctx);
+    ctx.change.callId = crypto.randomUUID();
+    await api.writeTool.execute(ctx, { path: "file.txt", content }, signal());
+    return readFile(join(root, "file.txt"));
+  };
+  // Models send LF and no BOM: one changed word must stay a one-line change.
+  expect(await overwrite("﻿int a;\r\nint b;\r\n", "int a;\nint B;\n")).toEqual(
+    Buffer.from("﻿int a;\r\nint B;\r\n"),
+  );
+  // A file with mixed line endings has no single form to keep; the content is written as given.
+  expect(await overwrite("int a;\r\nint b;\n", "int a;\nint B;\n")).toEqual(Buffer.from("int a;\nint B;\n"));
+  // cp1252 degree sign: one byte before and after.
+  const degree = (tail: string) =>
+    Buffer.concat([Buffer.from("// 25 "), Buffer.from([0xb0]), Buffer.from(tail)]);
+  expect(await overwrite(degree("C\nint a;\n"), "// 25 °C\nint A;\n")).toEqual(degree("C\nint A;\n"));
+  // A character Latin-1 lacks makes the rewrite UTF-8.
+  expect(await overwrite(degree("C\nint a;\nint b;\n"), "// 25 °C Ω\nint a;\n")).toEqual(
+    Buffer.from("// 25 °C Ω\nint a;\n"),
+  );
+});
 it("edits a file that is not UTF-8 without changing its other bytes", async () => {
   // cp1252 degree and micro signs, as in vendor C sources.
   const original = Buffer.concat([

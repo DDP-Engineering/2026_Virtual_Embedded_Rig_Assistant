@@ -37,6 +37,19 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Limit diff calculation time while keeping large file changes available for approval.
 - Report when a file was saved and the change history is still pending.
 - Identify UTF-16 as an unsupported editing encoding in file write errors.
+- Classify large files from their first bytes and in parallel batches during `grep`, so a search over a workbench with a build folder no longer reads every object file.
+- Read and search a file that is being appended to, such as a serial capture or a running build's log; `read` marks it as growing.
+- Keep CRLF line endings, the UTF-8 BOM and a Latin-1 encoding when `write` overwrites a file.
+- Match an LF passage in a file with mixed line endings when `edit` receives it as written.
+- Say why `grep` cannot search a file it is given by name when the file is binary or above the size limit, instead of returning no matches.
+- Name a missing file or a folder in the `read` error instead of passing on the system message with its absolute path.
+- Return the page or line count from `read_doc`, the next heading of a section, and all headings when no heading is given, so Word, spreadsheet and HTML documents can be read from start to end.
+- Say why `read_doc` cannot read a document by its index state: not in the workbench documents, waiting to be indexed, scanned without text, too large, unsupported type or failed.
+- Let `program_output` wait up to 10 minutes for a background run in one call.
+- Show the passage that holds the searched terms in `search_docs` snippets instead of the start of the fragment.
+- Leave `.vera`, `.git` and `node_modules` out of `grep` and `glob` searches in Bypass unless the search path or pattern names them, so a search finds the sources instead of timing out in dependencies.
+- Name the credential environment variables a failed `run_command` ran without, so the agent can say why a tool reports that it is not signed in.
+- Tell the agent how a terminal is shared when `terminal_read` finds none shared.
 - Report missing search locations and apply filename filters to explicitly selected files.
 - Keep discovery results when a file disappears and stop directory enumeration on cancellation.
 - Apply grep file limits to distinct paths and return complete counts for fully searched files.

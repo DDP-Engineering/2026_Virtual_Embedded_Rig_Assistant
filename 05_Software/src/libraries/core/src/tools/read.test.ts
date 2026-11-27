@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { appendFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -156,6 +157,44 @@ it("counts mixed line endings when a CRLF crosses a read block boundary", async 
     truncated: false,
   });
   expect([...ctx.lastReads.values()][0]?.sha256).toBe(createHash("sha256").update(data).digest("hex"));
+});
+it("names a missing file and a folder instead of passing on the system error", async () => {
+  const signal = new AbortController().signal;
+  const missing = api.readTool.execute(context(), { path: "docs/missing.c" }, signal);
+  await expect(missing).rejects.toThrow("File not found: docs/missing.c. Check the path with list or glob.");
+  // The system message would carry the absolute path of the workbench.
+  await expect(missing).rejects.not.toThrow(root);
+  await expect(api.readTool.execute(context(), { path: "docs" }, signal)).rejects.toThrow(
+    "docs is a folder. Use list to see its entries.",
+  );
+});
+it("reads a log that is appended to while it is read, as it was when opened", async () => {
+  const path = join(root, "serial.log");
+  await writeFile(path, "boot\nready\n");
+  const ctx = context();
+  // The tool checks its signal once before it opens the file and then before every block: the second
+  // check runs after the size was taken, which is when another process appends.
+  let checks = 0;
+  const appending = {
+    aborted: false,
+    throwIfAborted() {
+      if (++checks === 2) appendFileSync(path, "later\n");
+    },
+  } as unknown as AbortSignal;
+  expect(await api.readTool.execute(ctx, { path: "serial.log" }, appending)).toMatchObject({
+    text: "1: boot\n2: ready",
+    totalLines: 2,
+    growing: true,
+  });
+  expect(checks).toBeGreaterThanOrEqual(2);
+  const settled = await api.readTool.execute(ctx, { path: "serial.log" }, new AbortController().signal);
+  expect(settled).toMatchObject({ text: "1: boot\n2: ready\n3: later", totalLines: 3 });
+  expect(settled).not.toHaveProperty("growing");
+  // Other readers of the same window keep the strict check: a citation must match its indexed source.
+  checks = 0;
+  await expect(readWindow(await api.PathGuard.create(root), "serial.log", 1, 10, appending)).rejects.toThrow(
+    "File changed while reading",
+  );
 });
 it("reads the full log of a command run, the only readable file under .vera", async () => {
   await mkdir(join(root, ".vera/runs"), { recursive: true });

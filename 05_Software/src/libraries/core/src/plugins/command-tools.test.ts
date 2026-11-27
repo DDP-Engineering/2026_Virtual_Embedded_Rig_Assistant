@@ -145,6 +145,27 @@ it("returns foreground exit, tail and complete log, inheriting only the host-fil
   await expect(call.apply(signal())).rejects.toThrow("already used");
 });
 
+it("tells a failed command which credential variables it ran without, and a successful one nothing", async () => {
+  const shellHost = ctx.programs?.host.shell;
+  if (!shellHost) throw Error("Missing shell host");
+  shellHost.withheld = () => ["GH_TOKEN", "PLATFORMIO_AUTH_TOKEN"];
+  const run = async (code: number) => {
+    const before = host.programs.length;
+    if (ctx.programs) ctx.programs.callId = `call_${before}`;
+    const result = (await prepare({ command: "gh pr list" })).apply(signal());
+    await vi.waitFor(() => expect(host.programs).toHaveLength(before + 1));
+    host.programs[before]?.finish({ code, signal: null });
+    return result;
+  };
+  // gh fails with its own "not signed in" text; this is what lets the agent name the cause.
+  expect(await run(1)).toMatchObject({
+    exitCode: 1,
+    environmentNotPassed: ["GH_TOKEN", "PLATFORMIO_AUTH_TOKEN"],
+  });
+  expect(await run(0)).not.toHaveProperty("environmentNotPassed");
+  shellHost.withheld = () => [];
+  expect(await run(1)).not.toHaveProperty("environmentNotPassed");
+});
 it("shares handles with output/until and stop, survives a completed tool turn, and stops with its session", async () => {
   const turn = new AbortController();
   const call = await prepare({ command: "server", background: true }, turn.signal);

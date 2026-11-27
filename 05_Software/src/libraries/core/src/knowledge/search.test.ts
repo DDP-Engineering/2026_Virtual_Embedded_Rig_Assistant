@@ -496,6 +496,35 @@ it.each(["semantic", "hybrid"] as const)("cancels blocked %s ranking without fal
   }
 });
 
+it("shows the passage that holds the searched terms, not the start of the fragment", async () => {
+  const h = await harness();
+  try {
+    // A datasheet page: common words of the question ("of", "the") occur in its first line, the answer
+    // far below it.
+    const filler =
+      "This section of the datasheet describes the electrical characteristics of the device. " +
+      "Values apply over the full temperature range unless a note states otherwise. ".repeat(8);
+    const answer = "The maximum SPI clock frequency of the sensor is 10 MHz in mode 0.";
+    await h.add("docs/sensor.pdf", "sensor pdf source", [`${filler}${answer} Timing follows in table 7.`]);
+    const hits = await h.knowledge.search(
+      { query: "maximum SPI clock frequency of the sensor", mode: "keyword" },
+      h.signal,
+    );
+    expect(hits.results[0]?.snippet).toContain("maximum SPI clock frequency of the sensor is 10 MHz");
+    expect(hits.results[0]?.snippet.length).toBeLessThanOrEqual(300);
+    // An identifier outweighs the common words around it.
+    await h.add("docs/regs.pdf", "regs pdf source", [
+      `${"The value of the field is in the table of the register map. ".repeat(12)}Set I2C1_CR1 bit 0 to enable the peripheral.`,
+    ]);
+    const register = await h.knowledge.search(
+      { query: "the value of I2C1_CR1", mode: "keyword", pathGlob: "docs/regs.pdf" },
+      h.signal,
+    );
+    expect(register.results[0]?.snippet).toContain("I2C1_CR1 bit 0");
+  } finally {
+    await h.close();
+  }
+});
 it("pins one-based fusion ties/dedup, modes, pre-top50 glob filtering and bounded snippets", async () => {
   expect(
     fuseRanks([
@@ -585,6 +614,7 @@ it("returns full extraction with exact reduced refs; rejects mixed/out-of-range/
       truncated: true,
       part: 1,
       parts: 2,
+      pages: 1,
       ref: "docs/large.pdf#p=1",
     });
     expect(await h.knowledge.read({ path: "docs/large.pdf", page: 1, part: 2 }, h.signal)).toMatchObject({
@@ -604,6 +634,43 @@ it("returns full extraction with exact reduced refs; rejects mixed/out-of-range/
     expect(await registry.execute(ctx, "search_docs", { query: "x", k: 0 }, h.signal)).toMatchObject({
       isError: true,
     });
+  } finally {
+    await h.close();
+  }
+});
+it("says why a document cannot be read, by its index state", async () => {
+  const h = await harness();
+  try {
+    const state = async (
+      path: string,
+      status: "pending" | "failed" | "needs_ocr",
+      error: "PROCESSING" | "SIZE_LIMIT" | "NEEDS_OCR" | null,
+    ) => {
+      await writeFile(join(h.root, path), "%PDF");
+      h.rows.save({
+        path,
+        kind: "pdf",
+        sha256: null,
+        bytes: 4,
+        mtime: (await stat(join(h.root, path))).mtime.toISOString(),
+        pages: null,
+        status,
+        error,
+        indexedAt: null,
+      });
+      return h.knowledge.read({ path, page: 1 }, h.signal);
+    };
+    await expect(state("docs/waiting.pdf", "pending", null)).rejects.toThrow(/waiting to be indexed/);
+    // A scanned datasheet is in the workbench already: the advice is OCR, not adding its folder.
+    await expect(state("docs/scan.pdf", "needs_ocr", "NEEDS_OCR")).rejects.toThrow(/scanned pages.*OCR/);
+    await expect(state("docs/broken.pdf", "failed", "PROCESSING")).rejects.toThrow(
+      /indexing this file failed \(PROCESSING\)/,
+    );
+    await expect(state("docs/huge.pdf", "failed", "SIZE_LIMIT")).rejects.toThrow(/size limit/);
+    await writeFile(join(h.root, "docs/unlisted.pdf"), "%PDF");
+    await expect(h.knowledge.read({ path: "docs/unlisted.pdf", page: 1 }, h.signal)).rejects.toThrow(
+      /not among the workbench documents.*add its folder/,
+    );
   } finally {
     await h.close();
   }
@@ -865,8 +932,10 @@ it("cites, reads and searches office documents by slide number and heading slug 
       path: "docs/bringup.pptx",
       text: "Measurements\nVDD\n3.29 V",
       truncated: false,
+      pages: 2,
       ref: "docs/bringup.pptx#p=2",
     });
+    await expect(read({ path: "docs/bringup.pptx", page: 3 })).rejects.toThrow("which has 2");
     expect(await read({ path: "docs/bringup.pptx", page: 1, pageEnd: 2 })).toMatchObject({
       ref: "docs/bringup.pptx#p=1-2",
     });
@@ -878,6 +947,20 @@ it("cites, reads and searches office documents by slide number and heading slug 
       ref: "docs/report.xlsx#h=timing",
       text: "Timing\n\nReset pulse\t200",
     });
+    // A read without a heading lists the headings; a read by heading names the next one, so a Word file
+    // or a workbook can be read from start to end without a search.
+    const opening = await read({ path: "docs/review.docx" });
+    expect(opening.headings).toEqual(expect.arrayContaining(["power", "reset"]));
+    expect(opening).not.toHaveProperty("headingsTruncated");
+    const power = await read({ path: "docs/review.docx", heading: "power" });
+    expect(power).toMatchObject({ nextHeading: "reset" });
+    expect(power).not.toHaveProperty("headings");
+    expect((await read({ path: "docs/report.xlsx" })).headings).toEqual(
+      expect.arrayContaining(["rail", "timing"]),
+    );
+    await expect(read({ path: "docs/review.docx", heading: "absent" })).rejects.toThrow(
+      "read without heading to list",
+    );
     for (const args of [
       { path: "docs/bringup.pptx", page: 3 },
       { path: "docs/bringup.pptx", lineStart: 1 },

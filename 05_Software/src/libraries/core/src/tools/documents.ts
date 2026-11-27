@@ -21,7 +21,7 @@ export const readDocTool: ToolDefinition = {
   name: "read_doc",
   class: "read",
   description:
-    'Read extracted PDF pages or presentation slides (page, pageEnd), a heading slug (Markdown, HTML, Word/OpenDocument headings, spreadsheet sheets; "" for text before the first heading), or text lines. Read each part through parts. For a truncated range, then continue after the last page or line in ref.',
+    'Read extracted PDF pages or presentation slides (page, pageEnd), a heading slug (Markdown, HTML, Word/OpenDocument headings, spreadsheet sheets; "" for text before the first heading), or text lines. Read each part through parts. For a truncated range, then continue after the last page or line in ref. Without heading, the result lists the headings.',
   params: readDocSchema,
   execute: async (ctx, args, signal) => {
     if (!ctx.knowledge) throw Error("Document index unavailable. Use read/grep or index documents.");

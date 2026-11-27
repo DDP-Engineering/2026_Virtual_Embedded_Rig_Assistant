@@ -472,7 +472,9 @@ describe("background runs", () => {
     expect(
       await programOutputTool.execute(ctx, { handle: value.handle, until: "NEVER", waitMs: 50 }, signal()),
     ).toMatchObject({ matched: false, running: true });
-    expect(programOutputTool.params.safeParse({ handle: value.handle, waitMs: 30_001 }).success).toBe(false);
+    // One call may wait as long as a foreground run: ten minutes.
+    expect(programOutputTool.params.safeParse({ handle: value.handle, waitMs: 600_000 }).success).toBe(true);
+    expect(programOutputTool.params.safeParse({ handle: value.handle, waitMs: 600_001 }).success).toBe(false);
     onPoll(2, () => process.finish({ code: 2, signal: null }));
     expect(
       await programOutputTool.execute(ctx, { handle: value.handle, waitMs: 5000 }, signal()),

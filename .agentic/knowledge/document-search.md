@@ -25,6 +25,7 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 - Hybrid search shares a 2 s deadline for semantic ranking across attempts. Expiry cancels
   the pending rank and uses the keyword candidates if their revision is current.
 
+- read_doc results carry the document size (`pages` for PDF and presentations, `totalLines` for text). A read by heading returns `nextHeading`; a read without a heading also returns `headings` (at most 200 slugs and a quarter of the result limit, `headingsTruncated` when cut), so section documents can be read in order without a search. A slug that masking would change is omitted. A document that cannot be read gets an error by its state: not among the workbench documents, pending, needs OCR, size limit, unsupported type or failed with its reason code.
 - Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
 
 - Core exports the registered IDs, the BGE default and `readEmbeddingModel` from the embedding API.
@@ -51,7 +52,7 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),
   else 8/hybrid; explicit arguments win (REQ-FUNC-724d3fcc). Strict schemas
   bound k1..20, query1000 and prevent unknown fields. Results carry ref/path/
-  typed locator/snippet<=300/score. Each result envelope records scope coverage
+  typed locator/snippet<=300/score. The snippet is the 300-character window (80 before a term) holding the highest sum of distinct query-term weights: term length, doubled for identifiers (digit, underscore or all capitals). Each result envelope records scope coverage
   and actual ranking usage. An absent semantic port, missing current-model vectors,
   indexer interruptions and embedding deadlines use keyword fallback when published
   chunks exist. Empty unsettled indexes suggest grep.

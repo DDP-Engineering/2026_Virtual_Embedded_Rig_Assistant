@@ -1,8 +1,10 @@
+import { lstat } from "node:fs/promises";
 import { isAbsolute } from "node:path";
 import { advancedSettings, formatLineRef, parseArtifactRef, parseLineRef, veraError } from "@vera/shared";
 import { z } from "zod";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolLimit, toolPathGuard } from "./context.js";
+import { entryDisappeared } from "./discovery.js";
 import { readWindow } from "./read-window.js";
 
 function readArtifact(
@@ -54,7 +56,7 @@ export const readTool: ToolDefinition = {
   name: "read",
   class: "read",
   description:
-    "Read numbered text from a workbench file or exact current-session artifact:<name>. Continue at nextOffset when present; lineClipped means the last line is partial. Artifact reads return a verified SHA-256. Use read_doc for PDFs.",
+    "Read numbered text from a workbench file or exact current-session artifact:<name>. Continue at nextOffset when present; lineClipped means the last line is partial; growing means the file was being appended to, so read again for newer lines. Artifact reads return a verified SHA-256. Use read_doc for PDFs.",
   params: z.strictObject({
     path: z
       .string()
@@ -86,7 +88,22 @@ export const readTool: ToolDefinition = {
       throw Error(
         "Use read_doc to read PDF documents. A PDF that read_doc reports as not indexed cannot be read yet: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
       );
-    const file = await readWindow(guard, args.path, offset, limit, signal, { maxChars });
+    // A missing path or a folder gets its own sentence: the system error names neither, and carries the
+    // absolute path of the workbench.
+    const missing = () => Error(`File not found: ${args.path}. Check the path with list or glob.`);
+    const entry = await lstat(target.absolute).catch((error) => {
+      if (entryDisappeared(error)) throw missing();
+      throw error;
+    });
+    if (entry.isDirectory()) throw Error(`${args.path} is a folder. Use list to see its entries.`);
+    const file = await readWindow(guard, args.path, offset, limit, signal, {
+      maxChars,
+      allowGrowth: true,
+    }).catch((error) => {
+      // Deleted between the check and the read.
+      if (entryDisappeared(error)) throw missing();
+      throw error;
+    });
     const deferClippedLine = file.lineClipped && file.selected.length > 1;
     const selected = deferClippedLine ? file.selected.slice(0, -1) : file.selected;
     const end = selected.at(-1)?.line;
@@ -102,6 +119,7 @@ export const readTool: ToolDefinition = {
       totalLines: file.totalLines,
       truncated: file.truncated,
       ...(file.lineClipped && !deferClippedLine ? { lineClipped: true } : {}),
+      ...(file.growing ? { growing: true } : {}),
       ...(end !== undefined && end < file.totalLines ? { nextOffset: end + 1 } : {}),
       ...(ref ? { ref } : {}),
     };

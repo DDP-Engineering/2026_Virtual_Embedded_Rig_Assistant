@@ -14,6 +14,9 @@ import type { ProgramChangeRequest } from "./program-request.js";
 import { foreground, programTimeout } from "./program-tools.js";
 import { shellArguments } from "./shell.js";
 
+/** Variable names a failed command lists at most. */
+const WITHHELD_LISTED = 12;
+
 const params = z.strictObject({
   command: z
     .string()
@@ -117,7 +120,13 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
         return { handle: run.id, log: `.vera/runs/${run.id}.log` };
       }
       const { risk: _risk, ...result } = foreground(await run.waitForResult(), "command");
-      return result;
+      // Only a command that failed says which credential variables it ran without: the usual cause of a
+      // tool's "not signed in" error here, and nothing to read on the way of a command that worked.
+      const withheld =
+        typeof result.exitCode === "number" && result.exitCode !== 0 ? shellHost.withheld?.() : undefined;
+      return withheld?.length
+        ? { ...result, environmentNotPassed: withheld.slice(0, WITHHELD_LISTED) }
+        : result;
     },
   });
 }

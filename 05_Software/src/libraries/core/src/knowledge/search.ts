@@ -155,6 +155,38 @@ export function sectionParts(text: string, jsonChars = READ_JSON): string[] {
   }
   return parts;
 }
+/**
+ * Why read_doc cannot read a document, by its index state: each state has a different next step, and one
+ * message for all of them sent the user to add a folder that was already added.
+ */
+function unreadable(doc: { status: string; kind: string; error: string | null } | undefined): Error {
+  const text = " For a text file use read or grep.";
+  if (!doc)
+    return Error(
+      `Document not indexed: it is not among the workbench documents.${text} A PDF or Office file must be in a folder listed under Edit workbench > Documents; tell the user to add its folder.`,
+    );
+  if (doc.status === "pending")
+    return Error(`Document not indexed yet: it is waiting to be indexed. Retry shortly.${text}`);
+  if (doc.status === "needs_ocr" || doc.error === "NEEDS_OCR")
+    return Error(
+      "Document has no text: this PDF is scanned pages without a text layer. It needs OCR before it can be read; tell the user.",
+    );
+  if (doc.error === "SIZE_LIMIT")
+    return Error(
+      `Document not indexed: it is larger than the workbench's document size limit.${text} The user can raise the limit under Edit workbench > Documents.`,
+    );
+  if (doc.status === "unsupported" || doc.kind === "other" || doc.error === "TYPE_UNSUPPORTED")
+    return Error(`Document not indexed: this file type is not read as a document.${text}`);
+  if (doc.status === "failed")
+    return Error(
+      `Document not indexed: indexing this file failed${doc.error ? ` (${doc.error})` : ""}. Tell the user; Files shows the reason and Reindex retries it.${text}`,
+    );
+  return Error(`Document not indexed.${text}`);
+}
+
+/** Section slugs listed by a read without a heading; a longer list is cut and marked. */
+const HEADINGS_LISTED = 200;
+
 /** Read-only persisted search and full-extraction reads over one owned workbench connection. */
 export class DocumentKnowledge {
   constructor(
@@ -203,10 +235,7 @@ export class DocumentKnowledge {
     const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots),
       target = await guard.resolve(args.path);
     const doc = new DocumentsRepository(this.db).get(target.relative);
-    if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other")
-      throw Error(
-        "Document not indexed. For a text file use read or grep. A PDF or Office file must be indexed first: tell the user to add its folder under Edit workbench > Documents, or wait for indexing to finish.",
-      );
+    if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other") throw unreadable(doc);
     const stored = this.db
       .prepare("SELECT extraction_json FROM document_extractions WHERE doc_id=?")
       .pluck()
@@ -252,7 +281,7 @@ export class DocumentKnowledge {
     const path = target.relative;
     const project = output.maskText ?? ((text: string) => text);
     // Reserve the response envelope before cutting text, with the same room for every part.
-    const textBudget = (ref: string) => {
+    const textBudget = (ref: string, extra: Record<string, unknown> = {}) => {
       const envelope = JSON.stringify({
         path,
         ref,
@@ -260,6 +289,7 @@ export class DocumentKnowledge {
         truncated: false,
         part: Number.MAX_SAFE_INTEGER,
         parts: Number.MAX_SAFE_INTEGER,
+        ...extra,
       });
       const limit = output.limit ?? advancedSettings.toolResultChars.default;
       const jsonChars = Math.min(
@@ -297,8 +327,11 @@ export class DocumentKnowledge {
         throw Error("PDF and presentation reads require page and optional pageEnd.");
       const start = args.page ?? 1,
         end = args.pageEnd ?? start;
-      if (end < start || end > units.length) throw Error("Page or slide range is outside the document.");
-      const jsonChars = textBudget(`${path}#p=${units.length}-${units.length}`);
+      if (end < start || end > units.length)
+        throw Error(`Page or slide range is outside the document, which has ${units.length}.`);
+      // The total lets the model plan the next range instead of probing for the end.
+      const pages = { pages: units.length };
+      const jsonChars = textBudget(`${path}#p=${units.length}-${units.length}`, pages);
       const first = project(units[start - 1] ?? "");
       if (args.part !== undefined || !fits(first, jsonChars)) {
         // Parts cover the first page of the range only; the ref names that page.
@@ -307,6 +340,7 @@ export class DocumentKnowledge {
           path,
           ...result,
           truncated: result.truncated || end > start,
+          ...pages,
           ref: formatRef({ kind: "page", path, page: start }),
         };
       }
@@ -316,6 +350,7 @@ export class DocumentKnowledge {
         path,
         text: result.text,
         truncated: result.truncated,
+        ...pages,
         ref: formatRef(
           actualEnd === start
             ? { kind: "page", path, page: start }
@@ -328,8 +363,13 @@ export class DocumentKnowledge {
         throw Error("Text reads require lineStart and optional lineEnd.");
       const start = args.lineStart ?? 1,
         end = args.lineEnd ?? extraction.lines.length;
-      if (end < start || end > extraction.lines.length) throw Error("Line range is outside the document.");
-      const jsonChars = textBudget(`${path}#L${extraction.lines.length}-L${extraction.lines.length}`);
+      if (end < start || end > extraction.lines.length)
+        throw Error(`Line range is outside the document, which has ${extraction.lines.length} lines.`);
+      const totalLines = { totalLines: extraction.lines.length };
+      const jsonChars = textBudget(
+        `${path}#L${extraction.lines.length}-L${extraction.lines.length}`,
+        totalLines,
+      );
       const first = project(extraction.lines[start - 1] ?? "");
       if (args.part !== undefined || !fits(first, jsonChars)) {
         const result = inParts(first, "line", jsonChars);
@@ -337,6 +377,7 @@ export class DocumentKnowledge {
           path,
           ...result,
           truncated: result.truncated || end > start,
+          ...totalLines,
           ref: formatRef({ kind: "lines", path, start, end: start }),
         };
       }
@@ -345,6 +386,7 @@ export class DocumentKnowledge {
         path,
         text: result.text,
         truncated: result.truncated,
+        ...totalLines,
         ref: formatRef({ kind: "lines", path, start, end: start + result.count - 1 }),
       };
     }
@@ -353,15 +395,39 @@ export class DocumentKnowledge {
       args.heading === undefined
         ? extraction.sections[0]
         : extraction.sections.find((s) => s.slug === args.heading);
-    if (!section) throw Error("Heading not found. Use a heading slug from search_docs.");
+    if (!section)
+      throw Error(
+        "Heading not found. Use a heading slug from search_docs, or read without heading to list this document's headings.",
+      );
     // Every part cites the whole section.
     const ref =
       !section.slug && extraction.kind === "markdown"
         ? formatRef({ kind: "lines", path, start: section.start, end: section.end })
         : formatRef({ kind: "heading", path, slug: section.slug });
+    // A document read by heading is walked with these: the section after this one, and, on a read without
+    // a heading, every slug. Without them a Word file or a workbook could only be reached through search.
+    // A slug that masking would change is left out, like the text it names.
+    const shown = (slug: string) => project(slug) === slug;
+    const following = extraction.sections[extraction.sections.indexOf(section) + 1];
+    const slugs = extraction.sections.map((item) => item.slug).filter(shown);
+    // The list takes at most a quarter of the result, so the section text keeps its room at any limit.
+    const listed: string[] = [];
+    let room = Math.floor((output.limit ?? advancedSettings.toolResultChars.default) / 4);
+    for (const slug of slugs) {
+      room -= JSON.stringify(slug).length + 1;
+      if (room < 0 || listed.length === HEADINGS_LISTED) break;
+      listed.push(slug);
+    }
+    const walk = {
+      ...(following && shown(following.slug) ? { nextHeading: following.slug } : {}),
+      ...(args.heading === undefined
+        ? { headings: listed, ...(listed.length < slugs.length ? { headingsTruncated: true } : {}) }
+        : {}),
+    };
     return {
       path,
-      ...inParts(project(section.text), "section", textBudget(ref)),
+      ...inParts(project(section.text), "section", textBudget(ref, walk)),
+      ...walk,
       ref,
     };
   }

@@ -236,8 +236,8 @@ Code: `core/src/knowledge/search.ts`, `keyword.ts`, `shared/src/refs.ts`, `core/
 
 **`search_docs {query, k?, mode?, pathGlob?}`**: query up to 1 000 characters, `k` 1-20, defaults
 from `retrieval`, `pathGlob` relative to the root. Returns `{results, message?}`; each result is
-`{ref, path, locator, snippet, score}` for a file that still exists, the snippet 300 characters from
-80 before the first query term. Messages explain an empty index (use `grep`) or a glob matching
+`{ref, path, locator, snippet, score}` for a file that still exists, the snippet the 300 characters
+that hold the most of the query terms, identifiers counting double. Messages explain an empty index (use `grep`) or a glob matching
 nothing. While vectors are rebuilt or the indexer is stopped, semantic and hybrid return keyword
 results with a message. A search overlapping an index change fails with "Retry". The Files tab
 search is keyword mode, 20 results.
