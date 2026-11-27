@@ -16,6 +16,7 @@ import {
   type TerminalRevision,
   type TerminalSummary,
   terminalIdSchema,
+  terminalInputSchema,
   terminalSizeSchema,
   veraError,
 } from "@vera/shared";
@@ -317,7 +318,7 @@ export class TerminalService {
     };
   }
   input(owner: string, id: string, data: string): void {
-    z.string().min(1).max(16384).parse(data);
+    terminalInputSchema.parse(data);
     const entry = this.entry(owner, id);
     if (!entry.running) throw veraError("CONFLICT");
     entry.commandPrompt?.invalidate();

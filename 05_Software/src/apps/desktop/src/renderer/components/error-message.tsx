@@ -1,4 +1,4 @@
-import { browserFailureCodeSchema, veraErrorSchema } from "@vera/shared";
+import { browserFailureCodeSchema, terminalInputLimit, veraErrorSchema } from "@vera/shared";
 import { useTranslation } from "react-i18next";
 import { browserFailureText } from "../lib/browser-failure.js";
 
@@ -52,6 +52,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.OFFLINE": t("errors.OFFLINE", options),
     "errors.INTERNAL": t("errors.INTERNAL", options),
     "runs.stopUnconfirmed": t("runs.stopUnconfirmed"),
+    "terminal.inputTooLong": t("terminal.inputTooLong", { limit: terminalInputLimit }),
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
     "provider.noModel": t("provider.noModel"),

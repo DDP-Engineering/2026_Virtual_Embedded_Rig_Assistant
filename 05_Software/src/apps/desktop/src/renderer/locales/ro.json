@@ -1796,7 +1796,8 @@
     "tabs": "Terminale",
     "name": "Terminal {{number}}",
     "consent": "Permite agentului să citească acest terminal",
-    "input": "Intrare terminal"
+    "input": "Intrare terminal",
+    "inputTooLong": "Textul depășește limita de {{limit}} de caractere. Lipește un fragment mai scurt."
   },
   "privacy": {
     "maskTitle": "Maschează secretele stocate în",

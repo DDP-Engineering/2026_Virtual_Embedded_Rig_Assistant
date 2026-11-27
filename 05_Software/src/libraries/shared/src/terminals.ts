@@ -4,6 +4,25 @@ import { workbenchIdSchema } from "./workbench.js";
 
 export const terminalIdSchema = z.uuid();
 export const terminalShellSchema = z.enum(["powershell", "cmd", "bash", "sh"]);
+export const terminalInputLimit = 16_384;
+const pasteStart = "\x1b[200~";
+const pasteEnd = "\x1b[201~";
+const wrappedInputLimit = terminalInputLimit + pasteStart.length + pasteEnd.length;
+
+/** Count the paste payload separately from xterm's complete bracketed-paste envelope. */
+export function terminalInputTooLong(data: string): boolean {
+  return (
+    data.length > terminalInputLimit &&
+    (data.length > wrappedInputLimit || !data.startsWith(pasteStart) || !data.endsWith(pasteEnd))
+  );
+}
+
+export const terminalInputSchema = z
+  .string()
+  .min(1)
+  .max(wrappedInputLimit)
+  .refine((data) => !terminalInputTooLong(data));
+
 export const commandBlockShellSchema = z.enum(["powershell", "bash"]);
 export type CommandBlockShell = z.infer<typeof commandBlockShellSchema>;
 export const commandBlockTextSchema = z

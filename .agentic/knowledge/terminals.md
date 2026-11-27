@@ -57,6 +57,7 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   marker and stays unverified.
 - Ctrl+Shift+T opens/focuses Terminal and is editable in Keyboard shortcuts. Terminal input captures
   keys for the shell. Interface/help/release notes have en/ro/de/fr entries.
+  Interactive paste checks 16,384 UTF-16 code units of text and forwards complete bracketed-paste delimiters.
 
 ## Invariants
 

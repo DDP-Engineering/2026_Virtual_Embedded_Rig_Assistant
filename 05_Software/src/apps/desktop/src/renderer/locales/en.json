@@ -1796,7 +1796,8 @@
     "tabs": "Terminals",
     "name": "Terminal {{number}}",
     "consent": "Allow agent to read this terminal",
-    "input": "Terminal input"
+    "input": "Terminal input",
+    "inputTooLong": "Terminal input exceeds {{limit}} characters. Paste a smaller block."
   },
   "privacy": {
     "maskTitle": "Mask stored secrets in",

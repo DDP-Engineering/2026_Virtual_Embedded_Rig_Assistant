@@ -145,6 +145,7 @@ import {
 import {
   commandBlockShellSchema,
   commandBlockTextSchema,
+  terminalInputSchema,
   terminalOutputSchema,
   terminalOwnerSchema,
   terminalRevisionSchema,
@@ -277,7 +278,7 @@ export const channels = {
   ),
   "terminal.input": defineChannel(
     "terminal.input",
-    terminalTargetSchema.extend({ data: z.string().min(1).max(16384) }),
+    terminalTargetSchema.extend({ data: terminalInputSchema }),
     z.strictObject({}),
   ),
   "terminal.execute": defineChannel(

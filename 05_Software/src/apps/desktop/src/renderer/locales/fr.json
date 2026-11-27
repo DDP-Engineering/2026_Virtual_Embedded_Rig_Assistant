@@ -1796,7 +1796,8 @@
     "tabs": "Terminaux",
     "name": "Terminal {{number}}",
     "consent": "Autoriser l’agent à lire ce terminal",
-    "input": "Saisie du terminal"
+    "input": "Saisie du terminal",
+    "inputTooLong": "La saisie dépasse {{limit}} caractères. Collez un extrait plus court."
   },
   "privacy": {
     "maskTitle": "Masquer les secrets enregistrés dans",

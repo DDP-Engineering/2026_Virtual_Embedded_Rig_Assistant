@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { type TerminalSummary, veraError } from "@vera/shared";
+import { type TerminalSummary, terminalInputLimit, veraError } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -68,6 +68,51 @@ const initialRevision = { output: 1, masking: 0 };
 afterEach(() => {
   vi.clearAllMocks();
   vi.useRealTimers();
+});
+
+it("forwards a paste intact at the text limit and explains a rejected paste", async () => {
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000001",
+    number: 1,
+    shared: false,
+    shell: "bash",
+    dispatchEligible: false,
+    running: true,
+  };
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return [row] as never;
+    if (channel === "terminal.output")
+      return { ...row, output: "$ ", start: 0, revision: initialRevision } as never;
+    return {} as never;
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const wrap = (text: string) => `\x1b[200~${text}\x1b[201~`;
+  try {
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    const paste = wrap("x".repeat(terminalInputLimit));
+    await act(async () => native.input(paste));
+    expect(api.invoke).toHaveBeenCalledWith("terminal.input", {
+      workbenchId: owner,
+      id: row.id,
+      data: paste,
+    });
+
+    for (const data of ["x".repeat(terminalInputLimit + 1), wrap("x".repeat(terminalInputLimit + 1))]) {
+      await act(async () => native.input(data));
+      expect(api.invoke).not.toHaveBeenCalledWith("terminal.input", expect.objectContaining({ data }));
+      expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+        i18n.t("terminal.inputTooLong", { limit: terminalInputLimit }),
+      );
+    }
+    await act(async () => native.input("short text"));
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
 });
 
 it("updates the mounted terminal font and refits immediately when code text size changes", async () => {

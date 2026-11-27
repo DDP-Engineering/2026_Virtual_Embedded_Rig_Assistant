@@ -1796,7 +1796,8 @@
     "tabs": "Terminals",
     "name": "Terminal {{number}}",
     "consent": "Agent darf dieses Terminal lesen",
-    "input": "Terminaleingabe"
+    "input": "Terminaleingabe",
+    "inputTooLong": "Die Terminaleingabe überschreitet {{limit}} Zeichen. Füge einen kürzeren Abschnitt ein."
   },
   "privacy": {
     "maskTitle": "Gespeicherte Geheimnisse maskieren in",

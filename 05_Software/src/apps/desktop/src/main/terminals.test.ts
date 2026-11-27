@@ -1,4 +1,5 @@
 import { type CommandShell, capToolResult } from "@vera/core";
+import { terminalInputLimit } from "@vera/shared";
 import { describe, expect, it, vi } from "vitest";
 import { TerminalService, type UserPty } from "./terminals.js";
 
@@ -460,6 +461,16 @@ describe("user terminal host", () => {
     expect(() => f.service.input("bench-a", a.id, "x".repeat(16385))).toThrow();
     await Promise.all(Array.from({ length: 7 }, () => f.service.create("bench-a", 80, 24)));
     await expect(f.service.create("bench-a", 80, 24)).rejects.toMatchObject({ code: "BUSY" });
+  });
+  it("writes a complete bracketed paste at the text limit and drops an oversized paste", async () => {
+    const f = fixture();
+    const terminal = await f.service.create("bench-a", 80, 24);
+    const paste = `\x1b[200~${"x".repeat(terminalInputLimit)}\x1b[201~`;
+    f.service.input("bench-a", terminal.id, paste);
+    expect(f.processes[0]?.write).toHaveBeenCalledExactlyOnceWith(paste);
+    const tooLong = `\x1b[200~${"x".repeat(terminalInputLimit + 1)}\x1b[201~`;
+    expect(() => f.service.input("bench-a", terminal.id, tooLong)).toThrow();
+    expect(f.processes[0]?.write).toHaveBeenCalledTimes(1);
   });
 });
 

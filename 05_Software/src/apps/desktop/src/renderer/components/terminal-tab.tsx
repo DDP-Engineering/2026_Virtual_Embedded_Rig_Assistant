@@ -1,8 +1,22 @@
-import { type TerminalRevision, type TerminalSummary, typographyDefaults } from "@vera/shared";
+import {
+  type TerminalRevision,
+  type TerminalSummary,
+  terminalInputTooLong,
+  typographyDefaults,
+  veraError,
+} from "@vera/shared";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { Plus, X } from "lucide-react";
-import { type RefObject, useContext, useEffect, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type RefObject,
+  type SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { appAdvancedValue, useAppAdvanced } from "../hooks/app-advanced.js";
@@ -13,6 +27,7 @@ import "@xterm/xterm/css/xterm.css";
 
 // A successful chat dispatch proves this is first use. Claim that live-output handoff once, not on panel replay.
 const openedCommandTargets = new WeakSet<object>();
+const inputTooLongError = { ...veraError("INVALID"), messageKey: "terminal.inputTooLong" };
 
 function TerminalSurface({
   workbenchId,
@@ -23,7 +38,7 @@ function TerminalSurface({
 }: {
   workbenchId: string;
   terminal: TerminalSummary;
-  failure(error: unknown): void;
+  failure: Dispatch<SetStateAction<unknown>>;
   freshTerminals: Set<string>;
   closingTerminal: RefObject<string | undefined>;
 }) {
@@ -59,8 +74,18 @@ function TerminalSurface({
     const fit = new FitAddon();
     term.loadAddon(fit);
     styles.open(() => term.open(element));
+    let rejectedInput = false;
     const input = term.onData((data) => {
       if (!available()) return;
+      if (terminalInputTooLong(data)) {
+        rejectedInput = true;
+        failure(inputTooLongError);
+        return;
+      }
+      if (rejectedInput) {
+        rejectedInput = false;
+        failure((current: unknown) => (current === inputTooLongError ? undefined : current));
+      }
       void api.invoke("terminal.input", { workbenchId, id: terminal.id, data }).then(
         () => {
           if (available()) wake();

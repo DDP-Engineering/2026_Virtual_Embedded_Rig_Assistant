@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { channels } from "./ipc.js";
+import { terminalInputLimit } from "./terminals.js";
 
 describe("user terminal IPC", () => {
+  it.each([false, true])("bounds the input text with bracketed paste enabled: %s", (bracketed) => {
+    const target = {
+      workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      id: "00000000-0000-4000-8000-000000000001",
+    };
+    const request = channels["terminal.input"].request;
+    for (const size of [terminalInputLimit - 1, terminalInputLimit, terminalInputLimit + 1]) {
+      const text = "x".repeat(size);
+      const data = bracketed ? `\x1b[200~${text}\x1b[201~` : text;
+      expect(request.safeParse({ ...target, data }).success).toBe(size <= terminalInputLimit);
+    }
+    const incomplete = `\x1b[200~${"x".repeat(terminalInputLimit)}`;
+    expect(request.safeParse({ ...target, data: incomplete }).success).toBe(false);
+  });
   it("bounds clipboard text and accepts only explicit shell blocks on owned terminal targets", () => {
     expect(
       channels["app.clipboard.write"].request.parse({ text: "Știință 🧪\r\n```bash\nls\n```" }).text,

@@ -88,10 +88,10 @@ entries:
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Terminal reads keep the latest output and flag cuts. Idle terminals skip repeated snapshots.
-      ro: Terminalul păstrează finalul și semnalează trunchierea. Capturile identice nu se retrimit.
-      de: Das Terminal behält das Ende, meldet Kürzungen und sendet unveränderte Ausgaben nur einmal.
-      fr: Le terminal garde la fin, signale les coupes et évite de renvoyer la même sortie.
+      en: Terminal reads retain the tail and flag cuts. Idle output is sent once. Pastes at the limit work.
+      ro: Terminalul păstrează finalul, arată tăierile, evită retrimiterile și acceptă lipirea la limită.
+      de: Das Terminal meldet Kürzungen, sendet Ausgabe seltener und erlaubt Einfügen bis zum Limit.
+      fr: Le terminal signale les coupes, évite les renvois et accepte les collages jusqu’à la limite.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
