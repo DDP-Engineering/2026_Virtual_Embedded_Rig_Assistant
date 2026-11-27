@@ -124,8 +124,10 @@ export interface RunRead {
   output: string;
   truncated: boolean;
   running: boolean;
-  error?: typeof RUN_STOP_UNCONFIRMED;
+  error?: string;
   timedOut?: true;
+  /** Present on a deferred read. Advances through this snapshot once it is delivered. */
+  acknowledge?: () => void;
   exitCode?: number | null;
   /** Supervised runs that ended: their physical state and cleanup. */
   physical?: PhysicalState;
@@ -135,8 +137,25 @@ export interface ProgramRun {
   /** Run id and background handle; also the log file name. */
   readonly id: string;
   readonly done: Promise<RunResult>;
-  read(): RunRead;
+  read(consume?: boolean, maxChars?: number): RunRead;
   stop(): Promise<RunResult>;
+}
+
+function readRun(
+  tail: TailBuffer,
+  result: RunResult | undefined,
+  consume: boolean,
+  maxChars?: number,
+): RunRead {
+  return {
+    ...tail.read(consume, maxChars),
+    running: !result,
+    ...(result?.stopped && { stopped: true }),
+    ...(result?.timedOut && { timedOut: true }),
+    ...(result?.error && { error: result.error }),
+    ...(result && { exitCode: result.exitCode }),
+    ...(result?.physical && { physical: result.physical, cleanup: result.cleanup ?? "none" }),
+  };
 }
 export interface ProgramRunnerOptions {
   host: ProcessHost;
@@ -365,7 +384,6 @@ class Run implements ActiveRun {
   private logged = 0;
   private readonly decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
   private readonly tail: TailBuffer;
-  private unread: TailBuffer;
   private readonly abort = () => this.kill("stopped");
   private stopUnconfirmed = false;
   private stopOutcome: Promise<RunResult> | undefined;
@@ -391,7 +409,6 @@ class Run implements ActiveRun {
     this.volumes = volumeNames(request.programArgs ?? request.args, settings.devicePath);
     this.volumeKeys = new Set(this.volumes.map((volume) => volume.key));
     this.tail = new TailBuffer(settings.tailChars);
-    this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
       this.settle = resolve;
     });
@@ -502,23 +519,13 @@ class Run implements ActiveRun {
     this.settle(this.snapshot({ code: null, signal: null }));
   }
 
-  read(): RunRead {
-    const output = this.unread.text();
-    const truncated = this.unread.total > output.length;
-    this.unread = new TailBuffer(this.settings.tailChars);
+  read(consume = true, maxChars?: number): RunRead {
     return {
-      output,
-      truncated,
-      running: !this.result,
-      ...(this.result?.stopped ? { stopped: true as const } : {}),
-      ...(this.result ? { exitCode: this.result.exitCode } : {}),
+      ...readRun(this.tail, this.result, consume, maxChars),
       ...(this.stopUnconfirmed && {
         error: RUN_STOP_UNCONFIRMED,
         ...(this.reason === "timedOut" && { timedOut: true as const }),
       }),
-      ...(this.result?.physical
-        ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
-        : {}),
     };
   }
 
@@ -692,7 +699,6 @@ class Run implements ActiveRun {
   private append(text: string): void {
     if (!text) return;
     this.tail.push(text);
-    this.unread.push(text);
     // A chatty program never fills the disk: past the cap only the in-memory tail keeps following the run.
     if (this.logged > this.settings.logBytes) return;
     this.logged += Buffer.byteLength(text);
@@ -826,7 +832,6 @@ class Hold implements ActiveRun, RunHold {
   private folder: string | undefined;
   private writing = Promise.resolve();
   private readonly tail: TailBuffer;
-  private unread: TailBuffer;
 
   constructor(
     readonly id: string,
@@ -839,7 +844,6 @@ class Hold implements ActiveRun, RunHold {
     this.claimKeys = new Set(request.claims.flatMap((claim) => claim.keys));
     this.portKeys = this.claimKeys;
     this.tail = new TailBuffer(settings.tailChars);
-    this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
       this.settle = resolve;
     });
@@ -879,7 +883,6 @@ class Hold implements ActiveRun, RunHold {
   write(text: string): void {
     if (!text || this.result) return;
     this.tail.push(text);
-    this.unread.push(text);
     const file = this.file;
     if (!file) return;
     this.writing = this.writing
@@ -890,20 +893,8 @@ class Hold implements ActiveRun, RunHold {
       );
   }
 
-  read(): RunRead {
-    const output = this.unread.text();
-    const truncated = this.unread.total > output.length;
-    this.unread = new TailBuffer(this.settings.tailChars);
-    return {
-      output,
-      truncated,
-      running: !this.result,
-      ...(this.result?.stopped ? { stopped: true as const } : {}),
-      ...(this.result ? { exitCode: this.result.exitCode } : {}),
-      ...(this.result?.physical
-        ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
-        : {}),
-    };
+  read(consume = true, maxChars?: number): RunRead {
+    return readRun(this.tail, this.result, consume, maxChars);
   }
 
   stop(): Promise<RunResult> {

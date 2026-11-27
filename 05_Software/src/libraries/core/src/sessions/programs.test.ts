@@ -495,7 +495,34 @@ describe("background runs (REQ-FUNC-9b38f5a8, REQ-FUNC-da3adc80, REQ-FUNC-b70bb1
     expect(started).toEqual({ handle: HANDLE, risk: "safe", log: `.vera/runs/${HANDLE}.log` });
     expect(output).toMatchObject({ output: "boot\nREADY\n", running: true, matched: true });
     expect(stopped).toMatchObject({ stopped: true, log: `.vera/runs/${HANDLE}.log` });
+    expect(stopped.output).toBe("");
     expect(process.exited).toBe(true);
+  });
+  it("keeps output available across turns when Stop interrupts a background poll", async () => {
+    const rig = await setup();
+    await rig.scripts("serve", [run({ args: ["serve"], background: true }), { text: "Started" }]);
+    rig.service.send(rig.session.id, "serve");
+    const process = await spawned(rig);
+    await rig.service.waitIdle(rig.session.id);
+    process.print("pending output\n");
+    rig.hooks.sleep = () => {
+      delete rig.hooks.sleep;
+      rig.service.stop(rig.session.id);
+    };
+    await rig.scripts("poll", [
+      { toolCalls: [{ name: "program_output", args: { handle: HANDLE, waitMs: 500 } }] },
+      { text: "Read" },
+    ]);
+    rig.service.send(rig.session.id, "poll");
+    expect(await rig.service.waitIdle(rig.session.id)).toEqual({ stopReason: "aborted" });
+    await rig.scripts("retry", [
+      { toolCalls: [{ name: "program_output", args: { handle: HANDLE, waitMs: 500 } }] },
+      { text: "Read" },
+    ]);
+    rig.service.send(rig.session.id, "retry");
+    await rig.service.waitIdle(rig.session.id);
+    const result = JSON.parse(rig.toolResults().at(-1)?.summary ?? "{}");
+    expect(result).toMatchObject({ output: "pending output\n", running: false, stopped: true });
   });
   it("reads a background run in a later turn and stops only this session's runs (REQ-FUNC-ea2dfb26)", async () => {
     const rig = await setup();

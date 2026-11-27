@@ -38,6 +38,7 @@ export class OutputDecoder {
 export class TailBuffer {
   private buffer = "";
   private count = 0;
+  private readThrough = 0;
   constructor(readonly limit: number) {}
 
   get total(): number {
@@ -51,7 +52,30 @@ export class TailBuffer {
   }
 
   text(): string {
-    const tail = this.buffer.slice(-this.limit);
+    return this.suffix(this.limit);
+  }
+
+  /** A deferred read acknowledges only the output present in this snapshot. */
+  read(consume: boolean, maxChars = this.limit) {
+    const through = this.count;
+    const unread = through - this.readThrough;
+    const output = this.suffix(Math.min(this.limit, maxChars, unread));
+    const truncated = unread > output.length;
+    if (consume) {
+      this.readThrough = through;
+      return { output, truncated };
+    }
+    return {
+      output,
+      truncated,
+      acknowledge: () => {
+        this.readThrough = Math.max(this.readThrough, through);
+      },
+    };
+  }
+
+  private suffix(length: number): string {
+    const tail = this.buffer.slice(Math.max(0, this.buffer.length - length));
     const first = tail.charCodeAt(0);
     return first >= 0xdc00 && first <= 0xdfff ? tail.slice(1) : tail;
   }

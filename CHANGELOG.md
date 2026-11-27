@@ -36,6 +36,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Keep document citations and pagination aligned with the configured response limit.
 - Omit outdated results when indexed document sources change or disappear.
 - Bound command cancellation on Windows and keep the final output when command results are shortened.
+- Preserve background output after cancelled reads and report timeouts and startup errors.
 
 ## [0.4.0] - 2026-11-26
 

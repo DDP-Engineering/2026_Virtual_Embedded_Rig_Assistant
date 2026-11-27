@@ -77,12 +77,14 @@ export interface ToolDefinition {
   requiresImages?: true;
   params: z.ZodType;
   prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;
+  /** With deferred publication, onPublish commits the result after its final checks. */
   execute(
     ctx: ToolContext,
     args: unknown,
     signal: AbortSignal,
     callId?: string,
-  ): Promise<Record<string, unknown> & { image?: ImageContent }>;
+    deferPublish?: boolean,
+  ): Promise<Record<string, unknown> & { image?: ImageContent; onPublish?: () => void }>;
 }
 export function createToolContext(root: string, workers?: WorkerPool): ToolContext {
   return { root, ...(workers ? { workers } : {}), lastReads: new Map() };

@@ -220,6 +220,7 @@ export function capToolResult(
 export interface ToolOutcome {
   text: string;
   image?: ImageContent;
+  onPublish?: () => void;
   truncated: boolean;
   isError: boolean;
 }
@@ -291,6 +292,7 @@ export class ToolRegistry {
     signal: AbortSignal,
     disabled: readonly string[] = [],
     callId?: string,
+    deferPublish = false,
   ): Promise<ToolOutcome> {
     let result: Awaited<ReturnType<ToolDefinition["execute"]>>;
     let isError = false;
@@ -333,7 +335,7 @@ export class ToolRegistry {
         );
       // The clarification wait belongs to the turn even if its filesystem permissions change.
       effectiveSignal = tool === askUserTool ? signal : toolSignal(ctx, signal);
-      result = await tool.execute(ctx, parsed.data, effectiveSignal, callId);
+      result = await tool.execute(ctx, parsed.data, effectiveSignal, callId, true);
       effectiveSignal.throwIfAborted();
     } catch (error) {
       isError = true;
@@ -347,10 +349,19 @@ export class ToolRegistry {
       };
     }
     try {
-      const { image, ...data } = result;
+      const { image, onPublish, ...data } = result;
       const capped = this.capResult(ctx, name, data);
       const failed = isError || data.isError === true || JSON.parse(capped.text).isError === true;
-      return { ...capped, isError: failed, ...(!failed && image && { image }) };
+      const outcome = { ...capped, isError: failed, ...(!failed && image && { image }) };
+      if (!failed && onPublish) {
+        const publish = () => {
+          effectiveSignal.throwIfAborted();
+          onPublish();
+        };
+        if (deferPublish) return { ...outcome, onPublish: publish };
+        publish();
+      }
+      return outcome;
     } catch {
       return {
         text: '{"isError":true,"error":"Tool result is not valid JSON. Retry or narrow the request."}',
@@ -380,9 +391,10 @@ export class ToolRegistry {
           }
         : {}),
       execute: async (args, signal, callId) => {
-        const outcome = await this.execute(ctx, tool.name, args, signal, blocked, callId);
+        const outcome = await this.execute(ctx, tool.name, args, signal, blocked, callId, true);
         if (outcome.isError) throw Error(outcome.text);
-        return outcome.image ? { text: outcome.text, image: outcome.image } : outcome.text;
+        const { text, image, onPublish } = outcome;
+        return image || onPublish ? { text, ...(image && { image }), ...(onPublish && { onPublish }) } : text;
       },
     }));
   }

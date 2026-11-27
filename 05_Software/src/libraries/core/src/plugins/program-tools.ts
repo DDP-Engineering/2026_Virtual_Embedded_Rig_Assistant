@@ -33,7 +33,6 @@ import {
   verifyProgramFiles,
 } from "./program-request.js";
 import { claimedResources } from "./resource-registry.js";
-import { TailBuffer } from "./run-output.js";
 import {
   type ProgramRun,
   type ProgramRunner,
@@ -634,39 +633,34 @@ export const programOutputTool: ToolDefinition = {
   name: "program_output",
   class: "read",
   description:
-    "Read a background run's output since the previous read, whether it is running and its exitCode. waitMs (at most 30000) waits until the run ends or, with until (a regular expression), until the output read during this call matches it.",
+    "Read a background run's output since the last delivered read and whether it is running. Finished runs report exitCode and include timedOut or a startup error when applicable. waitMs (at most 30000) waits for completion or, with until (a regular expression), a matching output.",
   params: outputParams,
-  async execute(ctx, raw, signal) {
+  async execute(ctx, raw, signal, _callId, deferPublish) {
     const args = outputParams.parse(raw);
     const run = backgroundRun(ctx, args.handle);
     const matches = args.until === undefined ? undefined : untilMatcher(args.until);
     const { clock } = programContext(ctx).host;
-    const gathered = new TailBuffer(TAIL);
-    let truncated = false;
+    let previousOutput = "";
     let matched = false;
     let waited = 0;
     for (;;) {
-      const read = run.read();
-      gathered.push(read.output);
-      truncated ||= read.truncated;
-      if (matches && read.output) matched = matches(gathered.text());
+      signal.throwIfAborted();
+      const { acknowledge, ...read } = run.read(false, TAIL);
+      if (matches && read.output !== previousOutput) {
+        matched = !!read.output && matches(read.output);
+        previousOutput = read.output;
+      }
       if (!read.running || read.error || matched || waited >= (args.waitMs ?? 0)) {
-        const output = gathered.text();
+        if (!deferPublish) acknowledge?.();
         return {
-          output,
-          truncated: truncated || gathered.total > output.length,
-          running: read.running,
-          ...(read.stopped ? { stopped: true } : {}),
-          ...(read.error ? { error: read.error, ...(read.timedOut && { timedOut: true }) } : {}),
-          ...(read.running ? {} : { exitCode: read.exitCode ?? null }),
-          ...(read.physical ? { physical: read.physical, cleanup: read.cleanup } : {}),
-          ...(matches ? { matched } : {}),
+          ...read,
+          ...(matches && { matched }),
+          ...(deferPublish && acknowledge && { onPublish: acknowledge }),
         };
       }
       const step = Math.min(POLL_MS, (args.waitMs ?? 0) - waited);
       await clock.sleep(step);
       waited += step;
-      signal.throwIfAborted();
     }
   },
 };

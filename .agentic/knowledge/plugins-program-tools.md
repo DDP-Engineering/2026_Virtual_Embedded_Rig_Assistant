@@ -61,7 +61,7 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
 - Agent tools (core `program-tools.ts`): `run_program {program, args?, cwd?, timeout? 1..3600 s,
   background?}` -> foreground `{exitCode, durationMs, risk, output, truncated, log, timedOut?, stopped?,
   signal?, error?}` or background `{handle, risk, log}`; `program_output {handle, waitMs? 0..30000,
-  until? 1..512}` -> `{output, truncated, running, exitCode?, matched?}`; `program_stop {handle}` ->
+  until? 1..512}` -> `{output, truncated, running, exitCode?, timedOut?, error?, matched?}`; `program_stop {handle}` ->
   `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. `ProgramResolver.resolve(plugin,
   program)` -> `{executable, prefix?, launcher?, env?, version?}` or undefined; `unresolvedPrograms`; `ProgramHost`;
   `ProgramSession` (per-session handles); `programTimeout`; `programError`; `programPromptEntries(host,
@@ -120,6 +120,7 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   gathered in the call (its last 12 000 characters), in one node:vm context per call with a 100 ms limit
   per attempt (invalid or slow -> error). A refused start writes a `[VERA] The program did not start`
   line to its run log.
+  The tool acknowledges the output snapshot at publication, so a cancelled read leaves it available.
 - The prompt lists programs of enabled, issue-free plugins that resolve, including launcher programs, in
   plugin id then name order; the run rule joins the rules only with such programs.
 - Desktop `SessionsHost` recomputes `<programs>` entries only when the workbench, its plugin skill list or the

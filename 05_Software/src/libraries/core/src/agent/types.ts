@@ -12,7 +12,7 @@ import type { ContextCompactor } from "./compaction.js";
 import type { ContextPolicy, ContextView } from "./context.js";
 
 export type StopReason = "end" | "aborted" | "error" | "limit";
-export type ToolOutput = string | { text: string; image: ImageContent };
+export type ToolOutput = string | { text: string; image?: ImageContent; onPublish?: () => void };
 export interface ToolDef {
   /** Recheck tools whose permissions can change between model requests. */
   available?(): boolean;

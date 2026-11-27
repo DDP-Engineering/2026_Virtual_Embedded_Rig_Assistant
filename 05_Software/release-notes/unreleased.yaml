@@ -109,10 +109,10 @@ entries:
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: Windows command stops report failures promptly, and shortened output keeps its final lines.
-      ro: Pe Windows, eșecul opririi este raportat, iar outputul scurtat păstrează ultimele linii.
-      de: Windows meldet Fehler beim Stoppen. Gekürzte Ausgaben behalten ihre letzten Zeilen.
-      fr: Windows signale les échecs d’arrêt. La sortie tronquée garde ses dernières lignes.
+      en: Command output keeps its tail after truncation or cancellation. VERA reports failures and timeouts.
+      ro: Outputul păstrează finalul după trunchiere sau anulare. VERA raportează erorile și timeouturile.
+      de: Ausgabe bleibt bei Abbruch erhalten. Start-/Stoppfehler und Zeitüberschreitungen werden gemeldet.
+      fr: La sortie garde sa fin après annulation. Les échecs et les délais dépassés sont signalés.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

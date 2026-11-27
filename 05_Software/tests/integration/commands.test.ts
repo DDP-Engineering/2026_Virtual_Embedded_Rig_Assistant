@@ -30,6 +30,7 @@ it.skipIf(noPwsh)(
       expect(receipt.background).toMatchObject({ allDead: true, stopped: { stopped: true } });
       expect(receipt).not.toHaveProperty("background.stopped.error");
       expect(receipt).not.toHaveProperty("timeout.error");
+      expect(receipt.timeout).toMatchObject({ running: false, timedOut: true });
       expect(receipt.lifecycle).toEqual({ sessionStop: true, appStop: true });
     } finally {
       await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });

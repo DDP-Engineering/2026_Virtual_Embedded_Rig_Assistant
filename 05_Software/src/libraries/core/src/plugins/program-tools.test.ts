@@ -6,6 +6,7 @@ import { type PermissionMode, pluginManifestSchema, veraError } from "@vera/shar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestSha256 } from "../agent/approvals.js";
 import type { ToolContext } from "../tools/context.js";
+import { ToolRegistry } from "../tools/registry.js";
 import { FakeHost } from "./fake-process-host.test-support.js";
 import type { ProgramChangeRequest } from "./program-request.js";
 import {
@@ -477,6 +478,72 @@ describe("background runs", () => {
       await programOutputTool.execute(ctx, { handle: value.handle, waitMs: 5000 }, signal()),
     ).toMatchObject({ running: false, exitCode: 2 });
   });
+  it("keeps all unread output when a wait is cancelled", async () => {
+    const { value, process } = await background();
+    const controller = new AbortController();
+    const args = { handle: value.handle };
+    process.print("before\n");
+    onSleep = () => {
+      process.print("during\n");
+      controller.abort(Error("Cancelled poll"));
+    };
+    await expect(programOutputTool.execute(ctx, { ...args, waitMs: 500 }, controller.signal)).rejects.toThrow(
+      "Cancelled poll",
+    );
+    expect(await programOutputTool.execute(ctx, args, signal())).toMatchObject({
+      output: "before\nduring\n",
+      running: true,
+    });
+    expect(await programOutputTool.execute(ctx, args, signal())).toMatchObject({ output: "" });
+  });
+  it("commits a bound snapshot at publication and keeps it if cancelled before then", async () => {
+    const { value, process } = await background();
+    const args = { handle: value.handle };
+    const poll = new ToolRegistry([programOutputTool]).bind(ctx)[0];
+    const controller = new AbortController();
+    process.print("first\n");
+    const cancelled = await poll?.execute(args, controller.signal);
+    if (!cancelled || typeof cancelled === "string" || !cancelled.onPublish)
+      throw Error("Expected deferred publication.");
+    expect(JSON.parse(cancelled.text)).toMatchObject({ output: "first\n" });
+    controller.abort(Error("Cancelled before publication"));
+    expect(cancelled.onPublish).toThrow("Cancelled before publication");
+
+    const next = await poll?.execute(args, signal());
+    if (!next || typeof next === "string" || !next.onPublish) throw Error("Expected deferred publication.");
+    expect(JSON.parse(next.text)).toMatchObject({ output: "first\n" });
+    process.print("later\n");
+    next.onPublish();
+    expect(await programOutputTool.execute(ctx, args, signal())).toMatchObject({ output: "later\n" });
+  });
+  it("reports timeout even if the process exits with code zero", async () => {
+    vi.spyOn(host, "signal").mockImplementation(() => {
+      host.programs[0]?.finish({ code: 0, signal: null });
+      return true;
+    });
+    const run = await runner.start({
+      executable: "fixture",
+      args: [],
+      workbench: root,
+      sessionId: "ses_1",
+      background: true,
+      timeoutMs: 10,
+    });
+    ctx.programs?.session.add(run);
+    await run.done;
+    expect(await programOutputTool.execute(ctx, { handle: run.id }, signal())).toMatchObject({
+      running: false,
+      exitCode: 0,
+      timedOut: true,
+    });
+  });
+  it("reports the system error when a background process fails to start", async () => {
+    host.failNext = "ENOENT";
+    const { value } = await background();
+    expect(
+      await programOutputTool.execute(ctx, { handle: value.handle, waitMs: 1000 }, signal()),
+    ).toMatchObject({ running: false, exitCode: null, error: "ENOENT" });
+  });
   it("refuses an invalid or slow until pattern (REQ-SEC-e9bc4628)", async () => {
     const { value, process } = await background();
     await expect(
@@ -493,6 +560,7 @@ describe("background runs", () => {
       await programOutputTool.execute(ctx, { handle: value.handle, until: "ok" }, signal()),
     ).toMatchObject({
       matched: true,
+      output: `${"a".repeat(40)}ok`,
     });
   });
   it("stops a run and forgets its handle (REQ-FUNC-b70bb17e, REQ-FUNC-c6761a12)", async () => {
