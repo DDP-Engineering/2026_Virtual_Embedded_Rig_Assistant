@@ -58,7 +58,7 @@ Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d�
 
 ## Répondre à une question
 
-Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. Appuyez sur Entrée pour envoyer une réponse saisie. Vous pouvez également écrire votre réponse dans la zone de message principale et l’envoyer de là. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
+Lorsque VERA pose une question, choisissez une réponse ou saisissez la vôtre, puis sélectionnez **Envoyer la réponse**. Appuyez sur Entrée pour envoyer une réponse saisie. Vous pouvez également écrire votre réponse dans la zone de message principale et l’envoyer de là. Les réponses acceptent jusqu’à 2 000 caractères et aucune image. Si votre brouillon dépasse la limite ou contient des images, il reste modifiable dans la zone de message. La carte indique la réponse recommandée. Sélectionnez **Annuler la question** pour poursuivre le tour avec une annulation, ou arrêtez le tour. Une question en attente s’ouvre depuis le menu d’activité du banc de travail.
 
 Dans les réglages **Agent et chat** du banc de travail, l’option **Utiliser les réponses recommandées après un délai** est désactivée par défaut. Activez-la et choisissez un nombre entier de 1 à 1440 minutes. Lorsqu’une recommandation est valide, la carte affiche l’échéance et la conversation indique les réponses automatiques. Le délai continue en arrière-plan et pendant le rechargement de l’interface. Les opérations soumises à approbation la demandent séparément.
 

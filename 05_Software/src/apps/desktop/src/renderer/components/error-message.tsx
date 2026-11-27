@@ -1,6 +1,7 @@
 import {
   advancedSettings,
   browserFailureCodeSchema,
+  questionAnswerMax,
   terminalInputLimit,
   veraErrorSchema,
 } from "@vera/shared";
@@ -30,6 +31,8 @@ export function ErrorMessage({ error }: { error: unknown }) {
       count: advancedSettings.imagesPerMessage.default,
       ...options,
     }),
+    "question.replyTooLong": t("question.replyTooLong", { limit: questionAnswerMax }),
+    "question.replyTextOnly": t("question.replyTextOnly"),
     "wireshark.invalidCitation": t("wireshark.invalidCitation"),
     "wireshark.fileUnavailable": t("wireshark.fileUnavailable"),
     "wireshark.staleCapture": t("wireshark.staleCapture"),

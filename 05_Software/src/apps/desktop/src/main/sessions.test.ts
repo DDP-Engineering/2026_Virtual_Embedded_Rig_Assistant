@@ -2,9 +2,10 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openDb, type ProgramHost, SessionService, SkillCatalog, WriteQueue } from "@vera/core";
+import { openDb, type ProgramHost, SessionService, SkillCatalog, WriteQueue, zeroUsage } from "@vera/core";
 import { workbenchSchema } from "@vera/shared";
 import { expect, it } from "vitest";
+import { fixture } from "./plan-review.test-support.js";
 import { SessionsHost } from "./sessions.js";
 
 // REQ-NFR-2b7fe7ab: exercise the host captured by each service, including light-first workbench B.
@@ -138,6 +139,57 @@ it("lists recovered current-workbench sessions without awaiting pending program 
     await host.close();
     storage.close();
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("stops a question with a deadline while ordinary workbench preparation is held", async () => {
+  const env = await fixture();
+  env.a.config.agent.question_timeout_minutes = 1;
+  env.gateway.stream = async function* () {
+    yield {
+      type: "done",
+      message: {
+        role: "assistant",
+        content: [
+          {
+            type: "toolCall",
+            id: "question-call",
+            name: "ask_user",
+            arguments: { question: "Choose a profile", choices: ["Quiet", "Fast"], recommended: 2 },
+          },
+        ],
+        api: "replay",
+        provider: "replay",
+        model: "chat",
+        timestamp: 1,
+        usage: zeroUsage(),
+        stopReason: "toolUse",
+      },
+    };
+  };
+  const service = await env.host.run((current) => current);
+  service.send(env.id, "Ask about the profile");
+  await expect.poll(() => service.get(env.id).snapshot.questions[0]?.deadline).toEqual(expect.any(String));
+  let enter = () => {};
+  let release = () => {};
+  const entered = new Promise<void>((resolve) => (enter = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  env.holdConfig(() => {
+    enter();
+    return held;
+  });
+  const preparation = env.host.run(() => undefined, { purpose: "ordinary" });
+  try {
+    await entered;
+    expect(env.host.stop({ workbenchId: env.scope.workbenchId, db: env.a.db }, env.id)).toBe(true);
+    expect(service.get(env.id).snapshot.questions[0]?.outcome).toEqual({
+      kind: "cancelled",
+      source: "stopped",
+    });
+    expect(await service.waitIdle(env.id)).toEqual({ stopReason: "aborted" });
+  } finally {
+    release();
+    await preparation;
   }
 });
 

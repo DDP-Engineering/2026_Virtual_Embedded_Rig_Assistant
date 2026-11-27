@@ -60,17 +60,17 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Conversație, de: Chat, fr: Chat }
     text:
-      en: Provider errors for reasoning appear above the chat controls.
-      ro: Erorile furnizorului pentru reasoning apar deasupra comenzilor conversației.
-      de: Anbieterfehler zum Reasoning erscheinen über den Chat-Steuerelementen.
-      fr: Les erreurs du fournisseur liées au raisonnement apparaissent au-dessus des commandes du chat.
+      en: Stop responds promptly. Invalid replies stay in drafts. Reasoning errors appear above controls.
+      ro: Stop răspunde prompt. Ciorna se păstrează. Erorile de reasoning apar deasupra comenzilor.
+      de: Stopp reagiert rasch. Entwürfe bleiben. Reasoning-Fehler stehen über der Chatleiste.
+      fr: Stop réagit vite. Le brouillon reste. Les erreurs de raisonnement s’affichent au-dessus du chat.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Continue reading files and artifacts without skipping lines between pages.
-      ro: Citește în continuare fișierele și artefactele fără să sară linii între pagini.
-      de: Beim Weiterblättern in Dateien und Artefakten werden keine Zeilen übersprungen.
-      fr: La lecture des fichiers et artefacts reprend sans sauter de lignes entre les pages.
+      en: Files and artifacts keep every line across pages. Agents can read long plans in pages.
+      ro: Fișierele și artefactele se citesc fără linii sărite. Agentul citește planurile lungi pe pagini.
+      de: Dateien und Artefakte behalten jede Zeile. Agenten lesen lange Pläne seitenweise.
+      fr: Chaque ligne de fichier ou d’artefact est lue. L’agent lit les plans longs par pages.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

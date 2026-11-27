@@ -58,7 +58,7 @@ While the agent works, you can keep typing and send more messages, for example "
 
 ## Answer a question
 
-When VERA asks a question, select a choice or enter your own answer, then select **Submit answer**. Enter also submits a typed answer. You can type a text answer in the main message box and send it there. The card marks any recommended choice. You can also select **Cancel question** to continue the turn with a cancellation, or stop the turn to end it. Open a waiting question from the activity menu in its workbench heading.
+When VERA asks a question, select a choice or enter your own answer, then select **Submit answer**. Enter also submits a typed answer. You can type a text answer in the main message box and send it there. Answers accept up to 2,000 characters and no images. If your draft exceeds the limit or contains images, it stays in the message box for editing. The card marks any recommended choice. You can also select **Cancel question** to continue the turn with a cancellation, or stop the turn to end it. Open a waiting question from the activity menu in its workbench heading.
 
 In the workbench’s **Agent and chat** settings, **Use recommended answers after a timeout** is off by default. Enable it to set a whole number from 1 to 1440 minutes. The card shows the deadline when a valid recommendation can be applied, and the transcript marks automatic answers. The timer keeps running with the window in the background or the view reloading. Any operation that needs approval still asks for it separately.
 

@@ -222,6 +222,17 @@ it.each([
   },
 );
 
+it("keeps ordinary sends out of the steering queue while an answer is pending", async () => {
+  const { service, ask } = await setup(2, null);
+  const { id, question } = await ask();
+  expect(() => service.send(id, "x".repeat(2001))).toThrow(expect.objectContaining({ code: "BUSY" }));
+  await expect(service.sendWithImages(id, "Answer", ["invalid.png"])).rejects.toMatchObject({ code: "BUSY" });
+  expect(service.get(id).snapshot.items.some((item) => item.kind === "user" && item.pending)).toBe(false);
+  expect(service.get(id).snapshot.questions[0]?.outcome).toBeNull();
+  service.answerQuestion(id, question.questionId, { kind: "cancel" });
+  expect(await service.waitIdle(id)).toEqual({ stopReason: "end" });
+});
+
 it("keeps clarification pending when the user leaves Bypass", async () => {
   const { service, ask } = await setup(2, null);
   const { id, question } = await ask("bypass");

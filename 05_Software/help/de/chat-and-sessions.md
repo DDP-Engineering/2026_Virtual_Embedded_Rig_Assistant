@@ -58,7 +58,7 @@ Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten
 
 ## Eine Frage beantworten
 
-Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Wählen Sie **Antwort senden** oder drücken Sie Enter im Antwortfeld. Sie können auch im Nachrichtenfeld antworten. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
+Wenn VERA eine Frage stellt, wähle eine Antwort oder gib eine eigene ein. Wählen Sie **Antwort senden** oder drücken Sie Enter im Antwortfeld. Sie können auch im Nachrichtenfeld antworten. Antworten dürfen bis zu 2.000 Zeichen lang sein und keine Bilder enthalten. Zu lange Entwürfe oder Entwürfe mit Bildern bleiben zur Bearbeitung im Nachrichtenfeld. Die Empfehlung ist auf der Karte markiert. Mit **Frage abbrechen** läuft der Durchlauf mit einem Abbruch als Antwort weiter. Du kannst auch den ganzen Durchlauf stoppen. Öffne eine wartende Frage über das Aktivitätsmenü der Workbench.
 
 In den Workbench-Einstellungen unter **Agent und Chat** ist **Empfohlene Antworten nach einer Wartezeit übernehmen** standardmäßig aus. Nach dem Einschalten sind 1 bis 1440 ganze Minuten erlaubt. Bei gültiger Empfehlung zeigt die Karte den Zeitpunkt an, und der Chat kennzeichnet automatische Antworten. Die Zeit läuft im Hintergrund und beim Neuladen weiter. Genehmigungspflichtige Vorgänge fragen weiterhin gesondert nach.
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const questionTimeoutLimits = { min: 1, max: 1440, initial: 5 } as const;
+export const questionAnswerMax = 2000;
 export const questionTimeoutMinutesSchema = z
   .number()
   .int()
@@ -10,7 +11,7 @@ export const questionTimeoutMinutesSchema = z
 
 const questionText = z.string().trim().min(1).max(1000);
 const choiceText = z.string().trim().min(1).max(300);
-const answerText = z.string().trim().min(1).max(2000);
+const answerText = z.string().trim().min(1).max(questionAnswerMax);
 const choiceNumber = z.number().int().min(1).max(8);
 export const questionIdSchema = z.string().regex(/^q_[0-9A-HJKMNP-TV-Z]{26}$/);
 
@@ -76,7 +77,10 @@ export function maskQuestionOutcome(
   scrub: (text: string) => string,
 ): QuestionOutcome {
   return "answer" in outcome
-    ? { ...outcome, answer: masked(outcome.answer, scrub, outcome.kind === "choice" ? 300 : 2000) }
+    ? {
+        ...outcome,
+        answer: masked(outcome.answer, scrub, outcome.kind === "choice" ? 300 : questionAnswerMax),
+      }
     : outcome;
 }
 

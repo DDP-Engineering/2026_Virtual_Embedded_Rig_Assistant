@@ -58,7 +58,7 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 ## Răspunde la o întrebare
 
-Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Poți apăsa și Enter în câmpul răspunsului. Poți scrie și trimite răspunsul în caseta principală de mesaj. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
+Când VERA pune o întrebare, alege o variantă sau scrie răspunsul tău, apoi selectează **Trimite răspunsul**. Poți apăsa și Enter în câmpul răspunsului. Poți scrie și trimite răspunsul în caseta principală de mesaj. Răspunsul poate avea cel mult 2.000 de caractere, fără imagini. Dacă depășește limita sau conține imagini, ciorna rămâne în caseta de mesaj pentru editare. Cardul marchează varianta recomandată. Poți selecta **Anulează întrebarea** pentru a continua execuția cu o anulare sau poți opri execuția. Deschide o întrebare în așteptare din meniul de activitate al workbench-ului.
 
 În setările **Agent și chat** ale workbench-ului, opțiunea **Folosește răspunsurile recomandate după un interval** este dezactivată implicit. Activeaz-o și stabilește un număr întreg de la 1 la 1440 de minute. Cardul afișează termenul când se poate aplica o recomandare validă, iar conversația marchează răspunsul automat. Timpul continuă să curgă în fundal și la reîncărcarea interfeței. Operațiunile care necesită aprobare o cer separat.
 

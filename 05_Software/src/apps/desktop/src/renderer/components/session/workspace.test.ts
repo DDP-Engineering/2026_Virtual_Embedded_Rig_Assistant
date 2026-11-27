@@ -10,12 +10,13 @@ import {
 } from "@vera/shared";
 import { act, createElement, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, expect, onTestFinished, test, vi } from "vitest";
 import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
 import i18n from "../../i18n.js";
 import { WorkbenchNavigation } from "../workbench-navigation.js";
+import { AttachmentsContext } from "./attachments.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
 import { SessionList } from "./session-list.js";
@@ -1637,6 +1638,99 @@ test("session context details stay closed until requested and editor grows and s
   );
   expect(container.querySelector("[data-usage]")).toBeNull();
 });
+
+test.each([false, true])(
+  "keeps an invalid composer reply in the draft while a question is pending (image %s)",
+  async (image) => {
+    const bench = await api.invoke("workbench.create", {
+      folder: `/mock/question-reply-${image}`,
+      name: "Question",
+    });
+    const session = await api.invoke("session.create", { workbenchId: bench.config.id });
+    const view = await api.invoke("session.get", { sessionId: session.id });
+    const question = {
+      questionId: "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      callId: "ask",
+      turnId: "turn",
+      question: "Choose a profile",
+      choices: ["Quiet", "Fast"],
+      recommended: null,
+      deadline: null,
+    };
+    const snapshot = applySessionEvent(
+      applySessionEvent(view.snapshot, { type: "turn.started", turnId: question.turnId }),
+      { type: "question.requested", question },
+    );
+    const invoke = api.invoke.bind(api);
+    const observed = vi.spyOn(api, "invoke").mockImplementation((async (channel, request) => {
+      if (channel === "session.get") return { ...view, snapshot };
+      if (channel === "session.question.answer") return {};
+      return invoke(channel, request);
+    }) as typeof api.invoke);
+    if (image) {
+      const original = globalThis.URL;
+      onTestFinished(() => {
+        globalThis.URL = original;
+      });
+      vi.stubGlobal(
+        "URL",
+        Object.assign(class extends URL {}, {
+          createObjectURL: () => "blob:test",
+          revokeObjectURL: () => {},
+        }),
+      );
+    }
+    await mount(
+      createElement(
+        AttachmentsContext.Provider,
+        {
+          value: {
+            full: false,
+            list: () => [],
+            remove: () => {},
+            clear: () => {},
+            imageDraft: () => ({
+              pending: false,
+              images: image ? [{ name: "board.png", path: "board.png", thumbnail: "AAAA" }] : [],
+            }),
+          },
+        },
+        createElement(SessionWorkspace, {
+          id: session.id,
+          workbenchId: bench.config.id,
+          changed: () => {},
+          readOnly: false,
+        }),
+      ),
+    );
+    const input = container.querySelector<HTMLTextAreaElement>("#chat-message")!;
+    const submit = container.querySelector<HTMLButtonElement>('[data-action="send-message"]')!;
+    const draft = image ? "Photo of the board" : "x".repeat(2001);
+    await typeText(input, draft);
+    await vi.waitFor(() => expect(submit.disabled).toBe(false));
+    await act(async () => submit.click());
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      image ? "Remove the images" : "Shorten your answer to 2000 characters",
+    );
+    expect(input.value).toBe(draft);
+    expect(
+      observed.mock.calls.some(
+        ([channel]) => channel === "session.send" || channel === "session.question.answer",
+      ),
+    ).toBe(false);
+    if (!image) {
+      await typeText(input, "Quiet please");
+      await act(async () => submit.click());
+      expect(observed).toHaveBeenCalledWith("session.question.answer", {
+        workbenchId: bench.config.id,
+        sessionId: session.id,
+        questionId: question.questionId,
+        reply: { kind: "text", text: "Quiet please" },
+      });
+      expect(input.value).toBe("");
+    }
+  },
+);
 
 test("session ellipsis exports its own row and archives/restores without duplicate workspace actions", async () => {
   await api.invoke("workbench.create", { folder: "/mock/menu-board", name: "Menu board" });

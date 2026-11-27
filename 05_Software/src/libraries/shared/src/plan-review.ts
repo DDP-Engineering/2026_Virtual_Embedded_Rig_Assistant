@@ -107,11 +107,14 @@ export function equalPlanTarget(left: PlanTarget, right: PlanTarget): boolean {
 
 /** The exact todo presentation used for both selection and authoritative anchor validation. */
 export function projectPlan(items: readonly TodoItem[], content: (text: string) => string): TodoItem[] {
-  return items.map((item) => ({
-    ...item,
-    text: content(item.text).slice(0, 200),
-    ...(item.id === undefined ? {} : { id: content(item.id) }),
-  }));
+  return items.map((item) => {
+    const text = content(item.text);
+    return {
+      ...item,
+      text: text.slice(0, splitsSurrogate(text, 200) ? 199 : 200),
+      ...(item.id === undefined ? {} : { id: content(item.id) }),
+    };
+  });
 }
 
 /** Scrub data only; a retained quote is not sliced again using offsets into a previous projection. */

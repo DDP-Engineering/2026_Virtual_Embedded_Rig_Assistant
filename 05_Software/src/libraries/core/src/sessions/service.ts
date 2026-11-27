@@ -1498,7 +1498,7 @@ export class SessionService {
   async sendWithImages(id: string, text: string, images: string[]) {
     this.row(id);
     this.writable();
-    if (this.isPlanReviewActive(id)) throw veraError("BUSY");
+    if (this.isPlanReviewActive(id) || this.questions.current(id)) throw veraError("BUSY");
     const count = this.resolveAdvanced(id, "imagesPerMessage");
     if (images.length > count) throw { code: "INVALID", messageKey: "chat.imagesLimit", params: { count } };
     const reader = new SessionImages(this.host.root, this.host.managedRoots);
@@ -1525,6 +1525,7 @@ export class SessionService {
         active.failed ||
         active.approvalWait ||
         !active.turnId ||
+        this.questions.current(id) ||
         current.status === "awaiting_approval" ||
         this.host.db
           .prepare("SELECT 1 FROM approvals WHERE session_id=? AND decision IS NULL LIMIT 1")

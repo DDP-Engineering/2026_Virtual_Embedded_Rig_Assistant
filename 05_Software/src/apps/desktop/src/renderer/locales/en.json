@@ -608,6 +608,8 @@
     "choices": "Answer choices",
     "recommended": "Recommended",
     "freeText": "Your own answer",
+    "replyTooLong": "Shorten your answer to {{limit}} characters. Your draft is still here.",
+    "replyTextOnly": "Remove the images to send a text answer, or answer in the question card.",
     "deadline": "Recommended answer applies at {{date}}",
     "submit": "Submit answer",
     "cancel": "Cancel question",

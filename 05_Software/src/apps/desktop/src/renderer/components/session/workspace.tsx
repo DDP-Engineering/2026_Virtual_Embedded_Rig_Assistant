@@ -3,6 +3,7 @@
 import {
   type ChatDetail,
   type DictationRecordingMode,
+  questionAnswerMax,
   type SessionSummary,
   veraErrorSchema,
 } from "@vera/shared";
@@ -232,11 +233,16 @@ export function SessionWorkspace({
     sendUpdates.dispatchEvent(new Event(sendKey));
     setFailure(undefined);
     try {
-      // The agent is waiting on a question: what the user types in the message box is the answer to it,
-      // not a message queued behind a turn that cannot go on.
       const question = view.state.questions.find((item) => item.outcome === null);
-      const reply = text.trim();
-      if (question && workbenchId && !images?.length && reply.length <= 2000) {
+      if (question) {
+        const reply = text.trim();
+        if (images?.length || reply.length > questionAnswerMax) {
+          setFailure({
+            code: "INVALID",
+            messageKey: images?.length ? "question.replyTextOnly" : "question.replyTooLong",
+          });
+          return false;
+        }
         await api.invoke("session.question.answer", {
           workbenchId,
           sessionId: id,
@@ -302,16 +308,17 @@ export function SessionWorkspace({
     }
   }
   async function stop() {
-    if (!id || pending || readOnly) return;
+    if (!id || actionPending || readOnly) return;
+    const generation = scopeGeneration.current;
     setPending(true);
     setFailure(undefined);
     try {
       await api.invoke("session.stop", { sessionId: id });
       changed();
     } catch (e) {
-      setFailure(e);
+      if (generation === scopeGeneration.current) setFailure(e);
     } finally {
-      setPending(false);
+      if (generation === scopeGeneration.current) setPending(false);
     }
   }
   useEffect(() => {
@@ -339,7 +346,7 @@ export function SessionWorkspace({
         !event.ctrlKey &&
         !event.metaKey &&
         !readOnly &&
-        !pending &&
+        !actionPending &&
         activeTurnId &&
         !stopDialog.current?.open
       ) {
@@ -351,7 +358,7 @@ export function SessionWorkspace({
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [bindings, activeTurnId, readOnly, pending, shown]);
+  }, [bindings, activeTurnId, readOnly, actionPending, shown]);
   useEffect(() => {
     if (searching) searchInput.current?.focus();
   }, [searching]);
@@ -381,7 +388,7 @@ export function SessionWorkspace({
           sessionId={id}
           workbenchId={workbenchId}
           stop={() => void stop()}
-          stopPending={pending}
+          stopPending={actionPending}
           turnActive={!!view.state.activeTurnId}
         />
       )}
