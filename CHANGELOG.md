@@ -8,6 +8,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- bus-tools 0.2.0: Scan an I2C bus for the addresses that answer.
+- bus-tools 0.2.0: Talk to an I2C, SPI or UART device without writing a bus profile first.
+- bus-tools 0.2.0: Write a register, and run several reads, writes and pauses on one configured bus.
+- bus-tools 0.2.0: Read the voltage on each pin of the Bus Pirate to check the wiring.
 - raspberry-pi-linux 0.3.0: Run a command on the board with `exec`: install packages, scan I2C, read the camera list, reboot.
 - raspberry-pi-linux 0.3.0: Install a project's Python requirements into its own virtual environment on the board.
 - raspberry-pi-linux 0.3.0: Report the board's temperature, under-voltage, free disk and memory.
@@ -31,6 +35,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- bus-tools 0.2.0: Power the circuit from the adapter with one approval instead of a typed word on every call.
+- bus-tools 0.2.0: A bus profile needs only the bus mode; every other setting has a default.
+- bus-tools 0.2.0: Run after an interrupted call without releasing the adapter first.
 - raspberry-pi-linux 0.3.0: Connect like `ssh`: log in with a key from the SSH agent or `~/.ssh`, and learn the board's host key on the first connection.
 - raspberry-pi-linux 0.3.0: Declare a board with its host and user alone.
 - raspberry-pi-linux 0.3.0: Send changed files and run a task in one step with one approval.
@@ -69,6 +76,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- bus-tools 0.2.0: Recognize an I2C device that does not answer, and name the bus lines that read low.
+- bus-tools 0.2.0: Keep a whole UART capture instead of its first 512 bytes, and show its text.
+- bus-tools 0.2.0: Take a short UART answer instead of losing it.
+- bus-tools 0.2.0: Discard a late answer of the adapter instead of taking it for the next request's.
 - raspberry-pi-linux 0.3.0: Connect to a board that holds an RSA and an Ed25519 host key.
 - raspberry-pi-linux 0.3.0: Start a script that was saved with Windows line ends.
 - raspberry-pi-linux 0.3.0: Keep the output of a Python task that was stopped or ran out of time.

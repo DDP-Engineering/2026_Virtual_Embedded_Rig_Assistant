@@ -11,7 +11,16 @@ const audited: Record<string, Record<string, string[]>> = {
     "ble-tool": ["read-characteristic", "subscribe-notifications", "write-characteristic", "release"],
   },
   "bus-tools": {
-    "bus-tool": ["configure-bus", "read-register", "transfer", "capture", "release"],
+    "bus-tool": [
+      "scan",
+      "configure-bus",
+      "read-register",
+      "write-register",
+      "transfer",
+      "sequence",
+      "capture",
+      "release",
+    ],
   },
   "can-python": {
     can: ["capture", "send", "replay"],

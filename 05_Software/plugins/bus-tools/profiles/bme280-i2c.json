@@ -1,25 +1,21 @@
 {
-  "format": 1,
-  "kind": "bus-tools-profile",
   "name": "BME280 on I2C",
   "wiring": {
-    "commonGround": true,
     "logicMv": 3300,
     "note": "SDA on IO0, SCL on IO1; the sensor board has its own 3.3 V supply"
   },
-  "power": { "source": "external" },
-  "bus": { "mode": "i2c", "speedHz": 100000, "pullups": true, "clockStretch": false },
-  "limits": { "maxWriteBytes": 8, "maxReadBytes": 32, "timeoutMs": 1000 },
-  "final": "release",
+  "bus": { "mode": "i2c", "speedHz": 100000, "pullups": true },
   "devices": [
     {
       "name": "bme280",
       "address": "0x76",
-      "rawTransfer": false,
       "registers": [
-        { "name": "chip_id", "write": "d0", "read": 1, "access": "read", "expect": "60" },
-        { "name": "status", "write": "f3", "read": 1, "access": "read" },
-        { "name": "calibration", "write": "88", "read": 26, "access": "read" }
+        { "name": "chip_id", "write": "d0", "expect": "60" },
+        { "name": "status", "write": "f3" },
+        { "name": "ctrl_hum", "write": "f2" },
+        { "name": "ctrl_meas", "write": "f4", "note": "write 25 for one forced measurement, 1x oversampling" },
+        { "name": "data", "write": "f7", "read": 8, "note": "pressure, temperature and humidity, raw" },
+        { "name": "calibration", "write": "88", "read": 26 }
       ]
     }
   ]

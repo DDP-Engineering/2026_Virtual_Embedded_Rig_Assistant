@@ -1,15 +1,9 @@
 {
-  "format": 1,
-  "kind": "bus-tools-profile",
   "name": "UART console at 115200 8N1",
   "wiring": {
-    "commonGround": true,
     "logicMv": 3300,
     "note": "Bus Pirate TX to the target's RX, RX to its TX"
   },
-  "power": { "source": "external" },
-  "bus": { "mode": "uart", "baud": 115200, "dataBits": 8, "parity": "none", "stopBits": 1, "pullups": false },
-  "limits": { "maxWriteBytes": 64, "maxReadBytes": 512, "timeoutMs": 2000 },
-  "final": "release",
-  "devices": [{ "name": "console", "rawTransfer": true }]
+  "bus": { "mode": "uart", "baud": 115200, "dataBits": 8, "parity": "none", "stopBits": 1 },
+  "limits": { "maxWriteBytes": 64, "maxReadBytes": 512, "timeoutMs": 2000 }
 }

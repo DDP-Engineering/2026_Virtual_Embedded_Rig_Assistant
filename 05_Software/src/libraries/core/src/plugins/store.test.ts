@@ -559,8 +559,7 @@ it("lists the operations of official bus-tools from the rules its approvals clas
   expect(groups.map(({ risk, rules }) => [risk, rules.length])).toEqual([
     ["safe", 2],
     ["device-read", 1],
-    ["device-write", 3],
-    ["irreversible", 1],
+    ["device-write", 4],
   ]);
   const approval = classifyCommand(manifest.rules, "bus-tool", ["identify", "--adapter", "bp"]);
   const [identify] = groups.find((group) => group.risk === "device-read")?.rules ?? [];

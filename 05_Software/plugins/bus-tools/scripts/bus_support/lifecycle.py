@@ -1,8 +1,8 @@
 """The run's side of VERA's supervision (spec REQ-DATA-f2cbfc23 section 6), as the scpi helper keeps it.
 
 VERA gives a supervised run a control folder ($VERA_RUN_CONTROL): the helper reports its phase and the resource's
-physical state in `state.json` and stops at the next safe point when VERA creates `stop` there. $VERA_RESOURCE_STATE
-names resources whose physical state VERA recorded as unknown.
+physical state in `state.json` and stops at the next safe point when VERA creates `stop` there. A state VERA recorded as unknown
+needs no release first: every bus operation begins with a whole configuration that is read back.
 """
 
 from __future__ import annotations
@@ -24,12 +24,6 @@ class Lifecycle:
         self.phases: list[str] = []
         self.physical = "unchanged"
         self.stopped = False
-        try:
-            self.states = json.loads(os.environ.get("VERA_RESOURCE_STATE") or "{}")
-            if not isinstance(self.states, dict):
-                self.states = {}
-        except json.JSONDecodeError:
-            self.states = {}
 
     def report(self, phase: str, physical: str | None = None) -> None:
         if physical is not None:
@@ -58,7 +52,3 @@ class Lifecycle:
                 return True
             time.sleep(min(POLL, max(0.0, end - time.monotonic())))
         return self.stop_requested()
-
-    def unknown(self, alias: str) -> dict | None:
-        state = self.states.get(alias)
-        return state if isinstance(state, dict) and state.get("state") == "unknown" else None

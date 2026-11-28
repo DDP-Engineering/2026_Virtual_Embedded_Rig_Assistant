@@ -4,5 +4,5 @@ FORMAT = 1
 KIND = "bus-tool-result"
 PROFILE_KIND = "bus-tools-profile"
 TOOL = "bus-tool"
-VERSION = "0.1.1"
+VERSION = "0.2.0"
 BACKEND = "bus-pirate-bpio2"

@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-REL-077448a5"
-title = "Report an address NACK after a single attempt"
+title = "Report a device that does not acknowledge after a single attempt"
 status = "active"
-requirement = "If the adapter reports a NACK for a transaction, bus-tool shall end fail (nack) after that single attempt, without repeating the request, and apply the final state."
-verification = "read-register on a device declared at 0x77 where nothing answers: exit 1 nack; the wire log holds one data request; the final state is HiZ."
+requirement = "If the adapter reports a failed I2C transaction (the firmware's one error text, Protocol request failed, or a text naming a NACK), bus-tool shall end fail (nack) after that single attempt, naming the address and every I2C line that read under 700 mV after the configuration, without repeating the request, and apply the final state."
+verification = "read-register on a device declared at 0x77 where nothing answers: exit 1 nack naming 0x77; the wire log holds one data request; the final state is HiZ. With SDA held low on the simulated adapter the message names SDA with its voltage and the result warns line-low."
 affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
 linked_tests = ["05_Software/tests/plugins/bus-tools.test.ts"]
 spec = "specs/REQ-DATA-634d35da.md"
 priority = "high"
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

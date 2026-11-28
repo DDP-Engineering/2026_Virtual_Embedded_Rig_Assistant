@@ -1,14 +1,15 @@
 // The bus-tools plugin without a bus adapter. Default tests check the package, the risk rules and bus-tool against a
 // simulated Bus Pirate 5 in BPIO2 mode: a fake pyserial (tests/fixtures/bus-tools/fake-serial) parses the helper's
 // COBS/FlatBuffers requests with the official flatbuffers runtime and answers for a simulated BME280, I2C EEPROM, SPI
-// flash and UART peer - offline evidence only, never proof of a real adapter. The runner block uses the real
+// flash and UART peer - offline evidence only, never proof of a real adapter. Its error text, asynchronous UART data
+// and pin labels follow the firmware source. The runner block uses the real
 // ProgramRunner, lease folder, Stop and cleanup run. VERA_TEST_BUS_PIRATE_PORT, VERA_TEST_BUS_PIRATE_TERMINAL and
 // VERA_TEST_BUS_PIRATE_IDENTITY name a real adapter for the read-only hardware test.
 // REQ-DATA-634d35da REQ-SEC-9350b6ae REQ-FUNC-4dadea40 REQ-FUNC-0163b91b REQ-SEC-1c72e308 REQ-FUNC-971cb423
 // REQ-REL-793a44d8 REQ-REL-023c37ad REQ-FUNC-ebf73436 REQ-SEC-2ec2103d REQ-SEC-145e1953 REQ-FUNC-edb1741e
 // REQ-REL-28754edd REQ-FUNC-e5a016ac REQ-SEC-b30461f8 REQ-SEC-a8f13a1a REQ-SEC-85225742 REQ-FUNC-1dcdbb05
 // REQ-REL-077448a5 REQ-REL-87418271 REQ-REL-f430ec06 REQ-REL-737b96ec REQ-FUNC-3223c457 REQ-FUNC-d9a201a5
-// REQ-REL-c63f36b2 REQ-REL-10ae6ea5 REQ-FUNC-cd3227bc REQ-SEC-e088558b REQ-SEC-d8671786 REQ-FUNC-e62ad15a
+// REQ-REL-c63f36b2 REQ-REL-10ae6ea5 REQ-FUNC-cd3227bc REQ-SEC-d8671786 REQ-FUNC-e62ad15a
 // REQ-SEC-f0aa9c76 REQ-FUNC-1f2ee7cc REQ-TEST-e0a0dfe1
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -122,7 +123,7 @@ const i2cProfile = (fields: Json = {}): Json => ({
         { name: "temp_raw", write: "fa", read: 8, access: "read" },
       ],
     },
-    { name: "eeprom", address: "0x50", rawTransfer: true },
+    { name: "eeprom", address: "0x50", registers: [{ name: "cell", write: "10", read: 3 }] },
     {
       name: "ghost",
       address: "0x77",
@@ -142,7 +143,6 @@ const spiProfile = (cpol = 0, cpha = 0): Json => ({
   devices: [
     {
       name: "flash",
-      rawTransfer: true,
       registers: [{ name: "jedec_id", write: "9f", read: 3, access: "read", expect: "ef4018" }],
     },
   ],
@@ -155,7 +155,7 @@ const uartProfile = (fields: Json = {}): Json => ({
   power: { source: "external" },
   bus: { mode: "uart", baud: 115200, dataBits: 8, parity: "none", stopBits: 1, pullups: false },
   limits: { maxWriteBytes: 16, maxReadBytes: 64, timeoutMs: 1000 },
-  devices: [{ name: "console", rawTransfer: true }],
+  devices: [{ name: "console" }],
   ...fields,
 });
 async function profile(name: string, document: Json) {
@@ -227,7 +227,7 @@ describe("package", () => {
   it("publishes the official bus-tools package with one pinned helper, a supervised resource, skills, catalog and pack", async () => {
     const m = manifest();
     expect(validatePluginManifest(m).issues).toEqual([]);
-    expect(m).toMatchObject({ id: "bus-tools", version: "0.1.1", platforms: ["windows-x64", "linux-x64"] });
+    expect(m).toMatchObject({ id: "bus-tools", version: "0.2.0", platforms: ["windows-x64", "linux-x64"] });
     expect(Object.keys(m.programs)).toEqual(["bus-tool"]);
     const program = m.programs["bus-tool"];
     expect(program?.install).toEqual({ script: "scripts/bus_tool.py" });
@@ -266,11 +266,23 @@ describe("package", () => {
       .map((skill) => skill.name);
     expect(names.sort()).toEqual(["bus-profiles", "bus-transactions"]);
     const transactions = (await skills.read("plugin", "bus-transactions")).content;
-    for (const text of ["--clears", "--power", "sigrok", "nack", "unexpected-value", "BUSY", "release"])
+    for (const text of [
+      "scan",
+      "pins",
+      "--address",
+      "sequence",
+      "write-register",
+      "--clears",
+      "--supply",
+      "sigrok",
+      "nack",
+      "unexpected-value",
+      "BUSY",
+      "release",
+    ])
       expect(transactions).toContain(text);
     const profiles = (await skills.read("plugin", "bus-profiles")).content;
-    for (const text of ["commonGround", "read-clears", "rawTransfer", "no scan"])
-      expect(profiles).toContain(text);
+    for (const text of ["bus.mode", "read-clears", "expect", "keep"]) expect(profiles).toContain(text);
     for (const file of readdirSync(join(pluginFolder, "profiles"))) {
       await writeFile(join(root, "bench", file), readFileSync(join(pluginFolder, "profiles", file)));
       expect(bt(["capabilities", "--bus", `bench/${file}`]).code, file).toBe(0);
@@ -291,25 +303,27 @@ describe("package", () => {
     ])
       expect(risk(line)).toBe("safe");
     expect(risk("bus-tool identify --adapter bp")).toBe("device-read");
+    expect(risk("bus-tool pins --adapter bp")).toBe("device-read");
     for (const line of [
+      "bus-tool scan --adapter bp",
       "bus-tool configure-bus --adapter bp --bus p.json",
       "bus-tool read-register --adapter bp --bus p.json --device d --register r",
       "bus-tool read-register --adapter bp --bus p.json --device d --register r --clears",
+      "bus-tool write-register --adapter bp --bus p.json --register r --value 01",
       "bus-tool transfer --adapter bp --bus p.json --device d --write 00 --read 4",
+      "bus-tool transfer --adapter bp --address 0x76 --write d0 --read 1 --supply 3300",
+      "bus-tool sequence --adapter bp --bus p.json --step read",
       "bus-tool capture --adapter bp --bus p.json --duration 5",
       "bus-tool release --adapter bp",
     ])
       expect(risk(line), line).toBe("device-write");
-    expect(risk("bus-tool read-register --adapter bp --bus p.json --device d --register r --power")).toBe(
-      "irreversible",
-    );
-    expect(risk("bus-tool configure-bus --power --adapter bp --bus p.json")).toBe("irreversible");
     const notes = (m.rules ?? []).map((rule) => `${rule.match} ${rule.note ?? ""}`).join("\n");
     expect(notes).toMatch(/read-register.*writes the register address first and may clear flags/);
+    expect(notes).toMatch(/scan.*one empty write to each address/);
   });
 
-  it("offers no terminal, scan or firmware operation and writes no forbidden BPIO2 field", () => {
-    for (const args of [["terminal"], ["scan"], ["bootloader"], ["selftest"], ["script", "x"]]) {
+  it("offers no terminal or firmware operation and writes no forbidden BPIO2 field", () => {
+    for (const args of [["terminal"], ["bootloader"], ["selftest"], ["script", "x"]]) {
       const run = bt(args);
       expect(run.code).toBe(2);
       expect(run.json).toMatchObject({ status: "blocked", errors: [{ code: "arguments" }] });
@@ -327,7 +341,7 @@ describe("package", () => {
       "print_string",
     ])
       expect(source).not.toContain(field);
-    expect(bt(["--version"]).stdout.trim()).toBe("bus-tool 0.1.1");
+    expect(bt(["--version"]).stdout.trim()).toBe("bus-tool 0.2.0");
   });
 
   it("carries workspace.py as a byte-identical copy of the shared path rules", async () => {
@@ -452,7 +466,7 @@ describe("devices, identity and the backend", { timeout: 60_000 }, () => {
     const described = bt(["capabilities", "--bus", path]);
     expect(described.json.profile.devices[0]).toMatchObject({ name: "bme280", address: "0x76" });
     expect(described.json.profile.limits).toEqual({ maxWriteBytes: 16, maxReadBytes: 32, timeoutMs: 1000 });
-    const bad = await profile("bad.json", i2cProfile({ wiring: { commonGround: false, logicMv: 3300 } }));
+    const bad = await profile("bad.json", i2cProfile({ bus: { mode: "can" } }));
     expect(bt(["capabilities", "--bus", bad]).json.errors[0].code).toBe("profile-invalid");
     expect(opened()).toEqual([]);
   });
@@ -462,8 +476,9 @@ describe("profiles and requests refused before the adapter", { timeout: 60_000 }
   it("refuses an invalid profile", async () => {
     const base = i2cProfile();
     const cases: Json[] = [
-      { ...base, wiring: { commonGround: false, logicMv: 3300 } },
+      { ...base, bus: { speedHz: 100000 } },
       { ...base, wiring: { commonGround: true, logicMv: 900 } },
+      { ...uartProfile(), bus: { mode: "uart", parity: "odd" } },
       { ...base, bus: { mode: "i2c", speedHz: 2_000_000, pullups: true } },
       { ...base, devices: [{ name: "x", address: "0x78" }] },
       {
@@ -489,6 +504,37 @@ describe("profiles and requests refused before the adapter", { timeout: 60_000 }
     expect(opened()).toEqual([]);
   });
 
+  it("needs only the bus mode of a profile and fills in the usual settings", async () => {
+    const path = await profile("min.json", {
+      bus: { mode: "i2c" },
+      devices: [{ name: "bme280", address: "0x76", registers: [{ name: "chip_id", write: "d0" }] }],
+    });
+    const described = bt(["capabilities", "--bus", path]);
+    expect(described.code).toBe(0);
+    expect(described.json.profile).toMatchObject({
+      bus: { mode: "i2c", speedHz: 100000, pullups: true, clockStretch: false },
+      power: { source: "external" },
+      limits: { maxWriteBytes: 512, maxReadBytes: 512, timeoutMs: 2000 },
+      final: "release",
+    });
+    expect(described.json.profile.devices[0].registers[0]).toMatchObject({ read: 1, access: "read" });
+    // Without --device and --register: the one device, every register it declares.
+    const run = bt(["read-register", "--adapter", "bp", "--bus", path]);
+    expect(run.code).toBe(0);
+    expect(run.json.registers).toEqual([
+      { device: "bme280", name: "chip_id", value: "60", expected: null, matches: null },
+    ]);
+    const spi = await profile("spi-min.json", { bus: { mode: "spi" } });
+    expect(bt(["capabilities", "--bus", spi]).json.profile.bus).toMatchObject({
+      speedHz: 1000000,
+      cpol: 0,
+      cpha: 0,
+      csIdle: "high",
+      bitOrder: "msb",
+      pullups: false,
+    });
+  });
+
   it("reads only declared registers and clearing registers on purpose", async () => {
     const path = await profile("i2c.json", i2cProfile());
     const read = (...rest: string[]) => bt(["read-register", "--adapter", "bp", "--bus", path, ...rest]);
@@ -501,13 +547,15 @@ describe("profiles and requests refused before the adapter", { timeout: 60_000 }
     expect(opened()).toEqual([]);
     const cleared = read("--device", "bme280", "--register", "status", "--clears");
     expect(cleared.code).toBe(0);
-    expect(cleared.json.register).toMatchObject({ name: "status", value: "0c" });
+    expect(cleared.json.registers[0]).toMatchObject({ name: "status", value: "0c" });
   });
 
-  it("transfers only to devices that allow it and within the profile's and the adapter's limits", async () => {
+  it("transfers to a declared device within the profile's and the adapter's limits", async () => {
     const path = await profile("i2c.json", i2cProfile());
     const transfer = (...rest: string[]) => bt(["transfer", "--adapter", "bp", "--bus", path, ...rest]);
-    expect(transfer("--device", "bme280", "--read", "1").json.errors[0].code).toBe("transfer-not-allowed");
+    expect(transfer("--device", "nope", "--read", "1").json.errors[0].code).toBe("device-unknown");
+    expect(transfer("--read", "1").json.errors[0]).toMatchObject({ code: "device-unknown" });
+    expect(transfer("--read", "1").json.errors[0].message).toMatch(/--device: bme280, eeprom, ghost/);
     expect(transfer("--device", "eeprom", "--read", "64").json.errors[0].code).toBe("limit");
     expect(transfer("--device", "eeprom", "--write", "0x10").json.errors[0].code).toBe("arguments");
     expect(transfer("--device", "eeprom").json.errors[0].code).toBe("arguments");
@@ -520,43 +568,98 @@ describe("profiles and requests refused before the adapter", { timeout: 60_000 }
     expect(small.json.final).toMatchObject({ declared: "release", physical: "confirmed" });
   });
 
-  it("switches the adapter's supply on only when declared, named and within the bench limits", async () => {
+  it("powers the circuit from the adapter when the profile or the call asks, within the bench limits", async () => {
     const powered = await profile("p.json", i2cProfile({ power: { source: "adapter", mv: 3300, ma: 50 } }));
-    const configure = (path: string, ...rest: string[]) =>
-      bt(["configure-bus", "--adapter", "bp", "--bus", path, ...rest]);
-    expect(configure(powered).json.errors[0].code).toBe("power-not-allowed");
-    await setRegistry({ power: undefined });
-    expect(configure(powered, "--power").json.errors[0].code).toBe("power-not-allowed");
+    const configure = (...rest: string[]) => bt(["configure-bus", "--adapter", "bp", ...rest]);
     await setRegistry({ power: { maxMv: 1800, maxMa: 100 } });
-    expect(configure(powered, "--power").json.errors[0].code).toBe("power-not-allowed");
-    const external = await profile("e.json", i2cProfile());
-    expect(configure(external, "--power").json.errors[0].code).toBe("power-not-allowed");
+    expect(configure("--bus", powered).json.errors[0].code).toBe("power-not-allowed");
+    expect(configure("--mode", "i2c", "--supply", "3300").json.errors[0].code).toBe("power-not-allowed");
+    expect(configure("--mode", "i2c", "--supply", "700").json.errors[0].code).toBe("arguments");
     expect(opened()).toEqual([]);
     await setRegistry();
-    const on = configure(powered, "--power");
+    const on = configure("--bus", powered);
     expect(on.code).toBe(0);
+    expect(on.json.bus.power).toEqual({ mv: 3300, ma: 50 });
     expect(fakeState()).toMatchObject({ psu: true, psuMv: 3300, psuMa: 50 });
     expect(requests("configuration")[0]).toMatchObject({ psuEnable: true, psuSetMv: 3300, psuSetMa: 50 });
+    // A bench that declares no limits takes the call's own values.
+    await setRegistry({ power: undefined });
     await clearWire();
-    expect(configure(external).code).toBe(0);
+    expect(configure("--mode", "i2c", "--supply", "1800", "--supply-ma", "20").code).toBe(0);
+    expect(requests("configuration")[0]).toMatchObject({ psuEnable: true, psuSetMv: 1800, psuSetMa: 20 });
+    await clearWire();
+    const external = await profile("e.json", i2cProfile());
+    expect(configure("--bus", external).code).toBe(0);
     expect(requests("configuration").every((entry) => entry.psuDisable && !entry.psuEnable)).toBe(true);
   });
 
-  it("refuses bus operations while VERA records the adapter's state unknown", async () => {
+  it("runs after VERA recorded the adapter's state unknown, since the configuration sets all of it", async () => {
     const path = await profile("i2c.json", i2cProfile());
     const unknown = JSON.stringify({
       bp: { state: "unknown", since: "2026-11-14T10:00:00Z", runId: "R1", reason: "holder-lost" },
     });
     const run = bt(
       ["read-register", "--adapter", "bp", "--bus", path, "--device", "bme280", "--register", "chip_id"],
-      {
-        VERA_RESOURCE_STATE: unknown,
-      },
+      { VERA_RESOURCE_STATE: unknown },
     );
-    expect(run.code).toBe(2);
-    expect(run.json.errors[0].code).toBe("state-unknown");
+    expect(run.code).toBe(0);
+    expect(run.json.final).toMatchObject({ declared: "release", physical: "confirmed" });
+  });
+
+  it("describes a bus with the call's own options instead of a profile", async () => {
+    const read = bt(["transfer", "--adapter", "bp", "--address", "0x76", "--write", "d0", "--read", "1"]);
+    expect(read.code).toBe(0);
+    expect(read.json.transactions[0]).toMatchObject({ device: "device", write: "ecd0", read: "60" });
+    expect(read.json.bus).toMatchObject({ mode: "i2c", speedHz: 100000, pullups: true, power: "external" });
+    expect(read.json.inputs.profile).toBeUndefined();
+    expect(requests("configuration")[0]).toMatchObject({
+      mode: "I2C",
+      pullupEnable: true,
+      modeConfiguration: { speed: 100000 },
+    });
+    await clearWire();
+    const fast = bt([
+      "transfer",
+      "--adapter",
+      "bp",
+      "--address",
+      "0x76",
+      "--speed",
+      "400000",
+      "--pullups",
+      "off",
+      "--read",
+      "1",
+      "--keep",
+    ]);
+    expect(fast.code).toBe(0);
+    expect(requests("configuration")[0]).toMatchObject({
+      pullupDisable: true,
+      modeConfiguration: { speed: 400000 },
+    });
+    expect(requests("data")[0]).toMatchObject({ write: "ec", read: 1 });
+    expect(fast.json.final).toMatchObject({ declared: "keep", state: { mode: "I2C" } });
+    await clearWire();
+    const flash = bt(["transfer", "--adapter", "bp", "--mode", "spi", "--write", "9f", "--read", "3"]);
+    expect(flash.json.transactions[0].read).toBe("ef4018");
+    expect(bt(["configure-bus", "--adapter", "bp", "--mode", "spi", "--spi-mode", "3"]).code).toBe(0);
+    expect(requests("configuration").at(-1)).toMatchObject({
+      modeConfiguration: { clockPolarity: true, clockPhase: true },
+    });
+    await clearWire();
+    const path = await profile("i2c.json", i2cProfile());
+    for (const args of [
+      ["transfer", "--adapter", "bp", "--write", "00"],
+      ["transfer", "--adapter", "bp", "--bus", path, "--address", "0x76", "--read", "1"],
+      ["transfer", "--adapter", "bp", "--address", "0x78", "--read", "1"],
+      ["transfer", "--adapter", "bp", "--mode", "spi", "--address", "0x76", "--read", "1"],
+      ["transfer", "--adapter", "bp", "--mode", "i2c", "--spi-mode", "1", "--read", "1"],
+    ])
+      expect(bt(args).json.errors[0].code, args.join(" ")).toBe("arguments");
+    expect(bt(["transfer", "--adapter", "bp", "--mode", "i2c", "--read", "1"]).json.errors[0].code).toBe(
+      "device-unknown",
+    );
     expect(opened()).toEqual([]);
-    expect(bt(["release", "--adapter", "bp"], { VERA_RESOURCE_STATE: unknown }).code).toBe(0);
   });
 });
 
@@ -567,6 +670,7 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
     const run = bt(["configure-bus", "--adapter", "bp", "--bus", path]);
     expect(run.code).toBe(0);
     expect(run.json.configuration.readBack).toEqual({ mode: "I2C", pullups: true, psu: false });
+    expect(run.json.configuration.lines).toEqual({ SDA: 3300, SCL: 3300 });
     expect(run.json.final).toMatchObject({ declared: "configured", physical: "confirmed" });
     expect(fakeState()).toMatchObject({ mode: "I2C", pullups: true });
     expect(requests("configuration")[0]).toMatchObject({
@@ -616,13 +720,9 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
       "chip_id",
     ]);
     expect(run.code).toBe(0);
-    expect(run.json.register).toEqual({
-      device: "bme280",
-      name: "chip_id",
-      value: "60",
-      expected: "60",
-      matches: true,
-    });
+    expect(run.json.registers).toEqual([
+      { device: "bme280", name: "chip_id", value: "60", expected: "60", matches: true },
+    ]);
     expect(requests("data")).toHaveLength(1);
     expect(requests("data")[0]).toMatchObject({ startMain: true, write: "ecd0", read: 1, stopMain: true });
     expect(run.json.final).toEqual({
@@ -645,7 +745,7 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
       "jedec_id",
     ]);
     expect(flash.code).toBe(0);
-    expect(flash.json.register.value).toBe("ef4018");
+    expect(flash.json.registers[0].value).toBe("ef4018");
     expect(requests("configuration")[0]).toMatchObject({
       mode: "SPI",
       bitorderMsb: true,
@@ -683,7 +783,6 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
       "bme280",
       "--register",
       "chip_id",
-      "--power",
     ]);
     expect(stuck.json.final).toMatchObject({
       declared: "release",
@@ -743,8 +842,11 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
       "2",
     ]);
     expect(echo.code).toBe(0);
-    expect(echo.json.transactions[0].read).toBe("6869");
-    expect(requests("data")[0]).toMatchObject({ startMain: false, stopMain: false });
+    expect(echo.json.transactions[0]).toMatchObject({ read: "6869", text: "hi" });
+    // The write is the only request: what the UART receives arrives by itself.
+    expect(requests("data")).toEqual([
+      expect.objectContaining({ startMain: false, stopMain: false, write: "6869", read: 0 }),
+    ]);
     expect(requests("configuration")[0]).toMatchObject({
       mode: "UART",
       modeConfiguration: { speed: 115200, dataBits: 8, stopBits: 1, parity: false },
@@ -791,8 +893,25 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
     ]);
     expect(nack.code).toBe(1);
     expect(nack.json.errors[0].code).toBe("nack");
+    expect(nack.json.errors[0].message).toMatch(/ghost at 0x77 did not acknowledge.*Protocol request failed/);
     expect(requests("data")).toHaveLength(1);
     expect(nack.json.final.physical).toBe("confirmed");
+    // A line that stays low after the configuration is named with its voltage.
+    await setBench({ faults: { lowLines: [0] } });
+    const low = bt([
+      "read-register",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--device",
+      "ghost",
+      "--register",
+      "chip_id",
+    ]);
+    expect(low.json.errors[0].message).toMatch(/SDA \(IO0\) reads 0\.02 V/);
+    expect(low.json.warnings).toContainEqual(expect.objectContaining({ code: "line-low" }));
+    expect(low.json.configuration.lines).toEqual({ SDA: 20, SCL: 3300 });
 
     await setBench({ faults: { dropData: true } });
     await clearWire();
@@ -861,12 +980,12 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
     expect(run.code).toBe(1);
     expect(run.json.errors[0].code).toBe("unexpected-value");
     expect(run.json.errors[0].message).toMatch(/ef4018.*SPI mode/);
-    expect(run.json.register).toMatchObject({ expected: "ef4018", matches: false });
+    expect(run.json.registers[0]).toMatchObject({ expected: "ef4018", matches: false });
     expect(requests("data")).toHaveLength(1);
   });
 
   it("captures a UART for a bounded time and points I2C capture to sigrok", async () => {
-    await setBench({ faults: { stream: ["626f6f74", "0d0a6f6b"] } });
+    await setBench({ faults: { stream: ["626f6f74", "0d0a6f6b"] }, targets: { ...targets(), uart: {} } });
     const uart = await profile("uart.json", uartProfile());
     const run = bt([
       "capture",
@@ -882,7 +1001,8 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
       "cap",
     ]);
     expect(run.code).toBe(0);
-    expect(run.json.capture).toMatchObject({ bytes: 8, chunks: 2 });
+    expect(run.json.capture).toMatchObject({ bytes: 8, chunks: 2, text: "boot\nok" });
+    expect(readFileSync(join(root, "arduino-iot-results", "cap", "capture.txt"), "utf8")).toBe("boot\nok");
     expect(readFileSync(join(root, "arduino-iot-results", "cap", "capture.bin")).toString("hex")).toBe(
       "626f6f740d0a6f6b",
     );
@@ -899,6 +1019,241 @@ describe("transactions against the simulated adapter", { timeout: 60_000 }, () =
     expect(refused.code).toBe(2);
     expect(refused.json.errors[0]).toMatchObject({ code: "capture-mode" });
     expect(refused.json.errors[0].message).toMatch(/sigrok/);
+  });
+
+  it("keeps a whole boot log and shows its text in the result", async () => {
+    const lines = Array.from(
+      { length: 80 },
+      (_, index) => `[${String(index).padStart(3, "0")}] booting stage\r\n`,
+    );
+    const log = lines.join("");
+    const stream = (log.match(/[\s\S]{1,64}/g) ?? []).map((chunk) => Buffer.from(chunk).toString("hex"));
+    await setBench({ faults: { stream }, targets: { ...targets(), uart: {} } });
+    const uart = await profile("uart.json", uartProfile());
+    const run = bt(["capture", "--adapter", "bp", "--bus", uart, "--duration", "1", "--run-id", "boot"]);
+    expect(run.code).toBe(0);
+    expect(log.length).toBeGreaterThan(512);
+    expect(run.json.capture.bytes).toBe(log.length);
+    expect(run.json.capture.text).toContain("[000] booting stage\n");
+    expect(run.json.capture.text).toContain("[079] booting stage\n");
+    expect(readFileSync(join(root, "arduino-iot-results", "boot", "capture.bin")).toString()).toBe(log);
+    await setBench({ targets: { ...targets(), uart: {} } });
+    const silent = bt(["capture", "--adapter", "bp", "--bus", uart, "--duration", "1"]);
+    expect(silent.code).toBe(0);
+    expect(silent.json.warnings).toContainEqual(expect.objectContaining({ code: "nothing-received" }));
+  });
+
+  it("takes a UART answer as it arrives: a short one passes, none fails", async () => {
+    const uart = await profile("uart.json", uartProfile());
+    const exchange = () =>
+      bt(["transfer", "--adapter", "bp", "--bus", uart, "--write", "0d", "--read", "16"]);
+    await setBench({ targets: { ...targets(), uart: { reply: "6f6b0d0a" } } });
+    const short = exchange();
+    expect(short.code).toBe(0);
+    expect(short.json.transactions[0]).toMatchObject({ readRequested: 16, read: "6f6b0d0a", text: "ok\n" });
+    expect(short.json.warnings).toContainEqual(expect.objectContaining({ code: "short-read" }));
+    await setBench({ targets: { ...targets(), uart: { reply: "41".repeat(40), chunk: 8 } } });
+    expect(exchange().json.transactions[0].read).toBe("41".repeat(16));
+    await setBench({ targets: { ...targets(), uart: {} } });
+    const none = exchange();
+    expect(none.code).toBe(1);
+    expect(none.json.errors[0].code).toBe("no-response");
+    expect(none.json.final.physical).toBe("confirmed");
+  });
+
+  it("scans the I2C bus for the addresses that acknowledge", async () => {
+    const run = bt(["scan", "--adapter", "bp"]);
+    expect(run.code).toBe(0);
+    expect(run.json.scan).toEqual({
+      from: "0x08",
+      to: "0x77",
+      probed: 112,
+      found: [
+        { address: "0x50", device: null },
+        { address: "0x76", device: null },
+      ],
+    });
+    const probes = requests("data");
+    expect(probes).toHaveLength(112);
+    expect(probes[0]).toMatchObject({ startMain: true, write: "10", read: 0, stopMain: true });
+    expect(probes.at(-1)).toMatchObject({ write: "ee", read: 0 });
+    expect(requests("configuration")[0]).toMatchObject({ mode: "I2C", pullupEnable: true });
+    expect(run.json.final).toMatchObject({ declared: "release", physical: "confirmed" });
+    expect(run.json.requests.filter((entry: Json) => entry.request === "data")).toEqual([
+      { request: "data", probes: 112, reply: "scan" },
+    ]);
+    await clearWire();
+    const path = await profile("i2c.json", i2cProfile());
+    const named = bt(["scan", "--adapter", "bp", "--bus", path, "--from", "0x70", "--to", "0x77"]);
+    expect(named.json.scan).toMatchObject({ probed: 8, found: [{ address: "0x76", device: "bme280" }] });
+    expect(requests("data")).toHaveLength(8);
+    await setBench({ targets: { ...targets(), i2c: {} }, faults: { lowLines: [0, 1] } });
+    const empty = bt(["scan", "--adapter", "bp"]);
+    expect(empty.code).toBe(0);
+    expect(empty.json.scan.found).toEqual([]);
+    expect(empty.json.warnings.find((item: Json) => item.code === "no-device").message).toMatch(
+      /SDA \(IO0\) reads 0\.02 V and SCL \(IO1\) reads 0\.02 V/,
+    );
+    await setBench({ faults: { ackAll: true } });
+    expect(bt(["scan", "--adapter", "bp"]).json.warnings).toContainEqual(
+      expect.objectContaining({ code: "all-acknowledged" }),
+    );
+    await setBench();
+    await clearWire();
+    const spi = await profile("spi.json", spiProfile());
+    expect(bt(["scan", "--adapter", "bp", "--bus", spi]).json.errors[0].code).toBe("scan-mode");
+    expect(bt(["scan", "--adapter", "bp", "--from", "0x60", "--to", "0x50"]).json.errors[0].code).toBe(
+      "arguments",
+    );
+    expect(opened()).toEqual([]);
+  });
+
+  it("reads the pin voltages with one status request and leaves no run folder", async () => {
+    const path = await profile("i2c.json", i2cProfile());
+    expect(bt(["configure-bus", "--adapter", "bp", "--bus", path]).code).toBe(0);
+    const before = readdirSync(join(root, "arduino-iot-results"));
+    await clearWire();
+    const run = bt(["pins", "--adapter", "bp"]);
+    expect(run.code).toBe(0);
+    expect(run.json).toMatchObject({
+      operation: "pins",
+      mode: "I2C",
+      pullups: true,
+      supply: { enabled: false },
+    });
+    expect(run.json.pins).toHaveLength(8);
+    expect(run.json.pins.slice(0, 3)).toEqual([
+      { pin: "IO0", label: "SDA", mv: 3300, output: true, high: false },
+      { pin: "IO1", label: "SCL", mv: 3300, output: true, high: false },
+      { pin: "IO2", label: null, mv: 0, output: true, high: false },
+    ]);
+    expect(requests().map((entry) => entry.type)).toEqual(["status"]);
+    expect(run.json.resultPath).toBeUndefined();
+    expect(readdirSync(join(root, "arduino-iot-results"))).toEqual(before);
+    expect(fakeState()).toMatchObject({ mode: "I2C", pullups: true });
+  });
+
+  it("writes a register and runs several steps on one configured bus", async () => {
+    const path = await profile("i2c.json", i2cProfile());
+    const written = bt([
+      "write-register",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--device",
+      "eeprom",
+      "--register",
+      "cell",
+      "--value",
+      "a1b2c3",
+    ]);
+    expect(written.code).toBe(0);
+    expect(written.json.transactions[0]).toMatchObject({
+      step: "write",
+      register: "cell",
+      write: "a010a1b2c3",
+    });
+    await clearWire();
+    const run = bt([
+      "sequence",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--device",
+      "eeprom",
+      "--step",
+      "read cell",
+      "--step",
+      "write eeprom.cell 010203",
+      "--step",
+      "delay 50",
+      "--step",
+      "read eeprom.cell",
+      "--step",
+      "transfer 10 2",
+      "--step",
+      "read bme280.chip_id",
+    ]);
+    expect(run.code).toBe(0);
+    expect(run.json.registers.map((item: Json) => [item.device, item.name, item.value])).toEqual([
+      ["eeprom", "cell", "a1b2c3"],
+      ["eeprom", "cell", "010203"],
+      ["bme280", "chip_id", "60"],
+    ]);
+    expect(run.json.transactions.map((item: Json) => item.step)).toEqual([
+      "read",
+      "write",
+      "read",
+      "transfer",
+      "read",
+    ]);
+    expect(run.json.transactions[3]).toMatchObject({ write: "a010", read: "0102" });
+    // One configuration and one release for the whole sequence.
+    expect(requests("configuration").map((entry) => entry.mode)).toEqual(["I2C", "HiZ"]);
+    expect(requests("data")).toHaveLength(5);
+    await clearWire();
+    const several = bt([
+      "read-register",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--device",
+      "bme280",
+      "--register",
+      "chip_id",
+      "--register",
+      "temp_raw",
+    ]);
+    expect(several.json.registers.map((item: Json) => item.name)).toEqual(["chip_id", "temp_raw"]);
+    expect(requests("configuration").map((entry) => entry.mode)).toEqual(["I2C", "HiZ"]);
+    await clearWire();
+    // A device that does not answer ends the sequence there.
+    const stopped = bt([
+      "sequence",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--step",
+      "read ghost.chip_id",
+      "--step",
+      "read bme280.chip_id",
+    ]);
+    expect(stopped.code).toBe(1);
+    expect(stopped.json.errors[0].code).toBe("nack");
+    expect(requests("data")).toHaveLength(1);
+    expect(stopped.json.final.physical).toBe("confirmed");
+    await clearWire();
+    const sequence = (...steps: string[]) =>
+      bt(["sequence", "--adapter", "bp", "--bus", path, ...steps.flatMap((step) => ["--step", step])]);
+    expect(sequence("erase everything").json.errors[0].code).toBe("arguments");
+    expect(sequence("delay 20000").json.errors[0].code).toBe("arguments");
+    expect(sequence("read bme280.nope").json.errors[0].code).toBe("register-unknown");
+    expect(sequence("read bme280.status").json.errors[0].code).toBe("clears-flags");
+    expect(sequence("transfer 00").json.errors[0].code).toBe("device-unknown");
+    expect(opened()).toEqual([]);
+  });
+
+  it("discards the late answer to an earlier request instead of taking it for the next one's", async () => {
+    await setBench({ faults: { lateReply: true } });
+    const path = await profile("i2c.json", i2cProfile());
+    const run = bt([
+      "read-register",
+      "--adapter",
+      "bp",
+      "--bus",
+      path,
+      "--device",
+      "bme280",
+      "--register",
+      "chip_id",
+    ]);
+    expect(run.code).toBe(0);
+    expect(run.json.registers[0].value).toBe("60");
+    expect(run.json.warnings).toContainEqual(expect.objectContaining({ code: "late-reply" }));
   });
 
   it("reports a lost adapter as disconnected and sends nothing more", async () => {

@@ -136,7 +136,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `stm32-cubeprog` | 0.2.1 | real STM32CubeProgrammer 2.23.0 CLI without a board; Nucleo open |
 | `wokwi` | 0.2.1 | real wokwi-cli 0.29.1 offline; a cloud run open (no token) |
 | `zephyr` | 0.2.2 | real Zephyr 4.4.2 + SDK builds, Twister, ztest on Renode; board flash open |
-| `bus-tools` | 0.1.1 | only a simulated BPIO2 adapter; real Bus Pirate, I2C/SPI fixtures open |
+| `bus-tools` | 0.2.0 | only a simulated BPIO2 adapter; real Bus Pirate, I2C/SPI fixtures open |
 | `esp32-idf` | 0.1.0 | EIM transport only; no ESP-IDF installation or board found, real build/flash/panic open |
 | `electrical-network` | 0.1.0 | offline engine and fixture tests only; real projects and native Ubuntu open |
 | `industrial-catalog` | 0.1.0 | offline engine and fixture tests only; real projects and native Ubuntu open |

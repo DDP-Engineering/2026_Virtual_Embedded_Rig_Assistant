@@ -1,20 +1,20 @@
 format: 1
 id: bus-tools
-version: 0.1.1
+version: 0.2.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Bus tools (I2C, SPI, UART)
-summary: Run bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 declared in the lab resources.
-description: Active, bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 in its BPIO2 binary mode, declared in lab/resources.json - identify the adapter, configure a bus from a profile that declares wiring, logic voltage, ground, pull-ups, speed, SPI mode, addresses and registers, read one declared register, run one bounded transfer, record a UART for a bounded time and leave a declared final state that is read back. The adapter is reserved with both of its serial ports and released to HiZ after Stop, timeout or a crash. No terminal, no address scan, no firmware change and no supply unless the profile and the call ask for it; passive capture and decoding stay with sigrok.
+summary: Scan an I2C bus and read, write and record I2C, SPI and UART devices through a Bus Pirate 5 or 6, with or without a bus profile.
+description: I2C, SPI and UART transactions through a Bus Pirate 5 or 6 in its BPIO2 binary mode, declared in lab/resources.json - identify the adapter, read the voltage on its pins, scan an I2C bus for the addresses that answer, read and write declared registers, run transfers and sequences of steps with pauses on one configured bus, and record a UART as text. The bus comes from a profile file (speed, SPI mode, pull-ups, supply, devices and named registers) or from the call's own options with the usual defaults. A device that does not acknowledge is reported with the levels of the bus lines. The adapter is reserved with both of its serial ports and released to HiZ after each call unless told to keep the bus, and after Stop, timeout or a crash. No terminal and no firmware change; passive capture and decoding stay with sigrok.
 translations:
   ro:
-    summary: "Rulează tranzacții I2C, SPI și UART limitate printr-un Bus Pirate 5 sau 6 declarat în resursele de laborator."
-    description: "Tranzacții I2C, SPI și UART active și limitate printr-un Bus Pirate 5 sau 6 în modul binar BPIO2, declarat în lab/resources.json - identifică adaptorul, configurează o magistrală dintr-un profil care declară cablajul, tensiunea logică, masa, pull-up-urile, viteza, modul SPI, adresele și registrele, citește un registru declarat, rulează un transfer limitat, înregistrează un UART pentru un timp limitat și lasă o stare finală declarată, care este citită înapoi. Adaptorul este rezervat cu ambele porturi seriale și eliberat în HiZ după Oprește, un timeout sau un crash. Fără terminal, fără scanare de adrese, fără modificări de firmware și fără alimentare, decât dacă profilul și apelul o cer; captura pasivă și decodarea rămân la sigrok."
+    summary: "Scanează o magistrală I2C și citește, scrie și înregistrează dispozitive I2C, SPI și UART printr-un Bus Pirate 5 sau 6, cu sau fără profil."
+    description: "Tranzacții I2C, SPI și UART printr-un Bus Pirate 5 sau 6 în modul binar BPIO2, declarat în lab/resources.json - identifică adaptorul, citește tensiunea de pe pinii lui, scanează o magistrală I2C după adresele care răspund, citește și scrie registre declarate, rulează transferuri și secvențe de pași cu pauze pe o singură magistrală configurată și înregistrează un UART ca text. Magistrala vine dintr-un fișier de profil (viteză, mod SPI, pull-up-uri, alimentare, dispozitive și registre cu nume) sau din opțiunile apelului, cu valorile implicite obișnuite. Un dispozitiv care nu confirmă este raportat împreună cu nivelurile liniilor magistralei. Adaptorul este rezervat cu ambele porturi seriale și eliberat în HiZ după fiecare apel, dacă nu i se cere să păstreze magistrala, precum și după Oprește, un timeout sau un crash. Fără terminal și fără modificări de firmware; captura pasivă și decodarea rămân la sigrok."
   de:
-    summary: "Begrenzte I2C-, SPI- und UART-Transaktionen über einen in den Laborressourcen deklarierten Bus Pirate 5 oder 6 ausführen."
-    description: "Aktive, begrenzte I2C-, SPI- und UART-Transaktionen über einen in lab/resources.json deklarierten Bus Pirate 5 oder 6 im Binärmodus BPIO2 - den Adapter identifizieren, einen Bus aus einem Profil konfigurieren, das Verdrahtung, Logikspannung, Masse, Pull-ups, Geschwindigkeit, SPI-Modus, Adressen und Register deklariert, ein deklariertes Register lesen, einen begrenzten Transfer ausführen, einen UART für begrenzte Zeit aufzeichnen und einen deklarierten Endzustand herstellen, der zurückgelesen wird. Der Adapter wird mit beiden seriellen Ports reserviert und nach Stoppen, Zeitüberschreitung oder Absturz auf HiZ freigegeben. Kein Terminal, kein Adressscan, keine Firmware-Änderung und keine Versorgung, sofern Profil und Aufruf sie nicht verlangen; passives Erfassen und Dekodieren bleibt bei sigrok."
+    summary: "Einen I2C-Bus scannen und I2C-, SPI- und UART-Geräte über einen Bus Pirate 5 oder 6 lesen, schreiben und aufzeichnen, mit oder ohne Busprofil."
+    description: "I2C-, SPI- und UART-Transaktionen über einen in lab/resources.json deklarierten Bus Pirate 5 oder 6 im Binärmodus BPIO2 - den Adapter identifizieren, die Spannung an seinen Pins lesen, einen I2C-Bus nach antwortenden Adressen scannen, deklarierte Register lesen und schreiben, Transfers und Abfolgen von Schritten mit Pausen auf einem konfigurierten Bus ausführen und einen UART als Text aufzeichnen. Der Bus kommt aus einer Profildatei (Geschwindigkeit, SPI-Modus, Pull-ups, Versorgung, Geräte und benannte Register) oder aus den Optionen des Aufrufs mit den üblichen Standardwerten. Ein Gerät, das nicht bestätigt, wird mit den Pegeln der Busleitungen gemeldet. Der Adapter wird mit beiden seriellen Ports reserviert und nach jedem Aufruf auf HiZ freigegeben, sofern der Bus nicht erhalten bleiben soll, ebenso nach Stoppen, Zeitüberschreitung oder Absturz. Kein Terminal und keine Firmware-Änderung; passives Erfassen und Dekodieren bleibt bei sigrok."
   fr:
-    summary: "Exécutez des transactions I2C, SPI et UART limitées avec un Bus Pirate 5 ou 6 déclaré dans les ressources du labo."
-    description: "Transactions I2C, SPI et UART actives et limitées avec un Bus Pirate 5 ou 6 en mode binaire BPIO2, déclaré dans lab/resources.json - identifier l’adaptateur, configurer un bus à partir d’un profil qui déclare le câblage, la tension logique, la masse, les pull-ups, la vitesse, le mode SPI, les adresses et les registres, lire un registre déclaré, exécuter un transfert limité, enregistrer un UART pendant une durée limitée et laisser un état final déclaré qui est relu. L’adaptateur est réservé avec ses deux ports série et remis en HiZ après Arrêter, un dépassement de délai ou un plantage. Pas de terminal, de balayage d’adresses, de modification du firmware ni d’alimentation, sauf si le profil et l’appel le demandent ; la capture passive et le décodage restent du ressort de sigrok."
+    summary: "Balayez un bus I2C et lisez, écrivez et enregistrez des composants I2C, SPI et UART avec un Bus Pirate 5 ou 6, avec ou sans profil de bus."
+    description: "Transactions I2C, SPI et UART avec un Bus Pirate 5 ou 6 en mode binaire BPIO2, déclaré dans lab/resources.json - identifier l’adaptateur, lire la tension sur ses broches, balayer un bus I2C à la recherche des adresses qui répondent, lire et écrire des registres déclarés, exécuter des transferts et des séquences d’étapes avec des pauses sur un seul bus configuré, et enregistrer un UART sous forme de texte. Le bus vient d’un fichier de profil (vitesse, mode SPI, pull-ups, alimentation, composants et registres nommés) ou des options de l’appel, avec les valeurs par défaut habituelles. Un composant qui n’acquitte pas est signalé avec les niveaux des lignes du bus. L’adaptateur est réservé avec ses deux ports série et remis en HiZ après chaque appel, sauf s’il doit garder le bus, ainsi qu’après Arrêter, un dépassement de délai ou un plantage. Pas de terminal ni de modification du firmware ; la capture passive et le décodage restent du ressort de sigrok."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.buspirate.com/docs/binmode-reference/protocol-bpio2/", "https://pypi.org/project/flatbuffers/25.12.19/"]
@@ -23,10 +23,10 @@ settings:
     kind: workbench-file
     path: lab/resources.json
     format: lab-resources
-    description: The bench registry; declares the Bus Pirate adapter (bus-adapter) with its serial ports and power limits that calls name by alias.
+    description: The bench registry; declares the Bus Pirate adapter (bus-adapter) with its serial ports and optional power limits that calls name by alias.
 programs:
   bus-tool:
-    subcommandHelp: { flag: --help, commands: [configure-bus, read-register, transfer, capture, release] }
+    subcommandHelp: { flag: --help, commands: [scan, configure-bus, read-register, write-register, transfer, sequence, capture, release] }
     install: { script: scripts/bus_tool.py }
     version: { args: [--version], match: '^bus-tool (\d+\.\d+\.\d+)' }
     timeout: 120
@@ -41,20 +41,20 @@ rules:
   - match: "bus-tool {devices,capabilities,report} *"
     risk: safe
     note: Lists this computer's serial ports without opening them, describes the backend and a bus profile, or summarizes run folders; report writes a new run folder.
-  - match: "bus-tool identify *"
+  - match: "bus-tool {identify,pins} *"
     risk: device-read
-    note: Opens the adapter's binary port and sends one BPIO2 status request; the bus pins, pull-ups and supply are not changed.
-  - match: "bus-tool {configure-bus,read-register,transfer} *"
+    note: Opens the adapter's binary port and sends one BPIO2 status request - the adapter's hardware and firmware, or the voltage on each pin with the supply and the pull-ups. The bus pins, pull-ups and supply are not changed.
+  - match: "bus-tool scan *"
     risk: device-write
-    note: Configures the adapter's mode, speed and pull-ups onto the circuit and, for read-register and transfer, runs one bounded transaction (a register read writes the register address first and may clear flags); then the profile's final state, by default HiZ with pull-ups and supply off, read back. configure-bus leaves the bus configured.
+    note: Configures the adapter as I2C on the circuit and sends one empty write to each address to list those that acknowledge, then the final state, by default HiZ with pull-ups and supply off. With --supply or a profile that powers the circuit from the adapter, the adapter's supply is switched on.
+  - match: "bus-tool {configure-bus,read-register,write-register,transfer,sequence} *"
+    risk: device-write
+    note: Configures the adapter's mode, speed and pull-ups onto the circuit and runs the steps asked for - register reads (each writes the register address first and may clear flags), register writes, transfers of given bytes and pauses - then the final state, by default HiZ with pull-ups and supply off, read back. configure-bus and --keep leave the bus configured. With --supply or a profile that powers the circuit from the adapter, the adapter's supply is switched on.
+    timeout: 300
   - match: "bus-tool capture *"
     risk: device-write
-    note: Configures the adapter as a UART on the circuit, sends --write if given and records what arrives for --duration seconds, then the profile's final state.
-    timeout: 120
+    note: Configures the adapter as a UART on the circuit, sends --write if given and records what arrives for --duration seconds, then the final state.
+    timeout: 360
   - match: "bus-tool release *"
     risk: device-write
     note: Sets the adapter to HiZ with pull-ups and supply off and reads it back. VERA runs the same command as the cleanup after Stop, timeout or a crash.
-  - match: "bus-tool * --power *"
-    risk: irreversible
-    note: Switches the adapter's supply on at the profile's voltage and current limit (within lab/resources.json's power limits), powering the circuit wired to it.
-    timeout: 120

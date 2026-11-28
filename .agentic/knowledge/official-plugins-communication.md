@@ -7,16 +7,18 @@ can-capture and can-transmit); `can-dbc` (pip cantools plus the `can-decode` scr
 `wireshark-tshark` (typed offline capture evidence, generic program risk classification, and bounded
 live capture through the user's TShark); `wireshark-dumpcap` (typed, approved local acquisition with
 short and rolling PCAPNG); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
-bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with
-devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills
-bus-transactions and bus-profiles).
+I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with
+devices, capabilities, identify, pins, scan, configure-bus, read-register, write-register, transfer, sequence,
+capture, release and report, the bus taken from a profile file or from the call's options; skills bus-transactions
+and bus-profiles).
 
 For bus-tools, start at plugins/bus-tools/plugin.yaml, scripts/bus_tool.py and scripts/bus_support/ (cli.py dispatch
-and argument limits, registry.py bus-adapter entries, profile.py bus profiles, ports.py identity keys, adapter.py the
-binary-port link, bpio.py FlatBuffers slots, cobs.py, operations.py the operation flow and final state, lifecycle.py,
+and argument limits, registry.py bus-adapter entries, profile.py bus profiles, their defaults and `from_options`,
+ports.py identity keys, adapter.py the binary-port link, late-reply discard and pin readings, bpio.py FlatBuffers
+slots, cobs.py, operations.py the plan of steps, the operation flow and final state, lifecycle.py,
 report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/plugins/bus-tools.test.ts and
-tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
-evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
+tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets, whose
+error text, async UART data and pin labels follow the firmware source - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
 cleanup are platform behaviour, see [Plugin bench resources](plugins-bench-resources.md).
 
 The conventions shared by all official plugins (package format, catalog source, packs, versions and evidence
@@ -150,32 +152,49 @@ device commands follow their own program risk and approval rules.
   representatives. The report can be saved through the local artifact store. Both original
   citation locators stay private when the agent projection masks their paths.
 
-- `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
+- `bus-tools` 0.2.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
   `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
   `resources {option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
-  `devices`, `capabilities`, `report` safe; `identify` device-read; `configure-bus`, `read-register`, `transfer`,
-  `capture` (120 s), `release` device-write; any call with `--power` irreversible. Backend `bus-pirate-bpio2` only:
-  StatusResponse hardware major 5 or 6 and FlatBuffers major 2 (`adapter-unsupported`; a packet-level error too); a port
-  that answers no valid COBS/BPIO2 status in 2 s is `not-bpio2`. Order per adapter call: registry (hash
-  `registry-changed`, alias `adapter-unknown`), profile (`profile-invalid`: format 1, commonGround true, logicMv
-  1200-5000, I2C 1 kHz-1 MHz, SPI 10 kHz-20 MHz, UART 300-1 000 000 baud, I2C addresses 0x08-0x77, registers <=4 bytes
-  written and 1-64 read, limits <=512 bytes and <=10 s), request (`register-unknown`, `clears-flags`,
-  `transfer-not-allowed`, `limit`, `power-not-allowed`, `capture-mode`), VERA's unknown marker (`state-unknown` except
-  identify/release), both ports by identity (`port-missing`, `identity-mismatch`), then only the binary port is opened.
+  `devices`, `capabilities`, `report` safe; `identify`, `pins` device-read; `scan`, `configure-bus`, `read-register`,
+  `write-register`, `transfer`, `sequence` (300 s), `capture` (360 s), `release` device-write; no irreversible rule
+  (the supply is part of a device-write call). Backend `bus-pirate-bpio2` only: StatusResponse hardware major 5 or 6
+  and FlatBuffers major 2 (`adapter-unsupported`; a packet-level error too); a port that answers no valid COBS/BPIO2
+  status in 2 s is `not-bpio2`.
+  The bus of a call is `--bus PROFILE` or its own options (`--mode`, `--address`, `--speed`, `--spi-mode`,
+  `--pullups`; `profile.from_options` builds the same Profile, device `device`); never both. A profile needs only
+  `bus.mode`: defaults I2C 100 kHz with pull-ups, SPI 1 MHz mode 0 CS idle high MSB first, UART 115200 8N1, limits
+  512/512 bytes and 2 s, power external, final release, devices 0-16. Registers: `write` 0-4 bytes, `read` 0-64
+  (default 1), `access` read (default) or read-clears, optional `expect`. No `rawTransfer`, no required
+  `commonGround`. The device of a request: `--device`, else the only one, else unnamed on SPI/UART.
+  Order per adapter call: registry (hash `registry-changed`, alias `adapter-unknown`), bus (`profile-invalid`,
+  `arguments`), request as a plan of steps (`device-unknown`, `register-unknown`, `clears-flags`, `limit`,
+  `power-not-allowed`, `capture-mode`, `scan-mode`), both ports by identity (`port-missing`, `identity-mismatch`),
+  then only the binary port is opened. VERA's unknown-state marker refuses nothing.
   Wire: COBS frames ending in 0x00; RequestPacket version 2, minimum minor 0; one status, one configuration (mode
-  I2C/SPI/UART, ModeConfiguration fields, pull-ups, psu_enable with mV/mA only for `power.source: adapter` + `--power`
-  within the registry's `power`, else psu_disable), one status read-back (`config-error`, `config-mismatch`), byte limits
-  also from the adapter's mode_max_write/read (`limit`), one DataRequest (I2C: address<<1 first, start/stop; SPI:
-  start/stop as chip select; UART unframed); async DataResponses are kept apart for capture. Data errors: text naming
-  NACK `nack`, else `adapter-error`; `count-mismatch`; `unexpected-value` names SPI mode, wiring and logic voltage;
-  `no-response` (incomplete); serial failure `disconnected` (nothing more sent, physical unknown). Nothing is repeated.
-  Final state after configure-bus failures and every read-register, transfer and capture: `release` (HiZ, pull-ups and
-  supply off) or `keep`, read back -> `final.physical` confirmed/unknown; configure-bus leaves `configured`. Stop file
-  checked before configuration, data and during capture (`stopped`, release applied). Results
-  `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
-  Evidence: the simulated adapter only; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
-  unconfirmed).
+  I2C/SPI/UART, ModeConfiguration fields, pull-ups, psu_enable with mV/mA for `--supply` or `power.source: adapter`,
+  capped by the registry's `power` when declared, else psu_disable), one status read-back (`config-error`,
+  `config-mismatch`; its labelled pins become `configuration.lines`, an SDA/SCL under 700 mV warns `line-low`), byte
+  limits also from the adapter's mode_max_write/read (`limit`), then the steps: one DataRequest each (I2C:
+  address<<1 first, start/stop; SPI: start/stop as chip select), pauses through `Lifecycle.wait`. UART: the write
+  is one DataRequest with bytes_read 0 and the answer is the async DataResponses, taken until the count, 0.3 s of
+  silence or the timeout (`short-read` warning, none is `no-response` fail). Scan: one empty write per address,
+  one transcript line for all probes, warnings `no-device` and `all-acknowledged`. Before each request, frames
+  already waiting are drained: async kept, others discarded (`late-reply`).
+  Data errors: on I2C the firmware's one text "Protocol request failed" or a text naming NACK is `nack` (message
+  with address and low lines), else `adapter-error`; `count-mismatch`; `unexpected-value` names SPI mode, wiring and
+  logic voltage; `no-response` (incomplete); serial failure `disconnected` (nothing more sent, physical unknown).
+  A step is sent once and the first failure ends a sequence.
+  Final state after configure-bus failures and every other bus operation: `keep` with `--keep`, else the profile's
+  `release` (HiZ, pull-ups and supply off) or `keep`, read back -> `final.physical` confirmed/unknown; configure-bus
+  leaves `configured`. Stop file checked before configuration, data, probes, during delays and capture (`stopped`,
+  release applied). Capture: up to 300 s and 1 MiB, `capture.bin`, `capture.txt`, `capture.csv`, text in the
+  result (whole to 4000 characters, else head 1200 + tail 2500). `pins`: `adc_mv` (slot 23) IO0-IO7 with
+  `mode_pin_labels` (slot 11; ten labels frame eight readings), supply, pull-ups; no run folder. Results
+  `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`); exit 0/1/2/3.
+  Evidence: the simulated adapter only; no real Bus Pirate yet. The slot numbers were compared with `bpio.fbs`
+  field by field; the error text, async UART receive (protocol minor 2) and pin labels follow the firmware source
+  (`src/binmode/bpio*.c`) and are unconfirmed on hardware.
 
 ## Invariants
 
@@ -225,8 +244,8 @@ device commands follow their own program risk and approval rules.
   Unreported drop counts and timestamp synchronization remain unknown.
 
 - bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
-  self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
-  `--power` within the registry's limits.
+  self-test, pin-mask, LED or terminal-text field, and switches the adapter's supply on only when the call
+  (`--supply`) or the profile asks, within the registry's limits when it declares them.
 
 ## Change map
 

@@ -5,6 +5,10 @@ limits, the targets on its buses and faults. The adapter's state (mode, pull-ups
 in $FAKE_BUS_STATE across helper processes; every decoded request is appended to $FAKE_BUS_LOG as one JSON line.
 Requests are parsed and answers built with the official flatbuffers runtime, by the slot numbers of bpio.fbs
 (BusPirate5-firmware main), independently of the helper's own code.
+
+What follows the firmware source (src/binmode/bpio*.c), not a real adapter: every failed transaction is answered
+"Protocol request failed", a UART passes received bytes on as asynchronous data, and a status lists a label for each
+header pin (the supply pin first, ground last) around eight pin voltages.
 """
 
 from __future__ import annotations
@@ -20,6 +24,8 @@ from flatbuffers import encode, number_types as N, packer
 from flatbuffers.table import Table
 
 MODES = ["HiZ", "1WIRE", "UART", "HDUART", "I2C", "SPI", "2WIRE", "3WIRE", "DIO", "LED", "INFRARED", "JTAG"]
+FAILED = "Protocol request failed"
+LABELS = {"i2c": ["SDA", "SCL"], "spi": ["MISO", "CS", "CLK", "MOSI"], "uart": ["-", "-", "-", "-", "TX", "RX"]}
 FORBIDDEN_CONFIG = {14: "led_resume", 15: "led_color", 16: "print_string", 17: "hardware_bootloader", 18: "hardware_reset", 19: "hardware_selftest", 10: "io_direction_mask", 11: "io_direction", 12: "io_value_mask", 13: "io_value"}
 
 
@@ -182,9 +188,29 @@ def _packet(builder: flatbuffers.Builder, kind: int, contents: int, error: str |
     return bytes(builder.Output())
 
 
-def status_response(state: dict[str, Any], adapter: dict[str, Any]) -> bytes:
+def _numbers(builder: flatbuffers.Builder, values: list[int]) -> int:
+    builder.StartVector(4, len(values), 4)
+    for value in reversed(values):
+        builder.PrependUint32(value)
+    return builder.EndVector()
+
+
+def pin_voltages(state: dict[str, Any], faults: dict[str, Any]) -> list[int]:
+    """IO0..IO7 in mV: the lines of the mode idle high while pull-ups or the supply are on, unless a fault holds one low."""
+    used = len(LABELS.get(state["mode"].casefold(), []))
+    high = 3300 if state["pullups"] or state["psu"] else 0
+    readings = [high if index < used else 0 for index in range(8)]
+    for index in faults.get("lowLines", []):
+        readings[index] = 20
+    return readings
+
+
+def status_response(state: dict[str, Any], adapter: dict[str, Any], faults: dict[str, Any]) -> bytes:
     builder = flatbuffers.Builder(512)
     builder.ForceDefaults(True)
+    used = LABELS.get(state["mode"].casefold(), [])
+    labels = _strings(builder, ["Vout", *used, *["-"] * (8 - len(used)), "GND"])
+    voltages = _numbers(builder, pin_voltages(state, faults))
     git = builder.CreateString(adapter.get("gitHash", "a1b2c3d"))
     date = builder.CreateString(adapter.get("date", "2026-10-01"))
     modes = _strings(builder, MODES)
@@ -201,6 +227,7 @@ def status_response(state: dict[str, Any], adapter: dict[str, Any]) -> bytes:
     builder.PrependUOffsetTRelativeSlot(8, date, 0)
     builder.PrependUOffsetTRelativeSlot(9, modes, 0)
     builder.PrependUOffsetTRelativeSlot(10, current, 0)
+    builder.PrependUOffsetTRelativeSlot(11, labels, 0)
     builder.PrependBoolSlot(12, True, False)
     builder.PrependUint32Slot(13, 640, 0)
     builder.PrependUint32Slot(14, adapter.get("maxWrite", 512), 0)
@@ -210,6 +237,7 @@ def status_response(state: dict[str, Any], adapter: dict[str, Any]) -> bytes:
     builder.PrependUint32Slot(18, state["psuMa"] if state["psu"] else 0, 0)
     builder.PrependUint32Slot(19, state["psuMv"] if state["psu"] else 0, 0)
     builder.PrependBoolSlot(22, bool(state["pullups"]), False)
+    builder.PrependUOffsetTRelativeSlot(23, voltages, 0)
     builder.PrependUint8Slot(24, 0 if state["mode"] == "HiZ" else 0x0F, 0)
     contents = builder.EndObject()
     return _packet(builder, 1, contents)
@@ -249,6 +277,9 @@ class Adapter:
         self.outbox = bytearray()
         self.closed = False
         self.unplugged = False
+        if entry.get("role") == "binary" and bench().get("faults", {}).get("lateReply"):
+            # The answer to a request an earlier run gave up on, still waiting in the port.
+            self.queue(simple_response(3, FAILED))
 
     def feed(self, data: bytes) -> None:
         if self.unplugged:
@@ -284,7 +315,7 @@ class Adapter:
         state = load_state()
         kind = request["type"]
         if kind == "status":
-            self.queue(status_response(state, adapter))
+            self.queue(status_response(state, adapter, faults))
         elif kind == "configuration":
             self.configure(request, state, faults)
         elif kind == "data":
@@ -330,8 +361,10 @@ class Adapter:
                 return
             address = f"0x{written[0] >> 1:02x}"
             device = targets.get("i2c", {}).get(address)
+            if faults.get("ackAll") and len(written) == 1 and not count:
+                device = {}
             if device is None:
-                self.queue(simple_response(3, faults.get("nackText", "I2C address NACK")))
+                self.queue(simple_response(3, faults.get("nackText", FAILED)))
                 return
             payload = written[1:]
             if device.get("eeprom"):
@@ -361,8 +394,18 @@ class Adapter:
                 answer = bytes(((byte << 1) & 0xFF) | 1 for byte in answer)
             reply = answer
         elif mode == "uart":
+            # A read the adapter is asked for fails as a whole when a byte is late; what the peer sends arrives by
+            # itself as asynchronous data, in the peer's own chunks.
+            if count:
+                self.queue(simple_response(3, FAILED))
+                return
             peer = targets.get("uart", {})
-            reply = (written * (count // max(1, len(written)) + 1))[:count] if peer.get("echo") else b""
+            self.queue(simple_response(3, None, b""))
+            answer = bytes.fromhex(peer["reply"]) if "reply" in peer else (written if peer.get("echo") else b"")
+            size = peer.get("chunk", 64)
+            for start in range(0, len(answer), size):
+                self.queue(simple_response(3, None, answer[start : start + size], is_async=True))
+            return
         else:
             self.queue(simple_response(3, "Mode does not support data"))
             return

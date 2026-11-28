@@ -39,6 +39,10 @@ class Serial:
         except OSError as error:
             raise SerialException(*error.args) from error
 
+    @property
+    def in_waiting(self) -> int:
+        return len(self.adapter.outbox)
+
     def reset_input_buffer(self) -> None:
         self.adapter.outbox.clear()
 

@@ -110,17 +110,20 @@ def markdown(document: dict[str, Any]) -> str:
     bus = document.get("bus")
     if isinstance(bus, dict):
         lines.append(f"- Bus: {_cell(json.dumps(bus, sort_keys=True))}")
-    register = document.get("register")
-    if isinstance(register, dict):
+    for register in document.get("registers") or []:
         lines.append(f"- Register `{register.get('device')}.{register.get('name')}`: `{register.get('value')}` (expected `{register.get('expected')}`, matches {register.get('matches')})")
+    scan = document.get("scan")
+    if isinstance(scan, dict):
+        found = ", ".join(f"`{item.get('address')}`" + (f" ({item.get('device')})" if item.get("device") else "") for item in scan.get("found") or [])
+        lines.append(f"- Scan {scan.get('from')} to {scan.get('to')}: {found or 'no device acknowledged'}")
     final = document.get("final")
     if isinstance(final, dict):
         lines.append(f"- Final state: {final.get('declared')}, physical {final.get('physical')}, {_cell(json.dumps(final.get('state'), sort_keys=True))}")
     lines.append("")
     if document.get("transactions"):
-        lines += ["| # | Device | Register | Write | Read requested | Read | Error | ms |", "|---|---|---|---|---|---|---|---|"]
+        lines += ["| # | Step | Device | Register | Write | Read requested | Read | Error | ms |", "|---|---|---|---|---|---|---|---|---|"]
         lines += [
-            f"| {item.get('index')} | {item.get('device') or ''} | {item.get('register') or ''} | `{item.get('write')}` | {item.get('readRequested')} | `{item.get('read')}` | {_cell(item.get('error') or '')} | {item.get('durationMs')} |"
+            f"| {item.get('index')} | {item.get('step') or ''} | {item.get('device') or ''} | {item.get('register') or ''} | `{item.get('write')}` | {item.get('readRequested')} | `{item.get('read')}` | {_cell(item.get('error') or '')} | {item.get('durationMs')} |"
             for item in document["transactions"]
         ]
         lines.append("")
@@ -133,7 +136,7 @@ def markdown(document: dict[str, Any]) -> str:
         lines.append("")
     capture = document.get("capture")
     if isinstance(capture, dict):
-        lines += [f"Capture: {capture.get('bytes')} bytes in `{capture.get('file')}` and `{capture.get('csv')}`.", ""]
+        lines += [f"Capture: {capture.get('bytes')} bytes in `{capture.get('file')}`, `{capture.get('textFile')}` and `{capture.get('csv')}`.", ""]
     for key, title in (("errors", "Errors"), ("warnings", "Warnings")):
         items = document.get(key) or []
         if items:
@@ -156,7 +159,7 @@ def emit(document: dict[str, Any]) -> None:
     def size() -> int:
         return len(render().encode("utf-16-le")) // 2
 
-    for key in ("ports", "groups", "runs", "transactions", "warnings", "errors"):
+    for key in ("ports", "groups", "runs", "requests", "transactions", "registers", "warnings", "errors"):
         items = shown.get(key)
         while isinstance(items, list) and items and size() > OUTPUT_LIMIT:
             shown.setdefault("omittedFromOutput", {})[key] = shown.get("omittedFromOutput", {}).get(key, 0) + 1
@@ -177,7 +180,8 @@ def summary(cwd: Path, folder: Path) -> dict[str, Any]:
     except (OSError, ValueError) as error:
         raise refused("run-invalid", f"--run '{workspace.relative(cwd, folder)}' holds no bus-tool result.json.") from error
     adapter = document.get("adapter") if isinstance(document.get("adapter"), dict) else {}
-    register = document.get("register") if isinstance(document.get("register"), dict) else {}
+    registers = document.get("registers") if isinstance(document.get("registers"), list) else []
+    register = registers[0] if registers and isinstance(registers[0], dict) else {}
     final = document.get("final") if isinstance(document.get("final"), dict) else {}
     transactions = document.get("transactions") if isinstance(document.get("transactions"), list) else []
     first = transactions[0] if transactions and isinstance(transactions[0], dict) else {}

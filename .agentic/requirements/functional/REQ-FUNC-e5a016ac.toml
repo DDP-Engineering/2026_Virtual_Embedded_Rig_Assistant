@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-FUNC-e5a016ac"
-title = "Read a declared register in one transaction"
+title = "Read declared registers, each in one transaction"
 status = "active"
-requirement = "When read-register runs, bus-tool shall send the register's declared bytes and read its declared length in one data request (I2C: start, address, register bytes, restart, reads, stop; SPI: chip select, register bytes, reads, deselect) and report the bytes read and their comparison with the register's expected value."
-verification = "Simulated BME280 at 0x76: chip_id reads 60 (pass, expected matches); simulated SPI flash: jedec_id reads ef4018; the wire log holds exactly one data request with the declared bytes."
+requirement = "When read-register runs, bus-tool shall send, for each register named and without --register for every register of the device that reads without clearing, the register's declared bytes and read its declared length in one data request (I2C: start, address, register bytes, restart, reads, stop; SPI: chip select, register bytes, reads, deselect) between one configuration and one final state, and report the bytes read and their comparison with each register's expected value."
+verification = "Simulated BME280 at 0x76: chip_id reads 60 (pass, expected matches); simulated SPI flash: jedec_id reads ef4018; the wire log holds exactly one data request with the declared bytes. Two --register: two results, one configuration. A profile of one device and no --device or --register: every register is read."
 affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/operations.py", "05_Software/plugins/bus-tools/scripts/bus_support/bpio.py"]
 linked_tests = ["05_Software/tests/plugins/bus-tools.test.ts"]
 spec = "specs/REQ-DATA-634d35da.md"
 priority = "high"
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

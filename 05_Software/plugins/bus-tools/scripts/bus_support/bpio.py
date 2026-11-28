@@ -4,6 +4,7 @@ section 5).
 The slot numbers follow `bpio.fbs` of BusPirate5-firmware (main): a FlatBuffers field's vtable entry is at
 4 + 2 * slot, and a union field takes two slots (type, then value). Only the fields of section 5 are ever written:
 no bootloader, reset, self-test, pin mask, LED or terminal text field exists in this module (REQ-SEC-9350b6ae).
+The slot numbers were compared with bpio.fbs field by field; no real adapter has answered them yet.
 """
 
 from __future__ import annotations
@@ -134,6 +135,15 @@ def _texts(table: Table, slot: int) -> list[str]:
     return [table.String(start + 4 * index).decode("utf-8", "replace") for index in range(table.VectorLen(offset))]
 
 
+def _numbers(table: Table, slot: int) -> list[int]:
+    """A vector of uint32, as adc_mv holds one reading per IO pin."""
+    offset = _offset(table, slot)
+    if not offset:
+        return []
+    start = table.Vector(offset)
+    return [int(table.Get(N.Uint32Flags, start + 4 * index)) for index in range(table.VectorLen(offset))]
+
+
 def _octets(table: Table, slot: int) -> bytes:
     offset = _offset(table, slot)
     if not offset:
@@ -152,6 +162,7 @@ def _status(table: Table) -> dict[str, Any]:
         "date": _text(table, 8),
         "modes": _texts(table, 9),
         "mode": _text(table, 10),
+        "pinLabels": _texts(table, 11),
         "maxPacket": _get(table, 13, N.Uint32Flags, 0),
         "maxWrite": _get(table, 14, N.Uint32Flags, 0),
         "maxRead": _get(table, 15, N.Uint32Flags, 0),
@@ -162,6 +173,7 @@ def _status(table: Table) -> dict[str, Any]:
         "psuMeasuredMa": _get(table, 20, N.Uint32Flags, 0),
         "psuCurrentError": _get(table, 21, N.BoolFlags, False),
         "pullups": _get(table, 22, N.BoolFlags, False),
+        "adcMv": _numbers(table, 23),
         "ioDirection": _get(table, 24, N.Uint8Flags, 0),
         "ioValue": _get(table, 25, N.Uint8Flags, 0),
     }

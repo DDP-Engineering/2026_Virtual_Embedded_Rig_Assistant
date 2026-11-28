@@ -1,7 +1,7 @@
 """Arguments, dispatch and the one JSON document of bus-tool (spec REQ-DATA-634d35da).
 
-There is no terminal, scan, bootloader, reset, firmware or script operation (REQ-SEC-9350b6ae): every adapter call
-names a registry alias and, for bus operations, a profile file that VERA's approval binds by hash.
+There is no terminal, bootloader, reset, firmware or script operation (REQ-SEC-9350b6ae): every adapter call names a
+registry alias, and a bus operation names a profile file or describes the bus with its own options.
 """
 
 from __future__ import annotations
@@ -17,7 +17,11 @@ from . import profile as profiles
 from .lifecycle import Lifecycle
 from .report import Ended, Refused, problem
 
-OPERATIONS = ("devices", "capabilities", "identify", "configure-bus", "read-register", "transfer", "capture", "release", "report")
+OPERATIONS = ("devices", "capabilities", "identify", "pins", "scan", "configure-bus", "read-register", "write-register", "transfer", "sequence", "capture", "release", "report")
+# Operations that take the bus from --bus or from their own options; the register operations need a profile.
+DIRECT = ("scan", "configure-bus", "transfer", "sequence", "capture")
+# Operations that only look and leave no run folder.
+WITHOUT_RUN_FOLDER = ("pins",)
 
 
 class Interrupted(BaseException):
@@ -45,31 +49,53 @@ def _parser() -> Parser:
     commands: dict[str, Parser] = {}
     for name, text in (
         ("identify", "the adapter's hardware, firmware and BPIO version"),
-        ("configure-bus", "configure the bus from a profile and read it back"),
-        ("read-register", "read one declared register in one transaction"),
-        ("transfer", "one bounded write/read transaction to a device that allows raw transfers"),
+        ("pins", "the voltage on each IO pin, the supply and the pull-ups"),
+        ("scan", "the I2C addresses that acknowledge"),
+        ("configure-bus", "configure the bus and read it back"),
+        ("read-register", "read declared registers, each in one transaction"),
+        ("write-register", "write a value to a declared register"),
+        ("transfer", "one write/read transaction"),
+        ("sequence", "several reads, writes, transfers and pauses on the configured bus"),
         ("capture", "record a UART for a bounded time"),
         ("release", "HiZ with pull-ups and supply off, read back"),
     ):
         command = sub.add_parser(name, help=text, allow_abbrev=False)
         command.add_argument("--adapter", required=True, metavar="ALIAS")
         if name in operations.BUS:
-            command.add_argument("--bus", required=True, metavar="PROFILE")
-            command.add_argument("--power", action="store_true")
+            command.add_argument("--bus", required=name not in DIRECT, metavar="PROFILE", help="a bus profile file")
+            command.add_argument("--supply", type=int, metavar="MV", help="power the circuit from the adapter at this voltage")
+            command.add_argument("--supply-ma", type=int, metavar="MA", help="the supply's current limit (default 100)")
+            command.add_argument("--keep", action="store_true", help="leave the bus configured instead of releasing it")
+        if name in DIRECT:
+            command.add_argument("--mode", choices=("i2c", "spi", "uart"), help="the bus, without a profile")
+            command.add_argument("--address", metavar="0xNN", help="the 7-bit address of an I2C device, without a profile")
+            command.add_argument("--speed", type=int, metavar="HZ", help="I2C or SPI clock in Hz, UART baud rate")
+            command.add_argument("--spi-mode", type=int, choices=(0, 1, 2, 3))
+            command.add_argument("--pullups", choices=("on", "off"), help="the adapter's pull-ups (default: on for I2C)")
         commands[name] = command
-    commands["read-register"].add_argument("--device", required=True)
-    commands["read-register"].add_argument("--register", required=True)
+    commands["scan"].add_argument("--from", dest="first", default="0x08", metavar="0xNN")
+    commands["scan"].add_argument("--to", dest="last", default="0x77", metavar="0xNN")
+    commands["read-register"].add_argument("--device")
+    commands["read-register"].add_argument("--register", action="append", help="repeat for several; none reads every declared register")
     commands["read-register"].add_argument("--clears", action="store_true")
-    commands["transfer"].add_argument("--device", required=True)
+    commands["write-register"].add_argument("--device")
+    commands["write-register"].add_argument("--register", required=True)
+    commands["write-register"].add_argument("--value", required=True, metavar="HEX")
+    commands["transfer"].add_argument("--device")
     commands["transfer"].add_argument("--write", metavar="HEX")
     commands["transfer"].add_argument("--read", type=int, metavar="N")
+    commands["sequence"].add_argument("--device")
+    commands["sequence"].add_argument("--step", action="append", required=True, metavar="STEP", help="read REG, write REG HEX, transfer HEX|- [N] or delay MS")
+    commands["sequence"].add_argument("--clears", action="store_true")
     commands["capture"].add_argument("--duration", type=int, required=True, metavar="SECONDS")
     commands["capture"].add_argument("--write", metavar="HEX")
     summary = sub.add_parser("report", help="summarize run folders", allow_abbrev=False)
     summary.add_argument("--run", action="append", required=True, metavar="DIR")
     summary.add_argument("--title")
     commands["report"] = summary
-    for command in commands.values():
+    for name, command in commands.items():
+        if name in WITHOUT_RUN_FOLDER:
+            continue
         command.add_argument("--run-id", metavar="ID")
         command.add_argument("--results-dir", default=report.DEFAULT_RESULTS, metavar="DIR")
     return parser
@@ -80,8 +106,13 @@ def _check(args: Any) -> None:
         raise Refused([problem("arguments", "--run-id takes 1-64 letters, digits, '.', '_' or '-', starting and ending with a letter or digit.")])
     if getattr(args, "read", None) is not None and not 0 <= args.read <= 512:
         raise Refused([problem("arguments", "--read takes 0 to 512.")])
-    if args.operation == "capture" and not 1 <= args.duration <= 60:
-        raise Refused([problem("arguments", "--duration takes 1 to 60.")])
+    if args.operation == "capture" and not 1 <= args.duration <= 300:
+        raise Refused([problem("arguments", "--duration takes 1 to 300.")])
+    supply, limit = getattr(args, "supply", None), getattr(args, "supply_ma", None)
+    if supply is not None and not 800 <= supply <= 5000:
+        raise Refused([problem("arguments", "--supply takes 800 to 5000 mV.")])
+    if limit is not None and not 1 <= limit <= 500:
+        raise Refused([problem("arguments", "--supply-ma takes 1 to 500.")])
 
 
 def _capabilities(args: Any, document: dict[str, Any], cwd: Path, spelled: Path) -> None:
@@ -92,7 +123,8 @@ def _capabilities(args: Any, document: dict[str, Any], cwd: Path, spelled: Path)
         "protocolMajor": 2,
         "modes": ["i2c", "spi", "uart"],
         "operations": [name for name in OPERATIONS if name not in ("devices", "capabilities", "report")],
-        "caps": {**profiles.CAPS, "i2cSpeedHz": list(profiles.SPEED["i2c"]), "spiSpeedHz": list(profiles.SPEED["spi"]), "uartBaud": list(profiles.BAUD), "captureSeconds": [1, 60], "powerMv": [800, 5000], "powerMa": [1, 500]},
+        "caps": {**profiles.CAPS, "i2cSpeedHz": list(profiles.SPEED["i2c"]), "spiSpeedHz": list(profiles.SPEED["spi"]), "uartBaud": list(profiles.BAUD), "captureSeconds": [1, 300], "captureBytes": operations.CAPTURE_BYTES, "sequenceSteps": operations.STEPS, "powerMv": [800, 5000], "powerMa": [1, 500]},
+        "defaults": {**profiles.DEFAULTS, "limits": profiles.LIMITS},
         "verified": "simulated adapter only",
     }
     if args.bus:
@@ -123,10 +155,9 @@ def _folder(cwd: Path, spelled: Path, args: Any, document: dict[str, Any]) -> Pa
     return folder
 
 
-def _adapter(cwd: Path, spelled: Path, args: Any, document: dict[str, Any], lifecycle: Lifecycle) -> Path:
+def _adapter(cwd: Path, spelled: Path, args: Any, document: dict[str, Any], lifecycle: Lifecycle) -> Path | None:
     entry, profile, request = operations.prepare(args, document, cwd, spelled)
-    operations.check_state(lifecycle, entry.alias, args.operation)
-    folder = _folder(cwd, spelled, args, document)
+    folder = None if args.operation in WITHOUT_RUN_FOLDER else _folder(cwd, spelled, args, document)
     session = operations.Session(args, document, lifecycle, entry, profile, request)
     session.folder, session.cwd = folder, cwd
     try:
