@@ -24,6 +24,8 @@ export class LiveCaptureSessions {
     launch: (stop: AbortSignal) => Promise<ProgramRun>,
     finalize: (result: Awaited<ProgramRun["done"]>) => Promise<FinalCapture>,
     cleanup: () => Promise<void>,
+    /** Wait for the capture's end and return its manifest; otherwise return its ID once it runs. */
+    wait = !identity.limits.rotation,
   ): Promise<Record<string, unknown>> {
     const active = [...this.jobs.values()].filter((job) => job.phase !== "finished");
     if (active.length >= 4 || active.some((job) => job.identity.sessionId === identity.sessionId)) {
@@ -72,7 +74,7 @@ export class LiveCaptureSessions {
         }
         return result;
       });
-    if (!identity.limits.rotation) return job.done;
+    if (wait) return job.done;
     try {
       await ready;
       return this.view(job);

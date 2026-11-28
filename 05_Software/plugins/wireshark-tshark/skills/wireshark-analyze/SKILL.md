@@ -30,6 +30,14 @@ Two ways read a capture, and both work on any file in the workbench:
 6. Continue a page with the returned `cursor` and the same query. Say in the answer what `coverage` covered.
 7. `decodeAs` maps a TCP or UDP port to a dissector when a protocol runs on an unusual port
    (`{ transport: "tcp", port: 8883, protocol: "mqtt" }`).
+8. `query` with `preset` set to `mqtt`, `coap`, `modbus`, `dhcp`, `dns`, `http` or `tls` reads that protocol's
+   frames with its usual fields - MQTT message type, topic, QoS and connect return code; CoAP code, path and
+   response time; Modbus function, registers, exception and response time; the DHCP exchange; DNS names and
+   answers; HTTP requests and status; TLS handshakes with the server name and alerts. A `filter` or `fields`
+   of the call replaces the preset's.
+9. `tlsKeylog` names a TLS key log file in the workbench - the file a client writes when `SSLKEYLOGFILE` is set,
+   or one the board's TLS library exports in a debug build. With it `query`, `frame` and `follow` see the
+   decrypted traffic: `filter: "http"` or `preset: "mqtt"` then match inside TLS.
 
 Typed observations for particular protocols, each with its own cursor:
 

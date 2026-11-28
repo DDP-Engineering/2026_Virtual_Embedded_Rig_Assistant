@@ -34,6 +34,8 @@ Der Agent verwendet die Skills `wireshark-analyze` und `wireshark-capture`. Er l
 - „Dekodieren Sie UDP-Port 5684 als CoAP und exportieren Sie die Codes.“
 - „Zeigen Sie die MQTT-Topics, auf denen das Board veröffentlicht hat, und was es jeweils gesendet hat.“
 - „Was steht in Frame 42? Zeigen Sie seine Bytes.“
+- „Hat das Board eine Adresse bekommen? Zeigen Sie den DHCP-Austausch.“
+- „Entschlüsseln Sie den Mitschnitt mit keys.log und listen Sie die MQTT-Publishes auf.“
 - „Schneiden Sie die Frames 100000 bis 150000 aus captures/big.pcapng heraus.“
 - „Zeichnen Sie 30 Sekunden Verkehr von und zu 192.168.7.10 an Schnittstelle 3 in captures/board.pcapng auf.“
 

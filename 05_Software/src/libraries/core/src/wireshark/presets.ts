@@ -1,0 +1,116 @@
+import type { CapturePreset } from "@vera/shared";
+
+/**
+ * The filter and the fields a query takes when it names a protocol preset and neither of its own. The names are
+ * those of current TShark releases; a field an older release lacks is left out of the query.
+ */
+export const capturePresets: Record<CapturePreset, { filter: string; fields: string[] }> = {
+  mqtt: {
+    filter: "mqtt",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "mqtt.msgtype",
+      "mqtt.topic",
+      "mqtt.qos",
+      "mqtt.retain",
+      "mqtt.dupflag",
+      "mqtt.msgid",
+      "mqtt.conack.val",
+      "mqtt.clientid",
+      "mqtt.kalive",
+      "mqtt.msg",
+    ],
+  },
+  coap: {
+    filter: "coap",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "coap.type",
+      "coap.code",
+      "coap.mid",
+      "coap.token",
+      "coap.opt.uri_path_recon",
+      "coap.opt.observe",
+      "coap.opt.ctype",
+      "coap.payload_length",
+      "coap.response_time",
+      "coap.payload",
+    ],
+  },
+  modbus: {
+    filter: "modbus",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "mbtcp.trans_id",
+      "mbtcp.unit_id",
+      "modbus.func_code",
+      "modbus.reference_num",
+      "modbus.word_cnt",
+      "modbus.bit_cnt",
+      "modbus.exception_code",
+      "modbus.regval_uint16",
+      "modbus.response_time",
+    ],
+  },
+  dhcp: {
+    filter: "dhcp",
+    fields: [
+      "dhcp.option.dhcp",
+      "dhcp.id",
+      "dhcp.hw.mac_addr",
+      "dhcp.ip.client",
+      "dhcp.ip.your",
+      "dhcp.option.requested_ip_address",
+      "dhcp.option.dhcp_server_id",
+      "dhcp.option.hostname",
+      "dhcp.option.ip_address_lease_time",
+      "dhcp.option.router",
+      "dhcp.option.subnet_mask",
+    ],
+  },
+  dns: {
+    filter: "dns",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "dns.id",
+      "dns.flags.response",
+      "dns.qry.name",
+      "dns.qry.type",
+      "dns.flags.rcode",
+      "dns.a",
+      "dns.aaaa",
+      "dns.cname",
+      "dns.time",
+    ],
+  },
+  http: {
+    filter: "http",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "http.request.method",
+      "http.host",
+      "http.request.uri",
+      "http.response.code",
+      "http.content_type",
+      "http.content_length",
+      "http.time",
+    ],
+  },
+  tls: {
+    filter: "tls.handshake || tls.alert_message",
+    fields: [
+      "ip.src",
+      "ip.dst",
+      "tcp.dstport",
+      "tls.handshake.type",
+      "tls.handshake.version",
+      "tls.handshake.extensions_server_name",
+      "tls.alert_message.desc",
+    ],
+  },
+};

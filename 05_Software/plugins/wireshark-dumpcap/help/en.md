@@ -2,6 +2,6 @@
 
 Enable this optional plugin and install Dumpcap 4.2 or later. Windows requires Npcap. On Linux the selected interface requires capture permission.
 
-Ask VERA to list local capture interfaces. Choose one and provide a capture filter using numeric addresses or ports, a duration and a byte limit. Approve the displayed request. For a rolling capture, also set the segment limits and how many segments to keep. Use the capture ID to check status or stop it. The manifest reports retained segments and known losses. Enable Wireshark TShark to inspect a retained capture.
+Ask VERA to capture what a board sends and receives on a network interface of this computer. It lists the interfaces and can count the packets each one sees for a few seconds, to find the one the board is on. Name the interface; a capture filter, a duration (30 seconds by default, up to an hour) and a size limit are optional. A capture longer than a minute runs in the background, so you can ask VERA to start it, run a test or reboot the board, and then stop it. For a rare event, ask for a rolling capture that keeps the newest segments. The result reports what was kept and what was lost. Enable Wireshark TShark to inspect a retained capture.
 
-A capture lasts at most 120 seconds and holds at most 32 MiB, VERA asks you to approve every one, and only traffic to and from this computer is seen. For any other capture, ask the agent for a TShark capture into a workbench file.
+A capture is a device read: VERA asks you in Ask mode and runs it on its own in Auto-edit and Bypass. USB and sniffer interfaces that Wireshark reaches through extcap are captured with TShark instead.

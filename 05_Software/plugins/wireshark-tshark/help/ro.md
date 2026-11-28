@@ -34,6 +34,8 @@ Agentul folosește skill-urile `wireshark-analyze` și `wireshark-capture`. Cite
 - „Decodează portul UDP 5684 ca CoAP și exportă codurile.”
 - „Arată topicurile MQTT pe care a publicat placa și ce a trimis pe fiecare.”
 - „Ce conține cadrul 42? Arată-i octeții.”
+- „A primit placa o adresă? Arată schimbul DHCP.”
+- „Decriptează captura cu keys.log și listează publicările MQTT.”
 - „Decupează cadrele 100000-150000 din captures/big.pcapng.”
 - „Capturează 30 de secunde de trafic către și dinspre 192.168.7.10 pe interfața 3 în captures/board.pcapng.”
 

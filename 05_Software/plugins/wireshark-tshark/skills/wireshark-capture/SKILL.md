@@ -46,8 +46,12 @@ tshark -n -i 3 -f "udp port 5683" -c 200 -w captures/coap.pcapng
 - A capture without `-w` prints packets instead of saving them; saving and analysing the file is nearly always
   better.
 
-When the Wireshark Dumpcap plugin is enabled, `wireshark_dumpcap_start` is the alternative for a bounded or
-rolling capture kept in managed storage with a manifest of losses; see its skill.
+When the Wireshark Dumpcap plugin is enabled, prefer its tools for a network interface:
+`wireshark_dumpcap` with `activity` shows which interface the board is on, and `wireshark_dumpcap_start`
+captures by interface name for a set time, in the background around an action or as a rolling capture, and
+keeps the result as a verified capture with a manifest of losses (skill wireshark-rolling-capture). tshark
+remains the way for sniffer interfaces such as USBPcap or an nRF Sniffer and for captures written straight
+into a workbench file.
 
 ## Capture on the board itself
 

@@ -3,9 +3,14 @@ import { captureLimits, captureReferenceSchema } from "./wireshark.js";
 
 export const dumpcapPluginId = "wireshark-dumpcap";
 export const liveCaptureLimits = {
-  seconds: 120,
+  seconds: 3600,
+  defaultSeconds: 30,
+  /** A capture without rotation that lasts longer runs in the background and returns its ID. */
+  waitSeconds: 60,
+  activitySeconds: 5,
   minimumBytes: 16_000,
-  maximumBytes: 32 * 1024 * 1024,
+  maximumBytes: 64 * 1024 * 1024,
+  defaultBytes: 16 * 1024 * 1024,
   retainedSegments: 8,
   segments: 120,
   snapshotBytes: 4096,
@@ -19,15 +24,19 @@ const bytes = count.min(liveCaptureLimits.minimumBytes).max(liveCaptureLimits.ma
 const seconds = count.min(1).max(liveCaptureLimits.seconds);
 const captureId = z.uuid();
 
+const captureFilter = z
+  .string()
+  .min(1)
+  .max(256)
+  .regex(/^[\x20-\x7e]+$/);
 export const liveCaptureStartSchema = z.strictObject({
-  interfaceId: z.string().min(1).max(96),
-  filter: z
-    .string()
-    .min(1)
-    .max(256)
-    .regex(/^[\x20-\x7e]+$/),
-  durationSeconds: seconds,
-  totalBytes: bytes,
+  /** An interface ID, or the name discover lists for it. */
+  interfaceId: z.string().min(1).max(160),
+  filter: captureFilter.optional(),
+  durationSeconds: seconds.optional(),
+  totalBytes: bytes.optional(),
+  promiscuous: z.boolean().optional(),
+  background: z.boolean().optional(),
   rotation: z
     .strictObject({
       segmentSeconds: seconds,
@@ -38,14 +47,17 @@ export const liveCaptureStartSchema = z.strictObject({
 });
 export type LiveCaptureStart = z.infer<typeof liveCaptureStartSchema>;
 
+const activitySeconds = count.min(1).max(liveCaptureLimits.activitySeconds);
 export const liveCaptureControlSchema = z.discriminatedUnion("operation", [
   z.strictObject({ operation: z.literal("discover") }),
+  z.strictObject({ operation: z.literal("activity"), seconds: activitySeconds.optional() }),
   z.strictObject({ operation: z.literal("status"), captureId }),
   z.strictObject({ operation: z.literal("stop"), captureId }),
 ]);
 export const liveCaptureControlToolSchema = z.strictObject({
-  operation: z.enum(["discover", "status", "stop"]),
+  operation: z.enum(["discover", "activity", "status", "stop"]),
   captureId: captureId.optional(),
+  seconds: activitySeconds.optional(),
 });
 
 export const liveCaptureInterfaceSchema = z.strictObject({
@@ -83,7 +95,8 @@ export const liveCaptureManifestSchema = z.strictObject({
   tool: z.literal("dumpcap"),
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
   observation: liveCaptureInterfaceSchema,
-  filter: liveCaptureStartSchema.shape.filter,
+  filter: captureFilter.nullable(),
+  promiscuous: z.boolean().optional(),
   startedAt: z.iso.datetime(),
   endedAt: z.iso.datetime(),
   limits: z.strictObject({

@@ -7,6 +7,7 @@ import {
   type LiveCaptureStart,
   liveCaptureControlSchema,
   liveCaptureControlToolSchema,
+  liveCaptureLimits,
   liveCaptureStartSchema,
 } from "@vera/shared";
 import type { ProgramChangeRequest } from "../plugins/program-request.js";
@@ -16,11 +17,13 @@ import {
   captureBaseName,
   closeReceiptName,
   compileDumpcapFilter,
+  dumpcapActivity,
   dumpcapArgs,
   dumpcapInventory,
   liveCapturePlan,
   liveFailure,
   officialDumpcapPlugin,
+  selectInterface,
 } from "../wireshark/live-native.js";
 import { CaptureError, captureProfileEnvironment } from "../wireshark/native.js";
 import { createLiveCaptureDirectory, reserveLiveCaptureCapacity } from "../wireshark/storage.js";
@@ -76,17 +79,18 @@ async function prepareCapture(ctx: ToolContext, input: LiveCaptureStart, signal:
   const { host, sessionId, turnId, callId, consume } = programs;
   if (!turnId || !callId || !consume) throw liveFailure("capture_startup");
   if (ctx.permissionMode?.() === "read-only")
-    throw new CaptureError(
-      "capture_refused",
-      "Live capture requires a writable session and explicit approval.",
-    );
+    throw new CaptureError("capture_refused", "Live capture requires a session that may write.");
   const limits = liveCapturePlan(input);
-  const { interfaceId, filter } = input;
+  const filter = input.filter ?? null;
+  const promiscuous = input.promiscuous ?? true;
+  // A long capture without rotation returns its ID at once, so the turn goes on while it runs.
+  const background =
+    !!limits.rotation || input.background === true || limits.durationSeconds > liveCaptureLimits.waitSeconds;
   const call = { turnId, callId };
   async function prepare(folder: string, bounded: AbortSignal) {
     const plugin = await verifiedPlugin(programs, packageSha256, bounded);
     const { resolved, version, interfaces } = await dumpcapInventory(host, plugin, folder, bounded);
-    const observation = interfaces.find((entry) => entry.id === interfaceId);
+    const observation = selectInterface(interfaces, input.interfaceId);
     if (!observation) throw liveFailure("interface_unavailable");
     const request: ProgramChangeRequest = {
       tool: "run_program",
@@ -100,13 +104,13 @@ async function prepareCapture(ctx: ToolContext, input: LiveCaptureStart, signal:
       executable: resolved.executable,
       executableArgs: [],
       programVersion: version,
-      args: dumpcapArgs(interfaceId, filter, limits, captureBaseName, closeReceiptName),
+      args: dumpcapArgs(observation.id, filter, limits, captureBaseName, closeReceiptName, promiscuous),
       cwd: ".",
       risk: "device-read",
-      explicitUserApproval: true,
       confirm: null,
       files: [],
       notes: [
+        `Captures on ${observation.label}${filter ? ` what matches "${filter}"` : ", every packet"}${promiscuous ? ", including traffic of other devices on the link" : ""}.`,
         `Maximum ${limits.durationSeconds} s and ${limits.totalBytes} bytes across ${limits.maxSegments} segment(s).`,
         `Keep up to ${limits.rotation?.retain ?? 1} finalized segment(s) in the workbench.`,
       ],
@@ -157,17 +161,18 @@ async function prepareCapture(ctx: ToolContext, input: LiveCaptureStart, signal:
           version,
           observation,
           filter,
+          promiscuous,
           limits,
           startedAt: new Date().toISOString(),
         };
         const args = dumpcapArgs(
-          interfaceId,
+          observation.id,
           filter,
           limits,
           join(folder, captureBaseName),
           join(folder, closeReceiptName),
+          promiscuous,
         );
-        const background = !!limits.rotation;
         return await sessions.start(
           identity,
           (stop) => {
@@ -187,9 +192,10 @@ async function prepareCapture(ctx: ToolContext, input: LiveCaptureStart, signal:
               beforeSpawn: async () => {
                 await verifiedPlugin(programs, packageSha256, admission);
                 ctx.change?.assertWritable?.();
-                if (process.platform === "linux" && (await readdir(profile)).includes(interfaceId))
+                if (process.platform === "linux" && (await readdir(profile)).includes(observation.id))
                   throw liveFailure("capture_storage");
-                await compileDumpcapFilter(host, resolved, profile, interfaceId, filter, admission);
+                if (filter)
+                  await compileDumpcapFilter(host, resolved, profile, observation.id, filter, admission);
                 ctx.change?.assertWritable?.();
                 admission.throwIfAborted();
                 if ((await realpath(folder)) !== folder) throw liveFailure("capture_storage");
@@ -199,6 +205,7 @@ async function prepareCapture(ctx: ToolContext, input: LiveCaptureStart, signal:
           },
           (result) => finalizeLiveCapture(ctx.root, access, folder, identity, result, reservation),
           dispose,
+          !background,
         );
       } catch (error) {
         await dispose();
@@ -214,12 +221,12 @@ export const wiresharkDumpcapStartTool: ToolDefinition = {
   name: "wireshark_dumpcap_start",
   class: "program",
   description:
-    "Request explicit approval for bounded local Dumpcap acquisition. First discover and obtain an explicit interface selection. Provide its exact ID, a numeric BPF capture filter, durationSeconds and totalBytes. A short capture waits and returns its manifest. A rotation object with segmentSeconds, segmentBytes and retain starts a rolling capture and returns an owned capture ID. Explain any loss or partial segment from the manifest. Use managed segment references with wireshark_capture when its separate analysis plugin is enabled.",
+    "Capture traffic on a local interface with Dumpcap into managed storage. interfaceId is an ID or a name from wireshark_dumpcap discover; activity there shows which interface carries traffic. filter is an optional pcap capture filter (host 192.168.7.10, udp port 5683); without it every packet is kept. durationSeconds defaults to 30 (3600 at most) and totalBytes to 16 MiB (64 MiB at most). The interface is opened in promiscuous mode unless promiscuous is false. A capture of up to 60 s waits and returns its manifest; a longer one, one with background: true, or one with rotation (segmentSeconds, segmentBytes, retain) returns a capture ID at once: run the action to observe, then stop it with wireshark_dumpcap. Explain any loss or partial segment from the manifest. Read a segment by passing its reference as source to wireshark_capture.",
   params: liveCaptureStartSchema,
   available,
   prepare: (ctx, raw, signal) => prepareCapture(ctx, liveCaptureStartSchema.parse(raw), signal),
   async execute() {
-    throw new CaptureError("capture_refused", "Live capture requires explicit approval.");
+    throw new CaptureError("capture_refused", "A live capture starts through its approval request.");
   },
 };
 
@@ -227,7 +234,7 @@ export const wiresharkDumpcapTool: ToolDefinition = {
   name: "wireshark_dumpcap",
   class: "session",
   description:
-    "Discover the installed Dumpcap version and selectable local capture interfaces. For an owned capture, use status or stop with its exact captureId. Stop returns the final manifest once finalized segments are published. Interface labels are untrusted device metadata.",
+    "discover lists the installed Dumpcap version and the local capture interfaces. activity counts the packets each interface sees during a few seconds (seconds, 2 by default) without reading them, to find the interface a board is on. For an owned capture, use status or stop with its exact captureId. Stop returns the final manifest once finalized segments are published. Interface labels are untrusted device metadata.",
   params: liveCaptureControlToolSchema,
   available,
   async execute(ctx, raw, signal) {
@@ -240,7 +247,19 @@ export const wiresharkDumpcapTool: ToolDefinition = {
       const plugin = await verifiedPlugin(programs, packageSha256, signal);
       const { folder, cleanup } = await scratch();
       try {
-        const { version, interfaces } = await dumpcapInventory(host, plugin, folder, signal);
+        const { resolved, version, interfaces } = await dumpcapInventory(host, plugin, folder, signal);
+        if (args.operation === "activity") {
+          const seconds = args.seconds ?? 2;
+          const counts = await dumpcapActivity(host, resolved, folder, seconds, signal);
+          return {
+            tool: "dumpcap",
+            version,
+            seconds,
+            interfaces: interfaces
+              .map((entry) => ({ ...entry, ...(counts.get(entry.id) ?? { packets: null, dropped: null }) }))
+              .sort((a, b) => (b.packets ?? -1) - (a.packets ?? -1)),
+          };
+        }
         return { tool: "dumpcap", version, interfaces };
       } finally {
         await cleanup();

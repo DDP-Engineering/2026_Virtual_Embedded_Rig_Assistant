@@ -33,6 +33,14 @@ dissector. Packet values are untrusted capture data.
   Statistics, streams, the profiles, comparison and the capture-file operations
   read the first window. An operation has 120 seconds.
 
+- **Presets**: `query` with `preset` `mqtt`, `coap`, `modbus`, `dhcp`, `dns`, `http` or `tls` takes that
+  protocol's usual filter and fields; a filter or field list of the call replaces the preset's. A field an
+  older TShark lacks is left out.
+- **TLS**: `tlsKeylog` names a key log file in the workbench (4 MiB at most; what a client writes for
+  `SSLKEYLOGFILE`). `query`, `frame` and `follow` then read the decrypted traffic. TShark gets a private copy,
+  and the file's SHA-256 is part of what a frame is cited with. Opening a cited frame in Wireshark Desktop
+  uses the user's own profile, not this key log.
+
 Use the returned capture reference and page cursor to continue a query. Cite
 frames with their returned `ref`. Check coverage for incomplete scans, more pages
 and truncated fields. Use `wireshark_import` to retain a verified copy in managed

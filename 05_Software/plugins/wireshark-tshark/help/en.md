@@ -34,6 +34,8 @@ The agent uses the `wireshark-analyze` and `wireshark-capture` skills. It always
 - "Decode UDP port 5684 as CoAP and export the codes."
 - "Show the MQTT topics the board published and what it sent on each."
 - "What is in frame 42? Show its bytes."
+- "Did the board get an address? Show the DHCP exchange."
+- "Decrypt the capture with keys.log and list the MQTT publishes."
 - "Cut frames 100000 to 150000 out of captures/big.pcapng."
 - "Capture 30 seconds of traffic to and from 192.168.7.10 on interface 3 into captures/board.pcapng."
 

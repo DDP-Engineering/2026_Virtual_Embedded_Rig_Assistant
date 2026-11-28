@@ -29,7 +29,8 @@ import { analyzeMedia, mediaCapabilities } from "./media.js";
 import { CaptureError, emptyPcap, OfflineTshark, selectedFields } from "./native.js";
 import { analyzeNetworking } from "./network-evidence.js";
 import { networkingCapabilities } from "./network-profiles.js";
-import { publishCapture, snapshotCapture } from "./storage.js";
+import { capturePresets } from "./presets.js";
+import { publishCapture, snapshotCapture, snapshotKeyLog } from "./storage.js";
 import { analyzeTraffic, trafficCapabilities } from "./traffic-analysis.js";
 
 type Query = Extract<WiresharkCaptureArgs, { operation: "query" }>;
@@ -56,7 +57,10 @@ function analysisFor(args: WiresharkCaptureArgs, version: string): CaptureAnalys
     version,
     profile: wiresharkProfile,
     decodeAs,
-    filter: "filter" in args ? (args.filter ?? null) : null,
+    // A query that names a protocol preset and no filter of its own reads that protocol's frames.
+    filter:
+      ("filter" in args ? args.filter : undefined) ??
+      (args.operation === "query" && args.preset ? capturePresets[args.preset].filter : null),
     ...(args.operation === "automotive" ? { automotiveProfile: args.automotiveProfile } : {}),
     ...(args.operation === "network" ? { networkProfile: args.networkProfile } : {}),
     ...(args.operation === "media" ? { mediaProfile: args.mediaProfile } : {}),
@@ -187,6 +191,12 @@ async function captureOperation(
     args.operation === "frame"
       ? args.frame
       : (("scanFrames" in args ? args.scanFrames : undefined) ?? captureLimits.scanFrames);
+  if ("tlsKeylog" in args && args.tlsKeylog) {
+    // TShark decrypts with a private copy of the key log; its hash is part of what the frames are cited with.
+    const keys = join(scratch, "tls-keys.log");
+    analysis.tlsKeylog = (await snapshotKeyLog(ctx, args.tlsKeylog, keys, signal)).sha256;
+    native.prefer(["-o", `tls.keylog_file:${keys}`]);
+  }
   if (args.operation === "statistics" || args.operation === "follow")
     return analyzeTraffic(
       args,
@@ -230,8 +240,26 @@ async function captureOperation(
       signal,
     );
   const chosen = "fields" in args ? args.fields : undefined;
-  const fields = selectedFields(chosen);
-  if (analysis.filter || analysis.decodeAs.length || chosen) await native.validate(analysis, fields);
+  const preset = args.operation === "query" && args.preset ? capturePresets[args.preset] : undefined;
+  let fields = selectedFields(chosen ?? preset?.fields);
+  if (analysis.filter || analysis.decodeAs.length || chosen || preset) {
+    try {
+      await native.validate(analysis, fields);
+    } catch (error) {
+      // A preset names the fields of current releases: an older TShark reads the capture without those it lacks.
+      if (
+        !preset ||
+        chosen ||
+        !(error instanceof CaptureError) ||
+        error.reason !== "field_unavailable" ||
+        !error.fields.length
+      )
+        throw error;
+      fields = fields.filter((name) => !error.fields.includes(name));
+      if (!fields.length) throw error;
+      await native.validate(analysis, fields);
+    }
+  }
   if (args.operation === "frame") {
     // One frame is read directly, wherever it lies in the capture.
     const [packet] = await native.packets(snapshot, analysis, [args.frame], fields, capture.sha256);
@@ -414,6 +442,8 @@ export async function inspectWireshark(
         },
         profile: wiresharkProfile,
         limits: captureLimits,
+        presets: usable ? Object.keys(capturePresets) : [],
+        tlsKeylog: !!usable,
         traffic: usable ? trafficCapabilities : { available: false },
         automotive: usable ? automotiveCapabilities : { available: false },
         networking: usable ? networkingCapabilities : { available: false },

@@ -1,20 +1,20 @@
 format: 1
 id: wireshark-dumpcap
-version: 0.2.0
+version: 0.3.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wireshark (Dumpcap)
-summary: Capture bounded traffic on a selected local interface.
-description: Use the approved local capture tools for short and rolling PCAPNG acquisition with retention and loss reporting.
+summary: Capture traffic on a local interface for a set time, around an action or as a rolling capture.
+description: Capture what a board sends and receives on a network interface of this computer into verified PCAPNG files - for a set time, in the background around an action, or rolling with the newest segments kept - with a report of what was retained and lost. Find the interface by its name or by the packets it sees.
 translations:
   ro:
-    summary: Capturează trafic în limitele stabilite pe o interfață locală selectată.
-    description: Folosește instrumentele de captură locală aprobate pentru capturi PCAPNG scurte sau rotative, cu retenție și raportarea pierderilor.
+    summary: Capturează trafic pe o interfață locală pentru un timp stabilit, în jurul unei acțiuni sau ca o captură rotativă.
+    description: Capturează ce trimite și primește o placă pe o interfață de rețea a acestui computer în fișiere PCAPNG verificate - pentru un timp stabilit, în fundal în jurul unei acțiuni sau rotativ, cu păstrarea celor mai noi segmente - cu un raport despre ce s-a păstrat și ce s-a pierdut. Găsește interfața după nume sau după pachetele pe care le vede.
   de:
-    summary: Verkehr begrenzt auf einer ausgewählten lokalen Schnittstelle mitschneiden.
-    description: Verwenden Sie die genehmigten lokalen Werkzeuge für kurze und rotierende PCAPNG-Mitschnitte mit Aufbewahrung und Verlustmeldung.
+    summary: Verkehr auf einer lokalen Schnittstelle für eine feste Zeit, rund um eine Aktion oder als rotierenden Mitschnitt aufzeichnen.
+    description: Zeichnen Sie auf, was ein Board an einer Netzwerkschnittstelle dieses Computers sendet und empfängt, in geprüfte PCAPNG-Dateien - für eine feste Zeit, im Hintergrund rund um eine Aktion oder rotierend mit den neuesten Segmenten - mit einem Bericht über Aufbewahrtes und Verlorenes. Finden Sie die Schnittstelle über ihren Namen oder über die Pakete, die sie sieht.
   fr:
-    summary: Capturez le trafic dans des limites définies sur une interface locale choisie.
-    description: Utilisez les outils de capture locale approuvés pour produire des fichiers PCAPNG courts ou rotatifs, avec conservation et suivi des pertes.
+    summary: Capturez le trafic sur une interface locale pendant une durée fixée, autour d’une action ou en capture rotative.
+    description: Capturez ce qu’une carte envoie et reçoit sur une interface réseau de cet ordinateur dans des fichiers PCAPNG vérifiés - pendant une durée fixée, en arrière-plan autour d’une action ou en rotation avec les segments les plus récents - avec un rapport de ce qui a été conservé et perdu. Trouvez l’interface par son nom ou par les paquets qu’elle voit.
 ecosystem: wireshark
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.wireshark.org/docs/man-pages/dumpcap.html"]

@@ -1,20 +1,25 @@
 # Wireshark Dumpcap
 
-Optional Windows and Linux plugin for bounded local PCAPNG acquisition. VERA finds an installed
-Dumpcap from Wireshark 4.2 or later. Windows needs Npcap. Linux needs permission for the selected
-device. Enable the separate Wireshark TShark plugin to analyse retained files. The skill
-`wireshark-rolling-capture` carries these steps. For an ordinary capture into a workbench file -
-longer than 120 seconds, promiscuous, without a filter, or on a sniffer interface - use `tshark -i`
-of the TShark plugin instead; VERA asks for every Dumpcap capture, in every permission mode.
+Optional Windows and Linux plugin for local PCAPNG acquisition. VERA finds an installed Dumpcap from
+Wireshark 4.2 or later. Windows needs Npcap. Linux needs permission for the selected device. Enable the
+separate Wireshark TShark plugin to analyse retained files. The skill `wireshark-rolling-capture` carries
+these steps.
 
-- Use `wireshark_dumpcap` with `discover` to find current interface IDs. Choose a local interface
-  explicitly. The typed command uses non-promiscuous capture and numeric capture filters.
-- Use `wireshark_dumpcap_start` with the interface ID, filter, duration and total byte maximum.
-  Confirm the exact request in the session. Short capture waits for the final result. For rolling
-  capture, specify a smaller interval, byte maximum per segment and a retained segment count.
-- The limits are 1–120 seconds, 16,000 bytes to 32 MiB per capture, and up to eight retained
-  segments. Native rotation also obeys the host packet budget and space reserved for PCAPNG framing.
-- Use `wireshark_dumpcap` with `status` or `stop` and the issued capture ID. Runs can stop the owned
-  process directly. The final manifest records the exact managed references, timestamps, counts,
-  retention gaps and any incomplete last segment. Unavailable drop counts are unknown. Forward the
+- `wireshark_dumpcap` with `discover` lists the local interfaces with their IDs and names; with `activity` it
+  counts the packets each one sees during a few seconds (dumpcap's statistics mode, `-S -M`; no packet is
+  read), to find the interface a board is on.
+- `wireshark_dumpcap_start` takes the interface by ID or by name. Everything else is optional: a pcap capture
+  `filter` (none keeps every packet), `durationSeconds` (30 by default, 3600 at most), `totalBytes` (16 MiB by
+  default, 64 MiB at most), `promiscuous` (true by default) and `background`. A capture is a device read: VERA
+  asks in Ask mode and runs it in Auto-edit and Bypass.
+- A capture of up to 60 seconds waits for the final result. A longer one, one with `background: true` and a
+  rolling one (`rotation` with `segmentSeconds`, `segmentBytes` and `retain`, eight segments at most) return a
+  capture ID at once; `wireshark_dumpcap` with `status` or `stop` and that ID follows and ends it, which is
+  how to capture around an action. One capture runs per session.
+- Each packet is kept up to 4096 bytes and a file ends at 50,000 packets. Native rotation also obeys the
+  space reserved for PCAPNG framing.
+- The final manifest records the interface, the filter, the mode, the exact managed references, timestamps,
+  counts, retention gaps and any incomplete last segment. Unavailable drop counts are unknown. Forward the
   exact managed `reference` to `wireshark_capture` for offline inspection.
+- Interfaces Wireshark reaches through extcap (USBPcap, sniffer dongles, sshdump) are not offered; use
+  `tshark -i` of the TShark plugin for those.

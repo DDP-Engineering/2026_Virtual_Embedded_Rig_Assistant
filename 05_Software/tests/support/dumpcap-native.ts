@@ -136,6 +136,16 @@ export async function nativeDumpcapInventory(options: NativeOptions) {
   }
 }
 
+/** Packet counts per interface from the installed Dumpcap's statistics mode; no packet is read. */
+export async function nativeDumpcapActivity(options: NativeOptions) {
+  const rig = await nativeRig(options);
+  try {
+    return await rig.control({ operation: "activity", seconds: 2 });
+  } finally {
+    await rig.close();
+  }
+}
+
 /** Opt-in proof with real Dumpcap and TShark, confined to bounded UDP traffic on loopback. */
 export async function proveNativeDumpcap(options: NativeOptions) {
   const interfaceId = options.interfaceId;
@@ -174,7 +184,7 @@ export async function proveNativeDumpcap(options: NativeOptions) {
         input,
         rig.signal,
       );
-      assert(prepared?.request.tool === "run_program" && prepared.request.explicitUserApproval);
+      assert(prepared?.request.tool === "run_program" && prepared.request.risk === "device-read");
       approved = requestSha256(prepared.request);
       return prepared.apply(rig.signal);
     }

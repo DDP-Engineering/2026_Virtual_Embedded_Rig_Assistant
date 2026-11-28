@@ -1,9 +1,9 @@
 schema = 1
 id = "REQ-FUNC-05a80354"
-title = "Discover installed Dumpcap and local observation points"
+title = "Discover installed Dumpcap, local observation points and their activity"
 status = "active"
-requirement = "When the verified official live-capture plugin is enabled and discovery is requested, VERA shall return installed Dumpcap version and a bounded list restricted to host-local capture devices."
-verification = "Use the Windows and Linux interface probes and provider fixture to check installed versions, explicit loopback, and rejection of pseudo and external sources."
+requirement = "When the verified official live-capture plugin is enabled and discovery is requested, VERA shall return installed Dumpcap version and a bounded list restricted to host-local capture devices; when activity is requested it shall add the packets and drops each of them counted during the given seconds, from dumpcap's statistics mode, without reading or keeping any packet."
+verification = "Use the Windows and Linux interface probes and provider fixture to check installed versions, explicit loopback, and rejection of pseudo and external sources; request activity and check the last counts per listed interface and that no capture file is written."
 affected_paths = [
   "05_Software/src/libraries/core/src/wireshark/live-native.ts",
   "05_Software/src/libraries/core/src/index.ts",
@@ -31,4 +31,4 @@ affected_paths = [
 ]
 linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts", "05_Software/src/libraries/shared/src/tools.test.ts"]
 created = 2026-11-25
-updated = 2026-11-25
+updated = 2026-11-28

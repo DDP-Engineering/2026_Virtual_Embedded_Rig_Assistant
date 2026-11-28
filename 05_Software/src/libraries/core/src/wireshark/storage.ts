@@ -269,6 +269,23 @@ function workbenchSourceGuard(ctx: ToolContext) {
   });
 }
 
+/** Snapshot a TLS key log of the workbench, so TShark reads the bytes that were hashed. */
+export async function snapshotKeyLog(ctx: ToolContext, path: string, target: string, signal: AbortSignal) {
+  try {
+    const guard = await workbenchSourceGuard(ctx);
+    const bound = await guard.resolve(path);
+    const { bytes, sha256 } = await streamFile(bound.absolute, target, signal, 4 * 1024 * 1024, false);
+    if ((await guard.resolve(path)).absolute !== bound.absolute) throw changed();
+    return { bytes, sha256 };
+  } catch {
+    signal.throwIfAborted();
+    throw new CaptureError(
+      "keylog_inaccessible",
+      "Use a TLS key log file inside the workbench, 4 MiB at most (the file a client writes for SSLKEYLOGFILE).",
+    );
+  }
+}
+
 /** Snapshot and hash an exact hexdump file without giving the native converter its original path. */
 export async function snapshotHexdump(ctx: ToolContext, path: string, target: string, signal: AbortSignal) {
   try {

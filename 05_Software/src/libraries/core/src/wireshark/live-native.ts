@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { isIP } from "node:net";
 import { isAbsolute } from "node:path";
 import {
   dumpcapPluginId,
@@ -31,38 +30,14 @@ const jsonInventory = z
     ),
   )
   .max(1024);
-const filterWords = new Set([
-  "and",
-  "or",
-  "not",
-  "src",
-  "dst",
-  "host",
-  "net",
-  "port",
-  "portrange",
-  "ether",
-  "arp",
-  "ip",
-  "ip6",
-  "icmp",
-  "icmp6",
-  "tcp",
-  "udp",
-  "vlan",
-  "broadcast",
-  "multicast",
-  "less",
-  "greater",
-]);
-
 const hints: Record<LiveCaptureFailure, string> = {
   dumpcap_missing: "Install Dumpcap from Wireshark or your Linux distribution.",
   dumpcap_version: "Use an installed Dumpcap from Wireshark 4.2 or later.",
   npcap_missing: "Dumpcap requires Npcap on Windows.",
   capture_permission: "Dumpcap cannot open the selected capture device with the current permissions.",
   interface_unavailable: "Discover and select one currently available local capture interface.",
-  invalid_capture_filter: "Use a valid capture filter with numeric addresses and ports.",
+  invalid_capture_filter:
+    "Dumpcap rejected the capture filter. Use pcap filter syntax, such as host 192.168.7.10, udp port 5683 or ether host 02:00:00:00:00:01.",
   capture_startup: "Dumpcap could not start. Check the installation and the selected interface.",
   capture_failed: "Dumpcap failed while acquiring this capture.",
   capture_storage: "Live capture storage is unavailable. Check workspace access and free space.",
@@ -135,24 +110,22 @@ function inventoryRecords(stdout: string) {
   });
 }
 
-function assertNumericFilter(filter: string) {
-  const tokens = filter.match(/[a-z\d_.:-]+|[^\s]/gi) ?? [];
-  if (
-    !tokens.length ||
-    tokens.some(
-      (token) =>
-        !filterWords.has(token) &&
-        !isIP(token) &&
-        !/^(?:\d+|\d+-\d+|[()/]|(?:[a-f\d]{2}:){5}[a-f\d]{2})$/i.test(token),
-    )
-  )
-    throw liveFailure("invalid_capture_filter");
+/** The interface a call names: by its exact ID, else by the name discover lists for it. */
+export function selectInterface(interfaces: readonly LiveCaptureInterface[], requested: string) {
+  const wanted = requested.trim().toLowerCase();
+  const exact = interfaces.find((entry) => entry.id === requested);
+  if (exact) return exact;
+  const named = interfaces.filter((entry) => entry.label.toLowerCase() === wanted);
+  if (named.length === 1) return named[0];
+  const partial = interfaces.filter((entry) => entry.label.toLowerCase().includes(wanted));
+  return partial.length === 1 ? partial[0] : undefined;
 }
 
 /** Compile safe native limits before the request reaches the approval gate. */
 export function liveCapturePlan(input: LiveCaptureStart): LiveCaptureManifest["limits"] {
-  assertNumericFilter(input.filter);
-  const { durationSeconds, totalBytes, rotation } = input;
+  const { rotation } = input;
+  const durationSeconds = input.durationSeconds ?? liveCaptureLimits.defaultSeconds;
+  const totalBytes = input.totalBytes ?? liveCaptureLimits.defaultBytes;
   const maxSegmentBytes = rotation?.segmentBytes ?? totalBytes;
   const maxSegments = rotation
     ? Math.min(liveCaptureLimits.segments, Math.floor(totalBytes / maxSegmentBytes))
@@ -181,21 +154,21 @@ export const closeReceiptName = "closed.txt";
 
 export function dumpcapArgs(
   interfaceId: string,
-  filter: string,
+  filter: string | null,
   limits: LiveCaptureManifest["limits"],
   output: string,
   receipt: string,
+  promiscuous = true,
 ) {
   const kb = Math.floor((limits.maxSegmentBytes - liveCaptureLimits.segmentReserveBytes) / 1000);
   return [
     "-q",
-    "-p",
+    ...(promiscuous ? [] : ["-p"]),
     "-s",
     String(limits.snapshotBytes),
     "-i",
     interfaceId,
-    "-f",
-    filter,
+    ...(filter ? ["-f", filter] : []),
     "-a",
     `duration:${limits.durationSeconds}`,
     "-w",
@@ -319,4 +292,41 @@ export async function compileDumpcapFilter(
   const diagnostic = diagnoseDumpcap(`${compiled.stderr}\n${compiled.stdout}`, "capture_startup");
   if (diagnostic !== "capture_startup" || compiled.exit.code !== 0 || !/^\(000\)\s+\S/m.test(compiled.stdout))
     throw liveFailure(diagnostic);
+}
+
+/**
+ * Packets seen on each interface during a few seconds, from dumpcap's statistics mode (`-S -M`: one line per
+ * interface every second with its running packet and drop counts). No packet is read or kept.
+ */
+export async function dumpcapActivity(
+  host: ProgramHost,
+  resolved: ResolvedProgram,
+  folder: string,
+  seconds: number,
+  signal: AbortSignal,
+) {
+  let listed: Awaited<ReturnType<ProgramHost["runner"]["captureOutput"]>>;
+  try {
+    listed = await host.runner.captureOutput({
+      executable: resolved.executable,
+      args: ["-S", "-M"],
+      cwd: folder,
+      env: { ...resolved.env, ...captureProfileEnvironment(folder) },
+      maxBytes: 1024 * 1024,
+      signal,
+      stopAfterMs: seconds * 1000,
+    });
+  } catch {
+    signal.throwIfAborted();
+    throw liveFailure("capture_startup");
+  }
+  const counts = new Map<string, { packets: number; dropped: number }>();
+  for (const line of listed.stdout.split(/\r?\n/)) {
+    const [id, packets, dropped] = line.split("\t");
+    if (id && /^\d{1,15}$/.test(packets ?? "") && /^\d{1,15}$/.test(dropped ?? ""))
+      counts.set(id, { packets: Number(packets), dropped: Number(dropped) });
+  }
+  if (!counts.size)
+    throw liveFailure(diagnoseDumpcap(`${listed.stderr}\n${listed.stdout}`, "capture_startup"));
+  return counts;
 }

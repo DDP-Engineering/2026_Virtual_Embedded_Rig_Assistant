@@ -3133,6 +3133,90 @@ it("reads any field and filter, a frame's tree and bytes, stream payload and fra
   }
 }, 180_000);
 
+it("reads a protocol with its preset and passes a TLS key log to TShark", async (ctx) => {
+  const coap = { path: "captures/sample.pcapng" };
+  const traffic = { path: "captures/traffic.pcapng" };
+  const keys = "captures/keys.log";
+  const rig = await workbench({
+    presets: [
+      typed("capabilities"),
+      typed("query", { source: coap, preset: "coap", limit: 2 }),
+      typed("query", { source: coap, preset: "modbus" }),
+      typed("query", { source: traffic, preset: "dns" }),
+      typed("query", { source: coap, preset: "mqtt" }),
+      typed("query", { source: coap, preset: "coap", filter: "coap.code == 69", fields: ["coap.mid"] }),
+      typed("query", { source: traffic, preset: "http", tlsKeylog: keys }),
+      typed("frame", { source: traffic, frame: 14, tlsKeylog: keys }),
+      typed("query", { source: traffic, preset: "http" }),
+      typed("query", { source: traffic, preset: "http", tlsKeylog: "captures/absent.log" }),
+      typed("query", { source: traffic, preset: "http", tlsKeylog: "../outside.log" }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, traffic.path), await readFile(trafficSample));
+    // The key log of no session: TShark reads it and decrypts nothing, which is enough to see it arrive.
+    const keyLog = Buffer.from("# no session keys\n");
+    await writeFile(join(rig.bench, keys), keyLog);
+    const keySha256 = createHash("sha256").update(keyLog).digest("hex");
+    const service = await rig.start();
+    const run = rig.session(service, "presets", "read-only");
+    const firstStart = rig.starts.length;
+    service.send(run.id, "Read the protocols.");
+    expect(await service.waitIdle(run.id)).toEqual({ stopReason: "end" });
+    const [capabilities, coapRows, modbus, dns, mqtt, own, withKeys, frame, withoutKeys, absent, outside] =
+      run.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(run.outputs).toHaveLength(11);
+    expect(capabilities).toMatchObject({
+      presets: ["mqtt", "coap", "modbus", "dhcp", "dns", "http", "tls"],
+      tlsKeylog: true,
+    });
+    const cells = (result: { columns: string[]; rows: unknown[][] }, name: string) =>
+      result.rows.map((row) => row[result.columns.indexOf(name)]);
+    expect(coapRows).toMatchObject({ analysis: { filter: "coap" }, coverage: { matchedInScope: 4 } });
+    expect(coapRows.columns).toEqual(expect.arrayContaining(["coap.code", "coap.opt.uri_path_recon"]));
+    expect(cells(coapRows, "coap.opt.uri_path_recon")).toEqual(["/sensors/temp", "/sensors/temp"]);
+    expect(cells(coapRows, "coap.code")).toEqual(["1", "69"]);
+    expect(modbus.analysis.filter).toBe("modbus");
+    expect(cells(modbus, "modbus.func_code")).toEqual(["3", "3"]);
+    expect(cells(modbus, "modbus.regval_uint16")).toEqual([null, ["235", "258"]]);
+    expect(dns.analysis.filter).toBe("dns");
+    expect(cells(dns, "dns.qry.name")).toContain("example.test");
+    // A protocol the capture does not hold gives an empty page, not an error.
+    expect(mqtt).toMatchObject({ analysis: { filter: "mqtt" }, coverage: { matchedInScope: 0 }, rows: [] });
+    // The call's own filter and fields replace the preset's.
+    expect(own.analysis.filter).toBe("coap.code == 69");
+    expect(own.columns).toEqual(["frame", "time", "bytes", "ref", "coap.mid"]);
+    expect(own.rows).toHaveLength(2);
+    // The key log reaches TShark as a private copy, and its hash becomes part of the frame's citation.
+    expect(withKeys.analysis).toMatchObject({ filter: "http", tlsKeylog: keySha256 });
+    expect(frame.analysis.tlsKeylog).toBe(keySha256);
+    expect(withoutKeys.analysis.tlsKeylog).toBeUndefined();
+    const ref = (result: { columns: string[]; rows: unknown[][] }) => cells(result, "ref")[0];
+    expect(cells(withKeys, "frame")).toEqual(cells(withoutKeys, "frame"));
+    expect(ref(withKeys)).not.toBe(ref(withoutKeys));
+    const keyed = rig.starts
+      .slice(firstStart)
+      .filter((args) => args.some((arg) => arg.startsWith("tls.keylog_file:")));
+    expect(keyed.length).toBeGreaterThan(0);
+    for (const args of keyed) {
+      const option = args.find((arg) => arg.startsWith("tls.keylog_file:")) ?? "";
+      expect(args[args.indexOf(option) - 1]).toBe("-o");
+      expect(option).toContain("vera-offline-");
+      expect(option).not.toContain(rig.bench);
+    }
+    expect(absent).toMatchObject({ isError: true, reason: "keylog_inaccessible" });
+    expect(outside).toMatchObject({ isError: true, reason: "keylog_inaccessible" });
+  } finally {
+    await rig.close();
+  }
+}, 120_000);
+
 it("reconciles typed offline traffic statistics and directional streams with native TShark", async (ctx) => {
   const source = { path: "captures/sample.pcapng" };
   const trafficSource = { path: "captures/traffic.pcapng" };

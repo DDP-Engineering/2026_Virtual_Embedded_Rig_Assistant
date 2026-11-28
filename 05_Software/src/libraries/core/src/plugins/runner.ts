@@ -207,6 +207,8 @@ interface PrivateCaptureRequest {
   env: Readonly<Record<string, string>>;
   maxBytes: number;
   signal: AbortSignal;
+  /** End the command after this long and return what it printed until then; for commands that never end. */
+  stopAfterMs?: number;
 }
 /** Opening a log never follows a link (where the system supports it) and never blocks on a FIFO. */
 const READ_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
@@ -1086,8 +1088,14 @@ export class ProgramRunner {
     });
     signal.addEventListener("abort", kill, { once: true });
     if (signal.aborted) kill();
+    let exited = false;
+    if (request.stopAfterMs !== undefined)
+      void clock.sleep(request.stopAfterMs).then(() => {
+        if (!exited) kill();
+      });
     try {
       const exit = await child.exit;
+      exited = true;
       await killing;
       signal.throwIfAborted();
       return {

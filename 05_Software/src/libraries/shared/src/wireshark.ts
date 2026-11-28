@@ -114,6 +114,9 @@ const scanFrames = z.number().int().min(1).max(captureLimits.scanFrames);
 /** Frames before the scan window: the window covers the `scanFrames` frames after this one. */
 const scanFrom = z.number().int().min(0).max(4_294_967_295);
 export const streamPayloadSchema = z.enum(["text", "hex"]);
+/** A protocol's usual filter and fields, for a query that names neither. */
+export const capturePresetSchema = z.enum(["mqtt", "coap", "modbus", "dhcp", "dns", "http", "tls"]);
+export type CapturePreset = z.infer<typeof capturePresetSchema>;
 const kind = z.enum(["fields", "protocols", "decoders"]);
 const search = z
   .string()
@@ -183,6 +186,8 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     source,
     filter: filter.optional(),
     fields: fields.optional(),
+    preset: capturePresetSchema.optional(),
+    tlsKeylog: path.optional(),
     scanFrames: scanFrames.optional(),
     scanFrom: scanFrom.optional(),
     limit: limit.optional(),
@@ -196,6 +201,7 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     fields: fields.optional(),
     tree: z.boolean().optional(),
     bytes: z.boolean().optional(),
+    tlsKeylog: path.optional(),
     ...profile,
   }),
   z.strictObject({ operation: z.literal("statistics"), statistic: trafficStatisticSchema, ...trafficInputs }),
@@ -210,6 +216,7 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     transport: trafficTransportSchema,
     stream: trafficStreamSchema,
     payload: streamPayloadSchema.optional(),
+    tlsKeylog: path.optional(),
     ...trafficInputs,
   }),
   z.strictObject({
@@ -295,6 +302,8 @@ export const wiresharkCaptureToolSchema = z
     transport: trafficTransportSchema.optional(),
     stream: trafficStreamSchema.optional(),
     payload: streamPayloadSchema.optional(),
+    preset: capturePresetSchema.optional(),
+    tlsKeylog: path.optional(),
     window: trafficWindowSchema.optional(),
     trafficCursor: trafficPageCursorSchema.optional(),
     validateChecksums: z.boolean().optional(),
@@ -321,6 +330,8 @@ export const captureAnalysisSchema = z.strictObject({
   profile: z.literal(wiresharkProfile),
   decodeAs: z.array(decodeAs).max(8),
   filter: filter.nullable(),
+  /** SHA-256 of the TLS key log the frames were decrypted with. */
+  tlsKeylog: sha256.optional(),
   trafficPreferences: trafficPreferencesSchema.optional(),
   automotiveProfile: automotiveProfileSchema.optional(),
   networkProfile: networkProfileSchema.optional(),

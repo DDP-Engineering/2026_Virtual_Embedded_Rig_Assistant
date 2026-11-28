@@ -2,8 +2,8 @@ schema = 1
 id = "REQ-REL-2cf31772"
 title = "Bound live capture duration and cumulative volume"
 status = "active"
-requirement = "When accepting short or rolling capture, VERA shall enforce finite host bounds on elapsed capture time, packet snapshot length, cumulative bytes and rolling segment count."
-verification = "Assert compiled native and runner limits at their boundaries and observe deadline and volume expiry with stand-ins and bounded loopback proof."
+requirement = "When accepting a capture, VERA shall enforce finite host bounds on elapsed capture time (30 seconds by default, 3600 at most), packet snapshot length, cumulative bytes (16 MiB by default, 64 MiB at most) and rolling segment count, and shall return a capture's ID at once instead of waiting when it rotates, is asked to run in the background or lasts longer than 60 seconds."
+verification = "Assert compiled native and runner limits at their boundaries and their defaults, observe deadline and volume expiry with stand-ins and bounded loopback proof, and start a 600-second capture that returns its ID while dumpcap runs."
 affected_paths = [
   "05_Software/src/libraries/core/src/wireshark/live-native.ts",
   "05_Software/src/libraries/core/src/wireshark/live-evidence.ts",
@@ -13,4 +13,4 @@ affected_paths = [
 ]
 linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/tests/plugins/wireshark-dumpcap.test.ts", "05_Software/src/libraries/core/src/wireshark/storage.test.ts"]
 created = 2026-11-25
-updated = 2026-11-25
+updated = 2026-11-28

@@ -16,7 +16,7 @@ import { type CaptureCapacityReservation, type CaptureWriteAccess, publishCaptur
 
 export type LiveCaptureIdentity = Pick<
   LiveCaptureManifest,
-  "captureId" | "sessionId" | "version" | "observation" | "filter" | "startedAt" | "limits"
+  "captureId" | "sessionId" | "version" | "observation" | "filter" | "promiscuous" | "startedAt" | "limits"
 >;
 type CapturedSegment = LiveCaptureManifest["segments"][number];
 const nativeBlocks = new Set([0x0a0d0d0a, 1, 5, 6]);

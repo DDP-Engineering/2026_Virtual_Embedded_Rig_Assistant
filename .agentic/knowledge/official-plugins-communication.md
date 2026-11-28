@@ -34,12 +34,17 @@ device commands follow their own program risk and approval rules.
 
 ## Public interface
 
-- `wireshark-dumpcap` 0.2.0 is find-only and optional in the Wireshark pack, with the skill
-  `wireshark-rolling-capture` (its limits, and tshark -i as the ordinary capture path). Discovery probes Dumpcap
-  4.2 or later and lists local devices. The prepared Start tool binds the selected ID, numeric BPF
-  filter, duration and byte/retention limits to an explicit user approval. The control tool provides
-  session-owned status and Stop. The short form waits in the foreground. Rolling capture returns an
-  owned handle. Verified retained files and the format-1 manifest are published together in managed
+- `wireshark-dumpcap` 0.3.0 is find-only and optional in the Wireshark pack, with the skill
+  `wireshark-rolling-capture`. Discovery probes Dumpcap 4.2 or later and lists local devices; `activity`
+  runs `dumpcap -S -M` for a few seconds (`ProgramRunner.captureOutput` with `stopAfterMs`) and returns the
+  last packet and drop counts per interface. The prepared Start tool selects the interface by ID or listed
+  name (`selectInterface`), takes an optional pcap filter that dumpcap itself compiles (no filter grammar in
+  VERA), `durationSeconds` (default 30, max 3600), `totalBytes` (default 16 MiB, max 64 MiB), `promiscuous`
+  (default true; `-p` only when false) and `background`. Its request is a plain device-read
+  `run_program` request without `explicitUserApproval`: Ask asks, Auto-edit and Bypass run it. The control
+  tool provides session-owned status and Stop. A capture of up to 60 s waits in the foreground; a longer
+  one, `background: true` and a rolling capture return an owned handle
+  (`LiveCaptureSessions.start(..., wait)`). Verified retained files and the format-1 manifest are published together in managed
   workbench capture storage. Retained references are readable by the separate TShark package.
 
 - `can-python` 0.2.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
@@ -65,7 +70,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.11.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.12.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -114,7 +119,13 @@ device commands follow their own program risk and approval rules.
   The model reads a packet page compact (`model-output.ts` `compactPackets`): `columns` once and `rows`
   (frame, time, bytes, optional captured and interface, ref, the fields as text, list or null, optional
   cut); the retained tool record keeps whole packets and `citations.ts` `rowFrames` resolves a cited ref
-  from either form. Desktop reopens a
+  from either form.
+  `query` with `preset` (`presets.ts`: mqtt, coap, modbus, dhcp, dns, http, tls) takes that protocol's filter
+  and fields unless the call gives its own; a preset field the installed TShark lacks is dropped after its
+  `field_unavailable` (`CaptureError.fields`). `tlsKeylog` on query, frame and follow snapshots a workbench key
+  log (`snapshotKeyLog`, 4 MiB) into the scratch folder, passes `-o tls.keylog_file:` through
+  `OfflineTshark.prefer` and records its SHA-256 in `analysis.tlsKeylog`, so citations of decrypted frames
+  differ; Desktop opening ignores it. Desktop reopens a
   cited source or managed file through its owner, checks the exact bytes and packet in a private
   snapshot, then starts the installed Wireshark Desktop with the file's own frame number. It preserves
   applicable display filters and visibly adds the frame when a filter would hide it. Desktop removes

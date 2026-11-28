@@ -8,6 +8,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- wireshark-tshark 0.12.0: Read MQTT, CoAP, Modbus, DHCP, DNS, HTTP or TLS traffic with a protocol preset, without naming fields.
+- wireshark-tshark 0.12.0: Decrypt TLS in a capture with a key log file from the workbench.
+- wireshark-dumpcap 0.3.0: Find the interface a board is on by the packets each interface sees.
+- wireshark-dumpcap 0.3.0: Capture in the background around an action, for up to an hour.
 - wireshark-tshark 0.11.0: Show one packet's whole decode and its bytes.
 - wireshark-tshark 0.11.0: Show what each side of a TCP or UDP stream sent, as text or hex.
 - wireshark-tshark 0.11.0: Run `capinfos`, `editcap` and `mergecap` to measure, cut and merge capture files.
@@ -41,6 +45,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- wireshark-dumpcap 0.3.0: A live capture asks as any device read does: in Ask mode, not in Auto-edit or Bypass.
+- wireshark-dumpcap 0.3.0: Name an interface by its listed name, and leave the filter, duration and size out.
+- wireshark-dumpcap 0.3.0: Capture in promiscuous mode by default and accept any pcap capture filter.
 - wireshark-tshark 0.11.0: Select any field and use any display filter TShark knows in a capture query.
 - wireshark-tshark 0.11.0: Read captures up to 512 MiB and frames past the first 50,000.
 - wireshark-tshark 0.11.0: Return packet rows in a compact table that takes fewer tokens.

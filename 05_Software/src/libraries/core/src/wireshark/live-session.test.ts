@@ -61,6 +61,10 @@ class DumpcapHost extends FakeHost {
     } else if (args.includes("-d")) {
       failure = this.compileFailure;
       if (!failure) child.print("(000) ret      #4096\n");
+    } else if (args.includes("-S")) {
+      // Statistics mode prints running counts until it is ended.
+      child.print(`${interfaceId}\t3\t0\nrpcap://remote/eth0\t9\t0\n${interfaceId}\t41\t1\n`);
+      return child;
     } else return child;
     if (failure) child.print(failure, "stderr");
     child.finish({ code: failure && !this.compileReportsFailureWithSuccess ? 2 : 0, signal: null });
@@ -113,7 +117,7 @@ async function rig() {
   return { root, host, sessions, ctx, prepare, control, captureProcesses, resolver };
 }
 
-it("selects only local interfaces and refuses aliases, remote inputs and name-resolving filters", async () => {
+it("selects a local interface by ID or by name and refuses aliases and remote inputs", async () => {
   const stdout = ["any", "lo", "eth0", "2", "rpcap://other/eth0", "nflog", "TCP@localhost:9999"]
     .map(localLine)
     .join("");
@@ -133,16 +137,17 @@ it("selects only local interfaces and refuses aliases, remote inputs and name-re
       reason: "interface_unavailable",
     });
   }
-  for (const filter of [
-    "udp and host localhost",
-    "udp and port domain",
-    "udp and host 1.1.example",
-    "-w /tmp/a",
-  ]) {
-    await expect(t.prepare({ ...input, filter }).prepared).rejects.toMatchObject({
-      reason: "invalid_capture_filter",
-    });
-  }
+  // The name discover lists selects the interface too, whatever its letter case.
+  const named = await t.prepare({ ...input, interfaceId: "loopback" }).prepared;
+  expect(named?.request.tool === "run_program" && named.request.args).toContain(interfaceId);
+  // dumpcap itself compiles the filter, so a host name is its business; no filter keeps every packet.
+  const hostname = await t.prepare({ ...input, filter: "udp and host board.local" }).prepared;
+  expect(hostname?.request.tool === "run_program" && hostname.request.args).toContain(
+    "udp and host board.local",
+  );
+  const { filter: _filter, ...unfiltered } = input;
+  const everything = await t.prepare(unfiltered).prepared;
+  expect(everything?.request.tool === "run_program" && everything.request.args).not.toContain("-f");
   expect(t.captureProcesses()).toHaveLength(0);
 });
 
@@ -167,10 +172,11 @@ it("prepares bounded approval and does not compile or acquire until the exact re
   const candidate = await prepared;
   if (candidate?.request.tool !== "run_program") throw Error("Missing program approval");
   expect(candidate.request).toMatchObject({
-    explicitUserApproval: true,
     risk: "device-read",
     plan: { limits: { maxSegments: 4 } },
   });
+  // The permission mode decides whether a capture asks, as for any device read.
+  expect(candidate.request.explicitUserApproval).toBeUndefined();
   expect(candidate.request.args).toEqual(
     expect.arrayContaining([
       interfaceId,
@@ -181,9 +187,12 @@ it("prepares bounded approval and does not compile or acquire until the exact re
       "filesize:23",
       "packets:50000",
       "4096",
-      "-p",
     ]),
   );
+  // Promiscuous unless the call turns it off.
+  expect(candidate.request.args).not.toContain("-p");
+  const quiet = await t.prepare({ ...rolling, promiscuous: false }).prepared;
+  expect(quiet?.request.tool === "run_program" && quiet.request.args).toContain("-p");
   expect(t.host.programs.some((process) => process.args.includes("-d"))).toBe(false);
   expect(t.captureProcesses()).toHaveLength(0);
   consume.mockImplementation((current) => {
@@ -197,7 +206,7 @@ it("prepares bounded approval and does not compile or acquire until the exact re
     join(dirname(filename(t.captureProcesses()[0]?.args ?? [])), "profile"),
   );
   await expect(candidate.apply(signal)).rejects.toMatchObject({ reason: "capture_startup" });
-  expect(() => t.prepare({ ...rolling, durationSeconds: 121 })).toThrow();
+  expect(() => t.prepare({ ...rolling, durationSeconds: 3601 })).toThrow();
   expect(() => liveCapturePlan({ ...rolling, totalBytes: 32_000 })).toThrow();
 });
 
@@ -459,60 +468,102 @@ it.each([
   },
 );
 
-it("binds the official start tool through SessionService and waits for the user in Auto-edit", async () => {
+it("uses the usual bounds when a call gives none and runs a long capture in the background", async () => {
   const t = await rig();
-  const dir = join(t.root, "replay");
-  await mkdir(dir);
-  await writeFile(
-    join(dir, "capture.jsonl"),
-    [
-      { toolCalls: [{ name: "wireshark_dumpcap_start", args: input }] },
-      { text: "The bounded acquisition ended." },
-    ]
-      .map((row) => JSON.stringify(row))
-      .join("\n"),
-  );
-  const gateway = new ReplayGateway({ dir, now: Date.now });
-  await gateway.models("replay", signal);
-  const database = await openDb(join(t.root, ".vera", "vera.db"), {
-    workbenchId: "wb_test",
-    appVersion: "0",
-  });
-  scopes.push(async () => database.close());
-  const ctx = t.ctx();
-  const service = new SessionService({
-    root: t.root,
-    db: database.db,
-    gateway,
-    clock: { now: () => new Date(), sleep: async () => {} },
-    model: () => "replay/capture",
-    prompt: () => "Use the approved tools.",
-    programs: ctx.programs.host,
-    dumpcapPackage: ctx.liveCapture.packageSha256,
-  });
-  scopes.push(() => service.close());
-  await service.waitReady();
-  const session = service.create(null, "auto-edit");
-  const pending = () =>
-    service.get(session.id).snapshot.approvals.find((approval) => approval.decision === null);
-  service.send(session.id, "Capture on the loopback interface.");
-  await vi.waitFor(() =>
-    expect(pending()?.program).toMatchObject({ explicitUserApproval: true, program: "dumpcap" }),
-  );
-  expect(t.captureProcesses()).toHaveLength(0);
-  const approval = pending();
-  if (!approval) throw Error("Missing approval");
-  service.decideApproval({
-    sessionId: session.id,
-    approvalId: approval.approvalId,
-    requestSha256: approval.requestSha256,
-    decision: "approved",
-  });
-  await vi.waitFor(() => expect(t.captureProcesses()).toHaveLength(1));
+  const plain = await t.prepare({ interfaceId }).prepared;
+  if (plain?.request.tool !== "run_program") throw Error("Missing program approval");
+  expect(plain.request.plan).toMatchObject({ limits: { durationSeconds: 30, totalBytes: 16 * 1024 * 1024 } });
+  expect(plain.request.args).toEqual(expect.arrayContaining(["duration:30"]));
+  const long = await t.prepare({ ...input, durationSeconds: 600 }).prepared;
+  if (long?.request.tool !== "run_program") throw Error("Missing program approval");
+  // Longer than a turn should wait: the call returns the capture's ID while dumpcap runs.
+  const started = await long.apply(signal);
+  expect(started).toMatchObject({ status: "running", captureId: expect.any(String) });
+  expect(t.captureProcesses()).toHaveLength(1);
   const [child] = t.captureProcesses();
   if (!child) throw Error("Missing capture process");
   await writeFile(filename(child.args), packet);
   child.finish({ code: 0, signal: null });
-  await expect(service.waitIdle(session.id)).resolves.toMatchObject({ stopReason: "end" });
-  expect(service.get(session.id).snapshot.approvals).toMatchObject([{ decision: "approved", by: "user" }]);
+  const stopped = await t.control({ operation: "stop", captureId: String(started.captureId) });
+  expect(stopped).toMatchObject({ manifest: { filter: input.filter, promiscuous: true } });
 });
+
+it("counts the packets each local interface sees without keeping any", async () => {
+  const t = await rig();
+  const result = await t.control({ operation: "activity", seconds: 2 });
+  expect(result).toMatchObject({
+    tool: "dumpcap",
+    seconds: 2,
+    interfaces: [{ id: interfaceId, loopback: true, packets: 41, dropped: 1 }],
+  });
+  const [statistics] = t.host.programs.filter((process) => process.args.includes("-S"));
+  expect(statistics?.args).toEqual(["-S", "-M"]);
+  expect(t.captureProcesses()).toHaveLength(0);
+});
+
+it.each([
+  ["ask", true],
+  ["auto-edit", false],
+] as const)(
+  "binds the official start tool through SessionService: in %s the user decides %s",
+  async (mode, asks) => {
+    const t = await rig();
+    const dir = join(t.root, "replay");
+    await mkdir(dir);
+    await writeFile(
+      join(dir, "capture.jsonl"),
+      [
+        { toolCalls: [{ name: "wireshark_dumpcap_start", args: input }] },
+        { text: "The bounded acquisition ended." },
+      ]
+        .map((row) => JSON.stringify(row))
+        .join("\n"),
+    );
+    const gateway = new ReplayGateway({ dir, now: Date.now });
+    await gateway.models("replay", signal);
+    const database = await openDb(join(t.root, ".vera", "vera.db"), {
+      workbenchId: "wb_test",
+      appVersion: "0",
+    });
+    scopes.push(async () => database.close());
+    const ctx = t.ctx();
+    const service = new SessionService({
+      root: t.root,
+      db: database.db,
+      gateway,
+      clock: { now: () => new Date(), sleep: async () => {} },
+      model: () => "replay/capture",
+      prompt: () => "Use the approved tools.",
+      programs: ctx.programs.host,
+      dumpcapPackage: ctx.liveCapture.packageSha256,
+    });
+    scopes.push(() => service.close());
+    await service.waitReady();
+    const session = service.create(null, mode);
+    const pending = () =>
+      service.get(session.id).snapshot.approvals.find((approval) => approval.decision === null);
+    service.send(session.id, "Capture on the loopback interface.");
+    if (asks) {
+      await vi.waitFor(() => expect(pending()?.program).toMatchObject({ program: "dumpcap" }));
+      expect(t.captureProcesses()).toHaveLength(0);
+      const approval = pending();
+      if (!approval) throw Error("Missing approval");
+      service.decideApproval({
+        sessionId: session.id,
+        approvalId: approval.approvalId,
+        requestSha256: approval.requestSha256,
+        decision: "approved",
+      });
+    }
+    await vi.waitFor(() => expect(t.captureProcesses()).toHaveLength(1));
+    const [child] = t.captureProcesses();
+    if (!child) throw Error("Missing capture process");
+    await writeFile(filename(child.args), packet);
+    child.finish({ code: 0, signal: null });
+    await expect(service.waitIdle(session.id)).resolves.toMatchObject({ stopReason: "end" });
+    expect(pending()).toBeUndefined();
+    expect(service.get(session.id).snapshot.approvals.map((approval) => approval.by)).toEqual(
+      asks ? ["user"] : expect.not.arrayContaining(["user"]),
+    );
+  },
+);

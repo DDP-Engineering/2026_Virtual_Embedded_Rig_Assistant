@@ -3,7 +3,11 @@ import { fileURLToPath } from "node:url";
 import { classifyCommand, validatePluginManifest } from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
-import { nativeDumpcapInventory, proveNativeDumpcap } from "../support/dumpcap-native.js";
+import {
+  nativeDumpcapActivity,
+  nativeDumpcapInventory,
+  proveNativeDumpcap,
+} from "../support/dumpcap-native.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 
@@ -50,6 +54,23 @@ it.skipIf(!dumpcap)("probes the installed Dumpcap without opening a capture", as
       );
   }
 });
+
+it.skipIf(!dumpcap || process.env.VERA_DUMPCAP_TEST_NPCAP_MISSING === "1")(
+  "counts the packets each interface sees with the installed Dumpcap",
+  { timeout: 20_000 },
+  async () => {
+    if (!dumpcap) throw Error("Dumpcap path required");
+    const result = await nativeDumpcapActivity({ pluginRoot: fileURLToPath(plugins), dumpcap });
+    expect(result).toMatchObject({ tool: "dumpcap", seconds: 2 });
+    const rows = (result as { interfaces: { id: string; packets: number | null }[] }).interfaces;
+    expect(rows.length).toBeGreaterThan(0);
+    // Every interface dumpcap lists is counted, busiest first.
+    expect(rows.every((row) => typeof row.packets === "number")).toBe(true);
+    expect(rows.map((row) => row.packets)).toEqual(
+      [...rows.map((row) => row.packets as number)].sort((a, b) => b - a),
+    );
+  },
+);
 
 it.skipIf(!dumpcap || !tshark || !interfaceId)(
   "publishes real short and rolling UDP captures on isolated loopback",

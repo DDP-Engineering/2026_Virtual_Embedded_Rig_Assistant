@@ -1,9 +1,9 @@
 schema = 1
 id = "REQ-SEC-d4a52a4c"
-title = "Require explicit approval for bounded live capture"
+title = "Approve a live capture as the permission mode decides a device read"
 status = "active"
-requirement = "When a session requests live acquisition, VERA shall start capture only after consuming a fresh matching explicit user approval for the selected interface, capture filter and effective host limits."
-verification = "Drive the actual approval gate in automatic and ordinary modes; verify refusal, approval digest binding and no acquisition before approval."
+requirement = "When a session requests live acquisition, VERA shall start capture only after consuming a fresh matching approval for the selected interface, capture filter and effective host limits, decided as for any device read: by the user in Ask mode and by the mode in Auto-edit and Bypass, and refused in a read-only session."
+verification = "Drive the actual approval gate in Ask and Auto-edit: in Ask no acquisition starts before the user approves the exact request, in Auto-edit the capture starts without a user decision; verify refusal, approval digest binding and a read-only refusal."
 affected_paths = [
   "05_Software/src/libraries/core/src/tools/wireshark-live.ts",
   "05_Software/src/libraries/core/src/agent/approvals.ts",
@@ -15,4 +15,4 @@ affected_paths = [
 ]
 linked_tests = ["05_Software/src/libraries/core/src/wireshark/live-session.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts"]
 created = 2026-11-25
-updated = 2026-11-25
+updated = 2026-11-28

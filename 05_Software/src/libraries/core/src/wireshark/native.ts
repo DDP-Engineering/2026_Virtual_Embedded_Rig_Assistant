@@ -14,6 +14,8 @@ export class CaptureError extends Error {
   constructor(
     readonly reason: string,
     message: string,
+    /** The field names TShark does not know, for `field_unavailable`. */
+    readonly fields: readonly string[] = [],
   ) {
     super(message);
   }
@@ -106,6 +108,13 @@ export class OfflineTshark {
     private readonly signal: AbortSignal,
   ) {}
 
+  private preferences: string[] = [];
+
+  /** Preference options every later read of a capture takes, such as a TLS key log. */
+  prefer(options: string[]) {
+    this.preferences = options;
+  }
+
   private async run(
     args: string[],
     phase: "filter" | "capture" | "discovery" | "traffic",
@@ -171,6 +180,10 @@ export class OfflineTshark {
       throw new CaptureError(
         "field_unavailable",
         `TShark ${analysis?.version ?? ""} does not know a selected field (${nativeReason(stderr)}). Find field names with discover.`,
+        stderr
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => /^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,79}$/.test(line)),
       );
     if (phase === "filter")
       throw new CaptureError(
@@ -201,6 +214,7 @@ export class OfflineTshark {
       "-c",
       String(maxFrames),
       ...captureDissectionArgs(analysis),
+      ...this.preferences,
       ...(filter ? ["-Y", filter] : []),
     ];
   }

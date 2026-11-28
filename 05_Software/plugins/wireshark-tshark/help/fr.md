@@ -34,6 +34,8 @@ L’agent utilise les compétences `wireshark-analyze` et `wireshark-capture`. I
 - « Décodez le port UDP 5684 comme du CoAP et exportez les codes. »
 - « Montrez les topics MQTT sur lesquels la carte a publié et ce qu’elle a envoyé sur chacun. »
 - « Que contient la trame 42 ? Montrez ses octets. »
+- « La carte a-t-elle obtenu une adresse ? Montrez l’échange DHCP. »
+- « Déchiffrez la capture avec keys.log et listez les publications MQTT. »
 - « Découpez les trames 100000 à 150000 de captures/big.pcapng. »
 - « Capturez 30 secondes de trafic en provenance et à destination de 192.168.7.10 sur l’interface 3 dans captures/board.pcapng. »
 
