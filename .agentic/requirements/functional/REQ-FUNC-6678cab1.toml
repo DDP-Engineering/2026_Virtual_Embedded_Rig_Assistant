@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-FUNC-6678cab1"
 
-title = "Compile a copy of the sketch into a new run folder with a traceable result"
+title = "Compile the sketch from a kept copy into a new run folder with a traceable result"
 
 status = "active"
 
 requirement = """
-When compile succeeds, the arduino-tool helper shall compile a copy of the sketch into a new run folder and record the FQBN with options, the platform version with its recipe hash and hooks, the arduino-cli version, the configuration hash, the source and library hashes, the resolved libraries, the toolchain's flash and RAM sizes and every binary with its hash.
+When compile runs, the arduino-tool helper shall take the board from --fqbn, else the sketch.yaml's default_fqbn, else the one connected board that identifies itself, compile a copy of the sketch in a build folder kept per sketch, board and set of build properties so that a later compile rebuilds only what changed, and record in a new run folder the sources as compiled, the FQBN with options and where it came from, the platform version with its recipe hash and hooks, the arduino-cli version, the configuration hash, the source and library hashes, the libraries used, the build profile arduino-cli reports, the given defines and build properties, the toolchain's flash and RAM sizes and every binary with its hash. If the compiler does not find a header, then the arduino-tool helper shall name the index libraries that provide it. Where --symbols is given or the program exceeds the board's space, the arduino-tool helper shall report the largest symbols in flash and in RAM from the toolchain's nm. Where --compile-commands is given, the arduino-tool helper shall keep the build's compilation database in the run folder.
 """
 
-verification = "Compiling the blink and library fixtures for arduino:avr:uno and arduino:samd:mkrzero with the real arduino-cli writes result.json status pass with platform arduino:avr 1.8.8 or arduino:samd 1.8.14, SPI as platform library, VeraCounter as local library, text and data sizes with their maxima and the hex or bin binary whose recorded hash equals the file's; the original sketch folder is byte-identical afterwards."
+verification = "Compiling the blink and library fixtures for arduino:avr:uno and arduino:samd:mkrzero with the real arduino-cli writes result.json status pass with platform arduino:avr 1.8.8 or arduino:samd 1.8.14, SPI as platform library, VeraCounter as local library, a profile, text and data sizes with their maxima and the hex or bin binary whose recorded hash equals the file's; the original sketch folder is byte-identical afterwards and a repeated compile exports the same image; --symbols 3 --define VERA_PROBE=1 --compile-commands gives three flash symbols largest first and a compile_commands.json whose arguments hold -DVERA_PROBE=1. With the fake: a compile without --fqbn reports fqbnFrom sketch.yaml for a sketch whose sketch.yaml names a board, connected board for the one identified port, and fqbn-required naming the attach command otherwise; attach writes default_fqbn into sketch.yaml and the next compile uses it; two compiles of one sketch and board pass the same sketch folder and --build-path under builds/, leave an unchanged file's modification time alone, add and remove files with the sketch, report incremental true (false with --clean), and clean removes the build folders; a missing Servo.h gives header-missing with Servo before ESP32Servo and the install command; --define DEBUG=1, a two-word value and QUIET with --build-property build.f_cpu=8000000L reach arduino-cli as three --build-property values and use another build folder than the plain compile, while an invalid define or property is refused; a fake nm next to the size tool gives symbols.flash and symbols.ram, also for a build whose error says it exceeds the available space (sizes read from its text), and symbols-unavailable without it."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/report.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

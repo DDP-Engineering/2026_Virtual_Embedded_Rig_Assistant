@@ -2,7 +2,9 @@
 
 A sketch is a folder holding `<folder name>.ino`. `sketch.yaml` and `sketch.json` stay out of the copy (their
 `default_profile` would turn a compile into a profile build that installs platforms), as do a top-level `build`
-folder (exported binaries) and hidden entries. Links are refused: a link could reach files outside the workbench.
+folder (exported binaries) and hidden entries. The defaults sketch.yaml names - board, port, programmer and baud
+rate - are read here and used when a call names none. Links are refused: a link could reach files outside the
+workbench.
 """
 
 from __future__ import annotations
@@ -22,6 +24,22 @@ MAX_BYTES = 16 * 1024 * 1024
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,62}")
 IGNORED = ("sketch.yaml", "sketch.json")
 YAML_KEY = re.compile(r"^([A-Za-z_]+)\s*:", re.M)
+DEFAULTS = {"default_fqbn": "fqbn", "default_port": "port", "default_programmer": "programmer"}
+YAML_VALUE = re.compile(r"^(default_fqbn|default_port|default_programmer)\s*:\s*(.*?)\s*(?:#.*)?$", re.M)
+YAML_BAUD = re.compile(r"^default_port_config\s*:\s*\n(?:[ \t]+.*\n)*?[ \t]+baudrate\s*:\s*[\"']?(\d{3,8})", re.M)
+
+
+def defaults(text: str) -> dict:
+    """The board, port, programmer and baud rate a sketch.yaml names as defaults (what `board attach` writes)."""
+    found: dict = {}
+    for key, raw in YAML_VALUE.findall(text):
+        value = raw.strip().strip("\"'")
+        if value and workspace.control_free(value) and len(value) <= 256:
+            found[DEFAULTS[key]] = value
+    baud = YAML_BAUD.search(text + "\n")
+    if baud:
+        found["baud"] = int(baud.group(1))
+    return found
 
 
 class SketchInvalid(Exception):
@@ -36,6 +54,7 @@ class Sketch:
     files: list[dict] = field(default_factory=list)
     excluded: list[str] = field(default_factory=list)
     ignored: list[dict] = field(default_factory=list)
+    defaults: dict = field(default_factory=dict)
     sha256: str = ""
 
     @property
@@ -78,7 +97,7 @@ def scan(folder: Path, option: str = "--sketch") -> tuple[list[dict], list[str],
                 raise SketchInvalid(f"{option} holds {relative}, which is a link or not a regular file.")
             if relative_dir == Path(".") and name in IGNORED:
                 text = path.read_text(encoding="utf-8", errors="replace")
-                ignored.append({"path": name, "keys": sorted(set(YAML_KEY.findall(text)))})
+                ignored.append({"path": name, "keys": sorted(set(YAML_KEY.findall(text))), **({"defaults": defaults(text)} if name == "sketch.yaml" else {})})
                 continue
             if name.startswith("."):
                 excluded.append(relative)
@@ -108,8 +127,33 @@ def load(cwd: Path, spelled: Path, raw: str, option: str = "--sketch") -> Sketch
         raise SketchInvalid(f"{option} '{raw[:120]}' holds no {name}.ino; a sketch's main file is named after its folder.")
     files, excluded, ignored = scan(folder, option)
     sketch = Sketch(folder=folder, path=workspace.relative(cwd, folder), name=name, files=files, excluded=excluded, ignored=ignored)
+    sketch.defaults = next((item.get("defaults") or {} for item in ignored if item["path"] == "sketch.yaml"), {})
     sketch.sha256 = combined(files)
     return sketch
+
+
+def unused(sketch: Sketch) -> list[str]:
+    """The sketch.yaml keys VERA does not use: profiles would make arduino-cli install platforms during a compile."""
+    return sorted({key for item in sketch.ignored for key in item["keys"] if key in ("profiles", "default_profile")})
+
+
+def sync(files: list[dict], source: Path, target: Path) -> None:
+    """Makes `target` hold exactly `files` of `source`, rewriting only what differs so unchanged files keep their
+    times and a kept build folder rebuilds only what changed."""
+    wanted = {item["path"]: item for item in files}
+    if target.is_dir():
+        for path in sorted(target.rglob("*"), reverse=True):
+            relative = path.relative_to(target).as_posix()
+            if path.is_file() and relative not in wanted:
+                path.unlink()
+            elif path.is_dir() and not any(path.iterdir()):
+                path.rmdir()
+    for relative, item in wanted.items():
+        destination = target / relative
+        if destination.is_file() and sha256_file(destination) == item["sha256"]:
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / relative, destination)
 
 
 def copy(sketch: Sketch, target: Path) -> None:

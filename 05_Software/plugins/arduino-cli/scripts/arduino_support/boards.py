@@ -90,5 +90,17 @@ def ports(document: Any) -> tuple[list[dict], int]:
     return found, ignored
 
 
+def network(document: Any) -> list[dict]:
+    """The boards the discovery tools found on the local network, which a network (OTA) upload can name."""
+    found: list[dict] = []
+    for entry in document.get("detected_ports") or [] if isinstance(document, dict) else []:
+        port = entry.get("port") if isinstance(entry, dict) else None
+        address = _text(port.get("address"), 256) if isinstance(port, dict) else None
+        if isinstance(port, dict) and port.get("protocol") == "network" and address:
+            matches = [{"name": _text(board.get("name")) or board["fqbn"], "fqbn": board["fqbn"]} for board in entry.get("matching_boards") or [] if isinstance(board, dict) and isinstance(board.get("fqbn"), str)]
+            found.append({"address": address, "label": _text(port.get("label"), 256) or address, "boards": matches})
+    return found
+
+
 def same_address(left: str, right: str, windows: bool) -> bool:
     return left.casefold() == right.casefold() if windows else left == right

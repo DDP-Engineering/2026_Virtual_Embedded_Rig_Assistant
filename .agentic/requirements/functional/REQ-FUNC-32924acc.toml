@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-FUNC-32924acc"
 
-title = "Run arduino-cli only with VERA's own Arduino environment and an offline configuration outside install"
+title = "Run arduino-cli only with VERA's own Arduino environment and an offline configuration unless a download is asked for"
 
 status = "active"
 
 requirement = """
-The arduino-tool helper shall run every arduino-cli command with a generated configuration whose directories lie under the VERA Arduino environment root and, for every operation except install, a dead loopback proxy, so that no operation other than install reads or writes the Arduino IDE's folders or reaches the network.
+The arduino-tool helper shall run every arduino-cli command, including one passed on with cli, with a generated configuration whose directories lie under the VERA Arduino environment root and, for every operation except install and a cli command given --online, a dead loopback proxy, so that no other operation reads or writes the Arduino IDE's folders or reaches the network.
 """
 
-verification = "A fake arduino-cli records its argv and the configuration it receives: every call carries --config-file naming directories under VERA_ARDUINO_HOME and, except install, network.proxy http://127.0.0.1:9; with the real arduino-cli, `core update-index` under the offline configuration fails while compile of an installed core succeeds."
+verification = "A fake arduino-cli records its argv and the configuration it receives: every call carries --config-file naming directories under VERA_ARDUINO_HOME and, except install, network.proxy http://127.0.0.1:9; `cli -- lib deps Servo` carries the proxy and `cli --online -- core update-index` does not, and a cli command naming --config-file or the daemon is refused; with the real arduino-cli, `core update-index` under the offline configuration fails while compile of an installed core succeeds."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

@@ -7,10 +7,10 @@ title = "Inspect a sketch and the environment without changing either"
 status = "active"
 
 requirement = """
-When inspect names a sketch folder, the arduino-tool helper shall report the sketch's main file, files with hashes, the combined source hash, an ignored sketch.yaml with its default keys, the arduino-cli version and the installed cores and libraries, writing nothing, and shall refuse a folder without a main .ino named after it with exit 2.
+When inspect names a sketch folder, the arduino-tool helper shall report the sketch's main file, files with hashes, the combined source hash, the board, port, programmer and baud rate its sketch.yaml names as defaults, a warning when that file holds profiles, the arduino-cli version and the installed cores and libraries, writing nothing, and shall refuse a folder without a main .ino named after it with exit 2.
 """
 
-verification = "inspect of the fixture sketch with sketch.yaml lists its files and hashes, reports sketch.yaml as ignored with its default keys, and leaves the sketch's bytes unchanged; inspect of a folder whose .ino has another name exits 2 with sketch-invalid, as does a sketch holding a Windows junction (its target's files are not listed); without arduino-cli it still reports the sketch and marks the tool missing."
+verification = "inspect of the fixture sketch with sketch.yaml lists its files and hashes, reports sketch.yaml with its default keys and sketch.defaults fqbn arduino:avr:uno and port COM99, warns sketch-profile-unused, and leaves the sketch's bytes unchanged; inspect of a folder whose .ino has another name exits 2 with sketch-invalid, as does a sketch holding a Windows junction (its target's files are not listed); without arduino-cli it still reports the sketch and marks the tool missing."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/sketch.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

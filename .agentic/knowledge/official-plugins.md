@@ -114,7 +114,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `renode` | 0.3.1 | real Renode 1.17.0 on Windows 11; virtual boards, no hardware |
 | `wireshark-tshark` | 0.12.0 | native Windows offline inspection, traffic statistics, follow, Automotive Ethernet and general networking profiles; earlier live loopback on Windows/Npcap |
 | `wireshark-dumpcap` | 0.3.0 | native Windows discovery and isolated WSL2 loopback with offline readback. Native Windows and Ubuntu live acceptance are milestone checks. |
-| `arduino-cli` | 0.2.2 | real compiles with arduino-cli 1.6.0; upload, serial readback, two boards open |
+| `arduino-cli` | 0.3.0 | real installs, incremental compiles, examples, symbols and the passthrough with arduino-cli 1.6.0; upload (serial, network), serial readback, port choice with real boards open |
 | `ble-tools` | 0.2.1 | real Bleak 3.1.0 and one passive scan; read/notify/write, pairing, BlueZ open |
 | `can-python` | 0.2.2 | real python-can on a udp_multicast bus on Windows; real adapters and vcan0 open |
 | `circuitpython` | 0.2.2 | real circup 3.1.0 on simulated volumes; real board and bundle download open |

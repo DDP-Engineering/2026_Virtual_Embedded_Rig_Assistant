@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-FUNC-f2b3eb7d"
 
-title = "Upload only the verified binary of a passing compile run"
+title = "Upload only the verified binary of a passing compile run, over serial or the network, and read the board's output when asked"
 
 status = "active"
 
 requirement = """
-When upload names a passing compile result, the arduino-tool helper shall verify the recorded hashes of the copied sketch, the binaries and the original sketch, copy the binaries to a staging folder, verify them again and have arduino-cli upload that copy to the named port with the compile's FQBN.
+When upload names a passing compile result, or a compile with --upload passes, the arduino-tool helper shall verify the recorded hashes of the copied sketch, the binaries and the original sketch, copy the binaries to a staging folder, verify them again and have arduino-cli upload that copy to the chosen port with the compile's FQBN. Where --watch names 1 to 120 seconds, the arduino-tool helper shall then read the board's serial port for that long with arduino-cli's monitor and return what arrived, with a warning when nothing did. Where --network is given, the arduino-tool helper shall upload with the network protocol to the address --port names without looking for a serial port, passing the first line of --password-file as the upload password without recording it.
 """
 
-verification = "With the fake arduino-cli the upload call carries --fqbn of the compile, --port, --protocol serial and --input-dir in the staging folder whose hex hash equals the recorded one; the upload result records the binary hash and the port before and after."
+verification = "With the fake arduino-cli the upload call carries --fqbn of the compile, --port, --protocol serial and --input-dir in the staging folder whose hex hash equals the recorded one; the upload result records the binary hash and the port before and after. `compile --sketch ... --upload --watch 2` runs compile, upload and `monitor --port COM5 --protocol serial --config baudrate=115200 --quiet` under the offline configuration, and its document holds upload.serial.text and serial.log with the fake board's lines; an empty monitor gives warning serial-silent and --baud 9600 is used; with no port the call exits 2 with port-required while the compile's own result.json stays pass; --watch without --upload and --watch 500 are refused. `upload --network --port 192.168.1.20 --password-file ota.txt` makes one arduino-cli call, upload with --protocol network and --upload-field password=<the file's line>, records port.protocol network and the address as port.after and never the password; --network without --port, with --watch or with --identity, and --password-file without --network are refused; boards list shows the network port under network. Open: no run against a real board, serial or network."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

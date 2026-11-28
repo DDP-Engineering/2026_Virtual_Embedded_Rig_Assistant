@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-SEC-93d5fc98"
 
-title = "Classify every arduino-tool operation at its effective risk and expose no excluded operation"
+title = "Classify every arduino-tool operation at its effective risk"
 
 status = "active"
 
 requirement = """
-The arduino-cli plugin shall classify arduino-tool queries, inspect, report and clean as safe, boards list and compile as device-read, install and upload as device-write, shall refuse search text, FQBN parts, core and library names that start with '-', and shall offer no operation for the daemon, the interactive monitor, burning a bootloader, fuses or network (OTA) upload.
+The arduino-cli plugin shall classify arduino-tool queries, boards list, examples list, inspect, compile, report and clean as safe, install, attach, examples copy and clean --runs as device-read, upload, a compile with --upload and the cli passthrough as device-write, an upload or compile with --programmer and a cli command that burns a bootloader or names a programmer as irreversible, and shall refuse search text, FQBN parts, core and library names that start with '-'.
 """
 
-verification = "classifyCommand over plugin.yaml gives safe for `arduino-tool inspect --sketch Blink` and `arduino-tool boards details --fqbn arduino:avr:uno`, device-read for `arduino-tool compile ...` and `arduino-tool boards list`, device-write for `arduino-tool install core arduino:avr@1.8.8` and `arduino-tool upload ...`; `arduino-tool --help` lists no daemon, monitor, burn-bootloader or OTA operation and an unknown --protocol option is refused; `libraries search -- --log-file=outside.log`, `cores search -- -v`, `boards search -- --log-file=...`, `install library -- -x@1.0.0`, `install core -- -x:avr@1.0.0` and `--fqbn=-x:avr:uno` exit 2 with no arduino-cli call and no file written."
+verification = "classifyCommand over plugin.yaml gives safe for `arduino-tool inspect --sketch Blink`, `arduino-tool boards list`, `arduino-tool examples list --library Servo` and `arduino-tool compile --sketch Blink`, device-read for `arduino-tool install core arduino:avr`, `arduino-tool attach ...`, `arduino-tool examples copy ...` and `arduino-tool clean --runs --keep 3`, device-write for `arduino-tool upload --build r.json`, `arduino-tool compile --sketch Blink --upload --watch 5` and `arduino-tool cli -- lib deps Servo`, and irreversible for an upload or compile with --programmer and for `arduino-tool cli -- burn-bootloader -b arduino:avr:uno -P usbasp`; `arduino-tool --help` lists every operation and an unknown --protocol option is refused; `libraries search -- --log-file=outside.log`, `cores search -- -v`, `boards search -- --log-file=...`, `install library -- -x@1.0.0`, `install core -- -x:avr@1.0.0` and `--fqbn=-x:avr:uno` exit 2 with no arduino-cli call and no file written."
 
 affected_paths = ["05_Software/plugins/arduino-cli/plugin.yaml", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

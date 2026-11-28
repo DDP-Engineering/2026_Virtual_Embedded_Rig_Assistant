@@ -5,7 +5,7 @@ import { parse } from "yaml";
 
 const audited: Record<string, Record<string, string[]>> = {
   "arduino-cli": {
-    "arduino-tool": ["install", "upload"],
+    "arduino-tool": ["install", "attach", "upload"],
   },
   "ble-tools": {
     "ble-tool": ["read-characteristic", "subscribe-notifications", "write-characteristic", "release"],

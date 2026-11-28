@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-FUNC-9fceeea6"
 
-title = "Install indexes, cores and libraries only on an explicit install with exact versions"
+title = "Install indexes, cores and libraries on an explicit install, in the latest or a named version"
 
 status = "active"
 
 requirement = """
-When install names an index, a core VENDOR:ARCH@VERSION or a library NAME@VERSION, the arduino-tool helper shall install exactly that item into the VERA Arduino environment without post-install scripts and without library dependencies, accepting only https index URLs and refusing a missing or non-exact version with exit 2.
+When install names an index, a core VENDOR:ARCH[@VERSION] or one or more libraries NAME[@VERSION], the arduino-tool helper shall install them into the VERA Arduino environment without post-install scripts, in the latest version where none is named and with a library's dependencies unless --no-deps is given, fetching the indexes first when they were never downloaded, reporting every package it added or replaced, accepting only https index URLs and refusing a version that is not a version number with exit 2.
 """
 
-verification = "The fake arduino-cli receives `core install arduino:avr@1.8.8 --skip-post-install` and `lib install Servo@1.2.2 --no-deps`; `install core arduino:avr`, `install library Servo@latest` and `install index --index-url http://x` are refused with exit 2 before arduino-cli runs; the real install of arduino:avr 1.8.8 and arduino:samd 1.8.14 succeeds."
+verification = "With the fake arduino-cli, `install core arduino:avr` on an environment without indexes runs both update-index calls, then `core install arduino:avr --skip-post-install`, and reports installed arduino:avr 1.8.8; `install core arduino:avr@1.8.6` reports the replaced version; `install library Servo VeraCounter@1.2.0` passes both names in one `lib install` call and reports them with the dependency Helper; `--no-deps` is passed on; `install core arduino:avr@latest`, `install library Servo@latest` and an http or credential-carrying --index-url are refused with exit 2 before arduino-cli runs. Manual, 2026-11-28, real arduino-cli 1.6.0: `install library \"Adafruit BME280 Library\"` added the library and its two dependencies."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

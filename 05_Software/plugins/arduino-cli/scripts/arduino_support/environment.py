@@ -1,7 +1,8 @@
 """VERA's own Arduino environment and the way arduino-tool runs arduino-cli (spec REQ-DATA-e444904d).
 
-The environment root holds arduino-cli's data, downloads and user folders, the build cache and one staging folder per
-running operation; the Arduino IDE's folders are never named. Every arduino-cli call gets a configuration generated
+The environment root holds arduino-cli's data, downloads and user folders, the build cache, one kept build folder
+per sketch and board (so a later compile rebuilds only what changed) and one staging folder per running operation;
+the Arduino IDE's folders are never named. Every arduino-cli call gets a configuration generated
 into the operation's staging folder: the offline one points `network.proxy` at a dead loopback port so nothing but
 `install` can download indexes, tools, cores or libraries or ask Arduino's board-identification service.
 """
@@ -28,6 +29,7 @@ OWNER = "owner.json"
 CONFIG = "arduino-cli.yaml"
 OUTPUT_LIMIT = 64 * 1024 * 1024
 RECENT = 3600
+BUILDS_KEPT = 12
 HTTPS_URL = re.compile(r"https://[A-Za-z0-9.-]+(?::\d{1,5})?(?:/[^\s\x00-\x1f\x7f\"']*)?")
 
 
@@ -105,10 +107,46 @@ class Environment:
         self.user = self.root / "user"
         self.cache = self.root / "cache"
         self.staging = self.root / "staging"
+        self.builds = self.root / "builds"
 
     def ensure(self) -> None:
-        for folder in (self.data, self.downloads, self.user, self.cache, self.staging):
+        for folder in (self.data, self.downloads, self.user, self.cache, self.staging, self.builds):
             folder.mkdir(parents=True, exist_ok=True)
+
+    def build(self, name: str, key: str) -> "Path | None":
+        """The kept build folder of one sketch and board, claimed for this process; None while another run holds it."""
+        self.ensure()
+        folder = self.builds / f"{name}-{sha256_bytes(key.encode('utf-8'))[:16]}"
+        folder.mkdir(exist_ok=True)
+        owner = folder / OWNER
+        try:
+            pid = int(json.loads(owner.read_text(encoding="utf-8")).get("pid", 0))
+        except (OSError, ValueError, TypeError, AttributeError):
+            pid = 0
+        if pid and pid != os.getpid() and alive(pid):
+            return None
+        owner.write_text(json.dumps({"format": FORMAT, "pid": os.getpid()}) + "\n", encoding="utf-8")
+        os.utime(folder)
+        # Only the most recently used build folders stay.
+        others = sorted((entry for entry in self.builds.iterdir() if entry.is_dir() and entry != folder), key=lambda entry: entry.stat().st_mtime, reverse=True)
+        for old in others[BUILDS_KEPT - 1 :]:
+            if not self._held(old):
+                shutil.rmtree(old, ignore_errors=True)
+        return folder
+
+    def release(self, folder: Path) -> None:
+        try:
+            (folder / OWNER).unlink()
+        except OSError:
+            pass
+
+    @staticmethod
+    def _held(folder: Path) -> bool:
+        try:
+            pid = int(json.loads((folder / OWNER).read_text(encoding="utf-8")).get("pid", 0))
+        except (OSError, ValueError, TypeError, AttributeError):
+            return False
+        return bool(pid) and alive(pid)
 
     def index_urls(self) -> list[str]:
         path = self.root / STATE
@@ -196,11 +234,17 @@ class Environment:
                     continue
                 shutil.rmtree(entry, ignore_errors=True)
                 (failed if entry.exists() else removed).append(entry.name)
+        builds = 0
+        if self.builds.is_dir() and not self.builds.is_symlink():
+            for entry in sorted(self.builds.iterdir()):
+                if entry.is_dir() and not entry.is_symlink() and not self._held(entry):
+                    shutil.rmtree(entry, ignore_errors=True)
+                    builds += 0 if entry.exists() else 1
         # A running compile uses the cache: it stays until no staging folder is in use.
         cache = self.cache.is_dir() and not self.cache.is_symlink() and not busy
         if cache:
             shutil.rmtree(self.cache, ignore_errors=True)
-        return {"staging": {"removed": removed, "inUse": busy, "failed": failed}, "cacheRemoved": bool(cache and not self.cache.exists())}
+        return {"staging": {"removed": removed, "inUse": busy, "failed": failed}, "buildsRemoved": builds, "cacheRemoved": bool(cache and not self.cache.exists())}
 
 
 class Stage:
@@ -211,7 +255,12 @@ class Stage:
         self.folder = folder
 
     def remove(self) -> None:
-        shutil.rmtree(self.folder, ignore_errors=True)
+        # arduino-cli's discovery tools keep the folder as their working directory for a moment after it ends.
+        for _ in range(15):
+            shutil.rmtree(self.folder, ignore_errors=True)
+            if not self.folder.exists():
+                return
+            time.sleep(0.1)
 
     def redact(self, text: str) -> str:
         for form in {str(self.folder), self.folder.as_posix()}:
@@ -260,3 +309,25 @@ class Cli:
         except ValueError:
             document = None
         return completed.returncode, document, stderr
+
+    def watch(self, port: str, baud: int, seconds: float) -> tuple[str, str]:
+        """What the board prints on `port` for `seconds`, and arduino-cli's own message when the port did not open.
+
+        arduino-cli's monitor ends when its standard input ends, so it gets a pipe that stays open until it is
+        ended here.
+        """
+        argv = [self.executable, "--config-file", str(self.path), "monitor", "--port", port, "--protocol", "serial", "--config", f"baudrate={baud}", "--quiet"]
+        process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.stage.folder)
+        try:
+            out, err = process.communicate(timeout=seconds)
+        except subprocess.TimeoutExpired:
+            # Its input ending is how the monitor ends by itself; it is killed only when that does not work.
+            if process.stdin:
+                process.stdin.close()
+                process.stdin = None
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            out, err = process.communicate()
+        return out[:OUTPUT_LIMIT].decode("utf-8", "replace"), err[:65536].decode("utf-8", "replace")

@@ -94,12 +94,15 @@ def markdown(document: dict[str, Any]) -> str:
         lines += [f"| {_cell(item.get('section'))} | {item.get('bytes')} | {item.get('maxBytes')} |" for item in document["sizes"]]
         lines.append("")
     if document.get("libraries"):
-        lines += ["| Library | Version | Location | Declared |", "|---|---|---|---|"]
-        lines += [
-            f"| {_cell(item.get('name'))} | {_cell(item.get('version'))} | {item.get('location')} | {item.get('declared')} |"
-            for item in document["libraries"]
-        ]
+        lines += ["| Library | Version | Location |", "|---|---|---|"]
+        lines += [f"| {_cell(item.get('name'))} | {_cell(item.get('version'))} | {item.get('location')} |" for item in document["libraries"]]
         lines.append("")
+    symbols = document.get("symbols")
+    for key, title in (("flash", "Largest in flash"), ("ram", "Largest in RAM")):
+        if isinstance(symbols, dict) and symbols.get(key):
+            lines += [f"| {title} | Bytes | Kind |", "|---|---|---|"]
+            lines += [f"| `{_cell(item.get('name'))}` | {item.get('bytes')} | {item.get('kind')} |" for item in symbols[key]]
+            lines.append("")
     if document.get("binaries"):
         lines += ["| Binary | Bytes | SHA-256 |", "|---|---|---|"]
         lines += [f"| `{_cell(item['path'])}` | {item['bytes']} | `{item['sha256']}` |" for item in document["binaries"]]
@@ -119,6 +122,9 @@ def markdown(document: dict[str, Any]) -> str:
                 where = f"{item.get('file')}:{item.get('line')}:{item.get('column')} " if item.get("file") else ""
                 lines.append(f"- {where}{item.get('code') or item.get('severity', '')}: {_cell(item.get('message', ''))}")
             lines.append("")
+    serial = document.get("serial") or (document.get("upload") or {}).get("serial")
+    if isinstance(serial, dict):
+        lines += [f"## Serial output ({serial.get('port')}, {serial.get('baud')} baud, {serial.get('seconds')} s)", "", "```text", str(serial.get("text", "")).rstrip(), "```", ""]
     if document.get("log"):
         lines.append(f"Full output: `{document['log']}`.")
     return "\n".join(lines).rstrip() + "\n"
@@ -137,16 +143,16 @@ def emit(document: dict[str, Any]) -> None:
         return json.dumps(shown, ensure_ascii=False, indent=2) + "\n"
 
     text = render()
-    for key in ("ports", "boards", "platforms", "libraries", "files", "diagnostics", "warnings", "runs", "binaries", "errors"):
+    for key in ("ports", "boards", "platforms", "libraries", "examples", "files", "diagnostics", "warnings", "runs", "binaries", "errors"):
         items = shown.get(key)
         while isinstance(items, list) and items and len(text.encode("utf-16-le")) // 2 > OUTPUT_LIMIT:
             shown.setdefault("omitted", {})[key] = shown.get("omitted", {}).get(key, 0) + 1
             items.pop()
             text = render()
-    if isinstance(shown.get("source"), dict):
-        files = shown["source"].get("files")
+    for outer, inner in (("source", "files"), ("symbols", "ram"), ("symbols", "flash")):
+        files = shown[outer].get(inner) if isinstance(shown.get(outer), dict) else None
         while isinstance(files, list) and files and len(text.encode("utf-16-le")) // 2 > OUTPUT_LIMIT:
-            shown.setdefault("omitted", {})["source.files"] = shown.get("omitted", {}).get("source.files", 0) + 1
+            shown.setdefault("omitted", {})[f"{outer}.{inner}"] = shown.get("omitted", {}).get(f"{outer}.{inner}", 0) + 1
             files.pop()
             text = render()
     sys.stdout.write(text)

@@ -7,10 +7,10 @@ title = "Leave no process or partial state after Stop, timeout or failure"
 status = "active"
 
 requirement = """
-When an arduino-tool run is stopped, times out or fails, VERA's runner shall end the helper's whole process tree, the sketch and the installed cores and libraries shall be unchanged, a run folder already created shall hold a result with status incomplete, and the next clean shall remove the leftover staging folder.
+When an arduino-tool run is stopped, times out or fails, VERA's runner shall end the helper's whole process tree, the sketch and the installed cores and libraries shall be unchanged, a run folder already created shall hold a result with status incomplete, and the next clean shall remove the leftover staging folder. When clean runs with --runs, the arduino-tool helper shall remove only arduino-tool's own run folders from the results folder, except the newest ones.
 """
 
-verification = "A real runner run of arduino-tool compile against a fake arduino-cli that sleeps is stopped: the fake, its parent and the helper process (pid from the staging owner.json) end, the sketch hashes are unchanged, the run folder's result.json has status incomplete with error interrupted, the staging folder remains until `arduino-tool clean` removes it; clean keeps a folder whose owner runs, a fresh folder without owner.json and the cache while a folder is in use, and never removes data, downloads or user."
+verification = "A real runner run of arduino-tool compile against a fake arduino-cli that sleeps is stopped: the fake, its parent and the helper process (pid from the staging owner.json) end, the sketch hashes are unchanged, the run folder's result.json has status incomplete with error interrupted, the staging folder remains until `arduino-tool clean` removes it; clean keeps a folder whose owner runs, a fresh folder without owner.json and the cache while a folder is in use, removes the kept build folders no compile holds, and never removes data, downloads or user. After three compiles, `clean --runs --keep 1` removes two run folders and leaves the newest, another tool's folder with its own result.json, a folder without one, a file, and the kept build folder."
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-28

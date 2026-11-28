@@ -5,9 +5,9 @@
 """Native Arduino sketches for VERA (program `arduino-tool` of the arduino-cli plugin).
 
 Operations: inspect, boards list|details|search, cores list|search, libraries list|search, install index|core|library,
-compile, upload, report, clean. arduino-cli runs only with VERA's own Arduino environment and, outside install, an
-offline configuration. Standard library only. Exit codes: 0 completed with status pass, 2 refused before arduino-cli
-acted, 3 failed (compile or upload error, undeclared library, tool failure).
+attach, compile (with --upload and --watch in one call), upload, report, clean. arduino-cli runs only with VERA's own
+Arduino environment and, outside install, an offline configuration. Standard library only. Exit codes: 0 completed
+with status pass, 2 refused before arduino-cli acted, 3 failed (compile or upload error, tool failure).
 """
 
 import os

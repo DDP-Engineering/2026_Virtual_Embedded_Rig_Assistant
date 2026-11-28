@@ -1,6 +1,6 @@
 ---
 name: arduino-test-sketch
-description: How to write a small Arduino test sketch, upload exactly its verified build to the right board and read its serial output. Use whenever a task uploads to an Arduino board, needs a quick hardware check or a sensor test, or hands a board between upload and the serial monitor.
+description: How to write a small Arduino test sketch, build it, upload it to the board and read what it prints, in one call. Use whenever a task uploads to an Arduino board, needs a quick hardware check or a sensor test, or wants to see a board's serial output after an upload.
 ---
 # arduino-test-sketch
 
@@ -13,27 +13,51 @@ flash and starts the new firmware at once, and it may drive whatever is wired to
   `Serial.println("VERA-FIXTURE <name> <version>");`, then one line per measurement or step (`name=value unit`).
 - Keep outputs safe by default: do not switch pins that drive motors, relays or heaters unless the user confirmed
   what is connected. A sensor sketch only reads.
-- Compile it as described in `arduino-build-fix`.
 
-## Choosing the board
+## Build, upload and read in one call
 
-1. `arduino-tool boards list`: each port has an `identity` (`usb:<vid>:<pid>:<serial>` is stable, others are not),
-   `identified` and `boards`. A port behind a USB bridge (`bridge`: CH340, FTDI, CP210x...) is never identified: its
-   `candidates` are guesses. Ask the user which port and board to use when more than one is connected or none is
-   identified; never pick the first or newest port.
-2. Pass that identity on upload; the upload refuses when the port now carries another identity, two ports share it, or
-   the identified board does not match the build's FQBN. For an unidentified board add `--board-unverified` only after
-   the user confirmed the board.
+`arduino-tool compile --sketch <folder> --upload --watch 5` compiles the sketch, uploads the build when it passes and
+reads the board's serial port for 5 seconds (1 to 120). The result's `upload.serial.text` is what the board printed;
+opening the port restarts most boards, so the boot banner is in it. `--baud <n>` names another rate than 115200 (or
+the sketch.yaml's `default_port_config`). VERA asks before an upload, in Ask and in Auto-edit mode.
 
-## Upload and readback
+- The board (`--fqbn`) comes as for any compile: the call, the sketch's `sketch.yaml`, or the one connected board
+  that identifies itself (the arduino-build-fix skill).
+- The port is found by itself when one port fits: the sketch.yaml's `default_port`, the one port whose board is the
+  build's, or the one USB serial port. Otherwise `port-required` lists the ports: let the user say which, then pass
+  `--port <port>`. `arduino-tool boards list` shows the ports with their boards and identities.
+- `arduino-tool attach --sketch <folder> --fqbn <fqbn> --port <port>` remembers board and port in the sketch, so the
+  next call is just `compile --sketch <folder> --upload`.
+- `arduino-tool upload --build arduino-iot-results/<compile-run>/result.json [--port <port>] [--watch 5]` uploads an
+  earlier build as it was compiled; it refuses with `conflict` when the sketch changed since.
+- `--verify` reads the flash back after writing. `--programmer <id>` uploads through a programmer and overwrites the
+  bootloader: only on the user's explicit request.
 
-1. Stop any serial capture on the port first: while a capture (or any other run) names the port, VERA refuses the
-   upload with BUSY.
-2. `arduino-tool upload --build arduino-iot-results/<compile-run>/result.json --port <port> --identity <identity>
-   [--verify]`. The approval binds that result file; the upload re-checks the binary and the sketch and refuses with
-   `conflict` if either changed after the compile: compile again instead of editing the result.
-3. The result's `port.after` is where the board's identity is now (boards like the Leonardo re-enumerate). Read the
-   banner there with the serial-monitor plugin: `serial capture --port <port.after> --until "VERA-FIXTURE"
-   --duration 10`.
-4. Report the build's binary hash, the port before and after, and what the banner showed. If the banner never comes,
-   say so; do not upload again on your own.
+## Over the network, and anything else
+
+- A board that already runs a sketch with network upload (ESP32, ESP8266, Arduino boards with OTA):
+  `arduino-tool upload --build <result.json> --network --port <address>`, or `--network --port <address>` on a
+  `compile --upload`. `arduino-tool boards list` shows the boards found on the network under `network`.
+  `--password-file <file>` names a workbench file whose first line is the board's OTA password; never put a
+  password on the command line. `--watch` needs a serial port.
+- `arduino-tool cli -- <arduino-cli command ...>` runs any other arduino-cli command in VERA's own Arduino
+  environment: `cli -- burn-bootloader -b <fqbn> -p <port> -P <programmer>`, `cli -- debug --info -b <fqbn> -p
+  <port>`, `cli --online -- lib upgrade`. VERA asks before each one; prefer arduino-tool's own operation when one
+  fits. A command that waits for input (the interactive monitor or debugger) does not work there: use the
+  serial-monitor plugin.
+- `arduino-tool clean --runs` removes old run folders from `arduino-iot-results/` and keeps the newest five
+  (`--keep <n>`).
+
+## Reading the result
+
+- `board-unverified`: the port shows a USB bridge (CH340, FTDI, CP210x) or nothing that identifies a board, so the
+  board model was not checked against the build. The upload still ran; a wrong board shows as a failed upload or a
+  silent serial port. `board-mismatch`: the port identifies as another model than the build's - say so; compatible
+  boards often report a borrowed identity.
+- `serial-silent`: nothing arrived. Check the baud rate the sketch uses, then that the sketch prints at all.
+- `upload-failed`: read `upload.log` in the run folder. On BUSY, another run holds the port: stop a serial capture
+  on it first.
+- `port.after` is where the board is after the upload (boards like the Leonardo come back on another port). For a
+  longer look at the output use the serial-monitor plugin: `serial capture --port <port.after> --duration 30`.
+- Report the binary hash, the port and what the board printed. If the banner never comes, say so; do not upload
+  again on your own.

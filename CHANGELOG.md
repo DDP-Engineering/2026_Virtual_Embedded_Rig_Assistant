@@ -8,6 +8,17 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- arduino-cli 0.3.0: Compile a sketch, upload it and read what the board prints in one call.
+- arduino-cli 0.3.0: Remember a sketch's board and port in its `sketch.yaml`, and use them when a call names none.
+- arduino-cli 0.3.0: Find the board and the port by themselves when only one fits.
+- arduino-cli 0.3.0: Name the libraries that provide a header the compiler did not find.
+- arduino-cli 0.3.0: Record the versions a build used as an Arduino build profile.
+- arduino-cli 0.3.0: Start a sketch from a library's example.
+- arduino-cli 0.3.0: Pass preprocessor defines and build properties to a compile.
+- arduino-cli 0.3.0: Show the largest symbols in flash and RAM, by itself when a sketch does not fit.
+- arduino-cli 0.3.0: Upload over the network (OTA) to a named address.
+- arduino-cli 0.3.0: Run any other arduino-cli command in VERA's own Arduino environment after approval.
+- arduino-cli 0.3.0: Remove old run folders from the workbench with `clean --runs`.
 - wireshark-tshark 0.12.0: Read MQTT, CoAP, Modbus, DHCP, DNS, HTTP or TLS traffic with a protocol preset, without naming fields.
 - wireshark-tshark 0.12.0: Decrypt TLS in a capture with a key log file from the workbench.
 - wireshark-dumpcap 0.3.0: Find the interface a board is on by the packets each interface sees.
@@ -45,6 +56,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- arduino-cli 0.3.0: Install the latest version of a core or library unless one is named, with a library's dependencies.
+- arduino-cli 0.3.0: Compile without listing the libraries a sketch uses; the result records them.
+- arduino-cli 0.3.0: Rebuild only what changed on a repeated compile (Blink for the Uno: 3.4 s, then 1.1 s).
+- arduino-cli 0.3.0: Upload to a board behind a USB bridge without an extra option, with a note that the model was not checked.
+- arduino-cli 0.3.0: Compile and list boards without asking; an install asks in Ask mode only.
 - wireshark-dumpcap 0.3.0: A live capture asks as any device read does: in Ask mode, not in Auto-edit or Bypass.
 - wireshark-dumpcap 0.3.0: Name an interface by its listed name, and leave the filter, duration and size out.
 - wireshark-dumpcap 0.3.0: Capture in promiscuous mode by default and accept any pcap capture filter.
@@ -92,6 +108,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- arduino-cli 0.3.0: Print a result that holds characters outside the Windows code page instead of failing.
 - wireshark-tshark 0.11.0: Say what TShark refused in a filter or a field name.
 - wireshark-tshark 0.11.0: Offer a way to cut down a capture that is too large to derive from.
 - bus-tools 0.2.0: Recognize an I2C device that does not answer, and name the bus lines that read low.

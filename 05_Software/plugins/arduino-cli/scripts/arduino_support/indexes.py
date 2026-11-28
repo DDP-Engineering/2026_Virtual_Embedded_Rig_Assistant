@@ -94,3 +94,33 @@ def _rank(name: str, text: str) -> int:
     if folded == wanted:
         return 0
     return 1 if all(word in folded for word in wanted.split()) else 2
+
+
+def providers(data: Path, header: str, limit: int = 5) -> list[dict]:
+    """The index libraries that most likely provide `header` (their latest versions), best guess first: a library
+    named like the header, then one whose index entry lists the header (about half of them do), then one whose
+    name holds every word of the header's name."""
+    document = _load(data / "library_index.json")
+    entries = document.get("libraries") if isinstance(document, dict) else None
+    stem = header.rsplit(".", 1)[0]
+    folded = stem.casefold()
+    words = [word for word in re.split(r"[^a-z0-9]+", folded) if word]
+    latest: dict[str, dict] = {}
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict) or not entry.get("name") or not entry.get("version"):
+            continue
+        name = str(entry["name"])
+        provided = entry.get("providesIncludes")
+        if name.casefold() in (folded, folded.replace("_", " ")):
+            rank = 0
+        elif isinstance(provided, list) and header in provided:
+            rank = 1
+        elif words and set(words) <= set(re.split(r"[^a-z0-9]+", name.casefold())):
+            rank = 2
+        else:
+            continue
+        known = latest.get(name)
+        if known is None or version_key(entry["version"]) > version_key(known["latest"]):
+            latest[name] = {"name": name, "latest": entry["version"], "rank": min(rank, known["rank"]) if known else rank}
+    ranked = sorted(latest.values(), key=lambda item: (item["rank"], len(item["name"]), item["name"].casefold()))[:limit]
+    return [{"name": item["name"], "latest": item["latest"]} for item in ranked]
