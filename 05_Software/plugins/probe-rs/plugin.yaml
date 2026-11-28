@@ -1,25 +1,27 @@
 format: 1
 id: probe-rs
-version: 0.2.2
+version: 0.3.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: probe-rs
-summary: Flash, verify, reset, read memory and stream RTT on ARM, RISC-V and Xtensa targets through debug probes.
-description: Identify, flash, verify, reset, read memory and stream RTT on ARM, RISC-V and supported Xtensa targets through local debug probes.
+summary: Flash, inspect, test and profile ARM, RISC-V and Xtensa targets and follow their RTT log through debug probes.
+description: Identify, flash and verify, reset, read and back up memory, stream RTT, catch faults with a stack trace, run on-target tests and profile ARM, RISC-V and supported Xtensa targets through local debug probes.
 translations:
   ro:
-    summary: "Programează, verifică, resetează, citește memoria și transmite RTT pe ținte ARM, RISC-V și Xtensa prin probe-uri de depanare."
-    description: "Identifică, programează, verifică, resetează, citește memoria și transmite RTT pe ținte ARM, RISC-V și Xtensa suportate, prin probe-uri de depanare locale."
+    summary: "Programează, inspectează, testează și profilează ținte ARM, RISC-V și Xtensa și urmărește jurnalul RTT prin probe-uri de depanare."
+    description: "Identifică, programează și verifică, resetează, citește și salvează memoria, transmite RTT, prinde fault-uri cu stack trace, rulează teste pe placă și profilează ținte ARM, RISC-V și Xtensa suportate, prin probe-uri de depanare locale."
   de:
-    summary: "Flashen, verifizieren, zurücksetzen, Speicher lesen und RTT streamen auf ARM-, RISC-V- und Xtensa-Targets über Debug-Probes."
-    description: "Identifizieren, flashen, verifizieren, zurücksetzen, Speicher lesen und RTT streamen auf ARM-, RISC-V- und unterstützten Xtensa-Targets über lokale Debug-Probes."
+    summary: "ARM-, RISC-V- und Xtensa-Targets flashen, untersuchen, testen und profilieren und ihr RTT-Log verfolgen, über Debug-Probes."
+    description: "Identifizieren, flashen und verifizieren, zurücksetzen, Speicher lesen und sichern, RTT streamen, Faults mit Stacktrace abfangen, Tests auf dem Target ausführen und Profile erstellen auf ARM-, RISC-V- und unterstützten Xtensa-Targets über lokale Debug-Probes."
   fr:
-    summary: "Flashez, vérifiez, réinitialisez, lisez la mémoire et diffusez le RTT sur cibles ARM, RISC-V et Xtensa via des sondes de débogage."
-    description: "Identifiez, flashez, vérifiez, réinitialisez, lisez la mémoire et diffusez le RTT sur des cibles ARM, RISC-V et Xtensa prises en charge via des sondes de débogage locales."
+    summary: "Flashez, inspectez, testez et profilez des cibles ARM, RISC-V et Xtensa et suivez leur journal RTT via des sondes de débogage."
+    description: "Identifiez, flashez et vérifiez, réinitialisez, lisez et sauvegardez la mémoire, diffusez le RTT, interceptez les fautes avec leur pile d’appels, exécutez des tests sur la cible et profilez des cibles ARM, RISC-V et Xtensa prises en charge via des sondes de débogage locales."
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 programs:
   probe-rs:
-    subcommandHelp: { flag: --help, commands: [download, run, erase, benchmark, itm, write] }
+    subcommandHelp:
+      flag: --help
+      commands: [info, reset, download, verify, erase, run, attach, trace, itm, benchmark, profile, read, write, mi]
     install:
       find:
         windows: ["%PATH%", "~/.cargo/bin"]
@@ -43,16 +45,27 @@ programs:
           path: probe-rs-tools-aarch64-unknown-linux-gnu/probe-rs
     version: { args: [--version], match: 'probe-rs (\d+\.\d+\.\d+)', range: '==0.32.0' }
     timeout: 120
+# The highest matching risk wins. "info" is matched as the command only (first, or after global options), so
+# "chip info <name>", which reads the built-in registry, stays safe. Flashing, reading memory, tests, RTT and
+# profiling get longer time limits than the 120 seconds of the quick commands.
 rules:
   - { match: "probe-rs * {--version,-V,--help,-h,help} *", risk: safe }
   - { match: "probe-rs * chip *", risk: safe, note: Lists or describes supported targets; no hardware. }
   - { match: "probe-rs * list *", risk: safe, note: Lists attached probes without connecting to a target. }
-  - { match: "probe-rs * {info,mi,read,verify,attach,profile,trace} *", risk: device-read, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs info *", risk: device-read, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs {--*,-r*} * info *", risk: device-read, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs * {mi,trace} *", risk: device-read, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs * {read,verify} *", risk: device-read, timeout: 1800, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs * attach *", risk: device-read, timeout: 3600, note: Connects to the target and halts it on a fault or a reset. }
+  - { match: "probe-rs * profile *", risk: device-read, timeout: 1800, note: Samples the running firmware; the naive method halts the core for every sample. }
   - { match: "probe-rs * reset *", risk: device-read, note: Resets the target; stored firmware is unchanged. }
-  - { match: "probe-rs * {download,run,erase,benchmark} *", risk: device-write, note: Overwrites flash or RAM on the target. }
+  - { match: "probe-rs * {download,erase} *", risk: device-write, timeout: 1800, note: Overwrites flash or RAM on the target. }
+  - { match: "probe-rs * run *", risk: device-write, timeout: 3600, note: Overwrites flash or RAM on the target. }
+  - { match: "probe-rs * benchmark *", risk: device-write, note: Overwrites flash or RAM on the target. }
+  - { match: "probe-rs * --flash *", risk: device-write, note: Flashes the ELF before profiling. }
   - { match: "probe-rs * itm *", risk: device-write, note: Connects to the target and configures its trace hardware. }
   - match: "probe-rs * write *"
-    risk: irreversible
+    risk: device-write
     note: Writes arbitrary memory. A write to a flash controller or option register can enable permanent read protection, and a write to a GPIO register drives pins.
   - { match: "probe-rs * {debug,gdb,dap-server,serve,complete} *", risk: blocked, note: "Interactive, opens a server or changes shell configuration." }
   - { match: "probe-rs * --host *", risk: blocked, note: Remote probe servers are not supported by this plugin. }

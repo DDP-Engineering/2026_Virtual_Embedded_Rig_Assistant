@@ -302,6 +302,15 @@ export function probeKeys(args: readonly string[]): string[] {
 }
 
 /**
+ * Whether two `probe:` keys of `--probe` selectors can name one probe: the same selector, or one is only the model
+ * (`VID:PID`) of the other (`VID:PID:SERIAL`, `VID:PID-INTERFACE`), which cannot tell two probes of a model apart.
+ */
+export function sameProbe(left: string, right: string): boolean {
+  const [short, long] = left.length <= right.length ? [left, right] : [right, left];
+  return long === short || long.startsWith(`${short}:`) || long.startsWith(`${short}-`);
+}
+
+/**
  * The minimal environment of a run: allowlisted host variables (with `display`, also the desktop session's display
  * variables), the program's own, then the fixed two.
  */
@@ -1131,7 +1140,9 @@ export class ProgramRunner {
     // A probe a plan reserved (or a background run uses) is BUSY like a serial port.
     for (const key of run.probes) {
       const holder = runs.find(
-        (other) => other.claimKeys.has(key) || (other.background && other.portKeys.has(key)),
+        (other) =>
+          other.claimKeys.has(key) ||
+          (other.background && [...other.portKeys].some((held) => sameProbe(held, key))),
       );
       if (holder) throw thrown("BUSY", { handle: holder.id, resource: key.slice("probe:".length) });
     }

@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for `probe-rs` (local debug probes, flash/memory/RTT with four skills); `stm32-cubeprog` (find-only
+Select for `probe-rs` (local debug probes, flash/memory/RTT/tests/profiling with six skills); `stm32-cubeprog` (find-only
 STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes);
 `microchip-pymcuprog` (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and
 microchip-fuses); and `gdb-debug` (programs `gdb-elf` for offline ELF/DWARF inspection and fault re-diagnosis and
@@ -25,13 +25,15 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 ## Public interface
 
-- `probe-rs` 0.2.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
+- `probe-rs` 0.3.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
   PATH then ~/.cargo/bin discovery, explicit user-triggered SHA-256-pinned portable fallback.
   A found unsupported version reports range/unavailable and takes precedence over the download.
-  All three official archive hashes/member layouts and Linux host headers are inspected. Four
-  skills select probes/chips, flash/verify/reset the exact build ELF with approval hashes, stream
-  background RTT and inspect SVD-defined registers/fault addresses. CAP-02 decode_register is used
-  only if present; no such built-in tool is currently implemented. README carries CLI/source evidence.
+  All three official archive hashes/member layouts and Linux host headers are inspected. Six
+  skills select probes/chips, flash/verify/restart the exact build ELF in one `download --verify --reset`
+  run with approval hashes (and back up the board's firmware first), stream background RTT and catch a
+  HardFault or reset with its stack trace, inspect registers with decode_register, run embedded-test
+  suites and profile. `probe-rs verify` exits 0 on a mismatch: only its `Verification successful` line
+  is a pass, which the HIL step `probe-rs.verify` checks. README carries CLI/source evidence.
   Hardware acceptance on Nucleo/ST-Link, RP2040/CMSIS-DAP and ESP32-C3/USB-JTAG on both systems and
   real RTT with closed stdin/down channels remains outstanding. Replay is explicitly simulated.
 
@@ -84,8 +86,10 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 ## Invariants
 
 - probe-rs rules use highest-risk-wins, including command tokens after global options. Version/help,
-  chip/list safe; info/mi/read/verify/attach/profile/trace/reset device-read; download/run/erase/benchmark
-  device-write; itm explicitly device-write for trace configuration; every write irreversible;
+  chip/list safe (`chip info <name>` too: `info` is matched only as the command); exact `<command> --help`
+  safe for every hardware command; info/mi/read/verify/attach/profile/trace/reset device-read;
+  download/run/erase/benchmark and any `--flash` (profile) device-write; rule time limits 1800 s for
+  download/verify/erase/read/profile and 3600 s for run/attach, else the program's 120 s; itm explicitly device-write for trace configuration; write device-write too (asked, no typed word);
   debug/gdb/dap-server/serve/complete and every --host blocked.
   Help does not lower a dangerous match; --host=value is blocked. Unknown commands default device-write.
   Memory widths are b8/b16/b32/b64, read takes word count, write takes values, default hex-table.
@@ -134,7 +138,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 ## Files
 
-- `05_Software/plugins/probe-rs/` — manifest, four skills and measured upstream evidence/limits.
+- `05_Software/plugins/probe-rs/` — manifest, six skills and measured upstream evidence/limits.
 - `05_Software/tests/plugins/probe-rs.test.ts`, `tests/fixtures/probe-rs/replay.mjs` — exhaustive
   risk matrix, discovery/range, installed skills, exact-ELF approval/refusal, real closed-stdin
   fixture RTT and optional real local-archive CLI acceptance.

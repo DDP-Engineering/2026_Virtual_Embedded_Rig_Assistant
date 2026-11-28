@@ -651,6 +651,29 @@ describe("debug probe reservations of gdb-debug (REQ-SEC-ad412ce8)", () => {
     ).rejects.toMatchObject({ code: "BUSY" });
   });
 
+  it("refuses a probe-rs run naming only the model of the probe a background run follows, and the reverse", async () => {
+    const attach = (selector: string): RunRequest => ({
+      ...flash(selector),
+      args: ["attach", "--probe", selector, "app.elf"],
+      background: true,
+    });
+    const first = await runner.start(attach("0483:374b:066DFF4851"));
+    for (const selector of ["0483:374b:066dff4851", "0483:374B"])
+      await expect(runner.start(flash(selector)), selector).rejects.toMatchObject({
+        code: "BUSY",
+        params: { handle: first.id },
+      });
+    // A second probe of that model, named in full, and another model are free.
+    await runner.start(flash("0483:374b:OTHERSERIAL"));
+    await runner.start(flash("0483:3748:066DFF4851"));
+    expect(host.programs).toHaveLength(3);
+    await runner.stopAll();
+    // A background run that names only the model holds every probe of it: the selector cannot tell them apart.
+    await runner.start(attach("0403:6010"));
+    for (const selector of ["0403:6010:FT123", "0403:6010-1"])
+      await expect(runner.start(flash(selector)), selector).rejects.toMatchObject({ code: "BUSY" });
+  });
+
   it("refuses a debug run while probe-rs or a HIL plan uses the probe", async () => {
     const flashing = await runner.start(flash("0483:374b:066dff4851"));
     await expect(runner.start(debug())).rejects.toMatchObject({ code: "BUSY" });

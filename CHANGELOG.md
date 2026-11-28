@@ -8,6 +8,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- probe-rs 0.3.0: Add skills that run on-target tests and profile where firmware spends its time.
+- probe-rs 0.3.0: Catch a HardFault or an unexpected reset with its stack trace while following the RTT log.
+- probe-rs 0.3.0: Back up the firmware on the board before flashing.
 - serial-monitor 0.3.0: Add line timestamps, hex dumps, sending bytes and control characters, and parity, data and stop bits.
 - serial-monitor 0.3.0: Read a simulator's terminal or socket as a serial port.
 - serial-monitor 0.3.0: Send to a board through the capture that is reading it.
@@ -22,6 +25,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- probe-rs 0.3.0: Flash, verify and restart in one run with one approval.
+- probe-rs 0.3.0: Let flashing, memory reads and profiling run 30 minutes, tests and logs one hour.
+- probe-rs 0.3.0: Run `chip info` and the help of every command without asking.
+- probe-rs 0.3.0: Ask before a profile that flashes the firmware first.
+- probe-rs 0.3.0: Ask for a memory write like for any device write, without a typed word.
+- Refuse a probe-rs run that names only the model of a probe a background run is using.
 - Return the beginning and the end of a long program output, not only its end.
 - Run plugin programs in folders added to the workbench.
 - git 0.4.0: Let clone, fetch, pull, push and submodule updates run 30 minutes and end a stalled HTTP transfer after one.
@@ -47,6 +56,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Fail a HIL plan's probe-rs verify step when the flash does not match; probe-rs reports that with exit code 0.
+- probe-rs 0.3.0: Judge a verification by its result line, not by the exit code.
 - serial-monitor 0.3.0: Return the whole line that `--until` matched.
 - serial-monitor 0.3.0: Hide Linux ports without hardware, name CH9102 and CH343 correctly and let a foreground capture run an hour.
 - git 0.4.0: Run `log -5`, `remote get-url`, `submodule status` and reading a configuration key without approval.

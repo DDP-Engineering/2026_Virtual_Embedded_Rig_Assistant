@@ -128,7 +128,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `mqtt-tools` | 0.2.3 | real paho-mqtt 2.1.0 against the local TLS test broker; product broker and device open |
 | `platformio` | 0.2.2 | real PlatformIO 6.2.0 builds, host tests, Renode device tests; board upload open |
 | `power-profiler` | 0.2.2 | real pyjoulescope_driver 2.5.5 without a meter; JS220 and board open |
-| `probe-rs` | 0.2.2 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
+| `probe-rs` | 0.3.0 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
 | `raspberry-pi-linux` | 0.2.1 | real asyncssh 2.24.1 against an SSH test server in WSL; a Raspberry Pi open |
 | `scpi-instruments` | 0.2.1 | real PyVISA 1.16.2 + pyvisa-py against simulated servers; real instruments open |
 | `serial-monitor` | 0.2.2 | real pyserial through the real provisioner and runner; real-board capture open |

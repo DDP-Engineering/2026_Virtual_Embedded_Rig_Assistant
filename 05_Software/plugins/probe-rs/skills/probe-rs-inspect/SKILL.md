@@ -1,37 +1,48 @@
 ---
 name: probe-rs-inspect
-description: Read bounded target memory or peripheral registers with probe-rs, decode using an available SVD tool, and map captured fault PC/LR through exact-build binutils.
+description: How to read target memory and peripheral registers with probe-rs, decode a register value into its fields and turn fault addresses into source lines. Use to check what a register or variable holds on a live board.
 ---
+# probe-rs-inspect
 
-Load probe-rs-connect. Confirm the exact chip/core, register address and access semantics from the
-matching SVD/reference manual before reading. A peripheral read can clear status bits or pop a FIFO;
-device-read may also halt the target. Do not scan unknown peripheral ranges or invent addresses.
+Load `probe-rs-connect` first: every command below also takes `--probe S --chip C --non-interactive`.
 
-Use `run_program` program `probe-rs`, e.g.
-`read b32 <register-address> 1 --probe <selector> --chip <chip> --non-interactive --format hex-table`.
-Widths are `b8`, `b16`, `b32`, `b64`; the final number is a count of words, not bytes (b32 4 reads
-16 bytes). Choose the documented width/alignment and smallest useful count. Use `--core <index>`
-only for a core verified from the target description.
+| Command | Risk | Use |
+|---|---|---|
+| `probe-rs read b32 <address> <count>` | device-read | read `count` words of 32 bits; also `b8`, `b16`, `b64` |
+| `probe-rs read b32 <address> 1 --format simple-hex` | device-read | one register as a bare hex value |
+| `probe-rs read b8 <address> <bytes> --format binary --output <file>` | device-read | a memory range into a file |
+| `probe-rs write b32 <address> <value>...` | device-write | write words; asks the user first |
 
-In 0.32.0 the default is `hex-table`: each row begins with its address and colon, followed by
-width-padded hex values. Do not interpret the row address as a register value. `--format simple-hex`
-returns a space-separated list of width-padded hexadecimal words without row addresses, useful for
-decoding a single register. Other formats are `ihex` and `binary`; `--output <file>` writes the
-selected format to a file. The introductory help's older default description is stale.
+## Procedure
 
-If `decode_register` (CAP-02) is actually available in the current tool list, use it with the matching
-SVD-derived register definition and observed value, following its real schema. If absent, do not
-invent or call that tool: report the raw value and decode named fields only from a verified register
-definition, citing it; state what remains unknown. Reserved bits are not named behavior.
+1. Take the address, width and meaning of a register from the chip's SVD or reference manual, never
+   from memory of another chip. Reading can have effects: some status registers clear on read and a
+   data register pops a FIFO. Do not sweep unknown peripheral ranges.
+2. Read: `probe-rs read b32 0x40023800 1 --probe S --chip C --non-interactive`. The last number counts
+   words, not bytes (`b32 4` reads 16 bytes). The address may be decimal, `0x` hex or `0o` octal. Add
+   `--core <index>` only on a multi-core chip.
+3. The default output is `hex-table`: `<address>: <word> <word> ...`; the part before the colon is
+   the address, not data. `--format simple-hex` prints only the words; `ihex` and `binary` are for
+   files (`--output <file>`).
+4. Decode the value with `decode_register` and a register definition for this exact chip (a JSON
+   device definition, for example one made from its SVD file). Without a definition report the raw
+   value and name only the fields the reference manual documents; reserved bits have no meaning.
+5. A read may halt the core for a moment. Reading megabytes takes minutes; a read may run for up to
+   30 minutes.
 
-For an ARM HardFault, obtain the captured stack-frame address from firmware/debug evidence, then
-read the eight stacked b32 words only when the frame location is established. Basic frames contain
-R0/R1/R2/R3/R12/LR/PC/xPSR; extended floating-point frames need their correct offset. Never guess SP
-or treat EXC_RETURN as a code LR. Preserve raw PC/LR and build identity. Load crash-decode and use
-binutils `arm-none-eabi-addr2line -e <exact.elf> -a -f -C -i <PC> <LR>`; for RISC-V addresses use
-`riscv-none-elf-addr2line`. Xtensa needs the matching esp32-idf addr2line, not the ARM/RISC-V binaries.
-Report unresolved `??`/`:0`, and use bounded objdump ranges for context.
+## Faults
 
-`write b32 <address> <value>...` has a different trailing argument meaning (values, not count).
-Every write remains irreversible, including RAM-looking addresses: option registers can permanently
-protect flash and GPIO writes drive pins. Do not write to inspect or test a register.
+- The easy way to a crash location is `probe-rs attach <elf>`: it stops on the fault and prints the
+  stack trace (skill `probe-rs-rtt`).
+- For addresses you already have (PC and LR from a log or a fault handler), load `crash-decode`
+  (plugin binutils): `arm-none-eabi-addr2line -e <exact.elf> -a -f -C -i <PC> <LR>`, or
+  `riscv-none-elf-addr2line` for RISC-V. Xtensa needs the addr2line of esp32-idf. Use the ELF of the
+  firmware on the board; an `EXC_RETURN` value (`0xFFFFFFxx`) in LR is not a code address.
+- On Cortex-M3 and above the fault status is in `CFSR` at `0xE000ED28`, `HFSR` at `0xE000ED2C`, and the
+  faulting address in `BFAR` at `0xE000ED38` or `MMFAR` at `0xE000ED34` when CFSR marks it valid.
+
+## Do not
+
+- `probe-rs write` only when the user asks to change a value. A write to a flash controller or option
+  register can lock the chip for good, and a write to a GPIO register drives pins.
+- `probe-rs trace` never ends and prints binary: read the address again with `read` to watch a value.

@@ -195,6 +195,7 @@ non-repeatable step runs once; its failure is never retried. Outcome of an attem
 | scpi | exit 0 | exit 1 | exit 2 | exit 3 or other |
 | lab-validate | exit 0 | exit 1 | - | exit 2 (refused request) or other; exit 3 is `incomplete` |
 | probe-rs, esptool | exit 0 | - | - | any other |
+| probe-rs verify | exit 0 and the line `Verification successful` | exit 0 without that line (probe-rs reports a mismatch with exit 0) | - | any other |
 
 A runner timeout of the step is `error` (problem `step-timeout`); an attempt stopped by Stop or the budget is
 `incomplete`; a process that could not start is `error`. `expect` turns a passing attempt whose output does not match

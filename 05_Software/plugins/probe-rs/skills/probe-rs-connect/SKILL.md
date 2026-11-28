@@ -1,37 +1,48 @@
 ---
 name: probe-rs-connect
-description: Identify a local debug probe and target, select the observed chip/probe explicitly, and diagnose driver, wiring and permission problems for probe-rs.
+description: How to list debug probes, identify the target chip and choose the --probe and --chip values every probe-rs run needs. Use before any probe-rs run on hardware, and when a probe is missing, inaccessible or cannot connect.
 ---
+# probe-rs-connect
 
-Use `run_program` with program `probe-rs` and an argument array. The user installs/enables this plugin
-and explicitly chooses Install programs if needed. VERA searches PATH then ~/.cargo/bin, accepts only
-0.32.0, and offers the pinned portable download if no executable is found. An incompatible found
-version is unavailable; the user must correct PATH or that installation before trying again.
+The program `probe-rs` (plugin probe-rs, version 0.32.0) reaches a board through a debug probe: ST-Link,
+J-Link, CMSIS-DAP, FTDI or the USB-JTAG of an ESP32. Run it only through `run_program`.
 
-1. Run `probe-rs list`. Report the observed VID:PID:serial and accessibility. If there are no probes,
-   stop and ask the user to connect one. Never infer a board, probe serial or COM port from an example.
-2. Choose the exact observed `--probe VID:PID:Serial` (FTDI may need VID:PID-INTERFACE). Run
-   `probe-rs info --probe <selector> --non-interactive`. Info may auto-detect the chip in 0.32.0;
-   a failed info result alone does not establish broken hardware. Confirm markings/project target
-   against the result. Do not flash until the target and build agree.
-3. Use `probe-rs chip list` only when necessary (large output). Prefer `probe-rs chip info <name>`
-   for a known candidate. Use names returned by the registry: for example `esp32c3` and `esp32s3`,
-   not display names with invented hyphens. Confirm ambiguous STM32 variants against the board.
-4. Pass explicit `--probe`, `--chip` and `--non-interactive` to subsequent device commands. Where
-   necessary use the documented `--protocol swd|jtag` and `--speed <kHz>` appropriate to the wiring.
-   `--connect-under-reset` is a recovery step only with the user's known reset wiring; it resets/halts
-   the target. Never add `--allow-erase-all` as a connection fix. Avoid configuration presets: keep
-   target-affecting options visible in the approved argument array.
+| Command | Risk | Use |
+|---|---|---|
+| `probe-rs list` | safe | every connected probe with its `VID:PID:Serial`; `(inaccessible)` marks one the system will not open |
+| `probe-rs chip info <name>` | safe | cores and memory map (RAM and NVM ranges) of a chip name; no hardware |
+| `probe-rs chip list` | safe | every supported chip; thousands of lines, so `grep` the run log for a part of the name |
+| `probe-rs info --probe S --non-interactive` | device-read | connects and prints `Detected chip: <name>` |
 
-User-managed access remedies (VERA never installs drivers, system rules or elevates privileges):
+## Procedure
 
-- Linux: follow https://probe.rs/docs/getting-started/probe-setup/ for `69-probe-rs.rules` in
-  `/etc/udev/rules.d/`, rule reload/trigger and `plugdev` membership, then reconnect/re-login as directed.
-  Report inaccessible probes as a permissions issue. The user/admin performs system changes.
-- Windows ST-Link: official ST driver `STSW-LINK009`. J-Link: switch to WinUSB in J-Link Configurator
-  or Zadig. FTDI: WinUSB with Zadig; VCP/D2xx does not provide the required interface. CMSIS-DAP:
-  normally no additional driver. ESP32 USB-JTAG normally needs none; the user can use Zadig if
-  DeviceInterfaceGUIDs is missing. Choose only the correct debug interface, preserving serial access.
+1. Run `probe-rs list`. `No debug probes were found.` (exit 0) means nothing is connected: ask the user to
+   plug the probe in. Never take a selector, serial number or chip from an example.
+2. The selector `S` is the listed `VID:PID:Serial`, written in full (an FTDI probe may need
+   `VID:PID-INTERFACE`). Name it in every run: while a background run holds a probe, VERA refuses
+   another run naming it, in full or by its `VID:PID` alone (BUSY). A run with no `--probe` is not
+   recognised and fails on the USB device instead.
+3. Run `probe-rs info --probe S --non-interactive`. It detects the chip itself and ignores `--chip`.
+   A failed `info` does not prove broken hardware: check that the board is powered and wired, then try
+   `--protocol swd` or `--protocol jtag`, a lower `--speed <kHz>`, and, only when the reset line is
+   wired, `--connect-under-reset` (it resets the target).
+4. The chip name `C` comes from the project (`.cargo/config.toml` runner, `Embed.toml`, board
+   documentation) or from `info`, in the registry's spelling: `STM32F401RETx`, `nRF52840_xxAA`,
+   `RP2040`, `esp32c3`, `esp32s3`. Confirm a candidate with `probe-rs chip info C`.
+5. Every later command on hardware takes `--probe S --chip C --non-interactive`.
+6. A `.probe-rs.toml` in the working folder or the home folder may hold a preset named `default`; its
+   arguments are added to every run. Read it when a run behaves as if it had other arguments. Arguments
+   on the command line win.
 
-Safe list/chip/help do not connect to the target. Info and other device-read operations may halt it;
-reset resets it. `debug`, `gdb`, `dap-server`, `serve`, `complete` and every `--host` are blocked.
+## When the probe is not there
+
+VERA installs no drivers and no system rules and never elevates: show the remedy to the user.
+
+- Linux, probe `(inaccessible)` or a permission error: the probe-rs udev rule is missing. The user
+  installs `69-probe-rs.rules` in `/etc/udev/rules.d/`, reloads udev and joins the `plugdev` group, as
+  https://probe.rs/docs/getting-started/probe-setup/ describes, then replugs the probe.
+- Windows ST-Link: ST's driver `STSW-LINK009`. J-Link: switch it to WinUSB with J-Link Configurator or
+  Zadig. FTDI: WinUSB with Zadig (the serial-port driver does not work). CMSIS-DAP and ESP32 USB-JTAG
+  normally need nothing; Zadig on the debug interface only, so the serial port keeps working.
+- `debug`, `gdb`, `dap-server`, `serve`, `complete` and `--host` are blocked. For breakpoints and stepping use the
+  gdb-debug plugin.

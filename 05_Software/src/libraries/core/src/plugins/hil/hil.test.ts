@@ -649,6 +649,27 @@ describe("hil run execution", () => {
     expect(spawned("serial")).toHaveLength(sends);
   });
 
+  it("fails a probe-rs verify step on a mismatch, which probe-rs reports with exit code 0", async () => {
+    const steps = [
+      ...plan().steps.slice(0, 2),
+      { id: "verify", phase: "setup", use: "probe-rs.verify", with: target },
+      ...plan().steps.slice(2),
+    ];
+    let verdict = "Verification failed: contents do not match";
+    host.behave = (program, args, process) =>
+      exit(process, 0, program === "probe-rs" && args[0] === "verify" ? `${verdict}\n` : "0483:374b\npong\n");
+    let { result } = await run(plan({ steps }));
+    let json = (await resultOf(result)).json;
+    expect(json.status).toBe("blocked");
+    expect(json.steps[2]).toMatchObject({ status: "blocked", attempts: [{ status: "fail" }] });
+    expect(json.steps[3].status).toBe("not-run");
+    verdict = "Verification successful";
+    ({ result } = await run(plan({ steps })));
+    json = (await resultOf(result)).json;
+    expect(json.status).toBe("pass");
+    expect(json.steps[2]).toMatchObject({ status: "pass", attempts: [{ status: "pass" }] });
+  });
+
   it("retries only repeatable steps and never repeats a flash", async () => {
     let sends = 0;
     host.behave = (program, args, process) => {

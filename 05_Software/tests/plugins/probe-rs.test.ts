@@ -87,8 +87,7 @@ it("covers every risk row, global options, equals syntax and highest-risk escala
   const rows = [
     ["safe", ["--version", "-V", "--help", "-h", "help", "chip", "list"]],
     ["device-read", ["info", "mi", "read", "verify", "attach", "profile", "trace", "reset"]],
-    ["device-write", ["download", "run", "erase", "benchmark", "itm"]],
-    ["irreversible", ["write"]],
+    ["device-write", ["download", "run", "erase", "benchmark", "itm", "write"]],
     ["blocked", ["debug", "gdb", "dap-server", "serve", "complete"]],
   ] as const;
   for (const [risk, commands] of rows)
@@ -98,13 +97,14 @@ it("covers every risk row, global options, equals syntax and highest-risk escala
         if (risk !== "safe") expect(classify(...args).notes.join(" ").length).toBeGreaterThan(10);
       }
   for (const width of ["b8", "b16", "b32", "b64"]) {
+    // A memory write asks like any device write: no typed word.
     expect(classify("write", width, "0x40000000", "1")).toMatchObject({
-      risk: "irreversible",
-      confirm: "write",
+      risk: "device-write",
+      confirm: null,
     });
     expect(classify("--log-file", "x", "write", width, "0x40000000", "1")).toMatchObject({
-      risk: "irreversible",
-      confirm: "write",
+      risk: "device-write",
+      confirm: null,
     });
   }
   expect(classify("write").notes.join(" ")).toMatch(/option register/);
@@ -118,7 +118,7 @@ it("covers every risk row, global options, equals syntax and highest-risk escala
       [command, "--host"],
     ])
       expect(classify(...args), args.join(" ")).toMatchObject({ risk: "blocked", confirm: null });
-  expect(classify("help", "write").risk).toBe("irreversible");
+  expect(classify("help", "write").risk).toBe("device-write");
   expect(classify("help", "serve").risk).toBe("blocked");
   expect(classify("unknown")).toMatchObject({ risk: "device-write", notes: [] });
   for (const args of [
@@ -145,16 +145,69 @@ it("covers every risk row, global options, equals syntax and highest-risk escala
   }
   // Every declared rule must actually match a representative line (rather than the default).
   for (const rule of m.rules) {
-    const token = rule.match.split(/\s+/).find((s) => s !== "probe-rs" && s !== "*");
-    const command = token?.replace(/[{}]/g, "").split(",")[0];
-    expect(
-      classifyCommand([{ ...rule, note: "row-hit" }], "probe-rs", [command as string]).notes,
-      rule.match,
-    ).toContain("row-hit");
+    const line = rule.match
+      .split(/\s+/)
+      .filter((part) => part !== "probe-rs" && part !== "*")
+      .map((part) => (part.replace(/[{}]/g, "").split(",")[0] as string).replace(/\*$/, "x"));
+    expect(classifyCommand([{ ...rule, note: "row-hit" }], "probe-rs", line).notes, rule.match).toContain(
+      "row-hit",
+    );
   }
 });
 
-it("loads four installed skills and includes the plugin in the official catalog", async () => {
+it("keeps the chip registry and help free, asks before a profile that flashes and gives long work time", async () => {
+  const m = await manifest();
+  const program = m.programs["probe-rs"];
+  const classify = (...args: string[]) =>
+    classifyCommand(m.rules, "probe-rs", args, program?.optionSyntax, program?.subcommandHelp);
+  const select = ["--probe", "0483:374b:FIXTURE", "--chip", "STM32F401RETx", "--non-interactive"];
+  // "info" is the hardware command only as the command: the registry lookup of a chip name touches no probe.
+  expect(classify("chip", "info", "STM32F401RETx").risk).toBe("safe");
+  expect(classify("chip", "list").risk).toBe("safe");
+  expect(classify("info", ...select).risk).toBe("device-read");
+  expect(classify("--log-to-folder", "info", ...select).risk).toBe("device-read");
+  // Help of every command that touches hardware is free; a blocked command stays blocked.
+  const commands = program?.subcommandHelp?.commands ?? [];
+  expect(commands).toEqual(
+    expect.arrayContaining([
+      "info",
+      "reset",
+      "read",
+      "verify",
+      "attach",
+      "profile",
+      "download",
+      "run",
+      "write",
+    ]),
+  );
+  for (const command of commands) expect(classify(command, "--help").risk, command).toBe("safe");
+  expect(classify("gdb", "--help").risk).toBe("blocked");
+  expect(classify("read", "--help", "b32").risk).toBe("device-read");
+  // Profiling reads; with --flash it writes the firmware first, like download.
+  const profile = ["--duration", "10", "build/app.elf", "flat", "naive"];
+  expect(classify("profile", ...select, ...profile).risk).toBe("device-read");
+  expect(classify("profile", ...select, "--flash", ...profile)).toMatchObject({
+    risk: "device-write",
+    notes: expect.arrayContaining(["Flashes the ELF before profiling."]),
+  });
+  // Flashing, memory, profiles, tests and logs may run long; the quick commands keep the program's 120 seconds.
+  const limits: [string[], number | null][] = [
+    [["download", ...select, "--verify", "--reset", "build/app.elf"], 1800],
+    [["verify", ...select, "build/app.elf"], 1800],
+    [["erase", ...select], 1800],
+    [["read", ...select, "b8", "0x08000000", "524288"], 1800],
+    [["profile", ...select, ...profile], 1800],
+    [["attach", ...select, "build/app.elf"], 3600],
+    [["run", ...select, "build/tests.elf"], 3600],
+    [["reset", ...select], null],
+    [["info", ...select], null],
+    [["list"], null],
+  ];
+  for (const [args, timeout] of limits) expect(classify(...args).timeout, args[0]).toBe(timeout);
+});
+
+it("loads six installed skills and includes the plugin in the official catalog", async () => {
   const root = await temp();
   const store = new core.PluginStore({ root: join(root, "plugins") });
   await store.install(source);
@@ -168,7 +221,9 @@ it("loads four installed skills and includes the plugin in the official catalog"
     "probe-rs-connect",
     "probe-rs-flash",
     "probe-rs-inspect",
+    "probe-rs-profile",
     "probe-rs-rtt",
+    "probe-rs-test",
   ]);
   const checks = {
     "probe-rs-connect": [
@@ -176,6 +231,9 @@ it("loads four installed skills and includes the plugin in the official catalog"
       "--probe",
       "--chip",
       "chip info",
+      "Detected chip",
+      "BUSY",
+      ".probe-rs.toml",
       "69-probe-rs.rules",
       "plugdev",
       "STSW-LINK009",
@@ -183,15 +241,32 @@ it("loads four installed skills and includes the plugin in the official catalog"
       "Zadig",
       "CMSIS-DAP",
     ],
-    "probe-rs-flash": ["download", "verify", "reset", "ELF", "SHA-256", "approval", "--binary-format elf"],
+    "probe-rs-flash": [
+      "download --verify --reset",
+      "--preverify",
+      "SHA-256",
+      "approval",
+      "Finished in",
+      // probe-rs verify exits 0 on a mismatch: the skill names the line that decides.
+      "always exits 0",
+      "Verification successful",
+      "Verification failed: contents do not match",
+      "--format binary --output",
+      "--base-address",
+      "--binary-format idf",
+    ],
     "probe-rs-rtt": [
       "background: true",
       "program_output",
       "until",
       "program_stop",
-      "stdin",
       "down channel",
       "--scan-region",
+      "--list-rtt",
+      "--no-catch-reset",
+      "Firmware exited unexpectedly",
+      "Frame 0",
+      "parse_log",
       "run",
       "attach",
     ],
@@ -200,13 +275,22 @@ it("loads four installed skills and includes the plugin in the official catalog"
       "hex-table",
       "simple-hex",
       "decode_register",
-      "CAP-02",
       "SVD",
       "PC",
       "LR",
       "arm-none-eabi-addr2line",
       "riscv-none-elf-addr2line",
+      "0xE000ED28",
     ],
+    "probe-rs-test": [
+      "embedded-test",
+      "--list",
+      "--format json",
+      "--skip-test",
+      "timeout",
+      "Some tests failed",
+    ],
+    "probe-rs-profile": ["--duration", "flat", "pcsr", "naive", "--line-info", "Samples", "--flash"],
   };
   for (const [name, words] of Object.entries(checks)) {
     const body = (await skills.read("plugin", name)).content;
@@ -370,22 +454,24 @@ async function replay(steps: object[]) {
 }
 
 it.each(["attach", "run"])(
-  "replays exact-ELF approval, register read and closed-stdin background %s RTT",
+  "replays one-run flashing with the exact-ELF approval, a register read, a profile and background %s RTT",
   async (command) => {
     const select = ["--chip", "STM32F401RETx", "--probe", "0483:374b:FIXTURE", "--non-interactive"];
+    const skills = ["connect", "flash", "inspect", "profile", "rtt", "test"].map(
+      (name) => `probe-rs-${name}`,
+    );
     const rig = await replay([
-      ...["probe-rs-connect", "probe-rs-flash", "probe-rs-inspect", "probe-rs-rtt"].map((name) => ({
-        toolCalls: [{ name: "load_skill", args: { name } }],
-      })),
+      ...skills.map((name) => ({ toolCalls: [{ name: "load_skill", args: { name } }] })),
       run(["list"]),
+      run(["chip", "info", "STM32F401RETx"]),
       run(["info", ...select]),
-      run(["download", ...select, "--binary-format", "elf", "build/app.elf"]),
-      run(["verify", ...select, "--binary-format", "elf", "build/app.elf"]),
-      run(["reset", ...select]),
+      run(["download", ...select, "--verify", "--reset", "build/app.elf"]),
+      run(["verify", ...select, "build/app.elf"]),
       run(["read", ...select, "b32", "0x40000000", "1", "--format", "hex-table"]),
+      run(["profile", ...select, "--duration", "1", "build/app.elf", "flat", "naive"]),
       run([command, ...select, "build/app.elf"], true),
-      { toolCalls: [{ name: "program_output", args: { handle: id(7), until: "RTT ready", waitMs: 5000 } }] },
-      { toolCalls: [{ name: "program_stop", args: { handle: id(7) } }] },
+      { toolCalls: [{ name: "program_output", args: { handle: id(8), until: "RTT ready", waitMs: 5000 } }] },
+      { toolCalls: [{ name: "program_stop", args: { handle: id(8) } }] },
       { text: "Fixture workflow completed" },
     ]);
     try {
@@ -410,14 +496,16 @@ it.each(["attach", "run"])(
       }
       expect(await rig.service.waitIdle(rig.session.id)).toEqual({ stopReason: "end" });
       const done = rig.events.filter((e) => e.type === "tool.done");
-      expect(done).toHaveLength(13);
+      expect(done).toHaveLength(16);
       for (const d of done) expect(d.ok, d.summary).toBe(true);
       const text = done.map((d) => d.summary).join("\n");
       for (const word of [
         "Fixture ST-Link",
         "STM32F401RETx",
-        "Verified",
+        "Fixture Downloaded ELF",
+        "Verification successful",
         "40000000: 12345678",
+        "main_loop - 61.2%",
         "stdin:closed",
         "RTT ready",
         '"matched":true',
@@ -425,8 +513,8 @@ it.each(["attach", "run"])(
       ])
         expect(text).toContain(word);
       const logs = await rig.runner.list(rig.bench);
-      expect(logs).toHaveLength(7);
-      expect(logs.find((r) => r.id === id(7))).toMatchObject({ state: "stopped" });
+      expect(logs).toHaveLength(8);
+      expect(logs.find((r) => r.id === id(8))).toMatchObject({ state: "stopped" });
       const evidence = process.env.VERA_TEST_EVIDENCE_DIR;
       if (evidence) {
         const target = join(evidence, `${process.platform}-replay-${command}`);

@@ -335,7 +335,7 @@ export class HilExecution {
       attempt.problem = "step-timeout";
       return "error";
     }
-    let status = op.adapter.outcome(result.exitCode);
+    let status = op.adapter.outcome(result.exitCode, result.output);
     const expect = op.step.expect;
     if (status === "pass" && expect !== undefined) {
       let matched: boolean;

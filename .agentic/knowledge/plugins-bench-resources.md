@@ -38,7 +38,8 @@ holds the plan's registry, serial-port and probe keys through `ProgramRunner.hol
 (`parent`) that borrows those leases, re-hashes the plan and firmware before each step child (cleanup children
 re-check only their own files), runs every cleanup step after Stop/budget/error and always finishes the hold, records
 `unknown` physical states and writes `embedded-lab-results/<run-id>/`. In-process, the runner also treats `--probe`
-values as `probe:<selector>` keys, so a run naming a probe a plan holds is BUSY.
+values as `probe:<selector>` keys, so a run naming a probe a plan holds is BUSY. A background run's own
+`--probe` selector also holds the probe against a selector that is only its model, and the reverse (`sameProbe`).
 
 ## Public interface
 

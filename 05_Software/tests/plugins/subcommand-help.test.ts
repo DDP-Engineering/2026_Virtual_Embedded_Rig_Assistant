@@ -48,7 +48,22 @@ const audited: Record<string, Record<string, string[]>> = {
     "power-profile": ["capture", "release"],
   },
   "probe-rs": {
-    "probe-rs": ["download", "run", "erase", "benchmark", "itm", "write"],
+    "probe-rs": [
+      "info",
+      "reset",
+      "download",
+      "verify",
+      "erase",
+      "run",
+      "attach",
+      "trace",
+      "itm",
+      "benchmark",
+      "profile",
+      "read",
+      "write",
+      "mi",
+    ],
   },
   "raspberry-pi-linux": {
     "pi-tool": [

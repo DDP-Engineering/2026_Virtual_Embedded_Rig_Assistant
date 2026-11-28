@@ -40,8 +40,11 @@ export interface HilAdapter<P = any> {
   readonly folders: boolean;
   /** A passing attempt's run folder is a capture a later `lab-validate.compare` source may name (`step`). */
   readonly captures?: boolean;
-  /** The attempt's outcome from the program's exit code (a process that ran to its end). */
-  outcome(exitCode: number | null): HilAttemptStatus;
+  /**
+   * The attempt's outcome from the program's exit code (a process that ran to its end), and from its output for a
+   * program whose exit code does not tell.
+   */
+  outcome(exitCode: number | null, output: string): HilAttemptStatus;
 }
 
 const registry = new Map<string, HilAdapter>();
@@ -87,6 +90,9 @@ const quantity = z.number().positive().max(1e6);
 
 // --- Exit-code mappings ------------------------------------------------------------------------------------------
 const zeroPasses = (code: number | null): HilAttemptStatus => (code === 0 ? "pass" : "error");
+/** probe-rs verify exits 0 on a mismatch too: only its "Verification successful" line is a pass. */
+const probeVerifyOutcome = (code: number | null, output: string): HilAttemptStatus =>
+  code !== 0 ? "error" : output.includes("Verification successful") ? "pass" : "fail";
 /** serial-monitor: 4 when `--until` never matched. */
 const serialOutcome = (code: number | null): HilAttemptStatus =>
   code === 0 ? "pass" : code === 4 ? "fail" : "error";
@@ -149,7 +155,7 @@ registerHilAdapter<Target>({
   repeatable: always,
   formats: ["elf", "hex", "bin"],
   probes: (params) => [params.probe],
-  outcome: zeroPasses,
+  outcome: probeVerifyOutcome,
 });
 registerHilAdapter<Target>({
   ...base,
