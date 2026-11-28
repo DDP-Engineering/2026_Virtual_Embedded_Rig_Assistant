@@ -12,11 +12,29 @@ Use `wireshark_capture` to inspect a PCAP or PCAPNG in the workbench, discover
 fields and protocols, check a display filter, page through selected packets and
 retrieve one frame. The tool uses VERA's offline dissection profile with name
 resolution disabled. A Decode As entry selects TCP or UDP, a port and a
-dissector. Offline filters accept protocol presence and comparisons on selected
-fields with numeric addresses. Packet values are untrusted capture data.
+dissector. Packet values are untrusted capture data.
+
+- **Fields and filters**: `query` and `frame` take up to 24 fields, any that the
+  installed TShark knows (`discover` with `kind: fields` and a `search` word finds
+  them), and any display filter TShark accepts. A name or filter it refuses comes
+  back as `field_unavailable` or `invalid_filter` with TShark's own words. A host
+  name in a filter is never looked up.
+- **Rows**: the agent reads a page as `columns` and `rows`: frame number, time,
+  bytes on the wire, the frame's `ref`, then the selected fields - text, a list
+  when the frame holds several values (four at most, 240 characters each), null
+  when it has none. Columns `captured`, `interface` and `cut` appear when a frame
+  is clipped, not on interface 0, or had values cut.
+- **One frame**: `frame` with `tree: true` adds the dissection tree as TShark
+  prints it (`-V`, 12,000 characters at most) and `bytes: true` the hex dump
+  (`-x`, 6,000 characters).
+- **Size**: a capture that is only read may be 512 MiB. One call reads
+  `scanFrames` frames (50,000 at most) after frame `scanFrom`, so a longer
+  capture is read window by window, and `frame` reaches any frame number.
+  Statistics, streams, the profiles, comparison and the capture-file operations
+  read the first window. An operation has 120 seconds.
 
 Use the returned capture reference and page cursor to continue a query. Cite
-the SHA-256 and the frame number. Check coverage for incomplete scans, more pages
+frames with their returned `ref`. Check coverage for incomplete scans, more pages
 and truncated fields. Use `wireshark_import` to retain a verified copy in managed
 workbench storage. The `verify_reference` operation checks file identity even
 when TShark is unavailable. Small text reports use the session artifact store.
@@ -105,7 +123,10 @@ are refused when the active export mask would alter their data.
 
 The operation limits include 64 MiB and 50,000 packets across the inputs,
 64 MiB total derived output, 16 split parts, 24 chronological runs, and 200
-rows per report. The combined object body budget is 256 KiB. Operations
+rows per report. A larger capture is cut down first with the utilities
+themselves through `run_program`: `editcap -r <in> <out> <first>-<last>` for a
+frame range, `tshark -r <in> -Y <filter> -w <out>` for what a filter matches,
+`capinfos <in>` for its size and packet count. The combined object body budget is 256 KiB. Operations
 work on verified snapshots, preserve the original files, and publish a
 complete group after checking the output bytes and packet evidence. Derived
 captures and lineage reports use exclusive publication on filesystems that
@@ -168,8 +189,8 @@ totals count native follow records anchored to frames in the requested scope. TC
 can appear in packet and diagnostic counts while contributing no repeated bytes to the followed
 stream. Gap records carry the frame that revealed the gap and a byte estimate when TShark
 provides one. Follow reads the scanned capture prefix before selecting records by filter or window.
-Open a cited frame in Wireshark Desktop and use **Follow Stream** there for payload.
-The verified local capture retains the exact bytes.
+`payload: "text"` or `"hex"` adds what each record carried, its first 512 bytes (`payloadCut` marks
+a longer one; text shows other bytes as dots). Without the option a stream shows byte counts only.
 
 Continue evidence pages with `trafficCursor` and the original query. Check scan and measurement
 coverage before interpreting an empty interval, missing response, absent stream or transport
@@ -260,8 +281,10 @@ locations. Typed readiness is independent of TShark analysis.
 | `-r <file>` with any filter, field, statistics or output option; `-v`, `-h`, `-G` reports; `-D`/`--list-sources` interface listing | safe |
 | an option that writes a file or folder: `-w <file>`, `--export-objects`, `--export-tls-session-keys`, `--log-file` | device-read |
 | `-i`/`--source`, `-I`, `-L`, `--list-time-stamp-types`, or no `-r` at all (tshark then captures the first interface) | device-read |
-| an option this plugin does not recognise | device-write |
-| `-X lua_script…` (runs Lua code), `-A user:password` (RPCAP credentials) | blocked |
+| `editcap`, `mergecap`, `text2pcap` (each writes a new capture file) | device-read |
+| `capinfos` | safe |
+| an option this plugin does not recognise; `-X lua_script…`, which runs the Lua code of the named script | device-write |
+| `-A user:password` (RPCAP credentials) | blocked |
 
 The plugin parses tshark's options the way tshark does: case-sensitive
 letters (`-x` dumps bytes, `-X` sets extension options), grouped flags
@@ -280,8 +303,11 @@ session. VERA leaves both steps to the user.
 
 ## Limits
 
-Typed offline operations use isolated configuration with host-owned limits.
-Generic program runs use the user's Wireshark profile and its extensions.
+Typed offline operations use isolated configuration with host-owned limits,
+so a personal profile's dissector plugins, Lua scripts and decryption keys do
+not reach them. Generic program runs use the user's Wireshark profile and its
+extensions, take `-o tls.keylog_file:<file>` to decrypt TLS, and load a
+project's own Lua dissector with `-X lua_script:<file>`.
 Extcap interfaces such as sshdump or `rpcap://` capture on other hosts and
 are classified like any live capture. Only `-A` is refused as a credential:
 extcap options passed with `-o extcap.<tool>.<option>:<value>` can also carry

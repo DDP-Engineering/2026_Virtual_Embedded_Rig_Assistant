@@ -12,9 +12,9 @@ For general networking, ask about Ethernet and VLANs, IPv4 and IPv6, ARP and nei
 
 For saved Automotive Ethernet traffic, ask the agent for DoIP, SOME/IP or Service Discovery. It can show the direction, VLAN, PDU fields and contributing frames. Supply the service port for SOME/IP when needed.
 
-The offline capture tool lists conversations and endpoints, measures traffic and DNS or HTTP response times, and shows Expert Info by frame. Open a cited frame in Wireshark Desktop to inspect stream payload locally.
+The offline capture tool lists conversations and endpoints, measures traffic and DNS or HTTP response times, and shows Expert Info by frame. It can also show what each side of a TCP or UDP stream sent, as text or hex.
 
-Use the offline capture tool to select fields, filter packets and cite frames from a verified capture. Import a capture to keep its verified bytes in the workbench.
+Use the offline capture tool to select any field and apply any display filter TShark knows, show one frame's whole decode and its bytes, and cite frames from a verified capture. It reads captures of up to 512 MiB, 50,000 frames at a time. Import a capture to keep its verified bytes in the workbench.
 
 This plugin lets the agent analyse network capture files with TShark and capture live traffic from an interface of your computer. It answers questions about `.pcap` and `.pcapng` captures of a board's Ethernet, Wi-Fi or USB traffic with display filters, field export, protocol statistics and packet details, and saves bounded live captures in the workbench.
 
@@ -32,14 +32,17 @@ The agent uses the `wireshark-analyze` and `wireshark-capture` skills. It always
 - "List every CoAP request in the capture with its time and URI path."
 - "Show the TCP problems the expert analysis reports, with frame numbers."
 - "Decode UDP port 5684 as CoAP and export the codes."
+- "Show the MQTT topics the board published and what it sent on each."
+- "What is in frame 42? Show its bytes."
+- "Cut frames 100000 to 150000 out of captures/big.pcapng."
 - "Capture 30 seconds of traffic to and from 192.168.7.10 on interface 3 into captures/board.pcapng."
 
 ## Risk and approvals
 
-- **Safe** (runs without asking): reading a saved capture with any filter, field, statistics or output option, help, version and listing the interfaces.
-- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): a live capture, and any command that writes a file or folder (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), such as a filtered copy of a capture. A command without `-r` also captures live, on the first interface.
-- **Device write** (asks in **Ask** and **Auto-edit**): an option this plugin does not recognise.
-- **Blocked**: Lua scripts, which can run arbitrary code, and RPCAP passwords on the command line, which would be stored in run logs.
+- **Safe** (runs without asking): reading a saved capture with any filter, field, statistics or output option, help, version, listing the interfaces and `capinfos`.
+- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): a live capture, and any command that writes a file or folder (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), such as a filtered copy of a capture; `editcap`, `mergecap` and `text2pcap`, which write a new capture file. A command without `-r` also captures live, on the first interface.
+- **Device write** (asks in **Ask** and **Auto-edit**): an option this plugin does not recognise, and a Lua script (`-X lua_script`), for example the dissector of your own protocol, which runs code on your computer.
+- **Blocked**: RPCAP passwords on the command line, which would be stored in run logs.
 
 ## Limits
 

@@ -666,13 +666,14 @@ it("validates native capture-file operations and reusable managed outputs", asyn
     service.send(reused.id, "Read a derived frame through its managed identity.");
     await service.waitIdle(reused.id);
     const frame = JSON.parse(reused.outputs[0]?.summary ?? "{}");
-    expect(frame).toMatchObject({
-      capture,
-      packet: { frame: { number: 2, captureSha256: capture.sha256 }, ref: expect.any(String) },
-    });
+    expect(frame).toMatchObject({ capture, columns: expect.arrayContaining(["frame", "ref"]) });
+    expect(frame.rows).toHaveLength(1);
+    expect(frame.rows[0][0]).toBe(2);
+    const derivedRef: string = frame.rows[0][frame.columns.indexOf("ref")];
+    expect(derivedRef).toMatch(/^capture:[a-f0-9]{64}#f=2$/);
     await rig.writeReplay("reused-citation", [
       typed("frame", { source: { reference: capture }, frame: 2 }),
-      { text: `The derived frame. [[${frame.packet.ref}]]` },
+      { text: `The derived frame. [[${derivedRef}]]` },
     ]);
     const citation = rig.session(service, "reused-citation", "ask");
     service.send(citation.id, "Cite the exact derived frame.");
@@ -681,11 +682,10 @@ it("validates native capture-file operations and reusable managed outputs", asyn
       .get(citation.id)
       .snapshot.items.find(
         (item) =>
-          item.kind === "assistant" &&
-          item.citations.some(({ ref, valid }) => ref === frame.packet.ref && valid),
+          item.kind === "assistant" && item.citations.some(({ ref, valid }) => ref === derivedRef && valid),
       );
     expect(assistant).toBeDefined();
-    const located = service.openCaptureCitation(citation.id, assistant?.id ?? "", frame.packet.ref);
+    const located = service.openCaptureCitation(citation.id, assistant?.id ?? "", derivedRef);
     const viewer = await mkdtemp(join(rig.bench, "viewer-"));
     const viewerCopy = join(viewer, "derived.pcapng");
     const open = await core.prepareWiresharkFrame(
@@ -2216,7 +2216,14 @@ it("publishes the official find-only tshark package, its pack and two skills", a
       linux: ["$PATH", "/usr/bin/text2pcap"],
     },
   });
-  expect(classifyCommand(m.rules, "text2pcap", ["input.hex", "output.pcapng"]).risk).toBe("blocked");
+  expect(classifyCommand(m.rules, "text2pcap", ["input.hex", "output.pcapng"]).risk).toBe("device-read");
+  expect(classifyCommand(m.rules, "editcap", ["-r", "big.pcapng", "part.pcapng", "1-100"]).risk).toBe(
+    "device-read",
+  );
+  expect(classifyCommand(m.rules, "mergecap", ["-w", "all.pcapng", "a.pcapng", "b.pcapng"]).risk).toBe(
+    "device-read",
+  );
+  expect(classifyCommand(m.rules, "capinfos", ["-c", "big.pcapng"]).risk).toBe("safe");
   const catalog = parse(await readFile(new URL("catalog.yaml", plugins), "utf8"));
   expect(catalog.official).toContain("wireshark-tshark");
   const packs = parse(await readFile(new URL("packs.yaml", plugins), "utf8"));
@@ -2315,17 +2322,17 @@ it("classifies parsed tshark option roles at the highest risk", async () => {
     ["device-write", ["-r", "cap.pcapng", "-k"]],
     ["device-write", ["-r", "cap.pcapng", "-Z", "user"]],
     // Lua scripts and command-line RPCAP credentials.
-    ["blocked", ["-r", "cap.pcapng", "-X", "lua_script:dissector.lua"]],
-    ["blocked", ["-r", "cap.pcapng", "-Xlua_script:dissector.lua"]],
-    ["blocked", ["-r", "cap.pcapng", "-X", "lua_script1:argument"]],
-    ["blocked", ["-r", "cap.pcapng", "-Xlua_script1:argument"]],
-    ["blocked", ["-nXlua_script1:argument", "-r", "cap.pcapng"]],
-    ["blocked", ["-r", "cap.pcapng", "-X", "LUA_SCRIPT:dissector.lua"]],
-    ["blocked", ["-nX", "lua_script:dissector.lua", "-r", "cap.pcapng"]],
-    ["blocked", ["-v", "-X", "lua_script:dissector.lua"]],
-    ["blocked", ["-G", "-X", "lua_script:dissector.lua"]],
-    ["blocked", ["-r", "cap.pcapng", "coap", "-X", "lua_script:dissector.lua"]],
-    ["blocked", ["-r", "cap.pcapng", "--", "-X", "lua_script:dissector.lua"]],
+    ["device-write", ["-r", "cap.pcapng", "-X", "lua_script:dissector.lua"]],
+    ["device-write", ["-r", "cap.pcapng", "-Xlua_script:dissector.lua"]],
+    ["device-write", ["-r", "cap.pcapng", "-X", "lua_script1:argument"]],
+    ["device-write", ["-r", "cap.pcapng", "-Xlua_script1:argument"]],
+    ["device-write", ["-nXlua_script1:argument", "-r", "cap.pcapng"]],
+    ["device-write", ["-r", "cap.pcapng", "-X", "LUA_SCRIPT:dissector.lua"]],
+    ["device-write", ["-nX", "lua_script:dissector.lua", "-r", "cap.pcapng"]],
+    ["device-write", ["-v", "-X", "lua_script:dissector.lua"]],
+    ["device-write", ["-G", "-X", "lua_script:dissector.lua"]],
+    ["device-write", ["-r", "cap.pcapng", "coap", "-X", "lua_script:dissector.lua"]],
+    ["device-write", ["-r", "cap.pcapng", "--", "-X", "lua_script:dissector.lua"]],
     ["blocked", ["-i", "rpcap://host/eth0", "-A", "user:secret"]],
     ["blocked", ["-Auser:secret", "-i", "rpcap://host/eth0"]],
     ["blocked", ["-r", "cap.pcapng", "coap", "-A", "user:secret"]],
@@ -2745,7 +2752,7 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
       }),
       typed("frame", { source: pcap, frame: 1, fields: decodeFields, decodeAs }),
       typed("frame", { source: pcap, frame: 2 }),
-      typed("query", { source: pcap, fields: ["udp.payload"] }),
+      typed("query", { source: pcap, fields: ["udp.nonsense"] }),
       typed("query", { source: pcap, fields: decodeFields, cursor: { querySha256: hash, afterFrame: 1 } }),
       importCapture(classicPath),
       typed("frame", { source: { reference: managed }, frame: 1, fields: decodeFields, decodeAs }),
@@ -2767,7 +2774,7 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     await writeFile(join(rig.bench, classicPath), classicPcap);
     await writeFile(join(rig.bench, "captures/corrupt.pcap"), classicPcap.subarray(0, 31));
     await writeFile(join(rig.bench, "captures/huge.pcap"), classicPcap);
-    await truncate(join(rig.bench, "captures/huge.pcap"), captureLimits.captureBytes + 1);
+    await truncate(join(rig.bench, "captures/huge.pcap"), captureLimits.analysisBytes + 1);
     const service = await rig.start();
     const session = rig.session(service, "test", "ask");
     const firstStart = rig.starts.length;
@@ -2776,7 +2783,7 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     const outputs = session.outputs.map(({ summary }) => JSON.parse(summary));
     expect(outputs).toHaveLength(18);
     expect(outputs[0]).toMatchObject({ tshark: { available: true }, profile: "vera-offline-v1" });
-    expect(outputs[1].entries).toEqual([expect.objectContaining({ name: "coap.opt.uri_path_recon" })]);
+    expect(outputs[1].entries).toContainEqual(expect.objectContaining({ name: "coap.opt.uri_path_recon" }));
     expect(outputs[2].entries).toContainEqual(expect.objectContaining({ name: "coap" }));
     expect(outputs[3].entries).toContainEqual(expect.objectContaining({ name: "coap", transport: "udp" }));
     expect(outputs[4]).toMatchObject({ isError: true, reason: "invalid_filter" });
@@ -2790,37 +2797,43 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     );
     expect(outputs[6].coverage).toMatchObject({ scannedThrough: 8, scanComplete: true, partial: false });
     expect(outputs[7]).toMatchObject({
-      packets: [
-        {
-          frame: {
-            number: 3,
-            captureSha256: inspected.sha256,
-            interfaceId: 0,
-            timestampEpoch: "1767225600.200000000",
-          },
-          fields: { "coap.opt.uri_path_recon": ["/sensors/temp"] },
-        },
+      columns: ["frame", "time", "bytes", "ref", "coap.opt.uri_path_recon"],
+      rows: [
+        [3, "1767225600.200000000", 60, expect.stringMatching(/^capture:[a-f0-9]{64}#f=3$/), "/sensors/temp"],
       ],
       packetData: "untrusted_capture_data",
       coverage: { scannedThrough: 5, scanComplete: false, partial: true, returned: 1 },
       page: { limit: 1, next: { afterFrame: 3 } },
     });
     expect(outputs[8]).toMatchObject({
+      capture: { sha256: hash },
       analysis: { profile: "vera-offline-v1", decodeAs },
-      packet: {
-        frame: { captureSha256: hash, number: 1, timestampEpoch: "1.500000000" },
-        fields: { "coap.code": ["1"], "udp.dstport": ["5684"] },
-      },
     });
+    // A classic PCAP names no interface, so its rows carry the interface column (null).
+    const cell = (name: string) => outputs[8].rows[0][outputs[8].columns.indexOf(name)];
+    expect(outputs[8].rows).toHaveLength(1);
+    expect(["frame", "time", "interface", "coap.code", "udp.dstport"].map(cell)).toEqual([
+      1,
+      "1.500000000",
+      null,
+      "1",
+      "5684",
+    ]);
+    expect(outputs[10].error).toContain("udp.nonsense");
     expect(outputs[9]).toMatchObject({ reason: "frame_not_found" });
     expect(outputs[10]).toMatchObject({ reason: "field_unavailable" });
     expect(outputs[11]).toMatchObject({ reason: "cursor_mismatch" });
     expect(outputs[12]).toMatchObject({ capture: managed });
-    const { ref: sourceCitation, ...sourcePacket } = outputs[8].packet;
-    expect(outputs[13]).toMatchObject({ capture: managed, packet: sourcePacket });
+    const refAt = outputs[8].columns.indexOf("ref");
+    const [sourceRow] = outputs[8].rows;
+    const [managedRow] = outputs[13].rows;
+    const sourceCitation = sourceRow[refAt];
+    const withoutRef = (row: unknown[]) => row.filter((_, index) => index !== refAt);
+    expect(outputs[13]).toMatchObject({ capture: managed, columns: outputs[8].columns });
+    expect(withoutRef(managedRow)).toEqual(withoutRef(sourceRow));
     expect(sourceCitation).toMatch(/^capture:[a-f0-9]{64}#f=1$/);
-    expect(outputs[13].packet.ref).toMatch(/^capture:[a-f0-9]{64}#f=1$/);
-    expect(outputs[13].packet.ref).not.toBe(sourceCitation);
+    expect(managedRow[refAt]).toMatch(/^capture:[a-f0-9]{64}#f=1$/);
+    expect(managedRow[refAt]).not.toBe(sourceCitation);
     expect(outputs[14]).toMatchObject({ reason: "invalid_capture" });
     expect(outputs[15]).toMatchObject({ reason: "capture_byte_limit" });
     expect(outputs[16]).toMatchObject({ reason: "capture_inaccessible" });
@@ -2875,7 +2888,8 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     expect(await service.waitIdle(continuation.id)).toEqual({ stopReason: "end" });
     const more = continuation.outputs.map(({ summary }) => JSON.parse(summary));
     expect(more[0]).toMatchObject({
-      packets: [{ frame: { number: 4, captureSha256: inspected.sha256 } }],
+      capture: { sha256: inspected.sha256 },
+      rows: [[4, expect.any(String), expect.any(Number), expect.any(String), "/sensors/temp"]],
       page: { limit: 1, afterFrame: 3, next: null },
       coverage: { matchedInScope: 2, partial: true },
     });
@@ -2883,10 +2897,13 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
       "cursor_mismatch",
       "capture_changed",
       "storage_quota",
-      "filter_unavailable",
-      "filter_unavailable",
+      undefined,
+      "invalid_filter",
       "invalid_decode_as",
     ]);
+    // Any filter TShark accepts is valid; a host name is never looked up.
+    expect(more[4]).toMatchObject({ valid: true });
+    expect(more[5].error).toContain("not-resolved.example");
     expect(await readdir(stored)).toHaveLength(captureLimits.managedFiles);
 
     const repeated = "captures/repeated.pcap";
@@ -2910,17 +2927,17 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
       expect(text.length).toBeLessThanOrEqual(limit);
       expect(text).not.toContain("192.0.2.1");
       const page = JSON.parse(text);
-      expect(page.packets[0].fields["ip.src"]).toEqual(["[masked]".repeat(22)]);
+      expect(page.rows[0][page.columns.indexOf("ip.src")]).toBe("[masked]".repeat(22));
       if (limit === 8000) {
-        expect(page.packets.length).toBeLessThan(28);
+        expect(page.rows.length).toBeLessThan(28);
         expect(page.coverage).toMatchObject({
           partial: true,
           truncated: true,
-          returned: page.packets.length,
+          returned: page.rows.length,
         });
-        expect(page.page.next.afterFrame).toBe(page.packets.at(-1).frame.number);
+        expect(page.page.next.afterFrame).toBe(page.rows.at(-1)[0]);
       } else {
-        expect(page.packets).toHaveLength(28);
+        expect(page.rows).toHaveLength(28);
         expect(page.coverage).toMatchObject({ partial: false, truncated: false, returned: 28 });
         expect(page.page.next).toBeNull();
       }
@@ -2929,6 +2946,192 @@ it("replays typed Windows or Linux offline analysis with independent PCAP and PC
     await rig.close();
   }
 }, 120_000);
+
+/** A classic PCAP of identical UDP frames from 192.168.7.10 to 192.168.7.1, one per millisecond. */
+function syntheticCapture(frames: number, size: number, port: (index: number) => number) {
+  const record = 16 + size;
+  const body = Buffer.alloc(frames * record);
+  for (let index = 0; index < frames; index++) {
+    const at = index * record;
+    body.writeUInt32LE(1_700_000_000 + Math.floor(index / 1000), at);
+    body.writeUInt32LE((index % 1000) * 1000, at + 4);
+    body.writeUInt32LE(size, at + 8);
+    body.writeUInt32LE(size, at + 12);
+    const frame = body.subarray(at + 16, at + record);
+    Buffer.from("020000000002020000000001", "hex").copy(frame, 0);
+    frame.writeUInt16BE(0x0800, 12);
+    frame[14] = 0x45;
+    frame.writeUInt16BE(size - 14, 16);
+    frame[22] = 64;
+    frame[23] = 17;
+    Buffer.from("c0a8070ac0a80701", "hex").copy(frame, 26);
+    frame.writeUInt16BE(50000, 34);
+    frame.writeUInt16BE(port(index), 36);
+    frame.writeUInt16BE(size - 34, 38);
+  }
+  return Buffer.concat([classicPcap.subarray(0, 24), body]);
+}
+
+it("reads any field and filter, a frame's tree and bytes, stream payload and frames past the first window", async (ctx) => {
+  const coap = { path: "captures/sample.pcapng" };
+  const traffic = { path: "captures/traffic.pcapng" };
+  const long = { path: "captures/long.pcap" };
+  const large = { path: "captures/large.pcap" };
+  const rig = await workbench({
+    open: [
+      typed("query", { source: coap, filter: "coap", fields: ["coap.code", "udp.payload", "mqtt.topic"] }),
+      typed("query", {
+        source: traffic,
+        filter: "tcp.analysis.retransmission",
+        fields: ["tcp.seq", "tcp.len"],
+      }),
+      typed("query", { source: coap, filter: 'frame contains "temp"' }),
+      typed("query", { source: coap, fields: ["coap.nonsense"] }),
+      typed("query", { source: coap, filter: "tcp.prot == 80" }),
+      typed("discover", { kind: "fields", search: "mqtt.topic" }),
+      typed("frame", { source: coap, frame: 4, tree: true, bytes: true }),
+      typed("follow", { source: traffic, transport: "tcp", stream: 0, payload: "text" }),
+      typed("follow", { source: traffic, transport: "tcp", stream: 0, payload: "hex" }),
+      typed("follow", { source: traffic, transport: "tcp", stream: 0 }),
+      typed("inspect", { source: long }),
+      typed("inspect", { source: long, scanFrom: 50_000 }),
+      typed("query", { source: long, scanFrom: 50_000, filter: "udp.port == 40001", limit: 2 }),
+      typed("frame", { source: long, frame: 55_000 }),
+      typed("frame", { source: long, frame: 70_000 }),
+      typed("inspect", { source: large }),
+      { text: "Done." },
+    ],
+  });
+  try {
+    if (!rig.tshark) {
+      if (process.env.VERA_REQUIRE_TSHARK === "1") throw Error("Native TShark is required.");
+      ctx.skip("Native TShark is unavailable.");
+      return;
+    }
+    await writeFile(join(rig.bench, traffic.path), await readFile(trafficSample));
+    // 60,000 frames: the first 50,000 to port 40000, the rest to port 40001.
+    await writeFile(
+      join(rig.bench, long.path),
+      syntheticCapture(60_000, 46, (index) => (index < 50_000 ? 40000 : 40001)),
+    );
+    // Larger than a retained capture may be, smaller than one that is only read.
+    const largeBytes = syntheticCapture(45_000, 1514, () => 40000);
+    expect(largeBytes.length).toBeGreaterThan(captureLimits.captureBytes);
+    await writeFile(join(rig.bench, large.path), largeBytes);
+    const service = await rig.start();
+    const run = rig.session(service, "open", "read-only");
+    service.send(run.id, "Read the captures.");
+    expect(await service.waitIdle(run.id)).toEqual({ stopReason: "end" });
+    const [
+      payload,
+      retransmission,
+      contains,
+      unknownField,
+      wrongFilter,
+      discovered,
+      detail,
+      text,
+      hex,
+      counts,
+      firstWindow,
+      secondWindow,
+      windowRows,
+      farFrame,
+      absentFrame,
+      largeCapture,
+    ] = run.outputs.map(({ summary }) => JSON.parse(summary));
+    expect(run.outputs).toHaveLength(16);
+    expect(payload.columns).toEqual([
+      "frame",
+      "time",
+      "bytes",
+      "ref",
+      "coap.code",
+      "udp.payload",
+      "mqtt.topic",
+    ]);
+    expect(payload.rows).toHaveLength(4);
+    expect(payload.rows[0]).toEqual([
+      3,
+      "1767225600.200000000",
+      60,
+      expect.stringMatching(/^capture:[a-f0-9]{64}#f=3$/),
+      "1",
+      "4101123471b773656e736f72730474656d70",
+      null,
+    ]);
+    expect(retransmission.rows).toEqual([[5, expect.any(String), 73, expect.any(String), "1", "19"]]);
+    expect(contains.rows.map((row: unknown[]) => row[0])).toEqual([3]);
+    expect(unknownField).toMatchObject({ isError: true, reason: "field_unavailable" });
+    expect(unknownField.error).toContain("coap.nonsense");
+    expect(wrongFilter).toMatchObject({ isError: true, reason: "invalid_filter" });
+    expect(wrongFilter.error).toContain("tcp.prot");
+    expect(discovered.entries).toContainEqual({ name: "mqtt.topic", description: "Topic" });
+    expect(detail.rows[0][0]).toBe(4);
+    expect(detail.tree).toContain("Frame 4:");
+    expect(detail.tree).toContain("Constrained Application Protocol");
+    expect(detail.hex).toMatch(/^0000 {2}(?:[0-9a-f]{2} ){8}/m);
+    const sent = (result: { traffic: { rows: { payload?: string }[] } }) =>
+      result.traffic.rows.map((row) => row.payload).filter((value) => value !== undefined);
+    expect(text.traffic.summary.payloadView).toBe("text_per_record");
+    expect(sent(text)).toContain("VERA_LOCAL_SENTINEL");
+    expect(sent(hex)).toContain(Buffer.from("VERA_LOCAL_SENTINEL").toString("hex"));
+    // Without the option a stream shows byte counts only.
+    expect(sent(counts)).toEqual([]);
+    expect(JSON.stringify(counts)).not.toContain("VERA_LOCAL_SENTINEL");
+    expect(firstWindow.coverage).toMatchObject({
+      scannedThrough: 50_000,
+      scanComplete: false,
+      partial: true,
+    });
+    expect(secondWindow.coverage).toMatchObject({
+      scanFrom: 50_000,
+      scannedThrough: 60_000,
+      scanComplete: true,
+      matchedInScope: 10_000,
+    });
+    expect(windowRows.rows.map((row: unknown[]) => row[0])).toEqual([50_001, 50_002]);
+    expect(windowRows.coverage).toMatchObject({ scanFrom: 50_000, matchedInScope: 10_000 });
+    expect(windowRows.page.next).toMatchObject({ afterFrame: 50_002 });
+    expect(farFrame.rows[0][0]).toBe(55_000);
+    expect(absentFrame).toMatchObject({ isError: true, reason: "frame_not_found" });
+    expect(largeCapture.capture.bytes).toBe(largeBytes.length);
+    expect(largeCapture.coverage).toMatchObject({ scannedThrough: 45_000, scanComplete: true });
+
+    // A frame past the first window is cited and opened in Wireshark Desktop like any other.
+    const farRef: string = farFrame.rows[0][farFrame.columns.indexOf("ref")];
+    await rig.writeReplay("far-citation", [
+      typed("frame", { source: long, frame: 55_000 }),
+      { text: `The frame. [[${farRef}]]` },
+    ]);
+    const cite = rig.session(service, "far-citation", "read-only");
+    service.send(cite.id, "Cite the frame.");
+    await service.waitIdle(cite.id);
+    const assistant = service
+      .get(cite.id)
+      .snapshot.items.find(
+        (item) =>
+          item.kind === "assistant" && item.citations.some(({ ref, valid }) => ref === farRef && valid),
+      );
+    expect(assistant).toBeDefined();
+    const located = service.openCaptureCitation(cite.id, assistant?.id ?? "", farRef);
+    const viewer = await mkdtemp(join(rig.bench, "viewer-"));
+    const viewerCopy = join(viewer, "long.pcap");
+    const open = await core.prepareWiresharkFrame(
+      located.context,
+      located.evidence,
+      undefined,
+      rig.runner,
+      rig.tshark.executable,
+      viewer,
+      viewerCopy,
+      AbortSignal.timeout(captureLimits.deadlineMs),
+    );
+    expect(open.args).toEqual(["-n", "-r", viewerCopy, "-g", "55000"]);
+  } finally {
+    await rig.close();
+  }
+}, 180_000);
 
 it("reconciles typed offline traffic statistics and directional streams with native TShark", async (ctx) => {
   const source = { path: "captures/sample.pcapng" };
@@ -3372,11 +3575,7 @@ it("answers questions about the sample capture without approvals and gates live 
       step(["-i", "1", "-c", "5"]),
       { text: "The board answered two CoAP reads and one Modbus read." },
     ],
-    lua: [
-      step(["-r", file, "-X", "lua_script:dissector.lua"]),
-      step(["-r", file, "-A", "user:secret"]),
-      { text: "Refused." },
-    ],
+    lua: [step(["-r", file, "-A", "user:secret"]), { text: "Refused." }],
   });
   try {
     // The installed skills carry the analysis and bounded-capture guidance without a tshark.
@@ -3385,8 +3584,13 @@ it("answers questions about the sample capture without approvals and gates live 
     const analyze = (await bench.skills.read("plugin", "wireshark-analyze")).content;
     for (const text of [
       "`wireshark_capture`",
-      "`validate_filter`",
+      "`discover`",
       "`query`",
+      "`frame`",
+      "`follow`",
+      "scanFrom",
+      "editcap",
+      "lua_script",
       "`statistics`",
       "`conversations`",
       "`automotive`",
@@ -3394,7 +3598,15 @@ it("answers questions about the sample capture without approvals and gates live 
     ])
       expect(analyze).toContain(text);
     const capture = (await bench.skills.read("plugin", "wireshark-capture")).content;
-    for (const text of ["tshark -D", "-a duration:", "-c ", "-f ", "-w captures/"])
+    for (const text of [
+      "tshark -D",
+      "-a duration:",
+      "-c ",
+      "-f ",
+      "-w captures/",
+      "background: true",
+      "tcpdump",
+    ])
       expect(capture).toContain(text);
     if (!bench.tshark) {
       ctx.skip("tshark is not installed on this host; the capture-file acceptance needs a real tshark");
@@ -3436,9 +3648,9 @@ it("answers questions about the sample capture without approvals and gates live 
 
     const blocked = bench.session(service, "lua", "bypass");
     const before = bench.starts.length;
-    service.send(blocked.id, "Load the Lua dissector");
+    service.send(blocked.id, "Capture from the remote host with its password");
     expect(await service.waitIdle(blocked.id)).toEqual({ stopReason: "end" });
-    expect(blocked.outputs.map((output) => output.ok)).toEqual([false, false]);
+    expect(blocked.outputs.map((output) => output.ok)).toEqual([false]);
     expect(service.get(blocked.id).snapshot.approvals).toEqual([]);
     expect(bench.starts).toHaveLength(before);
   } finally {

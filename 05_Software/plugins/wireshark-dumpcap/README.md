@@ -2,7 +2,10 @@
 
 Optional Windows and Linux plugin for bounded local PCAPNG acquisition. VERA finds an installed
 Dumpcap from Wireshark 4.2 or later. Windows needs Npcap. Linux needs permission for the selected
-device. Enable the separate Wireshark TShark plugin to analyse retained files.
+device. Enable the separate Wireshark TShark plugin to analyse retained files. The skill
+`wireshark-rolling-capture` carries these steps. For an ordinary capture into a workbench file -
+longer than 120 seconds, promiscuous, without a filter, or on a sniffer interface - use `tshark -i`
+of the TShark plugin instead; VERA asks for every Dumpcap capture, in every permission mode.
 
 - Use `wireshark_dumpcap` with `discover` to find current interface IDs. Choose a local interface
   explicitly. The typed command uses non-promiscuous capture and numeric capture filters.

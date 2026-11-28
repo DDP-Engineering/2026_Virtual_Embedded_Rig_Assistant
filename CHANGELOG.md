@@ -8,6 +8,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- wireshark-tshark 0.11.0: Show one packet's whole decode and its bytes.
+- wireshark-tshark 0.11.0: Show what each side of a TCP or UDP stream sent, as text or hex.
+- wireshark-tshark 0.11.0: Run `capinfos`, `editcap` and `mergecap` to measure, cut and merge capture files.
+- wireshark-tshark 0.11.0: Load a project's own Lua dissector into TShark after approval.
+- wireshark-tshark 0.11.0: Teach capturing around an action, by interface name, and on a Raspberry Pi.
+- wireshark-dumpcap 0.2.0: Add a skill for bounded and rolling captures.
 - bus-tools 0.2.0: Scan an I2C bus for the addresses that answer.
 - bus-tools 0.2.0: Talk to an I2C, SPI or UART device without writing a bus profile first.
 - bus-tools 0.2.0: Write a register, and run several reads, writes and pauses on one configured bus.
@@ -35,6 +41,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- wireshark-tshark 0.11.0: Select any field and use any display filter TShark knows in a capture query.
+- wireshark-tshark 0.11.0: Read captures up to 512 MiB and frames past the first 50,000.
+- wireshark-tshark 0.11.0: Return packet rows in a compact table that takes fewer tokens.
 - bus-tools 0.2.0: Power the circuit from the adapter with one approval instead of a typed word on every call.
 - bus-tools 0.2.0: A bus profile needs only the bus mode; every other setting has a default.
 - bus-tools 0.2.0: Run after an interrupted call without releasing the adapter first.
@@ -76,6 +85,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- wireshark-tshark 0.11.0: Say what TShark refused in a filter or a field name.
+- wireshark-tshark 0.11.0: Offer a way to cut down a capture that is too large to derive from.
 - bus-tools 0.2.0: Recognize an I2C device that does not answer, and name the bus lines that read low.
 - bus-tools 0.2.0: Keep a whole UART capture instead of its first 512 bytes, and show its text.
 - bus-tools 0.2.0: Take a short UART answer instead of losing it.

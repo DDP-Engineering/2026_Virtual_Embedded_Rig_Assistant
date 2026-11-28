@@ -82,7 +82,7 @@ async function streamFile(
     if (before.size > maxBytes)
       throw new CaptureError(
         "capture_byte_limit",
-        "The capture exceeds the host byte limit. Select a smaller capture.",
+        `The capture is larger than ${Math.floor(maxBytes / (1024 * 1024))} MiB. Cut a part out first (editcap -r <in> <out> <first>-<last>, or tshark -r <in> -Y <filter> -w <out>), or read it with tshark directly.`,
       );
     input = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
     if (!matches(before, await input.stat())) throw changed();

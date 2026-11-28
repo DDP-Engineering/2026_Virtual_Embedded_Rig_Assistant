@@ -12,9 +12,9 @@ Pour analyser le réseau, demandez des informations sur Ethernet et les VLAN, IP
 
 Pour le trafic Ethernet automobile enregistré, demandez à l’agent une analyse DoIP, SOME/IP ou Service Discovery. Il peut indiquer le sens, le VLAN, les champs PDU et les trames contributrices. Indiquez le port du service SOME/IP si nécessaire.
 
-L’outil hors ligne répertorie les conversations et les terminaux, mesure le trafic et les temps de réponse DNS ou HTTP et affiche les informations d’expert par trame. Ouvrez une trame citée dans Wireshark Desktop pour examiner localement le contenu du flux.
+L’outil hors ligne répertorie les conversations et les terminaux, mesure le trafic et les temps de réponse DNS ou HTTP et affiche les informations d’expert par trame. Il peut aussi montrer ce que chaque côté d’un flux TCP ou UDP a envoyé, en texte ou en hexadécimal.
 
-Utilisez l’outil hors ligne pour sélectionner des champs, filtrer des paquets et citer des trames d’une capture vérifiée. Importez une capture pour conserver le fichier vérifié dans l’espace de travail.
+Utilisez l’outil hors ligne pour sélectionner n’importe quel champ et appliquer n’importe quel filtre d’affichage connus de TShark, afficher le décodage complet et les octets d’une trame, et citer des trames d’une capture vérifiée. Il lit des captures jusqu’à 512 Mio, 50 000 trames à la fois. Importez une capture pour conserver le fichier vérifié dans l’espace de travail.
 
 Ce plugin permet à l’agent d’analyser des fichiers de capture réseau avec TShark et de capturer du trafic en direct sur une interface de votre ordinateur. Il répond aux questions sur des captures `.pcap` et `.pcapng` du trafic Ethernet, Wi-Fi ou USB d’une carte à l’aide de filtres d’affichage, d’exports de champs, de statistiques de protocoles et du détail des paquets, et enregistre des captures en direct limitées dans le banc de travail.
 
@@ -32,14 +32,17 @@ L’agent utilise les compétences `wireshark-analyze` et `wireshark-capture`. I
 - « Listez chaque requête CoAP de la capture avec son horodatage et son chemin d’URI. »
 - « Montrez les problèmes TCP que signale l’analyse experte, avec les numéros de trame. »
 - « Décodez le port UDP 5684 comme du CoAP et exportez les codes. »
+- « Montrez les topics MQTT sur lesquels la carte a publié et ce qu’elle a envoyé sur chacun. »
+- « Que contient la trame 42 ? Montrez ses octets. »
+- « Découpez les trames 100000 à 150000 de captures/big.pcapng. »
 - « Capturez 30 secondes de trafic en provenance et à destination de 192.168.7.10 sur l’interface 3 dans captures/board.pcapng. »
 
 ## Risques et approbations
 
-- **Sûr** (exécuté sans demander) : lecture d’une capture enregistrée avec n’importe quelle option de filtre, de champ, de statistiques ou de sortie, aide, version et liste des interfaces.
-- **Lecture appareil** (demande en mode **Demander**, exécuté directement en mode **Modification auto**) : une capture en direct, et toute commande qui écrit un fichier ou un dossier (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), par exemple une copie filtrée d’une capture. Une commande sans `-r` capture aussi en direct, sur la première interface.
-- **Écriture appareil** (demande en modes **Demander** et **Modification auto**) : une option que ce plugin ne reconnaît pas.
-- **Bloqué** : les scripts Lua, qui peuvent exécuter du code arbitraire, et les mots de passe RPCAP sur la ligne de commande, qui seraient enregistrés dans les journaux d’exécution.
+- **Sûr** (exécuté sans demander) : lecture d’une capture enregistrée avec n’importe quelle option de filtre, de champ, de statistiques ou de sortie, aide, version, liste des interfaces et `capinfos`.
+- **Lecture appareil** (demande en mode **Demander**, exécuté directement en mode **Modification auto**) : une capture en direct, et toute commande qui écrit un fichier ou un dossier (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), par exemple une copie filtrée d’une capture ; `editcap`, `mergecap` et `text2pcap`, qui écrivent un nouveau fichier de capture. Une commande sans `-r` capture aussi en direct, sur la première interface.
+- **Écriture appareil** (demande en modes **Demander** et **Modification auto**) : une option que ce plugin ne reconnaît pas, et un script Lua (`-X lua_script`), par exemple le dissecteur de votre propre protocole, qui exécute du code sur votre ordinateur.
+- **Bloqué** : les mots de passe RPCAP sur la ligne de commande, qui seraient enregistrés dans les journaux d’exécution.
 
 ## Limites
 

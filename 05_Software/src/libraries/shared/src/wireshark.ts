@@ -26,13 +26,19 @@ import {
 export const wiresharkPluginId = "wireshark-tshark";
 export const wiresharkProfile = "vera-offline-v1";
 export const captureLimits = {
+  /** A capture that is retained or derived. */
   captureBytes: 64 * 1024 * 1024,
+  /** A capture that is only read. */
+  analysisBytes: 512 * 1024 * 1024,
   managedBytes: 256 * 1024 * 1024,
   managedFiles: 32,
   scanFrames: 50_000,
   pageRows: 50,
   valueChars: 240,
-  deadlineMs: 30_000,
+  frameTreeChars: 12_000,
+  frameHexChars: 6_000,
+  streamRecordBytes: 512,
+  deadlineMs: 120_000,
 } as const;
 export const captureLineageLimits = {
   bytes: 2 * 1024 * 1024,
@@ -97,7 +103,7 @@ export const captureCitationRefSchema = z
   .max(85)
   .refine((ref) => parseRef(ref)?.kind === "capture");
 const field = z.string().regex(/^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,79}$/);
-export const captureFieldsSchema = z.array(field).min(1).max(10);
+export const captureFieldsSchema = z.array(field).min(1).max(24);
 export const captureSourceSchema = z.union([
   z.strictObject({ path }),
   z.strictObject({ reference: captureReferenceSchema }),
@@ -105,6 +111,9 @@ export const captureSourceSchema = z.union([
 const fields = captureFieldsSchema;
 const source = captureSourceSchema;
 const scanFrames = z.number().int().min(1).max(captureLimits.scanFrames);
+/** Frames before the scan window: the window covers the `scanFrames` frames after this one. */
+const scanFrom = z.number().int().min(0).max(4_294_967_295);
+export const streamPayloadSchema = z.enum(["text", "hex"]);
 const kind = z.enum(["fields", "protocols", "decoders"]);
 const search = z
   .string()
@@ -155,7 +164,13 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     limit: limit.optional(),
   }),
   z.strictObject({ operation: z.literal("validate_filter"), filter, ...profile }),
-  z.strictObject({ operation: z.literal("inspect"), source, scanFrames: scanFrames.optional(), ...profile }),
+  z.strictObject({
+    operation: z.literal("inspect"),
+    source,
+    scanFrames: scanFrames.optional(),
+    scanFrom: scanFrom.optional(),
+    ...profile,
+  }),
   z.strictObject({ operation: z.literal("file_metadata"), source }),
   z.strictObject({
     operation: z.literal("file_lineage"),
@@ -169,6 +184,7 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     filter: filter.optional(),
     fields: fields.optional(),
     scanFrames: scanFrames.optional(),
+    scanFrom: scanFrom.optional(),
     limit: limit.optional(),
     cursor: captureQueryCursorSchema.optional(),
     ...profile,
@@ -178,6 +194,8 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     source,
     frame: positive,
     fields: fields.optional(),
+    tree: z.boolean().optional(),
+    bytes: z.boolean().optional(),
     ...profile,
   }),
   z.strictObject({ operation: z.literal("statistics"), statistic: trafficStatisticSchema, ...trafficInputs }),
@@ -191,6 +209,7 @@ export const wiresharkCaptureArgsSchema = z.discriminatedUnion("operation", [
     operation: z.literal("follow"),
     transport: trafficTransportSchema,
     stream: trafficStreamSchema,
+    payload: streamPayloadSchema.optional(),
     ...trafficInputs,
   }),
   z.strictObject({
@@ -266,12 +285,16 @@ export const wiresharkCaptureToolSchema = z
     filter: filter.optional(),
     source: source.optional(),
     scanFrames: scanFrames.optional(),
+    scanFrom: scanFrom.optional(),
     fields: fields.optional(),
     cursor: captureQueryCursorSchema.optional(),
     frame: positive.optional(),
+    tree: z.boolean().optional(),
+    bytes: z.boolean().optional(),
     statistic: trafficStatisticSchema.optional(),
     transport: trafficTransportSchema.optional(),
     stream: trafficStreamSchema.optional(),
+    payload: streamPayloadSchema.optional(),
     window: trafficWindowSchema.optional(),
     trafficCursor: trafficPageCursorSchema.optional(),
     validateChecksums: z.boolean().optional(),
@@ -307,6 +330,7 @@ export type CaptureAnalysis = z.infer<typeof captureAnalysisSchema>;
 
 export const captureCoverageSchema = z.strictObject({
   scope: z.enum(["capture", "display_filter", "single_frame"]),
+  scanFrom: z.number().int().nonnegative().optional(),
   scannedThrough: z.number().int().nonnegative(),
   scanLimit: positive,
   scanComplete: z.boolean(),

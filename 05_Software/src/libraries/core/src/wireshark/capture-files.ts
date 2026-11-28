@@ -90,7 +90,10 @@ export async function captureFileOperation(
     const audit = indexCapture(bytes, reference.fileFormat, signal);
     frames += audit.packets.length;
     if (frames > captureLimits.scanFrames)
-      throw new CaptureError("capture_scan_limit", "The inputs exceed the combined host frame limit.");
+      throw new CaptureError(
+        "capture_scan_limit",
+        `The inputs hold more than ${captureLimits.scanFrames} frames together. Cut a part out first with editcap -r <in> <out> <first>-<last>.`,
+      );
     remainingBytes -= reference.bytes;
     inputs.push({ path, reference, index: audit });
   }

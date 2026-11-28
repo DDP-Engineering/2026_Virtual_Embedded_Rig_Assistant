@@ -34,8 +34,8 @@ export async function prepareWiresharkFrame(
   const analysis = { ...evidence.analysis, filter: displayFilter ?? evidence.analysis.filter };
   const mismatch = () =>
     new CaptureError("frame_mismatch", "The frame does not belong to the cited capture.");
-  if (frame.captureSha256 !== capture.sha256 || frame.number > captureLimits.scanFrames) throw mismatch();
-  await snapshotCapture(context, { reference: capture }, path, signal);
+  if (frame.captureSha256 !== capture.sha256) throw mismatch();
+  await snapshotCapture(context, { reference: capture }, path, signal, captureLimits.analysisBytes);
   const native = new OfflineTshark(runner, tshark, folder, signal);
   if (analysis.filter || analysis.decodeAs.length) {
     await writeFile(join(folder, "empty.pcap"), emptyPcap, { mode: 0o600, flag: "wx" });

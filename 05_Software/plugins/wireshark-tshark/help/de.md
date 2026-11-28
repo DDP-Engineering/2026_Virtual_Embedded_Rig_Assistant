@@ -12,9 +12,9 @@ Frage zur Netzwerkanalyse nach Ethernet und VLANs, IPv4 und IPv6, ARP und Nachba
 
 Für gespeicherten Automotive-Ethernet-Verkehr kann der Agent DoIP, SOME/IP oder Service Discovery auswerten. Er zeigt Richtung, VLAN, PDU-Felder und beteiligte Pakete. Gib bei Bedarf den SOME/IP-Dienstport an.
 
-Das Offline-Werkzeug listet Verbindungen und Endpunkte auf, misst den Datenverkehr und DNS- oder HTTP-Antwortzeiten und zeigt Experteninformationen zu einzelnen Paketen. Öffnen Sie ein referenziertes Paket in Wireshark Desktop, um die Nutzdaten des Datenstroms lokal zu prüfen.
+Das Offline-Werkzeug listet Verbindungen und Endpunkte auf, misst den Datenverkehr und DNS- oder HTTP-Antwortzeiten und zeigt Experteninformationen zu einzelnen Paketen. Es kann auch zeigen, was jede Seite eines TCP- oder UDP-Datenstroms gesendet hat, als Text oder Hex.
 
-Mit dem Offline-Werkzeug Felder auswählen, Pakete filtern und Frames aus einem geprüften Mitschnitt belegen. Beim Import bleibt die geprüfte Datei im Arbeitsbereich erhalten.
+Mit dem Offline-Werkzeug jedes Feld auswählen und jeden Anzeigefilter anwenden, den TShark kennt, die vollständige Dekodierung und die Bytes eines Frames anzeigen und Frames aus einem geprüften Mitschnitt belegen. Es liest Mitschnitte bis 512 MiB, jeweils 50.000 Frames. Beim Import bleibt die geprüfte Datei im Arbeitsbereich erhalten.
 
 Dieses Plugin ermöglicht dem Agenten, Netzwerk-Aufzeichnungsdateien mit TShark zu analysieren und Live-Verkehr von einer Schnittstelle Ihres Computers aufzuzeichnen. Es beantwortet Fragen zu `.pcap`- und `.pcapng`-Aufzeichnungen des Ethernet-, WLAN- oder USB-Verkehrs eines Boards mit Anzeigefiltern, Feldexport, Protokollstatistiken und Paketdetails und speichert begrenzte Live-Aufzeichnungen in der Workbench.
 
@@ -32,14 +32,17 @@ Der Agent verwendet die Skills `wireshark-analyze` und `wireshark-capture`. Er l
 - „Listen Sie jede CoAP-Anfrage in der Aufzeichnung mit ihrer Zeit und ihrem URI-Pfad auf.“
 - „Zeigen Sie die TCP-Probleme, die die Expertenanalyse meldet, mit Frame-Nummern.“
 - „Dekodieren Sie UDP-Port 5684 als CoAP und exportieren Sie die Codes.“
+- „Zeigen Sie die MQTT-Topics, auf denen das Board veröffentlicht hat, und was es jeweils gesendet hat.“
+- „Was steht in Frame 42? Zeigen Sie seine Bytes.“
+- „Schneiden Sie die Frames 100000 bis 150000 aus captures/big.pcapng heraus.“
 - „Zeichnen Sie 30 Sekunden Verkehr von und zu 192.168.7.10 an Schnittstelle 3 in captures/board.pcapng auf.“
 
 ## Risiko und Freigaben
 
-- **Sicher** (läuft ohne Rückfrage): Lesen einer gespeicherten Aufzeichnung mit beliebigen Filter-, Feld-, Statistik- oder Ausgabeoptionen, Hilfe, Version und Auflisten der Schnittstellen.
-- **Gerät lesen** (fragt im Modus **Nachfragen** nach, läuft in **Auto-Edit** selbstständig): eine Live-Aufzeichnung und jeder Befehl, der eine Datei oder einen Ordner schreibt (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), etwa eine gefilterte Kopie einer Aufzeichnung. Ein Befehl ohne `-r` zeichnet ebenfalls live auf, an der ersten Schnittstelle.
-- **Gerät schreiben** (fragt in **Nachfragen** und **Auto-Edit** nach): eine Option, die dieses Plugin nicht erkennt.
-- **Gesperrt**: Lua-Skripte, die beliebigen Code ausführen können, und RPCAP-Passwörter auf der Befehlszeile, die in Laufprotokollen gespeichert würden.
+- **Sicher** (läuft ohne Rückfrage): Lesen einer gespeicherten Aufzeichnung mit beliebigen Filter-, Feld-, Statistik- oder Ausgabeoptionen, Hilfe, Version, Auflisten der Schnittstellen und `capinfos`.
+- **Gerät lesen** (fragt im Modus **Nachfragen** nach, läuft in **Auto-Edit** selbstständig): eine Live-Aufzeichnung und jeder Befehl, der eine Datei oder einen Ordner schreibt (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), etwa eine gefilterte Kopie einer Aufzeichnung; `editcap`, `mergecap` und `text2pcap`, die eine neue Aufzeichnungsdatei schreiben. Ein Befehl ohne `-r` zeichnet ebenfalls live auf, an der ersten Schnittstelle.
+- **Gerät schreiben** (fragt in **Nachfragen** und **Auto-Edit** nach): eine Option, die dieses Plugin nicht erkennt, und ein Lua-Skript (`-X lua_script`), etwa der Dissektor Ihres eigenen Protokolls, das Code auf Ihrem Computer ausführt.
+- **Gesperrt**: RPCAP-Passwörter auf der Befehlszeile, die in Laufprotokollen gespeichert würden.
 
 ## Grenzen
 

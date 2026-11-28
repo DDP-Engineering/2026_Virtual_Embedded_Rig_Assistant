@@ -2,15 +2,13 @@ schema = 1
 
 id = "REQ-SEC-4e0621b6"
 
-title = "Refuse tshark Lua scripts and command-line RPCAP credentials"
+title = "Refuse command-line RPCAP credentials and ask before a tshark Lua script"
 
 status = "active"
 
-requirement = """
-If a tshark command loads a Lua script through -X lua_script or passes RPCAP credentials with -A, then VERA shall refuse it as blocked in every permission mode without starting a process.
-"""
+requirement = "If a tshark command passes RPCAP credentials with -A, then VERA shall refuse it as blocked in every permission mode without starting a process; a command that loads a Lua script through -X lua_script shall be classified device-write, with a note that the script runs code on this computer."
 
-verification = "Classify -X lua_script and lua_scriptN in separate, grouped and attached forms and -A in both forms as blocked, keep -x and other -X keys at their own risk, and run a blocked command through a bypass replay session to confirm the refusal and that no process starts."
+verification = "Classify -A in both forms as blocked and -X lua_script and lua_scriptN in separate, grouped and attached forms as device-write, keep -x and other -X keys at their own risk, and run the blocked command through a bypass replay session to confirm the refusal and that no process starts."
 
 affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml", "05_Software/src/libraries/shared/src/tshark-options.ts"]
 
@@ -23,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-11
-updated = 2026-11-11
+updated = 2026-11-28

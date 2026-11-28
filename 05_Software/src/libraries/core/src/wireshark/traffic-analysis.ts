@@ -48,7 +48,7 @@ export const trafficCapabilities = {
   endpointLayers: ["ethernet", "ipv4", "ipv6", "tcp", "udp"],
   timingProtocols: ["dns", "http"],
   followTransports: ["tcp", "udp"],
-  payloadView: "verified_local_capture_only",
+  payloadView: ["text_per_record", "hex_per_record"],
   nativeSupport: "checked_when_requested",
   limits: trafficLimits,
 } as const;
@@ -170,7 +170,13 @@ export async function analyzeTraffic(
       throw new CaptureError("traffic_interval_limit", "Use a shorter window or a larger interval.");
   }
   const selection =
-    args.operation === "statistics" ? args.statistic : { transport: args.transport, stream: args.stream };
+    args.operation === "statistics"
+      ? args.statistic
+      : {
+          transport: args.transport,
+          stream: args.stream,
+          ...(args.payload ? { payload: args.payload } : {}),
+        };
   const limit = args.limit ?? 12;
   const querySha256 = createHash("sha256")
     .update(JSON.stringify({ capture, analysis, selection, window, scanLimit, limit }))
@@ -216,6 +222,7 @@ export async function analyzeTraffic(
           scoped,
           await readNativeFollow(native, snapshot, analysis, scanLimit, args.transport, args.stream),
           args.transport,
+          args.payload,
         );
   const coverageDetails = tallyCoverage(scoped, scanned, args.window);
   const { timeOrigin, ...scopeDetails } = coverageDetails;

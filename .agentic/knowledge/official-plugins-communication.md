@@ -34,7 +34,8 @@ device commands follow their own program risk and approval rules.
 
 ## Public interface
 
-- `wireshark-dumpcap` 0.1.0 is find-only and optional in the Wireshark pack. Discovery probes Dumpcap
+- `wireshark-dumpcap` 0.2.0 is find-only and optional in the Wireshark pack, with the skill
+  `wireshark-rolling-capture` (its limits, and tshark -i as the ordinary capture path). Discovery probes Dumpcap
   4.2 or later and lists local devices. The prepared Start tool binds the selected ID, numeric BPF
   filter, duration and byte/retention limits to an explicit user approval. The control tool provides
   session-owned status and Stop. The short form waits in the foreground. Rolling capture returns an
@@ -64,7 +65,7 @@ device commands follow their own program risk and approval rules.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.10.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.11.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -72,9 +73,13 @@ device commands follow their own program risk and approval rules.
   safe; `<capture>` (-i/--source/-I/-L/--list-time-stamp-types, or neither -r nor info) device-read; `<unknown>`
   (unrecognised or ambiguous) device-write; `<write>` (-w to a file, --export-objects,
   --export-tls-session-keys, --log-file) device-read;
-  `<execute>` (-X lua_script*) and `<credentials>` (-A) blocked. Skills wireshark-analyze (overview,
-  filters, field export, statistics, frame citations) and wireshark-capture (tshark -D, confirmed interface,
-  capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
+  `<execute>` (-X lua_script*) device-write; `<credentials>` (-A) blocked. The capture-file utilities
+  run as programs too: `capinfos` safe, `editcap`, `mergecap` and `text2pcap` device-read (each writes a
+  capture file). Skills wireshark-analyze (the typed tool for cited rows, tshark itself for everything
+  else, windows past frame 50,000, cuts of large files with editcap, TLS key logs and Lua dissectors) and
+  wireshark-capture (tshark -D, interface by number or name, optional capture filter, -a duration or -c
+  bound, background capture around an action, ring buffer, saved .pcapng, tcpdump on a Raspberry Pi
+  through pi-tool). Windows replay uses the real TShark and the
   generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captures self-sent loopback datagrams after
   approval on Windows/Npcap. Native Linux live capture remains unverified. `-o extcap.*` credential values are not refused.
 
@@ -99,7 +104,17 @@ device commands follow their own program risk and approval rules.
   inspection, queries, frame details and reference verification. Reference verification uses the
   stored bytes independently of externally discovered TShark. The capture contract includes
   SHA-256, frame number, available interface and timestamp, version, profile, filter and coverage.
-  Query rows and frame details carry opaque frame refs for assistant citations. Desktop reopens a
+  Query rows and frame details carry opaque frame refs for assistant citations.
+  `query` and `frame` take up to 24 fields - any field TShark knows; there is no field or filter list in
+  VERA, and TShark's own refusal comes back as `field_unavailable` or `invalid_filter` with its reason.
+  `frame` reads any frame number directly and returns with `tree`/`bytes` the `-V` tree (12,000 chars) and
+  `-x` dump (6,000 chars). `scanFrom` moves the 50,000-frame scan window (`coverage.scanFrom`), so
+  `numbers()` reads frames after a start. A capture that is only read may be `analysisBytes` (512 MiB);
+  import and the capture-file operations keep `captureBytes` (64 MiB). An operation has 120 s.
+  The model reads a packet page compact (`model-output.ts` `compactPackets`): `columns` once and `rows`
+  (frame, time, bytes, optional captured and interface, ref, the fields as text, list or null, optional
+  cut); the retained tool record keeps whole packets and `citations.ts` `rowFrames` resolves a cited ref
+  from either form. Desktop reopens a
   cited source or managed file through its owner, checks the exact bytes and packet in a private
   snapshot, then starts the installed Wireshark Desktop with the file's own frame number. It preserves
   applicable display filters and visibly adds the frame when a filter would hide it. Desktop removes
@@ -110,7 +125,8 @@ device commands follow their own program risk and approval rules.
   interval counts and rates, expert codes, TCP and checksum observations, DNS/HTTP response timing,
   and TCP/UDP follow metadata. The scope carries saved observation interfaces, filter, time window,
   applicable native preferences and completeness. Follow returns counts and frame evidence from
-  the native tap in stream order. The verified local capture holds exact payload for Wireshark Desktop.
+  the native tap in stream order and, with `payload: text|hex`, the first 512 bytes of each record
+  (`payloadCut` beyond); without the option a stream shows byte counts only.
 
 - The typed `automotive` operation profiles saved DoIP, SOME/IP and SOME/IP-SD. Native
   ordered protocol nodes provide per-PDU header and SD entry metadata, payload lengths and
@@ -279,7 +295,7 @@ device commands follow their own program risk and approval rules.
 - `REQ-PLAT-e0466566` — real adapter and Linux vcan0 acceptance (pending hardware/host).
 
 - `REQ-FUNC-3a49793a` / `REQ-REL-0cc3c9ba` — find-only TShark discovery with version, missing hint and no download.
-- `REQ-SEC-3fa7a69c` / `REQ-SEC-4e0621b6` — tshark option-role risk; Lua scripts and -A credentials blocked.
+- `REQ-SEC-3fa7a69c` / `REQ-SEC-4e0621b6` — tshark option-role risk; a Lua script asks (device-write), -A credentials blocked.
 - `REQ-UX-c68ec8b8` / `REQ-TEST-1fbadc3c` — analysis/capture skills; real-TShark replay of the sample capture.
 - `REQ-PLAT-0b1587fd` — approved bounded live capture (opt-in loopback test; Windows run, Linux pending).
 - `REQ-PLAT-c2323ad5` — capture-file analysis on Linux x64 (manual, pending a Linux host with tshark).

@@ -9,7 +9,6 @@ import {
 } from "@vera/shared";
 import { z } from "zod";
 import type { ProgramRunner } from "../plugins/runner.js";
-import { automotiveFields } from "./automotive-fields.js";
 
 export class CaptureError extends Error {
   constructor(
@@ -30,122 +29,21 @@ export const defaultFields = [
   "udp.srcport",
   "udp.dstport",
 ];
-const details = [
-  ...defaultFields,
-  "frame.cap_len",
-  "eth.src",
-  "eth.dst",
-  "eth.type",
-  "vlan.id",
-  "ip.proto",
-  "ip.ttl",
-  "ipv6.src",
-  "ipv6.dst",
-  "ipv6.nxt",
-  "tcp.flags",
-  "tcp.stream",
-  "udp.stream",
-  "udp.length",
-  "icmp.type",
-  "icmp.code",
-  "arp.opcode",
-  "dns.id",
-  "dns.flags.response",
-  "dns.qry.name",
-  "dns.qry.type",
-  "http.request.method",
-  "http.response.code",
-  "tls.handshake.type",
-  "coap.code",
-  "coap.type",
-  "coap.mid",
-  "coap.opt.uri_path_recon",
-  "mbtcp.trans_id",
-  "modbus.func_code",
-  "modbus.regval_uint16",
-];
-const selectable = new Set([...details, ...automotiveFields]);
 const intrinsic = ["frame.number", "frame.interface_id", "frame.time_epoch", "frame.len", "frame.cap_len"];
 export const emptyPcap = Buffer.from("d4c3b2a1020004000000000000000000ffff000001000000", "hex");
-const filterFields = new Set([
-  ...selectable,
-  ...intrinsic,
-  "ip.addr",
-  "ipv6.addr",
-  "eth.addr",
-  "udp.port",
-  "tcp.port",
-  "tcp.flags.syn",
-  "tcp.flags.ack",
-  "tcp.flags.reset",
-]);
-const textFields = new Set([
-  "frame.protocols",
-  "dns.qry.name",
-  "http.request.method",
-  "coap.opt.uri_path_recon",
-]);
-const comparisons = new Set([
-  "==",
-  "!=",
-  ">",
-  "<",
-  ">=",
-  "<=",
-  "eq",
-  "ne",
-  "gt",
-  "lt",
-  "ge",
-  "le",
-  "contains",
-  "matches",
-  "in",
-]);
-const logical = new Set(["&&", "||", "^^", "!", "and", "or", "xor", "not", "(", ")"]);
 
-function assertOfflineFilter(filter: string) {
-  const tokens =
-    filter.match(/"(?:\\.|[^"\\])*"|[!<>=]=|&&|\|\||\^\^|-?[a-zA-Z0-9_:][a-zA-Z0-9_.:/-]*|[^\s]/g) ?? [];
-  const literal =
-    /^-?(?:0x[0-9a-f]+|\d+(?:\.\d+)?|(?:\d{1,3}\.){3}\d{1,3}(?:\/\d+)?|[0-9a-f:.]*:[0-9a-f:.]+(?:\/\d+)?)$/i;
-  const allowed = tokens.every((token, index) => {
-    const prev = tokens[index - 1] ?? "";
-    const next = tokens[index + 1] ?? "";
-    if (comparisons.has(token)) {
-      if (!filterFields.has(prev)) return false;
-      if (token === "contains" || token === "matches") return textFields.has(prev);
-      return true;
-    }
-    if (token.startsWith('"')) return comparisons.has(prev) && textFields.has(tokens[index - 2] ?? "");
-    if (
-      logical.has(token) ||
-      filterFields.has(token) ||
-      literal.test(token) ||
-      token === "true" ||
-      token === "false" ||
-      token === "{" ||
-      token === "}" ||
-      token === ","
-    )
-      return true;
-    // An unqualified protocol name is a presence predicate. Values are restricted to offline literals.
-    return /^[a-z][a-z0-9_-]*$/i.test(token) && (!prev || logical.has(prev)) && (!next || logical.has(next));
-  });
-  if (!allowed)
-    throw new CaptureError(
-      "filter_unavailable",
-      "Use protocol presence and comparisons on offline fields with numeric addresses. Raw data and hostname lookups are unavailable.",
-    );
+/** The fields of a query, each once. TShark itself says which names it does not know. */
+export function selectedFields(fields: string[] = defaultFields) {
+  return [...new Set(fields)];
 }
 
-export function selectedFields(fields: string[] = defaultFields) {
-  if (fields.some((field) => !selectable.has(field)))
-    throw new CaptureError(
-      "field_unavailable",
-      "Select fields from the offline field catalog. Raw fields are unavailable.",
-    );
-  return [...new Set(fields)];
+/** What TShark wrote about a refused field or filter, as one line the agent can act on. */
+function nativeReason(stderr: string) {
+  const lines = stderr
+    .split(/\r?\n/)
+    .map((line) => inertText(line.replace(/^tshark(?:\.exe)?:\s*/i, "").trim()))
+    .filter((line) => line && !/^\^|^~+$/.test(line));
+  return lines.join(" ").slice(0, 300);
 }
 
 export function captureProfileEnvironment(folder: string) {
@@ -269,10 +167,15 @@ export class OfflineTshark {
         "tshark_unavailable",
         "TShark did not run successfully. Check the external Wireshark installation.",
       );
+    if (phase === "filter" && /(?:not valid fields|fields aren't valid|isn't a valid field)/i.test(stderr))
+      throw new CaptureError(
+        "field_unavailable",
+        `TShark ${analysis?.version ?? ""} does not know a selected field (${nativeReason(stderr)}). Find field names with discover.`,
+      );
     if (phase === "filter")
       throw new CaptureError(
         "invalid_filter",
-        "TShark rejected the display filter. Check the field, operator and parentheses.",
+        `TShark rejected the display filter: ${nativeReason(stderr) || "check the field, operator and parentheses"}.`,
       );
     if (phase === "capture")
       throw new CaptureError(
@@ -303,7 +206,6 @@ export class OfflineTshark {
   }
 
   async validate(analysis: CaptureAnalysis, fields: readonly string[] = ["frame.number"]) {
-    if (analysis.filter) assertOfflineFilter(analysis.filter);
     await this.run(
       [
         ...this.read(join(this.folder, "empty.pcap"), analysis, 1, analysis.filter ?? undefined),
@@ -317,11 +219,14 @@ export class OfflineTshark {
     );
   }
 
-  async numbers(path: string, analysis: CaptureAnalysis, maxFrames: number, filter?: string) {
+  /** The frame numbers after frame `from` up to frame `maxFrames`, optionally those a filter matches. */
+  async numbers(path: string, analysis: CaptureAnalysis, maxFrames: number, filter?: string, from = 0) {
+    const window = from > 0 ? `frame.number > ${from}` : undefined;
+    const scope = window && filter ? `(${window}) && (${filter})` : (window ?? filter);
     const stdout = await this.run(
-      [...this.read(path, analysis, maxFrames, filter), "-T", "fields", "-e", "frame.number"],
+      [...this.read(path, analysis, maxFrames, scope), "-T", "fields", "-e", "frame.number"],
       "capture",
-      (captureLimits.scanFrames + 1) * 8,
+      (captureLimits.scanFrames + 2) * 13,
     );
     const lines = stdout.trimEnd().split(/\r?\n/).filter(Boolean);
     const numbers = lines.map(Number);
@@ -331,7 +236,7 @@ export class OfflineTshark {
           !/^[1-9]\d*$/.test(lines[i] ?? "") ||
           !Number.isSafeInteger(n) ||
           n > maxFrames ||
-          n <= (numbers[i - 1] ?? 0),
+          n <= (numbers[i - 1] ?? from),
       )
     )
       throw invalidOutput();
@@ -382,6 +287,8 @@ export class OfflineTshark {
       throw invalidOutput();
     }
     const parsed = schema.safeParse(output);
+    // A frame past the end of the capture gives no rows at all.
+    if (parsed.success && parsed.data.length === 0) return [];
     if (!parsed.success || parsed.data.length !== frames.length) throw invalidOutput();
     const packets: CapturePacket[] = [];
     for (const [
@@ -427,18 +334,33 @@ export class OfflineTshark {
     return packets;
   }
 
+  /** One frame as TShark prints it: the dissection tree (`-V`) or the hex dump of its bytes (`-x`). */
+  async frameText(path: string, analysis: CaptureAnalysis, frame: number, view: "tree" | "bytes") {
+    const limit = view === "tree" ? captureLimits.frameTreeChars : captureLimits.frameHexChars;
+    const stdout = await this.run(
+      [...this.read(path, analysis, frame, `frame.number == ${frame}`), view === "tree" ? "-V" : "-x"],
+      "capture",
+      4 * 1024 * 1024,
+      analysis,
+    );
+    const text = inertLines(stdout).trimEnd();
+    return text.length > limit
+      ? `${text.slice(0, limit)}\n[${text.length - limit} more characters; select fields or read the frame with tshark]`
+      : text;
+  }
+
   async discover(args: Extract<WiresharkCaptureArgs, { operation: "discover" }>) {
     const output = await this.run(
       ["-G", args.kind === "decoders" ? "decodes" : args.kind],
       "discovery",
-      32 * 1024 * 1024,
+      64 * 1024 * 1024,
     );
     const entries = new Map<string, { name: string; description: string; transport?: string }>();
     for (const row of output.split(/\r?\n/)) {
       const [first, second, third, fourth] = row.split("\t");
       if (!first || !second || !third) continue;
       if (args.kind === "fields") {
-        if (first === "F" && fourth && selectable.has(third))
+        if (first === "F" && fourth && /^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,79}$/.test(third))
           entries.set(third, { name: third, description: inertText(second).slice(0, 160) });
       } else if (args.kind === "protocols") {
         if (/^[\w.-]{1,80}$/.test(third))
@@ -466,6 +388,14 @@ function intrinsicNumber(values: string[] | undefined) {
 function inertText(value: string) {
   // biome-ignore lint/suspicious/noControlCharactersInRegex: packet text must not carry display controls.
   return value.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "\ufffd");
+}
+
+/** Multi-line native text with its line ends kept and every other control character made inert. */
+function inertLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => inertText(line.replace(/\t/g, "    ")))
+    .join("\n");
 }
 
 export function invalidOutput() {

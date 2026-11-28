@@ -1,8 +1,14 @@
-import type { TrafficTransport } from "@vera/shared";
+import { captureLimits, type TrafficTransport } from "@vera/shared";
 import { observedFlags } from "./diagnostics.js";
 import { CaptureError, invalidOutput } from "./native.js";
 import { count, counts, endpointPair, type TrafficProjection, type TrafficRow } from "./statistics.js";
 import { type NativeFollow, nativeTime, type TrafficAddress, type TrafficFact } from "./traffic-native.js";
+
+/** The first bytes of one stream record as the model reads them: hex, or text with other bytes as dots. */
+function shown(data: Buffer, view: "text" | "hex") {
+  const part = data.subarray(0, captureLimits.streamRecordBytes);
+  return view === "hex" ? part.toString("hex") : part.toString("latin1").replace(/[^\x20-\x7e\r\n\t]/g, ".");
+}
 
 function same(a: TrafficAddress, b: TrafficAddress) {
   return a.address === b.address && a.port === b.port;
@@ -13,6 +19,7 @@ export function streams(
   scoped: TrafficFact[],
   native: NativeFollow,
   transport: TrafficTransport,
+  payload?: "text" | "hex",
 ): TrafficProjection {
   const allByNumber = new Map(scanned.map((fact) => [fact.frame.number, fact]));
   const inScope = new Set(scoped.map((fact) => fact.frame.number));
@@ -124,6 +131,12 @@ export function streams(
       direction: totals.direction,
       payloadBytes: record.kind === "data" ? record.bytes : 0,
       missingBytes: record.kind === "gap" ? record.bytes : 0,
+      ...(payload && record.kind === "data"
+        ? {
+            payload: shown(record.data, payload),
+            ...(record.data.length > captureLimits.streamRecordBytes ? { payloadCut: true } : {}),
+          }
+        : {}),
       frames: [record.frame],
     });
   }
@@ -153,7 +166,7 @@ export function streams(
       nativeGapRecords,
       recordsOutsideScope,
       unassociatedRecords,
-      payloadView: "verified_local_capture_only",
+      payloadView: payload ? `${payload}_per_record` : "verified_local_capture_only",
       basis: "native_follow_records_anchored_to_selected_frames",
     },
     rows,

@@ -1,6 +1,6 @@
 format: 1
 id: wireshark-tshark
-version: 0.10.0
+version: 0.11.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wireshark (TShark)
 summary: Analyse network capture files and capture live traffic with TShark.
@@ -58,9 +58,11 @@ programs:
     version: { args: [--version], match: '^Text2pcap \(Wireshark\) (\d+\.\d+\.\d+)' }
 # tshark syntax projects option roles: <info> exits before capturing, <file> reads -r, <write> names an output
 # file or folder (-w, --export-objects, --export-tls-session-keys, --log-file), <capture> opens an interface (or
-# the default one when no capture file is read), <unknown> is an unrecognised option.
+# the default one when no capture file is read), <execute> loads a Lua script, <unknown> is an unrecognised option.
+# The capture-file utilities read saved files; all but capinfos write a new one.
 rules:
-  - { match: "{capinfos,editcap,mergecap,text2pcap} *", risk: blocked, note: "Use the typed Wireshark tools for saved capture files and hexdumps." }
+  - { match: "capinfos *", risk: safe, note: "Reads saved capture files and prints their format, packet count, times and hashes." }
+  - { match: "{editcap,mergecap,text2pcap} *", risk: device-read, note: "Writes the capture file the command names from saved captures or a hexdump - a cut, a merge or a conversion; the path may lie outside the workbench." }
   - { match: "tshark * <info> *", risk: safe }
   - { match: "tshark * <file> *", risk: safe, note: Reads a saved capture file. }
   - { match: "tshark * <write> *", risk: device-read, note: "Writes the file or folder that -w, --export-objects, --export-tls-session-keys or --log-file names; it may lie outside the workbench." }
@@ -68,5 +70,5 @@ rules:
     risk: device-read
     note: Captures live traffic. Without -r tshark captures on the first interface. Needs Npcap on Windows or dumpcap capture permissions on Linux; extcap interfaces such as sshdump or rpcap reach other hosts.
   - { match: "tshark * <unknown> *", risk: device-write, note: An option this plugin does not recognise; check it against tshark -h. }
-  - { match: "tshark * <execute> *", risk: blocked, note: "Lua scripts (-X lua_script) can run arbitrary code and are unavailable. Use display filters, -d decode-as rules or field export instead." }
+  - { match: "tshark * <execute> *", risk: device-write, note: "Loads the Lua script that -X lua_script names into TShark, for example the dissector of a project's own protocol. A Lua script can run any code on this computer." }
   - { match: "tshark * <credentials> *", risk: blocked, note: RPCAP passwords on the command line would be stored in run logs. Configure remote capture outside VERA. }

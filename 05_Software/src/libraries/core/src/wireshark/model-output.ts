@@ -33,6 +33,8 @@ const modelResult = z.looseObject({
   coverage: captureCoverageSchema.optional(),
   packet: capturePacketSchema.optional(),
   packets: z.array(capturePacketSchema).optional(),
+  tree: z.string().optional(),
+  hex: z.string().optional(),
   page: z
     .strictObject({
       querySha256: captureQueryCursorSchema.shape.querySha256,
@@ -141,6 +143,51 @@ function maskAutomotive(
     masked = JSON.stringify(result);
   }
   return masked.length <= limit ? masked : JSON.stringify({ isError: true, reason: "result_limit" });
+}
+
+/**
+ * Packets as the model reads them: the column names once, then one row per frame. A field's value is its text,
+ * a list when the frame holds several, null when the frame has none. The retained tool record keeps every
+ * packet whole, so a cited ref resolves against it.
+ */
+function compactPackets(result: z.infer<typeof modelResult>) {
+  const { packets, packet, fields, ...rest } = result;
+  const shown = packets ?? (packet ? [packet] : undefined);
+  if (!shown) return result;
+  const names =
+    Array.isArray(fields) && fields.every((name): name is string => typeof name === "string")
+      ? fields
+      : Object.keys(shown[0]?.fields ?? {});
+  // Left out only when every frame is on interface 0, so a row still names its frame exactly.
+  const interfaces = shown.some(({ frame }) => frame.interfaceId !== 0);
+  const clipped = shown.some((item) => item.capturedBytes < item.wireBytes);
+  const cut = shown.some((item) => item.truncated);
+  return {
+    ...rest,
+    columns: [
+      "frame",
+      "time",
+      "bytes",
+      ...(clipped ? ["captured"] : []),
+      ...(interfaces ? ["interface"] : []),
+      "ref",
+      ...names,
+      ...(cut ? ["cut"] : []),
+    ],
+    rows: shown.map((item) => [
+      item.frame.number,
+      item.frame.timestampEpoch,
+      item.wireBytes,
+      ...(clipped ? [item.capturedBytes] : []),
+      ...(interfaces ? [item.frame.interfaceId] : []),
+      item.ref ?? null,
+      ...names.map((name) => {
+        const values = item.fields[name] ?? [];
+        return values.length > 1 ? values : (values[0] ?? null);
+      }),
+      ...(cut ? [item.truncated] : []),
+    ]),
+  };
 }
 
 function maskPacket(packet: CapturePacket, scrub: (text: string) => string) {
@@ -259,6 +306,7 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
       for (const endpoint of [row.a, row.b, row.endpoint]) {
         if (endpoint) endpoint.address = scrub(endpoint.address).slice(0, captureLimits.valueChars);
       }
+      if (typeof row.payload === "string") row.payload = scrub(row.payload);
     }
     let masked = JSON.stringify(result);
     while (masked.length > limit && view.rows.length > 1) {
@@ -282,7 +330,10 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
     result.coverage.partial = true;
     result.coverage.truncated = true;
   }
-  let masked = JSON.stringify(result);
+  if (result.tree) result.tree = scrub(result.tree);
+  if (result.hex) result.hex = scrub(result.hex);
+  const render = () => JSON.stringify(compactPackets(result));
+  let masked = render();
   if (result.coverage && masked.length > limit && packets.length) {
     result.coverage.partial = true;
     result.coverage.truncated = true;
@@ -292,7 +343,7 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
       if (!last) break;
       result.page.next = { querySha256: result.page.querySha256, afterFrame: last.frame.number };
       result.coverage.returned = packets.length;
-      masked = JSON.stringify(result);
+      masked = render();
     }
     if (masked.length > limit && packets.length === 1) {
       const first = packets[0];
@@ -300,7 +351,9 @@ export function maskCaptureOutput(text: string, scrub: (text: string) => string,
         first.fields = {};
         first.truncated = true;
       }
-      masked = JSON.stringify(result);
+      delete result.tree;
+      delete result.hex;
+      masked = render();
     }
   }
   if (result.entries && result.offset !== undefined) {

@@ -175,16 +175,18 @@ async function captureOperation(
     }
   }
   if (args.operation === "import") assertWritable();
-  const capture = await snapshotCapture(ctx, source, snapshot, signal);
+  // A capture that is only read may be larger than one that is retained.
+  const capture = await snapshotCapture(
+    ctx,
+    source,
+    snapshot,
+    signal,
+    args.operation === "import" ? captureLimits.captureBytes : captureLimits.analysisBytes,
+  );
   const scanLimit =
     args.operation === "frame"
       ? args.frame
       : (("scanFrames" in args ? args.scanFrames : undefined) ?? captureLimits.scanFrames);
-  if (args.operation === "frame" && scanLimit > captureLimits.scanFrames)
-    throw new CaptureError(
-      "frame_scan_limit",
-      "The frame exceeds the host scan limit. Use a smaller capture.",
-    );
   if (args.operation === "statistics" || args.operation === "follow")
     return analyzeTraffic(
       args,
@@ -227,21 +229,54 @@ async function captureOperation(
       toolLimit(ctx, "toolResultChars"),
       signal,
     );
-  const fields = "fields" in args ? selectedFields(args.fields) : selectedFields();
-  if (analysis.filter || analysis.decodeAs.length) await native.validate(analysis);
-  const lastPosition = scanLimit + 1;
-  const all = await native.numbers(snapshot, analysis, lastPosition);
+  const chosen = "fields" in args ? args.fields : undefined;
+  const fields = selectedFields(chosen);
+  if (analysis.filter || analysis.decodeAs.length || chosen) await native.validate(analysis, fields);
+  if (args.operation === "frame") {
+    // One frame is read directly, wherever it lies in the capture.
+    const [packet] = await native.packets(snapshot, analysis, [args.frame], fields, capture.sha256);
+    if (!packet)
+      throw new CaptureError(
+        "frame_not_found",
+        "The requested frame is absent. Check the capture reference and frame number.",
+      );
+    return {
+      capture,
+      analysis,
+      fields,
+      packet: { ...packet, ref: captureCitation(capture, packet.frame, analysis) },
+      ...(args.tree ? { tree: await native.frameText(snapshot, analysis, args.frame, "tree") } : {}),
+      ...(args.bytes ? { hex: await native.frameText(snapshot, analysis, args.frame, "bytes") } : {}),
+      coverage: {
+        scope: "single_frame",
+        scannedThrough: args.frame,
+        scanLimit,
+        scanComplete: false,
+        matchedInScope: 1,
+        returned: 1,
+        partial: packet.truncated,
+        truncated: packet.truncated,
+      } satisfies CaptureCoverage,
+      packetData: "untrusted_capture_data",
+    };
+  }
+  // The scan window: the `scanLimit` frames after frame `scanFrom`.
+  const scanFrom = "scanFrom" in args ? (args.scanFrom ?? 0) : 0;
+  const windowEnd = scanFrom + scanLimit;
+  const all = await native.numbers(snapshot, analysis, windowEnd + 1, undefined, scanFrom);
   const lastSeen = all.at(-1) ?? 0;
-  const scanComplete = lastSeen < lastPosition;
-  const scannedThrough = Math.min(lastSeen, scanLimit);
+  const scanComplete = lastSeen <= windowEnd;
+  const inWindow = all.filter((number) => number <= windowEnd);
+  const scannedThrough = inWindow.at(-1) ?? 0;
   const coverage: CaptureCoverage = {
-    scope: args.operation === "frame" ? "single_frame" : analysis.filter ? "display_filter" : "capture",
+    scope: analysis.filter ? "display_filter" : "capture",
+    ...(scanFrom ? { scanFrom } : {}),
     scannedThrough,
     scanLimit,
     scanComplete,
-    matchedInScope: scannedThrough,
+    matchedInScope: inWindow.length,
     returned: 0,
-    partial: !scanComplete && args.operation !== "frame",
+    partial: !scanComplete || scanFrom > 0,
     truncated: false,
   };
   if (args.operation === "import" && writeAccess) {
@@ -261,33 +296,10 @@ async function captureOperation(
     return { capture: reference, analysis, coverage };
   }
   if (args.operation === "inspect") return { capture, analysis, coverage };
-  if (args.operation === "frame") {
-    if (args.frame > scannedThrough)
-      throw new CaptureError(
-        "frame_not_found",
-        "The requested frame is absent. Check the capture reference and frame number.",
-      );
-    const [packet] = await native.packets(snapshot, analysis, [args.frame], fields, capture.sha256);
-    if (!packet) throw new CaptureError("frame_not_found", "The requested frame is absent.");
-    return {
-      capture,
-      analysis,
-      fields,
-      packet: { ...packet, ref: captureCitation(capture, packet.frame, analysis) },
-      coverage: {
-        ...coverage,
-        matchedInScope: 1,
-        returned: 1,
-        partial: packet.truncated,
-        truncated: packet.truncated,
-      },
-      packetData: "untrusted_capture_data",
-    };
-  }
   if (args.operation !== "query")
     throw new CaptureError("storage_read_only", "Capture storage is unavailable.");
   const querySha256 = createHash("sha256")
-    .update(JSON.stringify({ capture, analysis, fields, scanLimit, limit: args.limit ?? 12 }))
+    .update(JSON.stringify({ capture, analysis, fields, scanLimit, scanFrom, limit: args.limit ?? 12 }))
     .digest("hex");
   if (args.cursor && args.cursor.querySha256 !== querySha256)
     throw new CaptureError(
@@ -295,8 +307,8 @@ async function captureOperation(
       "This cursor belongs to a different capture or query. Start at the first page.",
     );
   const inScope = analysis.filter
-    ? await native.numbers(snapshot, analysis, scanLimit, analysis.filter)
-    : all.filter((number) => number <= scanLimit);
+    ? await native.numbers(snapshot, analysis, windowEnd, analysis.filter, scanFrom)
+    : inWindow;
   if (args.cursor && !inScope.includes(args.cursor.afterFrame))
     throw new CaptureError(
       "cursor_mismatch",

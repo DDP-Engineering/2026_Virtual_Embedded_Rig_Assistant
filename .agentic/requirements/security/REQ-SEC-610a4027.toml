@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-SEC-610a4027"
-title = "Keep stream content in the verified local capture"
+title = "Return packet and stream content only when a call asks for it"
 status = "active"
-requirement = "When VERA returns traffic or stream evidence to a model, it shall project only bounded typed metadata and masked addresses while leaving exact payload bytes in the verified local capture."
-verification = "Use distinctive fixture payload and input masking, validate exact source citations and check the result and recorded replay for disclosure."
+requirement = "When VERA returns traffic or stream evidence to a model, it shall project bounded typed metadata and masked addresses, and shall return payload bytes only where the call asks for them - a selected field, a frame's tree or bytes, or a followed stream's payload - bounded and passed through the agent mask."
+verification = "Use distinctive fixture payload and input masking, validate exact source citations, check that statistics and a stream followed without the payload option disclose none of it, and that the payload option returns it."
 affected_paths = ["05_Software/src/libraries/core/src/wireshark/model-output.ts","05_Software/src/libraries/core/src/wireshark/streams.ts","05_Software/src/libraries/core/src/wireshark/citations.ts","05_Software/src/libraries/core/src/wireshark/desktop.ts","05_Software/src/libraries/core/src/wireshark/traffic-native.ts","05_Software/src/libraries/shared/src/wireshark-traffic.ts","05_Software/src/libraries/shared/src/wireshark.ts"]
 linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts","05_Software/src/libraries/core/src/agent/citations.test.ts","05_Software/src/libraries/core/src/wireshark/desktop.test.ts"]
 created = 2026-11-25
-updated = 2026-11-25
+updated = 2026-11-28

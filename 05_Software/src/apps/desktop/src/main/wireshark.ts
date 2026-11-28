@@ -114,7 +114,6 @@ function openingError(error: unknown, signal: AbortSignal): VeraError {
       case "frame_mismatch":
         return report("CONFLICT", "wireshark.invalidCitation");
       case "invalid_filter":
-      case "filter_unavailable":
         return report("INVALID", "wireshark.invalidFilter");
       case "invalid_decode_as":
         return report("CONFLICT", "wireshark.invalidCitation");

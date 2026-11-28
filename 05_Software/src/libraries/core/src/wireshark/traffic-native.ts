@@ -43,7 +43,7 @@ export type TrafficFact = {
 };
 export type TrafficAddress = { address: string; port: number | null };
 export type NativeFollowRecord =
-  | { frame: number; peer: 0 | 1; kind: "data"; bytes: number }
+  | { frame: number; peer: 0 | 1; kind: "data"; bytes: number; data: Buffer }
   | { frame: number; peer: 0 | 1; kind: "gap"; bytes: number | null };
 export type NativeFollow = {
   peers: [TrafficAddress | null, TrafficAddress | null];
@@ -201,11 +201,13 @@ export async function readNativeFollow(
     let payloadBytes = 0;
     let firstLine = "";
     let dataLines = 0;
+    const encoded: string[] = [];
     while (lines[offset]?.startsWith("      ")) {
       const line = read(/^ {6}(\S{1,128})$/);
       if (!base64Line.test(line)) throw invalidOutput();
       if (!dataLines) firstLine = line;
       dataLines++;
+      encoded.push(line);
       payloadBytes += (line.length / 4) * 3 - (line.endsWith("==") ? 2 : line.endsWith("=") ? 1 : 0);
     }
     if (!payloadBytes || frame < 1 || frame > maxFrames || !peers[peer]) throw invalidOutput();
@@ -225,7 +227,13 @@ export async function readNativeFollow(
         bytes: Number.isSafeInteger(bytes) && bytes > 0 ? bytes : null,
       });
     } else {
-      records.push({ frame, peer, kind: "data", bytes: payloadBytes });
+      records.push({
+        frame,
+        peer,
+        kind: "data",
+        bytes: payloadBytes,
+        data: Buffer.concat(encoded.map((line) => Buffer.from(line, "base64"))),
+      });
     }
   }
   return { peers, records };

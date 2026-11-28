@@ -12,9 +12,9 @@ Pentru analiza rețelei, întreabă despre Ethernet și VLAN, IPv4 și IPv6, ARP
 
 Pentru trafic Automotive Ethernet salvat, cere agentului o analiză DoIP, SOME/IP sau Service Discovery. Poate afișa direcția, VLAN-ul, câmpurile PDU și cadrele contributoare. Indică portul serviciului SOME/IP când este necesar.
 
-Instrumentul offline listează conversațiile și endpointurile, măsoară traficul și timpii de răspuns DNS sau HTTP și afișează diagnosticele pe cadre. Deschide un cadru citat în Wireshark Desktop pentru a examina local conținutul fluxului.
+Instrumentul offline listează conversațiile și endpointurile, măsoară traficul și timpii de răspuns DNS sau HTTP și afișează diagnosticele pe cadre. Poate arăta și ce a trimis fiecare parte a unui flux TCP sau UDP, ca text sau hex.
 
-Folosește instrumentul offline pentru a selecta câmpuri, a filtra pachete și a cita cadre dintr-o captură verificată. Importă o captură pentru a păstra fișierul verificat în spațiul de lucru.
+Folosește instrumentul offline pentru a selecta orice câmp și a aplica orice filtru de afișare pe care TShark le cunoaște, a arăta decodarea completă și octeții unui cadru și a cita cadre dintr-o captură verificată. Citește capturi de până la 512 MiB, câte 50.000 de cadre o dată. Importă o captură pentru a păstra fișierul verificat în spațiul de lucru.
 
 Acest plugin îi permite agentului să analizeze fișiere de captură de rețea cu TShark și să captureze trafic live de pe o interfață a computerului tău. Răspunde la întrebări despre capturi `.pcap` și `.pcapng` ale traficului Ethernet, Wi-Fi sau USB al unei plăci, cu filtre de afișare, export de câmpuri, statistici de protocol și detalii de pachete, și salvează în workbench capturi live limitate.
 
@@ -32,14 +32,17 @@ Agentul folosește skill-urile `wireshark-analyze` și `wireshark-capture`. Cite
 - „Listează fiecare cerere CoAP din captură cu timpul și calea URI.”
 - „Arată problemele TCP raportate de analiza expert, cu numerele cadrelor.”
 - „Decodează portul UDP 5684 ca CoAP și exportă codurile.”
+- „Arată topicurile MQTT pe care a publicat placa și ce a trimis pe fiecare.”
+- „Ce conține cadrul 42? Arată-i octeții.”
+- „Decupează cadrele 100000-150000 din captures/big.pcapng.”
 - „Capturează 30 de secunde de trafic către și dinspre 192.168.7.10 pe interfața 3 în captures/board.pcapng.”
 
 ## Risc și aprobări
 
-- **Sigur** (rulează fără să întrebe): citirea unei capturi salvate cu orice filtru, câmp, statistică sau opțiune de ieșire, ajutorul, versiunea și listarea interfețelor.
-- **Citire dispozitiv** (întreabă în modul **Întreabă**, rulează singur în **Editare automată**): o captură live și orice comandă care scrie un fișier sau un dosar (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), de exemplu o copie filtrată a unei capturi. O comandă fără `-r` capturează și ea live, pe prima interfață.
-- **Scriere dispozitiv** (întreabă în **Întreabă** și **Editare automată**): o opțiune pe care acest plugin nu o recunoaște.
-- **Blocat**: scripturile Lua, care pot rula cod arbitrar, și parolele RPCAP în linia de comandă, care ar fi stocate în logurile rulărilor.
+- **Sigur** (rulează fără să întrebe): citirea unei capturi salvate cu orice filtru, câmp, statistică sau opțiune de ieșire, ajutorul, versiunea, listarea interfețelor și `capinfos`.
+- **Citire dispozitiv** (întreabă în modul **Întreabă**, rulează singur în **Editare automată**): o captură live și orice comandă care scrie un fișier sau un dosar (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), de exemplu o copie filtrată a unei capturi; `editcap`, `mergecap` și `text2pcap`, care scriu un fișier de captură nou. O comandă fără `-r` capturează și ea live, pe prima interfață.
+- **Scriere dispozitiv** (întreabă în **Întreabă** și **Editare automată**): o opțiune pe care acest plugin nu o recunoaște și un script Lua (`-X lua_script`), de exemplu disectorul propriului tău protocol, care rulează cod pe computerul tău.
+- **Blocat**: parolele RPCAP în linia de comandă, care ar fi stocate în logurile rulărilor.
 
 ## Limitări
 

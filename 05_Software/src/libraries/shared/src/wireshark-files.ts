@@ -11,6 +11,7 @@ import {
 export const captureFileLimits = {
   inputBytes: captureLimits.captureBytes,
   outputBytes: captureLimits.captureBytes,
+  exportFields: 10,
   inputs: 8,
   parts: 16,
   chronologicalRuns: 24,
@@ -84,7 +85,12 @@ export const deriveCaptureSchema = z.discriminatedUnion("operation", [
   z.strictObject({ operation: z.literal("reorder"), source, outputFormat }),
   z.strictObject({ operation: z.literal("deduplicate"), source, window }),
   z.strictObject({ operation: z.literal("clean"), source, remove }),
-  z.strictObject({ operation: z.literal("export_fields"), source, fields: captureFieldsSchema, filter }),
+  z.strictObject({
+    operation: z.literal("export_fields"),
+    source,
+    fields: captureFieldsSchema.max(captureFileLimits.exportFields),
+    filter,
+  }),
   z.strictObject({ operation: z.literal("export_pdus"), source, tap, filter }),
   z.strictObject({ operation: z.literal("export_objects"), source, protocol }),
   z.strictObject({ operation: z.literal("import_hexdump"), path: capturePathSchema, hexdumpProfile }),

@@ -32,6 +32,9 @@ const resultSchema = z.object({
   analysis: captureAnalysisSchema,
   packet: capturePacketSchema.optional(),
   packets: z.array(capturePacketSchema).max(captureLimits.pageRows).optional(),
+  // The compact page the model reads: the column names once, then one row per frame.
+  columns: z.array(z.string()).max(64).optional(),
+  rows: z.array(z.array(z.unknown()).max(64)).max(captureLimits.pageRows).optional(),
   traffic: z
     .object({ evidence: z.array(captureTrafficFrameSchema).max(captureLimits.pageRows * 2 + 9) })
     .optional(),
@@ -39,6 +42,23 @@ const resultSchema = z.object({
   networking: z.object({ evidence: captureNetworkingEvidenceSchema }).optional(),
   media: z.object({ evidence: captureMediaEvidenceSchema }).optional(),
 });
+
+/** The cited frames of a compact packet page. The interface column is left out when every frame is on interface 0. */
+function rowFrames(columns: string[], rows: unknown[][], captureSha256: string) {
+  const [number, time, iface, ref] = ["frame", "time", "interface", "ref"].map((name) =>
+    columns.indexOf(name),
+  );
+  return rows.flatMap((row) => {
+    const frame = captureFrameReferenceSchema.safeParse({
+      captureSha256,
+      number: row[number ?? -1],
+      interfaceId: iface === undefined || iface < 0 ? 0 : row[iface],
+      timestampEpoch: row[time ?? -1],
+    });
+    const cited = row[ref ?? -1];
+    return frame.success && typeof cited === "string" ? [{ ref: cited, frame: frame.data }] : [];
+  });
+}
 
 /** Retain the exact local locator before publication applies the agent mask. */
 export function networkingCitationContext(text: string): CaptureNavigationContext | undefined {
@@ -136,7 +156,7 @@ export function issuedCaptureCitations(messages: readonly Message[], lookup?: Ca
         }
         const parsed = resultSchema.safeParse(decoded);
         if (!parsed.success) continue;
-        const { packet, packets, traffic, automotive, networking, media } = parsed.data;
+        const { packet, packets, columns, rows, traffic, automotive, networking, media } = parsed.data;
         const context = networking || media ? lookup?.(message.toolCallId) : undefined;
         const { capture, analysis } = context && "capture" in context ? context : parsed.data;
         if (capture.sha256 !== parsed.data.capture.sha256) continue;
@@ -145,7 +165,7 @@ export function issuedCaptureCitations(messages: readonly Message[], lookup?: Ca
           automotive?.evidence ??
           traffic?.evidence ??
           packets ??
-          (packet ? [packet] : [])) {
+          (packet ? [packet] : columns && rows ? rowFrames(columns, rows, parsed.data.capture.sha256) : [])) {
           add(row, { capture, analysis });
         }
       } catch {
