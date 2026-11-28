@@ -41,7 +41,13 @@ interface Port {
 interface Scenario {
   ports?: Port[];
   open_error?: { errno?: number; message: string };
-  chunks?: (string | { error: string } | { os_error: string })[];
+  chunks?: (string | { error: string } | { os_error: string } | { hex: string })[];
+  /** A port without DTR and RTS, as a simulator's pseudo-terminal is. */
+  no_lines?: boolean;
+  /** What the device prints at each baud rate; "other" is every rate not named. */
+  chunks_by_baud?: Record<string, Scenario["chunks"]>;
+  /** What the device prints after it was written the key. */
+  replies?: Record<string, string>;
 }
 const S3: Port = {
   device: "COM7",
@@ -194,6 +200,25 @@ describe("risk rules", () => {
     for (const args of [["list"], ["list", "--verbose"], ["--version"], ["--help"], ["-h"]])
       expect(classify(...args).risk, args.join(" ")).toBe("safe");
     expect(classify("--version", "capture", "--port", "COM3").risk).toBe("device-write");
+    // Asking a command for its options opens nothing.
+    const help = manifest.programs.serial?.subcommandHelp;
+    for (const command of ["list", "capture", "send"])
+      expect(classifyCommand(manifest.rules ?? [], "serial", [command, "--help"], undefined, help).risk).toBe(
+        "safe",
+      );
+    expect(
+      classifyCommand(
+        manifest.rules ?? [],
+        "serial",
+        ["capture", "--port", "COM3", "--help"],
+        undefined,
+        help,
+      ).risk,
+    ).toBe("device-read");
+  });
+  it("lets a foreground capture run an hour and keeps the default for a send", () => {
+    expect(classify("capture", "--port", "COM7", "--duration", "1800").timeout).toBe(3600);
+    expect(classify("send", "--port", "COM7", "--text", "help").timeout).toBeNull();
   });
   it("captures as device-read with the reset note (REQ-SEC-22dd5e18)", () => {
     for (const args of [
@@ -256,11 +281,22 @@ describe("list", () => {
       [0x303a, 0x0002, "Espressif native USB"],
       [0x10c4, 0xea60, "Silicon Labs CP210x"],
       [0x1a86, 0x7523, "WCH CH340"],
-      [0x1a86, 0x55d4, "WCH CH343"],
+      [0x1a86, 0x55d3, "WCH CH343"],
+      [0x1a86, 0x55d4, "WCH CH9102"],
       [0x0403, 0x6001, "FTDI FT232R"],
       [0x0403, 0x6010, "FTDI FT2232H (ESP-Prog)"],
       [0x0403, 0x6014, "FTDI FT232H"],
-      [0x10c4, 0xea70, null],
+      [0x0403, 0x6015, "FTDI FT231X"],
+      [0x10c4, 0xea70, "Silicon Labs CP2105"],
+      // Boards and debug probes other than ESP32 ones.
+      [0x2341, 0x0043, "Arduino"],
+      [0x2e8a, 0x000a, "Raspberry Pi Pico"],
+      [0x0483, 0x374b, "ST-Link V2-1 virtual COM port"],
+      [0x0483, 0x374e, "ST-Link V3 virtual COM port"],
+      [0x1366, 0x0105, "SEGGER J-Link virtual COM port"],
+      [0x0d28, 0x0204, "CMSIS-DAP (DAPLink) virtual COM port"],
+      [0x0483, 0x3748, null],
+      [0x1234, 0x5678, null],
     ];
     const ports = ids.map(([vid, pid], i) => ({ device: `COM${10 + i}`, vid, pid }));
     const result = await serial(["list"], { ports: [...ports, { device: "COM99" }] });
@@ -291,6 +327,29 @@ describe("list", () => {
       `${folder}/usb-Espressif_USB_JTAG_serial_debug_unit_F412FA001122-if00`,
       null,
       `${folder}/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0`,
+    ]);
+  });
+});
+
+describe("list on Linux", () => {
+  it("leaves out legacy ports the kernel lists without hardware behind them", async () => {
+    const folder = await mkdtemp(join(base, "sys-tty-"));
+    // /sys/class/tty/<name>/type: 0 is an unknown UART (nothing there), 4 a 16550A.
+    for (const [name, type] of [
+      ["ttyS0", "0"],
+      ["ttyS1", "0"],
+      ["ttyS4", "4"],
+    ] as const) {
+      await mkdir(join(folder, name));
+      await writeFile(join(folder, name, "type"), `${type}\n`);
+    }
+    const ports = ["/dev/ttyS0", "/dev/ttyS1", "/dev/ttyS4", "/dev/ttyUSB0"].map((device) => ({ device }));
+    const harness = [join(fixtures, "by_id.py"), script, folder, "{}"];
+    const result = await serial([], { ports }, harness);
+    expect(result.code).toBe(0);
+    expect(JSON.parse(result.stdout).map((p: { port: string }) => p.port)).toEqual([
+      "/dev/ttyS4",
+      "/dev/ttyUSB0",
     ]);
   });
 });
@@ -338,6 +397,140 @@ describe("capture", () => {
     const result = await serial(["capture", "--port", "COM7", "--until", until], { chunks });
     expect(result).toMatchObject({ code: 0, stdout: `${chunks[0]}${chunks[1]}` });
   });
+  it("finishes the line an expression matched before it was complete", async () => {
+    // The value arrives in two USB packets: the match is in the first, the address ends in the second.
+    const chunks = ["I (2532) esp_netif: sta ip: 192.1", "68.1.57, mask: 255.255.255.0\r\n", "later\r\n"];
+    const result = await serial(["capture", "--port", "COM7", "--until", "sta ip: \\d+"], { chunks });
+    expect(result).toMatchObject({ code: 0, stdout: `${chunks[0]}${chunks[1]}` });
+    expect(result.stderr).toContain("stopped by until");
+  });
+  it("returns a prompt that never ends its line once the port falls silent", async () => {
+    const chunks = ["MicroPython v1.22 on ESP32\r\n", ">>> "];
+    const result = await serial(["capture", "--port", "COM7", "--until", ">>> $", "--duration", "5"], {
+      chunks,
+    });
+    expect(result).toMatchObject({ code: 0, stdout: chunks.join("") });
+    expect(result.stderr).toContain("stopped by until");
+    // Silence ends the wait long before the duration.
+    expect(result.ms).toBeLessThan(4000);
+    // A match the duration cuts short is still a match.
+    const cut = await serial(["capture", "--port", "COM7", "--until", ">>> $", "--duration", "0.05"], {
+      chunks,
+    });
+    expect(cut.code).toBe(0);
+  });
+  it("starts every line with the seconds since reading began", async () => {
+    const chunks = ["boot\r\nwifi ", "up\r\n", "ready"];
+    const result = await serial(["capture", "--port", "COM7", "--timestamps", "--duration", "0.3"], {
+      chunks,
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toMatch(
+      /^\[ {4}\d\.\d{3}\] boot\r\n\[ {4}\d\.\d{3}\] wifi up\r\n\[ {4}\d\.\d{3}\] ready$/,
+    );
+    // The count is of the board's bytes, not of the stamps.
+    expect(result.stderr).toContain("COM7: 20 bytes");
+    const both = await serial(["capture", "--port", "COM7", "--timestamps", "--hex"]);
+    expect(both.code).toBe(2);
+    expect(both.records).toEqual([]);
+  });
+  it("prints binary data as a dump and ends a row when the data pauses", async () => {
+    const bytes = Array.from({ length: 20 }, (_, index) => index + 0x30);
+    const hex = (values: number[]) => values.map((value) => value.toString(16).padStart(2, "0")).join("");
+    const result = await serial(["capture", "--port", "COM7", "--hex", "--duration", "0.4"], {
+      chunks: [{ hex: hex(bytes) }, { hex: "010304002afffe9b80" }],
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout.replaceAll("\r\n", "\n")).toBe(
+      [
+        "00000000  30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f  |0123456789:;<=>?|",
+        "00000010  40 41 42 43 01 03 04 00 2a ff fe 9b 80           |@ABC....*....|",
+        "",
+      ].join("\n"),
+    );
+    expect(result.stderr).toContain("COM7: 29 bytes");
+  });
+  it("opens the port with the frame format that was asked for", async () => {
+    const args = ["capture", "--port", "COM7", "--duration", "0.1"];
+    const framed = await serial([
+      ...args,
+      "--bytesize",
+      "7",
+      "--parity",
+      "e",
+      "--stopbits",
+      "2",
+      "--baud",
+      "9600",
+    ]);
+    expect(framed.records[0]).toMatchObject({ op: "open", baudrate: 9600, frame: "7E2" });
+    expect((await serial(args)).records[0]).not.toHaveProperty("frame");
+    for (const bad of [
+      ["--bytesize", "9"],
+      ["--parity", "X"],
+      ["--stopbits", "3"],
+    ]) {
+      const result = await serial([...args, ...bad]);
+      expect(result.code, bad.join(" ")).toBe(2);
+      expect(result.records).toEqual([]);
+    }
+  });
+  it("reads a simulator's terminal and socket, which have no reset lines", async () => {
+    const chunks = ["ESP-ROM:esp32s3-20210327\r\n"];
+    const terminal = await serial(["capture", "--port", "/dev/pts/3", "--duration", "0.2"], {
+      chunks,
+      no_lines: true,
+    });
+    expect(terminal).toMatchObject({ code: 0, stdout: chunks[0] });
+    const refused = await serial(["capture", "--port", "/dev/pts/3", "--reset"], { chunks, no_lines: true });
+    expect(refused.code).toBe(3);
+    expect(refused.stdout).toBe("");
+    expect(refused.stderr).toContain("--reset needs the DTR and RTS lines");
+    expect(refused.records.at(-1)).toEqual({ op: "close" });
+    const socket = await serial(["capture", "--port", "socket://127.0.0.1:5555", "--duration", "0.2"], {
+      chunks,
+    });
+    expect(socket).toMatchObject({ code: 0, stdout: chunks[0] });
+    // A network port is not locked like a device file.
+    expect(socket.records[0]).toMatchObject({ op: "open", port: "socket://127.0.0.1:5555", exclusive: null });
+    expect((await serial(["capture", "--port", "socket://127.0.0.1:5555", "--reset"], { chunks })).code).toBe(
+      3,
+    );
+    const closed = await serial(["capture", "--port", "socket://127.0.0.1:9"], {
+      open_error: { errno: 111, message: "Could not open port socket://127.0.0.1:9: Connection refused" },
+    });
+    expect(closed.code).toBe(3);
+    expect(closed.stderr).toContain("Start the simulator or the serial server first");
+  });
+  it("finds the baud rate at which the board prints text", async () => {
+    const garbage = { hex: "ff80fee0c3f89e00ff80fe1cf8e0ff80fee0c3f89e00ff80" };
+    const text = [
+      "ets Jan  8 2013,rst cause:2, boot mode:(3,6)\r\n",
+      "load 0x4010f000, len 3460, room 16\r\n",
+    ];
+    const args = ["capture", "--port", "COM7", "--baud", "auto", "--duration", "0.2"];
+    const found = await serial(args, { chunks_by_baud: { "74880": text, other: [garbage] } });
+    expect(found.code).toBe(0);
+    expect(found.stdout).toBe(text.join(""));
+    expect(found.stderr).toContain("[serial-monitor] baud rate 74880 detected (100% readable text)");
+    // The usual rates are tried in order, and the port keeps the one that read as text.
+    const rates = found.records.filter((r) => r.op === "baudrate").map((r) => r.value);
+    expect(rates.slice(0, 4)).toEqual([115200, 9600, 57600, 74880]);
+    expect(rates.at(-1)).toBe(74880);
+    // The port is opened once: no extra reset of the board between rates.
+    expect(found.records.filter((r) => r.op === "open")).toHaveLength(1);
+    const binary = await serial(args, { chunks_by_baud: { other: [garbage] } });
+    expect(binary.code).toBe(0);
+    expect(binary.stderr).toContain("the data may be binary: look at it with --hex");
+    const silent = await serial(args, {});
+    expect(silent.code).toBe(3);
+    expect(silent.stdout).toBe("");
+    expect(silent.stderr).toContain("No bytes arrived at any baud rate");
+    expect(silent.records.at(-1)).toEqual({ op: "close" });
+    // A send speaks first, so its rate cannot be listened for.
+    const send = await serial(["send", "--port", "COM7", "--baud", "auto", "--text", "x"]);
+    expect(send.code).toBe(2);
+  }, 60_000);
   it("stops at the byte limit and after the duration", async () => {
     const limited = await serial(["capture", "--port", "COM7", "--max-bytes", "10"], { chunks: bootChunks });
     expect(limited).toMatchObject({
@@ -416,6 +609,101 @@ describe("send", () => {
     ]);
     expect(bare.records).toContainEqual({ op: "write", data: "help" });
   });
+  it("writes bytes given in hexadecimal and prints the reply as a dump", async () => {
+    const result = await serial(
+      ["send", "--port", "COM7", "--hex", "01 03 00 00 0x00,0x0A c5:cd", "--duration", "0.3"],
+      { chunks: [{ hex: "010304002afffe9b80" }] },
+    );
+    expect(result.code).toBe(0);
+    // No line end is added to bytes.
+    expect(result.records).toContainEqual({ op: "write", hex: "01030000000ac5cd" });
+    expect(result.stdout.replaceAll("\r\n", "\n")).toBe(
+      "00000000  01 03 04 00 2a ff fe 9b 80                       |....*....|\n",
+    );
+    for (const bad of [
+      ["--hex", "0"],
+      ["--hex", "zz"],
+      ["--hex", ""],
+      ["--hex", "01", "--text", "x"],
+      ["--hex", "01", "--escape"],
+    ]) {
+      const refused = await serial(["send", "--port", "COM7", ...bad]);
+      expect(refused.code, bad.join(" ")).toBe(2);
+      expect(refused.records).toEqual([]);
+    }
+  });
+  it("sends control characters written as escapes only when asked to", async () => {
+    const args = [
+      "send",
+      "--port",
+      "COM7",
+      "--duration",
+      "0.1",
+      "--eol",
+      "none",
+      "--text",
+      "\\x03\\r\\t\\\\n\\q",
+    ];
+    const escaped = await serial([...args, "--escape"]);
+    // Ctrl-C, carriage return, tab, a backslash followed by n, and an unknown escape left as written.
+    expect(escaped.records).toContainEqual({ op: "write", data: "\u0003\r\t\\n\\q" });
+    const literal = await serial(args);
+    expect(literal.records).toContainEqual({ op: "write", data: "\\x03\\r\\t\\\\n\\q" });
+  });
+  it("goes through the capture that holds the port when no port is named", async () => {
+    const temp = await mkdtemp(join(base, "tmp-"));
+    const dir = await scenarioDir({
+      chunks: ["I (300) app: ready\r\n"],
+      replies: { "help\r\n": "Commands: help, version\r\n" },
+    });
+    // Both runs see the same temporary directory, where a capture leaves its address.
+    const shared = { ...process.env, ...env(dir), PYTHONUTF8: "1", TEMP: temp, TMP: temp, TMPDIR: temp };
+    const run = (args: string[]) => spawnSync(python, [script, ...args], { env: shared, encoding: "utf8" });
+    const nobody = run(["send", "--text", "help"]);
+    expect(nobody.status).toBe(3);
+    expect(nobody.stderr).toContain("No capture is running to send through.");
+
+    const capture = spawn(
+      python,
+      [script, "capture", "--port", "COM7", "--until", "Commands", "--duration", "20"],
+      {
+        env: shared,
+      },
+    );
+    let output = "";
+    let notes = "";
+    capture.stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString();
+    });
+    capture.stderr.on("data", (chunk: Buffer) => {
+      notes += chunk.toString();
+    });
+    const ended = new Promise<number | null>((done) => capture.on("close", done));
+    try {
+      await expect.poll(() => output, { timeout: 15_000 }).toContain("ready");
+      const sent = run(["send", "--text", "help", "--until", "Commands", "--duration", "10"]);
+      expect(sent.status).toBe(0);
+      expect(sent.stdout).toBe("Commands: help, version\r\n");
+      expect(sent.stderr.trim()).toBe(
+        "[serial-monitor] COM7 through its running capture: 25 bytes, stopped by until",
+      );
+      expect(await ended).toBe(0);
+    } finally {
+      capture.kill();
+    }
+    // The capture wrote the line itself and its own output holds the whole console.
+    expect(await records(dir)).toContainEqual({ op: "write", data: "help\r\n" });
+    expect(output).toBe("I (300) app: ready\r\nCommands: help, version\r\n");
+    expect(notes).toContain("[serial-monitor] sent 6 bytes: b'help\\r\\n'");
+    // The capture ended: nothing is left to send through.
+    expect(run(["send", "--text", "help"]).status).toBe(3);
+    for (const bad of [
+      ["send", "--port", "COM7", "--capture", "bench", "--text", "x"],
+      ["capture", "--port", "COM7", "--name", "com5"],
+      ["capture", "--port", "COM7", "--name", "Bench A"],
+    ])
+      expect(run(bad).status, bad.join(" ")).toBe(2);
+  }, 60_000);
   it("reads the reply for one second by default", async () => {
     const result = await serial(["send", "--port", "COM7", "--text", "version"]);
     expect(result).toMatchObject({
@@ -443,6 +731,7 @@ describe("failures", () => {
     });
     expect(other.code).toBe(3);
     expect(other.stderr).not.toContain("usermod");
+    expect(other.stderr).toContain("This port does not exist. List the ports again with: serial list.");
   });
   it("reports other port failures with a hint and keeps what was read (REQ-REL-3c25e5c0)", async () => {
     const missing = await serial(["capture", "--port", "COM9"], {
@@ -514,6 +803,49 @@ describe("in VERA", () => {
       await runner.stopAll();
     }
   });
+
+  it("sends through a background capture, which VERA does not count as a second run on the port", async () => {
+    const dir = await scenarioDir({
+      chunks: ["I (300) app: ready\r\n"],
+      replies: { "version\r\n": "fw 1.4.2\r\n" },
+    });
+    const workbench = join(dir, "bench");
+    await mkdir(join(workbench, ".vera"), { recursive: true });
+    const temp = await mkdtemp(join(base, "tmp-"));
+    const runner = new core.ProgramRunner({
+      host: new core.NodeProcessHost(spawn),
+      clock: { sleep: (ms) => new Promise((done) => setTimeout(done, ms)) },
+    });
+    const request = (args: string[], background = false) => ({
+      sessionId: "s1",
+      workbench,
+      executable: python,
+      args: [script, ...args],
+      env: { ...env(dir), TEMP: temp, TMP: temp, TMPDIR: temp },
+      background,
+    });
+    const capture = await runner.start(request(["capture", "--port", "COM7", "--duration", "30"], true));
+    try {
+      await expect.poll(() => capture.read(false).output, { timeout: 15_000 }).toContain("ready");
+      const send = await runner.start(
+        request(["send", "--text", "version", "--until", "fw", "--duration", "10"]),
+      );
+      const sent = await send.done;
+      expect(sent.exitCode).toBe(0);
+      expect(sent.output).toContain("fw 1.4.2");
+      expect(sent.output).toContain("COM7 through its running capture");
+      // The capture wrote the line; its own output keeps the whole console and what was sent.
+      await expect.poll(() => capture.read(false).output, { timeout: 15_000 }).toContain("fw 1.4.2");
+      expect(capture.read(false).output).toContain("[serial-monitor] sent 9 bytes");
+      expect(await records(dir)).toContainEqual({ op: "write", data: "version\r\n" });
+      // Naming the port is still a second run on it.
+      await expect(runner.start(request(["send", "--port", "COM7", "--text", "x"]))).rejects.toMatchObject({
+        code: "BUSY",
+      });
+    } finally {
+      await runner.stopAll();
+    }
+  }, 60_000);
 
   async function session(mode: "ask" | "read-only", enabled = true) {
     const dir = await scenarioDir({ ports: [S3, CP210X], chunks: bootChunks });
@@ -660,6 +992,7 @@ describe("in VERA", () => {
       const skills = await rig.skills.list();
       const ours = skills.filter((s) => s.plugin === "serial-monitor");
       expect(ours.map((s) => [s.name, s.source, s.error])).toEqual([
+        ["board-identify", "plugin", undefined],
         ["esp32-identify", "plugin", undefined],
         ["serial-console", "plugin", undefined],
       ]);
@@ -668,7 +1001,7 @@ describe("in VERA", () => {
           name: "serial",
           plugin: "serial-monitor",
           version: manifest.version,
-          skills: ["esp32-identify", "serial-console"],
+          skills: ["board-identify", "esp32-identify", "serial-console"],
         }),
       ]);
     } finally {
@@ -686,8 +1019,23 @@ describe("in VERA", () => {
       expect(console).toContain(text);
       expect(identify).toContain(text);
     }
-    for (const id of ["303A", "10C4:EA60", "1A86:7523", "1A86:55D4", "0403:6010"])
+    for (const id of ["303A", "10C4:EA60", "1A86:7523", "1A86:55D3", "1A86:55D4", "0403:6010"])
       expect(identify).toContain(id);
     expect(identify).toContain("esptool chip-id");
+    const boards = await readFile(join(source, "skills/board-identify/SKILL.md"), "utf8");
+    for (const word of ["serial list", "ST-Link", "Raspberry Pi Pico", "Arduino", "J-Link", "esp32-identify"])
+      expect(boards).toContain(word);
+    // The console skill says where a capture goes next: analysis of the run log and crash decoding.
+    for (const word of [
+      "parse_log",
+      "esp32-panic",
+      "crash-decode",
+      "--timestamps",
+      "--hex",
+      "socket://",
+      "--baud auto",
+      "without `--port`",
+    ])
+      expect(console).toContain(word);
   }, 30_000);
 });

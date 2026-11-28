@@ -13,11 +13,11 @@ description: Find which serial port each connected ESP32 board uses and what kin
    |---|---|---|
    | `303A:*` (`303A:1001` USB-Serial-JTAG) | Espressif native USB | ESP32-S3, C3, C6, H2 on their USB port; S2/S3 USB-OTG CDC |
    | `10C4:EA60` | Silicon Labs CP210x | ESP32 DevKitC and many ESP32/ESP32-S2 boards |
-   | `1A86:7523`, `1A86:55D4` | WCH CH340, CH343 | low-cost boards, ESP32-C3/S3 boards with a UART port |
+   | `1A86:7523`, `1A86:55D3`, `1A86:55D4` | WCH CH340, CH343, CH9102 | low-cost boards, ESP32-C3/S3 boards with a UART port |
    | `0403:6001`, `0403:6010`, `0403:6014` | FTDI (`6010` = ESP-Prog) | external adapters; ESP-Prog's second channel is JTAG |
 
    A board with two USB sockets (for example an ESP32-S3 DevKitC) shows up once per connected socket:
-   `303A:1001` on the USB socket and a bridge (CP210x or CH343) on the UART socket. Ports without a
+   `303A:1001` on the USB socket and a bridge (CP210x, CH343 or CH9102) on the UART socket. Ports without a
    family are not necessarily ESP32 boards; ask the user before using them.
 3. On Linux, name each board by its `/dev/serial/by-id/...` path (`by_id`) when it is present; it stays
    stable when boards are replugged.

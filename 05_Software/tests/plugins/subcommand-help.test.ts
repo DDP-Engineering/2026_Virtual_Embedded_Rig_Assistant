@@ -62,7 +62,7 @@ const audited: Record<string, Record<string, string[]>> = {
     ],
   },
   "serial-monitor": {
-    serial: ["send"],
+    serial: ["capture", "send"],
   },
   wokwi: {
     "wokwi-tool": ["run-scenario"],

@@ -3,7 +3,7 @@
 ## Routing
 
 Select for `serial-monitor` (program `serial`: list serial ports with board family, capture a console with an optional
-DTR/RTS reset, send one line; skills `serial-console` and `esp32-identify`); `esp32-esptool` (program `esptool`,
+DTR/RTS reset, send one line or bytes; skills `serial-console`, `board-identify` and `esp32-identify`); `esp32-esptool` (program `esptool`,
 esptool v5 from PyPI: identify, flash, verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf`
 (EIM-activated idf.py, Xtensa/RISC-V addr2line; skills `esp32-build-fix` and `esp32-panic`); and `esp32-efuse`.
 
@@ -22,7 +22,7 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 ## Public interface
 
-- `serial-monitor` 0.2.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
+- `serial-monitor` 0.3.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
   `install: { script: scripts/serial_monitor.py }` (pyserial 3.5), probed with `--version`
   (`serial-monitor <version>`).
 - Commands (spec `.agentic/specs/REQ-FUNC-42818bb7.md`): `serial list` prints a JSON array of `{port, vid_pid,
@@ -159,3 +159,18 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
 
 - `05_Software/plugins/esp32-idf/` — manifest, measured EIM transport README, build-fix and panic skills.
 - `05_Software/tests/plugins/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.
+- serial-monitor 0.3.0: `open_port` uses `serial.serial_for_url`, so `socket://` and `rfc2217://` addresses and a
+  simulator's pseudo-terminal are ports; ENOTTY or EINVAL on the DTR update marks a port without reset lines and
+  `--reset` then exits 3. `read()` writes through a sink (`Text`, with `--timestamps`; `Hex`, whose `idle()` ends a
+  row when the data pauses) and keeps reading after `--until` matched an unfinished line, until its line break or
+  `SETTLE_SECONDS` of silence. `send --hex` writes bytes and dumps the reply; `--escape` replaces escapes in
+  `--text`. `absent()` hides `/dev/ttyS*` whose `/sys/class/tty/<name>/type` reads 0 (`SYS_TTY` is patched by the
+  test harness `by_id.py`). The capture rule carries `timeout: 3600`; `subcommandHelp` covers list, capture and
+  send. The fake pyserial of the tests has `serial_for_url`, `no_lines` and `{"hex": ...}` chunks.
+- serial-monitor hand-off and auto baud: every capture creates a `Relay` (a listener on 127.0.0.1 with a random
+  token, announced in `<temp>/vera-serial-monitor[-uid]/<pid>.json`); `read()` polls it between port reads. `send`
+  without `--port` (`send_through`) finds the running capture, sends `{token, hex}` and reads the copied console
+  through a `Through` adapter with its own duration, `--until` and sink. The runner's BUSY rule is untouched: the
+  hand-off form names no port, and `--name` refuses names of the form `comN`. A stopped capture's stale file is
+  removed by the next send. `detect_baud` changes `port.baudrate` on the open port per candidate in `BAUD_RATES`
+  and scores `readable()` text; the fake pyserial offers `chunks_by_baud` and `replies` for these tests.

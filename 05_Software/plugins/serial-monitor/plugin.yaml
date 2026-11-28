@@ -1,10 +1,10 @@
 format: 1
 id: serial-monitor
-version: 0.2.2
+version: 0.3.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Serial monitor
-summary: List serial ports by USB ID, capture a board's console and send it one line.
-description: List serial ports with their USB IDs and board family, capture a board's console (optionally after a DTR/RTS reset) and send it one line. Use to find a board's port and to read its boot log or console output.
+summary: List serial ports by USB ID, capture a board's console and send it a line or bytes.
+description: List serial ports with their USB IDs and board family, capture a board's console (optionally after a DTR/RTS reset, with timestamps or as a hex dump) and send it one line or bytes. Use to find a board's port and to read its boot log, console output or a binary reply; a simulator's terminal or socket works as a port.
 translations:
   ro:
     summary: "Listează porturile seriale după ID-ul USB, capturează consola unei plăci și îi trimite o linie."
@@ -19,7 +19,7 @@ ecosystem: general
 platforms: [windows-x64, linux-x64]
 programs:
   serial:
-    subcommandHelp: { flag: --help, commands: [send] }
+    subcommandHelp: { flag: --help, commands: [capture, send] }
     install: { script: scripts/serial_monitor.py }
     version: { args: [--version], match: 'serial-monitor (\d+\.\d+\.\d+)' }
 rules:
@@ -27,9 +27,10 @@ rules:
   - { match: "serial list *", risk: safe }
   - match: "serial capture *"
     risk: device-read
+    timeout: 3600
     note: Opens the port and reads the console; with --reset it restarts the board through DTR/RTS.
   - match: "serial send *"
     risk: device-write
-    note: Writes one line to the device's console; the device's firmware decides what the line does.
+    note: Writes one line or the given bytes to the device; the device's firmware decides what they do.
 docs:
   - https://pyserial.readthedocs.io/en/latest/

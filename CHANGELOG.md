@@ -8,6 +8,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- serial-monitor 0.3.0: Add line timestamps, hex dumps, sending bytes and control characters, and parity, data and stop bits.
+- serial-monitor 0.3.0: Read a simulator's terminal or socket as a serial port.
+- serial-monitor 0.3.0: Send to a board through the capture that is reading it.
+- serial-monitor 0.3.0: Detect the baud rate with `--baud auto`.
+- serial-monitor 0.3.0: Add a skill that identifies boards and probes other than ESP32.
 - git 0.4.0: Add skills to exchange with a remote, find the commit behind a regression and name a release.
 - Show the files a Git commit records on its approval card.
 - Offer Always allow in Auto-edit for plugin program commands such as `git commit`.
@@ -42,6 +47,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- serial-monitor 0.3.0: Return the whole line that `--until` matched.
+- serial-monitor 0.3.0: Hide Linux ports without hardware, name CH9102 and CH343 correctly and let a foreground capture run an hour.
 - git 0.4.0: Run `log -5`, `remote get-url`, `submodule status` and reading a configuration key without approval.
 - git 0.4.0: Accept `@{u}` revisions and commit messages with a body.
 - git 0.4.0: Ask for approval, not a typed word, for `checkout -b` and `restore --staged`, and for the command's name instead of `<discard>`.

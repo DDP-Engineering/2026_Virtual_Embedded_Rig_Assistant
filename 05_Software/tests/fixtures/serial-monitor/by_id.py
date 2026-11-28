@@ -1,7 +1,8 @@
 """Runs `serial_monitor.py list` as on Linux with a /dev/serial/by-id folder.
 
 Usage: python by_id.py <serial_monitor.py> <folder> <JSON {entry name: device}>
-BY_ID points at <folder>, whose entries resolve (os.path.realpath) to the devices of the mapping.
+BY_ID points at <folder>, whose entries resolve (os.path.realpath) to the devices of the mapping. SYS_TTY
+points there too: a folder <folder>/<tty name> with a file `type` stands for /sys/class/tty/<tty name>.
 """
 
 import importlib.util
@@ -15,6 +16,7 @@ spec = importlib.util.spec_from_file_location("serial_monitor", script)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 module.BY_ID = folder
+module.SYS_TTY = folder
 os.path.realpath = lambda path, *args, **kwargs: (
     links.get(os.path.basename(path), path) if os.path.dirname(path) == folder else path
 )
