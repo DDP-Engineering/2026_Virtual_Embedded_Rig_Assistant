@@ -6,7 +6,7 @@ title = "Collect bounded task and service logs"
 
 status = "active"
 
-requirement = "When collect-logs runs, pi-tool shall write the last lines (at most 2000) of each listed service's user journal and the bounded stdout and stderr tails of the named task handles into the run folder and report their sizes."
+requirement = "When collect-logs runs, pi-tool shall write the last lines (at most 2000) of each listed service's journal (the user's own journal, else the system journal's lines of that user unit) and the bounded stdout and stderr tails of the named task handles into the run folder, report their sizes and warn journal-empty when a service has no readable line."
 
 verification = "collect-logs after a service start writes its journal lines holding the service's output and reports their count; a task handle's logs are copied into task-<handle>-stdout.log; --lines 5000 is refused with usage."
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

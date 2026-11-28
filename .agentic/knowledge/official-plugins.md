@@ -129,7 +129,7 @@ The version of each official plugin and the evidence behind it. A row changes wi
 | `platformio` | 0.2.2 | real PlatformIO 6.2.0 builds, host tests, Renode device tests; board upload open |
 | `power-profiler` | 0.2.2 | real pyjoulescope_driver 2.5.5 without a meter; JS220 and board open |
 | `probe-rs` | 0.3.0 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
-| `raspberry-pi-linux` | 0.2.1 | real asyncssh 2.24.1 against an SSH test server in WSL; a Raspberry Pi open |
+| `raspberry-pi-linux` | 0.3.0 | real asyncssh 2.24.1 against an SSH test server in WSL; a Raspberry Pi and a real OpenSSH server open |
 | `scpi-instruments` | 0.2.1 | real PyVISA 1.16.2 + pyvisa-py against simulated servers; real instruments open |
 | `serial-monitor` | 0.2.2 | real pyserial through the real provisioner and runner; real-board capture open |
 | `sigrok` | 0.2.0 | real pinned sigrok-cli 0.8.0 installed from the verified archive; ATK-DL16/Hantek captures open |

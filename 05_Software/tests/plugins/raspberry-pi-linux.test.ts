@@ -3,7 +3,8 @@
 // agent (pi-test-agent.py) with generated keys on 127.0.0.1; the server runs each exec request as `sh -c` in a real
 // Linux shell - this host on Linux, the default WSL distribution on Windows - so the remote helper meets a real
 // kernel, /proc and systemd user manager. That is SSH-protocol and Linux evidence, never proof of a Raspberry Pi.
-// No test connects to any other host. VERA_TEST_PI_REMOTE=none skips the SSH block.
+// No test connects to any other host, and none reads the developer's own ~/.ssh: PI_SSH_DIR names a folder of the
+// test. VERA_TEST_PI_REMOTE=none skips the SSH block.
 // REQ-DATA-44547a17 REQ-SEC-da232972 REQ-FUNC-9ea5add1 REQ-SEC-0513894a REQ-SEC-6b76749c REQ-FUNC-ac086c52
 // REQ-SEC-255ef057 REQ-FUNC-38952891 REQ-SEC-c2cd454d REQ-FUNC-379be3d8 REQ-SEC-90a99d8d REQ-FUNC-d7e0c14e
 // REQ-SEC-9e1f9401 REQ-FUNC-cf78987c REQ-REL-4569ba1a REQ-REL-0b7928f1 REQ-REL-8352b260 REQ-REL-d58d8abe
@@ -11,7 +12,7 @@
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { chmodSync, cpSync, existsSync, readFileSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,6 +79,9 @@ function sh(command: string): { code: number | null; out: string } {
 let root = "";
 const registryPath = () => join(root, "lab", "resources.json");
 let agentPath = "";
+/** A path no SSH agent listens on. */
+const noAgent = () => (windows ? "\\\\.\\pipe\\vera-pi-no-agent" : join(root, "no-agent.sock"));
+const RESULTS = "raspberry-pi-results";
 
 function environment(extra: Record<string, string> = {}): Record<string, string> {
   const env: Record<string, string> = {};
@@ -88,6 +92,8 @@ function environment(extra: Record<string, string> = {}): Record<string, string>
     ...env,
     PI_REGISTRY: registryPath(),
     PYTHONUTF8: "1",
+    // An empty folder by default: the agent is the only key source, and no known_hosts counts.
+    PI_SSH_DIR: join(root, "ssh-none"),
     ...(agentPath ? { SSH_AUTH_SOCK: agentPath } : {}),
     ...extra,
   };
@@ -160,7 +166,7 @@ describe("package", () => {
       expect(validatePluginManifest(m).issues).toEqual([]);
       expect(m).toMatchObject({
         id: "raspberry-pi-linux",
-        version: "0.2.1",
+        version: "0.3.0",
         platforms: ["windows-x64", "linux-x64"],
       });
       const program = m.programs["pi-tool"];
@@ -204,10 +210,12 @@ describe("package", () => {
       const projects = (await skills.read("plugin", "raspberry-pi-projects")).content;
       for (const text of [
         "host-key-changed",
-        "install-helper",
+        "trust-host-key",
         "--overwrite",
-        "command-not-allowed",
+        "requirements",
         "conflict",
+        "pi-tool exec",
+        "pi-tool fetch",
       ])
         expect(projects).toContain(text);
       const tasks = (await skills.read("plugin", "raspberry-pi-tasks")).content;
@@ -234,18 +242,33 @@ describe("package", () => {
       ["report", "--run", "x"],
     ])
       expect(risk(args), args.join(" ")).toBe("safe");
-    for (const op of ["check-host-key", "identify", "task-status", "service-status", "collect-logs"])
+    for (const op of [
+      "check-host-key",
+      "identify",
+      "compare",
+      "task-status",
+      "service-status",
+      "collect-logs",
+      "fetch",
+    ])
       expect(risk([op, "--board", "pi"]), op).toBe("device-read");
     for (const op of [
+      "trust-host-key",
       "install-helper",
+      "deploy",
       "deploy-candidate",
       "apply-candidate",
       "run-task",
+      "exec",
       "service-start",
       "service-stop",
       "stop-owned",
     ])
       expect(risk([op, "--board", "pi"]), op).toBe("device-write");
+    expect(risk(["exec", "--board", "pi", "--command", "sudo reboot"])).toBe("device-write");
+    expect(risk(["deploy", "--board", "pi", "--project", "p/vera-pi.json", "--overwrite", "app.py"])).toBe(
+      "irreversible",
+    );
     expect(risk(["apply-candidate", "--board", "pi", "--candidate", "c.json", "--overwrite", "app.py"])).toBe(
       "irreversible",
     );
@@ -281,7 +304,7 @@ describe("package", () => {
       expect(command.endsWith("'")).toBe(true);
       expect(command.slice(24, -1)).not.toContain("'");
       expect(command).toContain(digest);
-      expect(command).toContain("0.2.0");
+      expect(command).toContain("0.3.0");
     }
   });
 });
@@ -299,11 +322,11 @@ describe("refusals before any connection", { timeout: 60_000 }, () => {
     const run = pi(["capabilities"]);
     expect(run.code).toBe(0);
     expect(run.json.helper).toMatchObject({
-      version: "0.2.0",
-      path: "~/.local/share/vera-pi/0.2.0/vera_pi_remote.py",
+      version: "0.3.0",
+      path: "~/.local/share/vera-pi/0.3.0/vera_pi_remote.py",
     });
     expect(run.json.matrix.boards).toContain("Raspberry Pi OS 12");
-    expect(run.json.matrix.excluded).toContain("reboot or shutdown");
+    expect(run.json.operations).toEqual(expect.arrayContaining(["deploy", "exec", "fetch", "compare"]));
   });
 
   it("inspects the fixture project offline: files with hashes, tasks, services and classification", async () => {
@@ -326,7 +349,13 @@ describe("refusals before any connection", { timeout: 60_000 }, () => {
     expect(app.mode).toBe("0644");
     expect(run.json.tasks.map((task: Json) => task.name)).toContain("selftest");
     expect(run.json.services).toEqual([
-      { unit: "vera-fixture.service", keepRunning: true, actuates: false, note: "Prints a heartbeat." },
+      {
+        unit: "vera-fixture.service",
+        file: null,
+        keepRunning: true,
+        actuates: false,
+        note: "Prints a heartbeat.",
+      },
     ]);
     expect(run.json.hardware).toEqual({ actuates: false, note: "The fixture drives no hardware." });
   });
@@ -336,17 +365,11 @@ describe("refusals before any connection", { timeout: 60_000 }, () => {
     ["an absolute path", (p: Json) => p.files.push("/etc/passwd"), "path"],
     ["VERA's state folder", (p: Json) => p.files.push(".vera-pi/x"), "path"],
     ["a backslash", (p: Json) => p.files.push("dir\\x"), "path"],
-    ["sudo", (p: Json) => (p.tasks.root = { argv: ["sudo", "reboot"], budgetS: 5 }), "command-not-allowed"],
+    ["requirements the project does not deploy", (p: Json) => (p.requirements = "missing.txt"), "manifest"],
     [
-      "a shell",
-      (p: Json) => (p.tasks.shell = { argv: ["sh", "-c", "id"], budgetS: 5 }),
-      "command-not-allowed",
-    ],
-    ["env", (p: Json) => (p.tasks.env = { argv: ["env", "python3"], budgetS: 5 }), "command-not-allowed"],
-    [
-      "an absolute program",
-      (p: Json) => (p.tasks.abs = { argv: ["/usr/bin/python3", "x"], budgetS: 5 }),
-      "command-not-allowed",
+      "a unit file the project does not deploy",
+      (p: Json) => (p.services["vera-fixture.service"].file = "missing.service"),
+      "manifest",
     ],
     ["an unknown field", (p: Json) => (p.deleteRemote = true), "manifest"],
     ["a system-looking unit name", (p: Json) => (p.services["../sshd"] = {}), "manifest"],
@@ -355,6 +378,43 @@ describe("refusals before any connection", { timeout: 60_000 }, () => {
     const run = pi(["inspect-project", "--project", project]);
     expect(run.code).toBe(2);
     expect(run.json.errors[0].code).toBe(code);
+  });
+
+  it("takes any program, a default budget, patterns in exclude and a script saved with Windows line ends", async () => {
+    await writeFile(join(root, "project", "win.sh"), "#!/bin/sh\r\necho from windows\r\n");
+    const project = await writeProject((p) => {
+      p.files.push("win.sh");
+      p.exclude = ["*.txt"];
+      p.tasks.scan = { argv: ["i2cdetect", "-y", "1"] };
+      p.tasks.shell = { argv: ["sh", "-c", "id"], budgetS: 5 };
+    });
+    const run = pi(["inspect-project", "--project", project]);
+    expect(run.code, JSON.stringify(run.json.errors)).toBe(0);
+    expect(run.json.tasks.find((task: Json) => task.name === "scan")).toMatchObject({ budgetS: 600 });
+    expect(run.json.files.map((file: Json) => file.path)).toEqual([
+      "app.py",
+      "config.json",
+      "run.sh",
+      "win.sh",
+    ]);
+    // The board receives the script with Unix line ends, or its #! line would name an interpreter "sh\r".
+    const script = run.json.files.find((file: Json) => file.path === "win.sh");
+    expect(script).toMatchObject({
+      mode: "0755",
+      size: 28,
+      sha256: createHash("sha256").update("#!/bin/sh\necho from windows\n").digest("hex"),
+    });
+    expect(run.json.warnings.map((warning: Json) => warning.code)).toEqual(["line-ends"]);
+    await rm(join(root, "project", "win.sh"));
+    await writeProject();
+  });
+
+  it.skipIf(!windows)("names the spelling of a file whose letter case differs on disk", async () => {
+    const project = await writeProject((p) => p.files.push("APP.py"));
+    const run = pi(["inspect-project", "--project", project]);
+    expect(run.json.errors[0]).toMatchObject({ code: "path" });
+    expect(run.json.errors[0].message).toContain("'app.py' on disk");
+    await writeProject();
   });
 
   it("refuses an unlisted service, an unknown task and undeclared arguments before connecting", async () => {
@@ -446,16 +506,27 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
   let agent: ChildProcess | undefined;
   let main: Server | undefined;
   let twin: Server | undefined;
+  let both: Server | undefined;
+  let lingered = false;
   const unit = `vera-fixture-${randomBytes(4).toString("hex")}.service`;
+  const owned = `vera-owned-${randomBytes(4).toString("hex")}.service`;
+  /** The fixture manifest as the SSH tests use it. */
+  const base = (p: Json) => {
+    p.services = { [unit]: { keepRunning: true, actuates: false, note: "Prints a heartbeat." } };
+  };
+  /** A folder standing in for ~/.ssh that holds the authorized key as a file. */
+  const withKeyFile = () => ({ SSH_AUTH_SOCK: noAgent(), PI_SSH_DIR: join(root, "ssh-key") });
+  const warnings = (run: { json: Json }): string[] => run.json.warnings.map((warning: Json) => warning.code);
   const runtime = `/run/user/${remote.uid}`;
   let services = false;
 
-  async function startServer(hostKey: string, port = 0): Promise<Server> {
+  async function startServer(hostKey: string, port = 0, second?: string): Promise<Server> {
     const log = join(root, `sshd-${hostKey}.log`);
     const child = spawn(python, [
       join(support, "pi-test-sshd.py"),
       "--host-key",
       join(keys, hostKey),
+      ...(second ? ["--host-key", join(keys, second)] : []),
       "--authorized",
       join(keys, "user.pub"),
       "--user",
@@ -505,6 +576,11 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       entry({ alias: "open-root", root: `${home}/open-root` }),
       entry({ alias: "linked-root", root: `${home}/linked-root` }),
       entry({ alias: "other-key", agentKey: fp.other }),
+      // What a user writes: a host and a user (the port only because the test server is not on 22).
+      { alias: "mini", kind: "linux-board", host: "127.0.0.1", port: main?.port, user: remote.user },
+      { alias: "mini-twin", kind: "linux-board", host: "127.0.0.1", port: twin?.port, user: remote.user },
+      entry({ alias: "rsa-pin", port: both?.port, hostKeys: [fp["host-rsa"]] }),
+      entry({ alias: "ed-pin", port: both?.port }),
     ]);
   }
   const execs = (server: Server | undefined) =>
@@ -560,10 +636,14 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     await readyLine(agent);
     main = await startServer("host");
     twin = await startServer("host2");
+    // A board holds a key of each kind; the server lists its RSA key first.
+    both = await startServer("host-rsa", 0, "host");
     await registry();
-    await writeProject((p) => {
-      p.services = { [unit]: { keepRunning: true, actuates: false, note: "Prints a heartbeat." } };
-    });
+    await mkdir(join(root, "ssh-key"));
+    await copyFile(join(keys, "user"), join(root, "ssh-key", "id_ed25519"));
+    await copyFile(join(keys, "user.pub"), join(root, "ssh-key", "id_ed25519.pub"));
+    await writeProject(base);
+    lingered = sh(`test -e /var/lib/systemd/linger/${remote.user} && echo yes || echo no`).out === "yes";
     services = ["running", "degraded"].includes(sh("systemctl --user is-system-running").out);
     if (services) {
       sh(
@@ -575,9 +655,12 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
   afterAll(async () => {
     if (services)
       sh(
-        `systemctl --user stop ${unit}; rm -f ${runtime}/systemd/user/${unit}; systemctl --user daemon-reload`,
+        `systemctl --user stop ${unit} ${owned}; systemctl --user disable ${owned}; rm -f ${runtime}/systemd/user/${unit} ~/.config/systemd/user/${owned}; systemctl --user daemon-reload`,
       );
-    for (const child of [main?.child, twin?.child, agent]) child?.kill();
+    // A service declared keepRunning turns lingering on; the test leaves the account as it found it.
+    if (!lingered)
+      sh(`loginctl disable-linger 2>/dev/null || sudo -n loginctl disable-linger ${remote.user} 2>/dev/null`);
+    for (const child of [main?.child, twin?.child, both?.child, agent]) child?.kill();
     if (home.startsWith("/tmp/vera-pi-test-")) sh(`rm -rf '${home}'`);
     agentPath = "";
     await rm(root, { recursive: true, force: true });
@@ -586,10 +669,18 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
   it("shows the presented host key without logging in", () => {
     const run = pi(["check-host-key", "--board", "pi"]);
     expect(run.code).toBe(0);
-    expect(run.json.hostKey).toEqual({ type: "ssh-ed25519", fingerprint: fp.host, pinned: true });
+    expect(run.json.hostKey).toEqual({
+      type: "ssh-ed25519",
+      fingerprint: fp.host,
+      trusted: true,
+      trust: "pinned",
+    });
+    // A board not seen before is not an error: the first connection will save this key.
     const fresh = pi(["check-host-key", "--board", "fresh"]);
-    expect(fresh.json.errors[0].code).toBe("host-key-unpinned");
-    expect(fresh.json.errors[0].message).toContain(fp.host);
+    expect(fresh.code).toBe(0);
+    expect(fresh.json.hostKey).toMatchObject({ fingerprint: fp.host, trusted: false, trust: "first-use" });
+    expect(warnings(fresh)).toEqual(["host-key-new"]);
+    expect(existsSync(join(root, "lab", "linux-board-keys.json"))).toBe(false);
     expect(events(main?.log ?? "").filter((event) => event.event === "public-key")).toEqual([]);
   });
 
@@ -597,66 +688,126 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     const run = pi(["identify", "--board", "twin"]);
     expect(run.code).toBe(2);
     expect(run.json.errors[0].code).toBe("host-key-changed");
-    expect(run.json.hostKey).toMatchObject({ fingerprint: fp.host2, pinned: false });
-    // Without an agent too, the host-key conflict is what the user is told.
-    const missing = windows ? "\\\\.\\pipe\\vera-pi-no-agent" : join(root, "no-agent.sock");
-    expect(pi(["identify", "--board", "twin"], { SSH_AUTH_SOCK: missing }).json.errors[0].code).toBe(
+    expect(run.json.hostKey).toMatchObject({ fingerprint: fp.host2, trusted: false, trust: "pinned" });
+    // Without any key too, the host-key conflict is what the user is told.
+    expect(pi(["identify", "--board", "twin"], { SSH_AUTH_SOCK: noAgent() }).json.errors[0].code).toBe(
       "host-key-changed",
     );
     expect(events(twin?.log ?? "").filter((event) => event.event !== "begin-auth")).toEqual([]);
     expect(events(twin?.log ?? "").filter((event) => event.event === "exec")).toEqual([]);
   });
 
-  it("authenticates only with the agent key and names agent and server refusals", () => {
+  it("logs in with an agent key or a key file of ~/.ssh and names what is missing", () => {
     const agentLog = join(root, "agent.log");
     const before = events(agentLog).filter((event) => event.request === "sign").length;
-    expect(pi(["identify", "--board", "pi"]).json.errors[0].code).toBe("helper-missing");
+    // The first call finds no helper on the board and installs it by itself.
+    const first = pi(["identify", "--board", "pi"]);
+    expect(first.code, JSON.stringify(first.json.errors)).toBe(0);
+    expect(warnings(first)).toEqual(["helper-installed"]);
     const signs = events(agentLog).filter((event) => event.request === "sign");
     expect(signs.length).toBe(before + 1);
     expect(signs.at(-1)?.fingerprint).toBe(fp.user);
     expect(pi(["identify", "--board", "other-key"]).json.errors[0].code).toBe("agent-key-missing");
-    const missing = windows ? "\\\\.\\pipe\\vera-pi-no-agent" : join(root, "no-agent.sock");
-    expect(pi(["identify", "--board", "pi"], { SSH_AUTH_SOCK: missing }).json.errors[0].code).toBe(
+    expect(pi(["identify", "--board", "other-key"], { SSH_AUTH_SOCK: noAgent() }).json.errors[0].code).toBe(
       "agent-unavailable",
     );
-    expect(pi(["identify", "--board", "stranger"]).json.errors[0].code).toBe("auth-failed");
+    // No agent and no key file: the message says how to make a key and authorize it.
+    const none = pi(["identify", "--board", "pi"], { SSH_AUTH_SOCK: noAgent() });
+    expect(none.json.errors[0].code).toBe("no-key");
+    expect(none.json.errors[0].message).toContain("ssh-keygen -t ed25519");
+    // No agent, the key as a file: what a Windows user with a stopped ssh-agent service has.
+    expect(pi(["identify", "--board", "pi"], withKeyFile()).code).toBe(0);
+    const refused = pi(["identify", "--board", "stranger"]);
+    expect(refused.json.errors[0].code).toBe("auth-failed");
+    expect(refused.json.errors[0].message).toContain("authorized_keys");
     const attempts = events(main?.log ?? "").filter((event) => event.event === "public-key");
     expect(attempts.every((event) => event.fingerprint === fp.user)).toBe(true);
   });
 
-  it("installs the helper explicitly, then runs only a helper with the bundled hash", () => {
-    const install = pi(["install-helper", "--board", "pi"]);
-    expect(install.code).toBe(0);
-    expect(install.json.helper.state).toBe("installed");
+  it("learns the host key of a board declared by host and user, and refuses another one until told", async () => {
+    const store = join(root, "lab", "linux-board-keys.json");
+    const first = pi(["identify", "--board", "mini"], withKeyFile());
+    expect(first.code, JSON.stringify(first.json.errors)).toBe(0);
+    expect(warnings(first)).toEqual(["host-key-saved"]);
+    expect(first.json.board).toMatchObject({ root: "~/vera-projects", hostKey: fp.host });
+    expect(first.json.rootCheck).toEqual({ ok: true, path: projects });
+    const address = `127.0.0.1:${main?.port}`;
+    expect(JSON.parse(readFileSync(store, "utf8")).hosts[address].fingerprint).toBe(fp.host);
+    expect(warnings(pi(["identify", "--board", "mini"]))).toEqual([]);
+    // The saved key is another one (as after the board's system was installed again).
+    const saved = JSON.parse(readFileSync(store, "utf8"));
+    saved.hosts[address].fingerprint = fp.host2;
+    await writeFile(store, JSON.stringify(saved));
+    const changed = pi(["identify", "--board", "mini"]);
+    expect(changed.json.errors[0].code).toBe("host-key-changed");
+    expect(changed.json.errors[0].message).toContain("trust-host-key --board mini");
+    expect(changed.json.hostKey).toMatchObject({ fingerprint: fp.host, trusted: false, trust: "saved" });
+    const trusted = pi(["trust-host-key", "--board", "mini"]);
+    expect(trusted.json.hostKey).toMatchObject({ fingerprint: fp.host, trusted: true });
+    expect(pi(["identify", "--board", "mini"]).code).toBe(0);
+    expect(pi(["trust-host-key", "--board", "pi"]).json.errors[0].code).toBe("host-key-pinned");
+    // A line of ~/.ssh/known_hosts counts as ssh counts it.
+    const known = join(root, "ssh-known");
+    await mkdir(known);
+    const line = (key: string) =>
+      `[127.0.0.1]:${twin?.port} ${readFileSync(join(keys, `${key}.pub`), "utf8").trim()}\n`;
+    await writeFile(join(known, "known_hosts"), line("host"));
+    const other = pi(["identify", "--board", "mini-twin"], { PI_SSH_DIR: known });
+    expect(other.json.errors[0].code).toBe("host-key-changed");
+    expect(other.json.hostKey.trust).toBe("known_hosts");
+    await writeFile(join(known, "known_hosts"), line("host2"));
+    const same = pi(["identify", "--board", "mini-twin"], { PI_SSH_DIR: known });
+    expect(same.code, JSON.stringify(same.json.errors)).toBe(0);
+    expect(warnings(same)).toEqual([]);
+    expect(JSON.parse(readFileSync(store, "utf8")).hosts[`127.0.0.1:${twin?.port}`]).toBeUndefined();
+  });
+
+  it("asks a board with several host keys for the Ed25519 one, and finds a pinned RSA key", () => {
+    const ed = pi(["check-host-key", "--board", "ed-pin"]);
+    expect(ed.json.hostKey).toMatchObject({ type: "ssh-ed25519", fingerprint: fp.host, trusted: true });
+    expect(pi(["identify", "--board", "ed-pin"]).code).toBe(0);
+    const rsa = pi(["identify", "--board", "rsa-pin"]);
+    expect(rsa.code, JSON.stringify(rsa.json.errors)).toBe(0);
+    expect(rsa.json.board.hostKey).toBe(fp["host-rsa"]);
+  });
+
+  it("runs only a helper with the bundled hash and replaces one that differs", () => {
     const digest = createHash("sha256")
       .update(readFileSync(join(scripts, "remote", "vera_pi_remote.py")))
       .digest("hex");
-    expect(install.json.helper.sha256).toBe(digest);
-    const installed = `${home}/.local/share/vera-pi/0.2.0/vera_pi_remote.py`;
+    const installed = `${home}/.local/share/vera-pi/0.3.0/vera_pi_remote.py`;
     expect(sh(`sha256sum '${installed}' | cut -d' ' -f1`).out).toBe(digest);
     expect(sh(`stat -c %a '${installed}'`).out).toBe("600");
-    expect(pi(["install-helper", "--board", "pi"]).json.helper.state).toBe("already-installed");
+    const explicit = pi(["install-helper", "--board", "pi"]);
+    expect(explicit.json.helper).toMatchObject({ state: "already-installed", sha256: digest });
     sh(`printf '#' >> '${installed}'`);
     const changed = pi(["identify", "--board", "pi"]);
-    expect(changed.json.errors[0].code).toBe("helper-changed");
-    expect(pi(["install-helper", "--board", "pi"]).json.helper.state).toBe("replaced");
+    expect(changed.code).toBe(0);
+    expect(warnings(changed)).toEqual(["helper-installed"]);
+    expect(sh(`sha256sum '${installed}' | cut -d' ' -f1`).out).toBe(digest);
   });
 
-  it("identifies the board and refuses another identity and an unsafe root", () => {
+  it("identifies the board with its health and refuses another identity and an unsafe root", () => {
     const run = pi(["identify", "--board", "pi"]);
     expect(run.code).toBe(0);
+    expect(run.json.runFolder).toBeUndefined();
+    expect(run.json.health.memoryTotalMB).toBeGreaterThan(0);
+    expect(run.json.health.diskFreeMB).toBeGreaterThan(0);
+    expect(run.json.health).toMatchObject({ tasksRunning: 0 });
     expect(run.json.identity).toMatchObject({
       machineId: remote.machineId,
       user: remote.user,
       uid: Number(remote.uid),
-      helper: "0.2.0",
+      helper: "0.3.0",
     });
     expect(run.json.identity.machine).toMatch(/^(x86_64|aarch64)$/);
     expect(run.json.identity.os.ID).toBeTruthy();
-    expect(run.json.rootCheck).toEqual({ ok: true });
+    expect(run.json.rootCheck).toEqual({ ok: true, path: projects });
     expect(pi(["identify", "--board", "wrong-id"]).json.errors[0].code).toBe("identity-mismatch");
     expect(pi(["identify", "--board", "wrong-model"]).json.errors[0].code).toBe("identity-mismatch");
-    expect(pi(["identify", "--board", "no-root"]).json.errors[0].code).toBe("root-invalid");
+    // A projects folder that does not exist yet is created.
+    expect(pi(["identify", "--board", "no-root"]).code).toBe(0);
+    expect(sh(`stat -c %a '${home}/missing-root'`).out).toBe("755");
     expect(pi(["identify", "--board", "open-root"]).json.errors[0].code).toBe("root-invalid");
     sh(`ln -s '${projects}' '${home}/linked-root'`);
     const viaLink = pi(["deploy-candidate", "--board", "linked-root", "--project", project()]);
@@ -677,7 +828,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-1/candidate.json",
+      "raspberry-pi-results/deploy-1/candidate.json",
     ]);
     expect(applied.code).toBe(0);
     expect(applied.json.applied.applied).toEqual([
@@ -719,7 +870,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-2/candidate.json",
+      "raspberry-pi-results/deploy-2/candidate.json",
     ]);
     expect(applied.json.applied.applied).toEqual(["app.py"]);
     expect(remoteFile(`${projects}/vera-fixture/config.json`)).toContain("on the board");
@@ -731,7 +882,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-3/candidate.json",
+      "raspberry-pi-results/deploy-3/candidate.json",
       "--overwrite",
       "app.py",
     ]);
@@ -741,7 +892,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-3/candidate.json",
+      "raspberry-pi-results/deploy-3/candidate.json",
       "--overwrite",
       "config.json",
     ]);
@@ -763,7 +914,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-4/candidate.json",
+      "raspberry-pi-results/deploy-4/candidate.json",
     ]);
     expect(tampered.json.errors[0].code).toBe("candidate-changed");
     const restaged = pi([
@@ -784,7 +935,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-5/candidate.json",
+      "raspberry-pi-results/deploy-5/candidate.json",
     ]);
     expect(raced.json.errors[0].code).toBe("conflict");
     expect(remoteFile(`${projects}/vera-fixture/app.py`)).toContain("edited meanwhile");
@@ -798,7 +949,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
         "--board",
         "pi",
         "--candidate",
-        "arduino-iot-results/deploy-6/candidate.json",
+        "raspberry-pi-results/deploy-6/candidate.json",
         "--overwrite",
         "app.py",
       ]).code,
@@ -826,7 +977,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       "--board",
       "pi",
       "--candidate",
-      "arduino-iot-results/deploy-link/candidate.json",
+      "raspberry-pi-results/deploy-link/candidate.json",
       "--overwrite",
       "dir with space/a b.txt",
     ]);
@@ -836,6 +987,150 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       `rm '${projects}/vera-fixture/dir with space' && mv '${home}/moved' '${projects}/vera-fixture/dir with space'`,
     );
   });
+
+  it("deploys in one call: sends only what changed, repairs a mode, leaves board edits unless told", async () => {
+    const same = pi(["compare", "--board", "pi", "--project", project()]);
+    expect(same.json.deploy.counts).toEqual({ new: 0, changed: 0, unchanged: 4, conflict: 0 });
+    expect(same.json.deploy.remoteOnly).toEqual(["notes.txt"]);
+    await writeFile(
+      join(root, "project", "app.py"),
+      `${readFileSync(join(fixture, "app.py"), "utf8")}# v4\n`,
+    );
+    sh(`chmod 644 '${projects}/vera-fixture/run.sh' && echo board >> '${projects}/vera-fixture/config.json'`);
+    const seen = pi(["compare", "--board", "pi", "--project", project()]);
+    expect(seen.json.deploy.counts).toEqual({ new: 0, changed: 1, unchanged: 2, conflict: 1 });
+    expect(remoteFile(`${projects}/vera-fixture/app.py`)).not.toContain("# v4");
+    const before = execs(main).length;
+    const sent = pi(["deploy", "--board", "pi", "--project", project(), "--run-id", "deploy-one"]);
+    expect(sent.code, JSON.stringify(sent.json.errors)).toBe(0);
+    expect(sent.json.deploy).toMatchObject({
+      applied: ["app.py"],
+      modeFixed: ["run.sh"],
+      conflicts: ["config.json"],
+    });
+    expect(warnings(sent)).toEqual(["conflict"]);
+    // Two calls of the board's helper: compare, then send and apply.
+    expect(execs(main).length).toBe(before + 2);
+    expect(remoteFile(`${projects}/vera-fixture/app.py`)).toContain("# v4");
+    expect(sh(`stat -c %a '${projects}/vera-fixture/run.sh'`).out).toBe("755");
+    expect(remoteFile(`${projects}/vera-fixture/config.json`)).toContain("board");
+    expect(sh(`ls -A '${projects}/.vera-pi/candidates'`).out).toBe("");
+    // fetch brings the board's copy here before it is replaced.
+    const fetched = pi([
+      "fetch",
+      "--board",
+      "pi",
+      "--project",
+      project(),
+      "--path",
+      "config.json",
+      "--run-id",
+      "fetch-1",
+    ]);
+    expect(fetched.json.file).toMatchObject({
+      remote: `${projects}/vera-fixture/config.json`,
+      path: `${RESULTS}/fetch-1/config.json`,
+    });
+    expect(fetched.json.file.preview).toContain("board");
+    expect(readFileSync(join(root, RESULTS, "fetch-1", "config.json"), "utf8")).toContain("board");
+    expect(pi(["fetch", "--board", "pi", "--path", "/no/such/file"]).json.errors[0].code).toBe("path");
+    const wrong = pi(["deploy", "--board", "pi", "--project", project(), "--overwrite", "app.py"]);
+    expect(wrong.json.errors[0].code).toBe("usage");
+    const forced = pi(["deploy", "--board", "pi", "--project", project(), "--overwrite", "config.json"]);
+    expect(forced.json.deploy).toMatchObject({ applied: ["config.json"], conflicts: [] });
+    expect(remoteFile(`${projects}/vera-fixture/config.json`)).toBe('{ "greeting": "hello" }');
+    await writeFile(join(root, "project", "app.py"), readFileSync(join(fixture, "app.py")));
+  });
+
+  it("runs an edited project in one call and passes the task's output on while it runs", async () => {
+    await writeFile(
+      join(root, "project", "app.py"),
+      `${readFileSync(join(fixture, "app.py"), "utf8")}print("edited here")\n`,
+    );
+    const run = pi(["run-task", "--board", "pi", "--project", project(), "--task", "selftest"]);
+    expect(run.code, JSON.stringify(run.json.errors)).toBe(0);
+    expect(run.json.deploy.applied).toEqual(["app.py"]);
+    expect(run.json.task.stdout.text).toBe("fixture app 1.0.0\nselftest ok\nedited here\n");
+    // stdout carries the one result document; the task's own output went to stderr as it came.
+    expect(run.stderr).toContain("selftest ok\nedited here\n");
+    await writeFile(join(root, "project", "app.py"), readFileSync(join(fixture, "app.py")));
+    expect(pi(["deploy", "--board", "pi", "--project", project()]).json.deploy.applied).toEqual(["app.py"]);
+  });
+
+  it("runs a command line in a shell on the board, in the home folder or in the project", () => {
+    const run = pi([
+      "exec",
+      "--board",
+      "pi",
+      "--command",
+      "echo one; echo two >&2; pwd | wc -l",
+      "--run-id",
+      "exec-1",
+    ]);
+    expect(run.code, JSON.stringify(run.json.errors)).toBe(0);
+    expect(run.json.task).toMatchObject({ name: "exec", state: "exited", exitCode: 0 });
+    expect(run.json.task.stdout.text).toBe("one\n1\n");
+    expect(run.json.task.stderr.text).toBe("two\n");
+    expect(readFileSync(join(root, RESULTS, "exec-1", "stdout.log"), "utf8")).toBe("one\n1\n");
+    const inProject = pi(["exec", "--board", "pi", "--project", project(), "--command", "pwd; exit 4"]);
+    expect(inProject.code).toBe(1);
+    expect(inProject.json.task).toMatchObject({ exitCode: 4 });
+    expect(inProject.json.task.stdout.text).toBe(`${projects}/vera-fixture\n`);
+    const slow = pi(["exec", "--board", "pi", "--command", "echo started; sleep 30", "--budget", "2"]);
+    expect(slow.json.task.state).toBe("budget-exceeded");
+    expect(slow.json.task.stdout.text).toBe("started\n");
+    expect(alive(slow.json.task.pid)).toBe(false);
+    const missing = pi([
+      "run-task",
+      "--board",
+      "pi",
+      "--project",
+      project(),
+      "--task",
+      "selftest",
+      "--arg",
+      "x",
+    ]);
+    expect(missing.json.errors[0].code).toBe("usage");
+  });
+
+  it("builds the project's virtual environment from its requirements and runs tasks with it", async (ctx) => {
+    if (sh("python3 -c 'import ensurepip, venv'").code !== 0) ctx.skip("the Linux shell has no python3-venv");
+    await writeFile(join(root, "project", "requirements.txt"), "");
+    await writeProject((p) => {
+      base(p);
+      p.files.push("requirements.txt");
+      p.requirements = "requirements.txt";
+      p.tasks.prefix = { argv: ["python3", "-c", "import sys; print(sys.prefix)"] };
+    });
+    const first = pi([
+      "run-task",
+      "--board",
+      "pi",
+      "--project",
+      project(),
+      "--task",
+      "prefix",
+      "--run-id",
+      "venv-1",
+    ]);
+    expect(first.code, JSON.stringify(first.json.errors)).toBe(0);
+    expect(first.json.setup).toMatchObject({ name: "setup", state: "exited", exitCode: 0 });
+    expect(first.json.task.stdout.text).toBe(`${projects}/vera-fixture/.venv\n`);
+    expect(existsSync(join(root, RESULTS, "venv-1", "setup-stdout.log"))).toBe(true);
+    // Unchanged requirements are not installed again, and the environment is not a project file.
+    const again = pi(["run-task", "--board", "pi", "--project", project(), "--task", "prefix"]);
+    expect(again.json.setup).toBeUndefined();
+    expect(again.json.deploy.remoteOnly).toEqual(["notes.txt"]);
+    await writeFile(join(root, "project", "requirements.txt"), "this-package-does-not-exist-vera==0\n");
+    const failed = pi(["run-task", "--board", "pi", "--project", project(), "--task", "prefix"]);
+    expect(failed.code).toBe(1);
+    expect(failed.json.errors[0].code).toBe("setup-failed");
+    expect(failed.json.task).toBeUndefined();
+    sh(`rm -rf '${projects}/vera-fixture/.venv' '${projects}/vera-fixture/requirements.txt'`);
+    await rm(join(root, "project", "requirements.txt"));
+    await writeProject(base);
+  }, 240_000);
 
   it("runs a declared task with a handle, PID and logs, and passes arguments literally", () => {
     const run = pi([
@@ -853,7 +1148,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     expect(run.json.task).toMatchObject({ name: "selftest", state: "exited", exitCode: 0 });
     expect(run.json.task.handle).toMatch(/^[0-9a-f]{16}$/);
     expect(run.json.task.pid).toBeGreaterThan(1);
-    expect(readFileSync(join(root, "arduino-iot-results", "task-1", "stdout.log"), "utf8")).toContain(
+    expect(readFileSync(join(root, "raspberry-pi-results", "task-1", "stdout.log"), "utf8")).toContain(
       "selftest ok",
     );
     const echo = pi([
@@ -879,6 +1174,8 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     expect(sh(`find '${home}' -name 'pwned*' | wc -l`).out).toBe("0");
     const script = pi(["run-task", "--board", "pi", "--project", project(), "--task", "script"]);
     expect(script.json.task.stdout.text).toBe("script ok 1\n");
+    // Nothing changed here, so nothing was sent.
+    expect(script.json.deploy).toMatchObject({ applied: [], conflicts: [] });
     const commands = new Set(execs(main).map((event) => event.command));
     expect(commands.size).toBe(2);
     for (const command of commands) expect(command).toMatch(/^\/usr\/bin\/python3 -I -c '/);
@@ -892,6 +1189,8 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     const budget = pi(["run-task", "--board", "pi", "--project", project(), "--task", "over-budget"]);
     expect(budget.code).toBe(1);
     expect(budget.json.task.state).toBe("budget-exceeded");
+    // What the task wrote before it was ended is kept.
+    expect(budget.json.task.stdout.text).toContain("tick");
     expect(budget.json.task.durationS).toBeLessThan(6);
     expect(alive(budget.json.task.pid)).toBe(false);
     const spam = pi(["run-task", "--board", "pi", "--project", project(), "--task", "spam"]);
@@ -983,7 +1282,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
         "--board",
         "pi",
         "--candidate",
-        "arduino-iot-results/deploy-family/candidate.json",
+        "raspberry-pi-results/deploy-family/candidate.json",
       ]);
       expect(applied.code, JSON.stringify(applied.json.errors)).toBe(0);
     }
@@ -1036,7 +1335,8 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     expect(start.code, JSON.stringify(start.json.errors)).toBe(0);
     expect(start.json.service).toMatchObject({ unit, activeState: "active", keepRunning: true });
     expect(start.json.service.mainPid).toBeGreaterThan(1);
-    // Whether a user service outlives VERA's SSH session depends on lingering, which VERA reports and never changes.
+    // A service declared keepRunning outlives VERA's SSH session only with lingering, which VERA turns on where
+    // the board lets it.
     const linger = start.json.service.linger;
     expect(typeof linger).toBe("boolean");
     expect(start.json.warnings.map((w: Json) => w.code)).toContain(linger ? "keeps-running" : "no-linger");
@@ -1060,7 +1360,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     expect(logs.json.logs[0]).toMatchObject({ kind: "service", unit });
     expect(logs.json.logs[0].entries).toBeGreaterThan(0);
     const journal = readFileSync(
-      join(root, "arduino-iot-results", "logs-1", `journal-${unit}.jsonl`),
+      join(root, "raspberry-pi-results", "logs-1", `journal-${unit}.jsonl`),
       "utf8",
     );
     expect(journal).toContain("heartbeat");
@@ -1073,6 +1373,53 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
         .errors[0].code,
     ).toBe("service-not-allowed");
     expect(execs(main).length).toBe(before);
+  });
+
+  it("installs the unit file a project deploys, restarts the service on new code and stops it", async (ctx) => {
+    if (!services) ctx.skip("the Linux shell has no running systemd user manager");
+    const unitFile = (word: string) =>
+      `[Unit]\nDescription=VERA raspberry-pi-linux owned test unit\n[Service]\nExecStart=/usr/bin/python3 -u -c "import time\\nwhile True:\\n    print('${word}', flush=True); time.sleep(1)"\n`;
+    await writeFile(join(root, "project", owned), unitFile("first"));
+    await writeProject((p) => {
+      base(p);
+      p.files.push(owned);
+      p.services[owned] = { file: owned };
+    });
+    const start = pi(["service-start", "--board", "pi", "--project", project(), "--service", owned]);
+    expect(start.code, JSON.stringify(start.json.errors)).toBe(0);
+    expect(start.json.deploy.applied).toEqual([owned]);
+    expect(start.json.service).toMatchObject({
+      unit: owned,
+      activeState: "active",
+      installed: "installed",
+      file: owned,
+    });
+    const pid = start.json.service.mainPid;
+    await writeFile(join(root, "project", owned), unitFile("second"));
+    const again = pi(["service-start", "--board", "pi", "--project", project(), "--service", owned]);
+    expect(again.json.service).toMatchObject({ activeState: "active", installed: "updated" });
+    expect(again.json.service.mainPid).not.toBe(pid);
+    const stop = pi(["service-stop", "--board", "pi", "--project", project(), "--service", owned]);
+    expect(stop.json.service.activeState).toMatch(/^(inactive|failed)$/);
+    // A listed unit that nobody installed names what to add to the manifest.
+    await writeProject((p) => {
+      base(p);
+      p.services["vera-not-installed.service"] = {};
+    });
+    const absent = pi([
+      "service-start",
+      "--board",
+      "pi",
+      "--project",
+      project(),
+      "--service",
+      "vera-not-installed.service",
+    ]);
+    expect(absent.json.errors[0].code).toBe("service-failed");
+    expect(absent.json.errors[0].message).toContain('"file"');
+    await rm(join(root, "project", owned));
+    await writeProject(base);
+    sh(`rm -f '${projects}/vera-fixture/${owned}'`);
   });
 
   it("collects task logs and reports run folders", () => {
@@ -1101,16 +1448,16 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
     expect(logs.json.logs[0]).toMatchObject({ kind: "task", handle: task.json.task.handle });
     expect(
       readFileSync(
-        join(root, "arduino-iot-results", "logs-2", `task-${task.json.task.handle}-stdout.log`),
+        join(root, "raspberry-pi-results", "logs-2", `task-${task.json.task.handle}-stdout.log`),
         "utf8",
       ),
     ).toContain("selftest ok");
     const reported = pi([
       "report",
       "--run",
-      "arduino-iot-results/deploy-1",
+      "raspberry-pi-results/deploy-1",
       "--run",
-      "arduino-iot-results/task-2",
+      "raspberry-pi-results/task-2",
       "--run-id",
       "report-1",
     ]);
@@ -1123,7 +1470,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       remote: "confirmed",
     });
     for (const name of ["result.json", "report.md", "report.html"])
-      expect(existsSync(join(root, "arduino-iot-results", "report-1", name))).toBe(true);
+      expect(existsSync(join(root, "raspberry-pi-results", "report-1", name))).toBe(true);
     expect(pi(["report", "--run", "lab"]).json.errors[0].code).toBe("run-invalid");
   });
 
@@ -1147,6 +1494,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
         // APPDATA only so this test's Python finds its user site with asyncssh; VERA's own install uses uv.
         env: {
           PI_REGISTRY: env.PI_REGISTRY as string,
+          PI_SSH_DIR: env.PI_SSH_DIR as string,
           ...(windows ? { APPDATA: process.env.APPDATA ?? "" } : {}),
         },
         inherit: ["SSH_AUTH_SOCK"],

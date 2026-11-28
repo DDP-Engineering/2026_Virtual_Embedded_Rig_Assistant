@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-53db2460"
 
-title = "Show, start and stop only listed user services"
+title = "Install, show, start and stop only listed user services"
 
 status = "active"
 
-requirement = "When service-status, service-start or service-stop names a unit, pi-tool shall act only on a `.service` unit listed in the project manifest, through `systemctl --user` with no sudo or system scope, report its load, active and sub state, main PID, whether it is declared to stay running and whether lingering is enabled for the user (warning no-linger when a service declared to stay running would stop with VERA's SSH session), and refuse any other unit with service-not-allowed."
+requirement = "When service-status, service-start or service-stop names a unit, pi-tool shall act only on a `.service` unit listed in the project manifest, through `systemctl --user` with no system scope, and refuse any other unit with service-not-allowed; service-start shall first deploy the project's changed files, install the unit file the manifest names when it is new or changed, restart the unit and, for a service declared to stay running, enable it at boot and turn lingering on; results shall report load, active and sub state, main PID, whether the unit file was installed and whether lingering is on (warning no-linger when it could not be turned on)."
 
-verification = "With a runtime user unit in the WSL systemd user manager: start gives active with a main PID, linger as a boolean and the keeps-running or no-linger warning, status reports it active, stop gives inactive; an unlisted unit (ssh.service, sshd.service) gives service-not-allowed and the server logs no exec for it."
+verification = "With user units in the WSL systemd user manager: start gives active with a main PID, linger as a boolean and the keeps-running or no-linger warning, status reports it active, stop gives inactive; a unit file listed in the project is installed, a changed file is installed again and the service restarts with another PID; a listed unit nobody installed ends service-failed naming the manifest field; an unlisted unit (ssh.service) gives service-not-allowed and the server logs no exec for it."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

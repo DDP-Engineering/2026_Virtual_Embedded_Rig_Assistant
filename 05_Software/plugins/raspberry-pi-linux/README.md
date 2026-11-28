@@ -1,73 +1,98 @@
 # raspberry-pi-linux
 
-Projects, finite tasks and user services on a Raspberry Pi that VERA reaches over SSH from this computer. VERA keeps
-running on Windows or Linux x64; nothing of VERA runs on the board except a small helper the user installs
-explicitly. One program, `pi-tool`, a PEP 723 script pinned to asyncssh 2.24.1, which VERA installs with its own uv.
+Projects, tasks, commands and user services on a Raspberry Pi that VERA reaches over SSH from this computer. VERA
+keeps running on Windows or Linux x64; nothing of VERA runs on the board except a small helper that installs itself
+on the first call. One program, `pi-tool`, a PEP 723 script pinned to asyncssh 2.24.1, which VERA installs with its
+own uv.
 
 It has been verified against a local SSH test server whose commands ran in a real Linux shell (Ubuntu 24.04 in WSL 2,
-with its systemd user manager); it has not run against a real Raspberry Pi yet, and not from native Ubuntu.
+with its systemd user manager); it has not run against a real Raspberry Pi or a real OpenSSH server yet, and not from
+native Ubuntu.
 
 ## Supported
 
-- Raspberry Pi OS 12 (Bookworm) 64-bit on one Raspberry Pi, an unprivileged login user with a systemd user manager,
+- Raspberry Pi OS 12 (Bookworm) 64-bit on a Raspberry Pi, an unprivileged login user with a systemd user manager,
   `/usr/bin/python3` 3.9 or newer (Bookworm ships 3.11). Other distributions and boards are not claimed.
-- Not offered: a shell, sudo, system services, raw GPIO, I2C or SPI access, OS provisioning, firmware or bootloader
-  changes, reboot and shutdown.
+- Not offered: passwords and passphrases, OS provisioning, firmware or bootloader changes.
 
 ## Declaring a board
 
 A board is an entry of `lab/resources.json` (kind `linux-board`); VERA reserves it for each run, so another session or
-the CLI gets BUSY:
+the CLI gets BUSY. A host and a user are enough:
 
 ```json
 { "format": 1, "resources": [
-  { "alias": "pi", "kind": "linux-board", "host": "pi5.local", "port": 22, "user": "vera",
-    "hostKeys": ["SHA256:<43 characters>"], "agentKey": "SHA256:<43 characters>",
-    "identity": { "serial": "<16 hex>", "model": "Raspberry Pi 5 Model B Rev 1.0" },
-    "root": "/home/vera/vera-projects" } ] }
+  { "alias": "pi", "kind": "linux-board", "host": "raspberrypi.local", "user": "pi" } ] }
 ```
 
-- `hostKeys`: the fingerprints of the board's SSH host keys. Read them on the board's own console (keyboard and screen,
-  or another channel you trust) with `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. `pi-tool check-host-key`
-  shows the key the board presents without logging in; pin it only after comparing. A key that differs later is
-  refused as `host-key-changed`; VERA never accepts it by itself.
-- `user`: an unprivileged account; `root` is refused. Its `~/.ssh/authorized_keys` holds the public half of a key in
-  your system SSH agent (`ssh-add`; on Windows the OpenSSH Authentication Agent service or Pageant). `agentKey` picks
-  one agent key by fingerprint. There is no password option: VERA never handles a password or a key file.
-- `identity`: the board's serial (`cat /proc/device-tree/serial-number`), or its machine id (`/etc/machine-id`), and
-  optionally the model (`cat /proc/device-tree/model`). A board that reports another value is refused.
-- `root`: an existing folder owned by `user`, not writable by group or others and not a link. Projects go into
-  `<root>/<project name>`; VERA's own state into `<root>/.vera-pi/`.
+| Field | Default | Meaning |
+|---|---|---|
+| `port` | 22 | the SSH port |
+| `root` | `~/vera-projects` | the folder projects go into (`<root>/<project name>`), created when missing; VERA's own state is in `<root>/.vera-pi/`. It must belong to the user and not be writable by every user |
+| `hostKeys` | none | `SHA256:` fingerprints that pin the board's host key; then only those are accepted and nothing is learned |
+| `identity` | none | `serial` (`cat /proc/device-tree/serial-number`), `machineId` (`/etc/machine-id`), `model`; a board that reports another value is refused |
+| `agentKey` | none | the fingerprint of the one SSH agent key to offer |
 
-## First steps
+## Connecting
 
-1. `pi-tool check-host-key --board pi`, compare, pin.
-2. `pi-tool install-helper --board pi` writes the helper to `~/.local/share/vera-pi/0.2.0/` after checking its
-   SHA-256. Every later call runs only a helper whose SHA-256 matches the one in this plugin (`helper-missing`,
-   `helper-changed` otherwise).
-3. `pi-tool identify --board pi` reports model, serial, machine id, OS, architecture, kernel, Python, user and the
-   checks of the remote root.
+`pi-tool` connects as `ssh` does and reads neither a password nor a passphrase.
+
+- **Login key**: the keys of the SSH agent when one answers (`SSH_AUTH_SOCK`; on Windows the OpenSSH agent's pipe),
+  then the private keys in `~/.ssh` that need no passphrase (`id_ed25519`, `id_ecdsa`, `id_rsa`, then every other key
+  with a `.pub` file beside it), at most six. A key with a passphrase is used through the agent (`ssh-add`). The
+  public half belongs in `~/.ssh/authorized_keys` of the board's user; `no-key` and `auth-failed` show the command
+  that puts it there. `~/.ssh/config` is not read.
+- **Host key**: `hostKeys` when the entry pins them; else the key `pi-tool` saved for this host
+  (`lab/linux-board-keys.json`); else the keys `~/.ssh/known_hosts` holds for it. A board seen for the first time is
+  accepted and its key saved, as `ssh -o StrictHostKeyChecking=accept-new` does. A key that differs is refused as
+  `host-key-changed`; `pi-tool trust-host-key --board pi` accepts the key the board presents now (after its system
+  was installed again). `pi-tool` asks for the Ed25519 key first, then ECDSA, then RSA, and tries each kind before it
+  calls a key changed.
+- **Helper**: every call runs VERA's helper on the board only when its SHA-256 matches the copy in this plugin; a
+  missing or older helper is written to `~/.local/share/vera-pi/0.3.0/` first (`helper-installed`).
+- `pi-tool identify --board pi` reports model, serial, machine id, OS, architecture, kernel, Python, user, the
+  projects folder and the board's health: temperature, `vcgencmd get_throttled` decoded (under-voltage, throttling),
+  free disk and memory, load and running VERA tasks.
 
 ## Projects
 
-A project folder in the workbench holds `vera-pi.json` (see the raspberry-pi-projects skill): the files to deploy, the
-tasks it may run and the user services it may start. `deploy-candidate` uploads the files into a staging folder on the
-board and compares each with the board's copy; `apply-candidate` replaces only the new and changed files of that
-approved candidate. A file changed on the board since VERA last applied it is a `conflict` and stays unless named with
-`--overwrite` (irreversible). No file is ever deleted, and no `--delete` sync exists.
+A project folder in the workbench holds `vera-pi.json` (see the raspberry-pi-projects skill): the files to deploy,
+an optional pip requirements file, the tasks and the user services.
 
-## Tasks and services
+- `deploy` compares hashes and sends only new and changed files; `run-task` and `service-start` do that first.
+  `compare` lists the differences without changing anything. A file edited on the board since VERA last applied it
+  is a `conflict` and stays unless named with `--overwrite` (irreversible). No file is ever deleted.
+- `requirements` creates `.venv` in the board's project folder with `--system-site-packages` and installs the file
+  again whenever it changed; tasks and `exec --project` run with that environment first on their `PATH`.
+- A script with a `#!` line and Windows line ends is deployed with Unix line ends; `.venv`, `__pycache__` and `.git`
+  are never deployed.
+- `deploy-candidate` and `apply-candidate` remain for a deploy in two approved steps: stage, show the list, apply.
 
-`run-task` runs a declared task under a supervisor on the board that owns its process group and enforces its budget
-and output limit, also when the SSH connection is gone. Stop ends it and confirms that its recorded PID (with start
-time and boot) no longer runs; a lost connection is reported `connection-lost` with the remote state unknown, and VERA's
-cleanup `stop-owned` settles it. A task recorded before the board booted again is `lost-by-reboot`, never signalled.
-Services are `systemctl --user` units the manifest lists; a service declared `keepRunning` stays active after the run
-only when lingering is enabled for the user (`loginctl enable-linger <user>` on the board, which VERA never runs);
-without it systemd stops the user's services shortly after VERA's SSH session ends, and the result warns `no-linger`.
-`collect-logs` copies journal lines and task logs into the run folder.
+## Tasks, commands and services
+
+`run-task` runs a declared task, and `exec` one command line in a shell, under a supervisor on the board that owns
+the process group and enforces the budget and output limit, also when the SSH connection is gone. Output is passed
+on while it runs (Python runs unbuffered). Stop ends it and confirms that its recorded PID (with start time and boot)
+no longer runs; a lost connection is reported `connection-lost` with the remote state unknown, and VERA's cleanup
+`stop-owned` settles it. A task recorded before the board booted again is `lost-by-reboot`, never signalled. The board
+keeps the folders of the 20 newest finished tasks.
+
+Services are `systemctl --user` units the manifest lists. `service-start` installs the unit file the manifest names,
+restarts the unit and, for a service declared `keepRunning`, enables it at boot and turns lingering on
+(`loginctl enable-linger`, with `sudo -n` when the plain call is refused). `collect-logs` copies journal lines and
+task logs into the run folder; `fetch` copies one file of the board (at most 8 MiB) there.
+
+## Risk matrix
+
+| Operations | Risk |
+|---|---|
+| `capabilities`, `inspect-project`, `report` | safe |
+| `check-host-key`, `identify`, `compare`, `task-status`, `service-status`, `collect-logs`, `fetch` | device-read |
+| `trust-host-key`, `install-helper`, `deploy`, `deploy-candidate`, `apply-candidate`, `run-task`, `exec`, `service-start`, `service-stop`, `stop-owned` | device-write |
+| `deploy --overwrite`, `apply-candidate --overwrite` | irreversible |
 
 ## Results
 
-Each board call writes `arduino-iot-results/<run-id>/result.json` and `report.md` in the workbench (`candidate.json`
-and task logs where they apply); `report` summarizes run folders as JSON, Markdown and HTML.
+`deploy`, `run-task`, `exec`, `fetch`, `collect-logs`, the service changes and `report` write
+`raspberry-pi-results/<run-id>/result.json` and `report.md` in the workbench, with task logs and fetched files where
+they apply. Calls that only look (`identify`, `compare`, the status calls) leave no folder.

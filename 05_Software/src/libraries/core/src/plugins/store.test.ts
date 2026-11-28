@@ -617,7 +617,7 @@ it("declares the parameters of the official plugins in their manifests", async (
   expect(await declared("raspberry-pi-linux")).toEqual([
     registry,
     { name: "pi-project", kind: "workbench-file", path: "*/vera-pi.json", format: "json", optional: true },
-    { name: "ssh-agent", kind: "value", value: expect.stringContaining("SSH agent") },
+    { name: "ssh-keys", kind: "value", value: expect.stringContaining("SSH agent") },
   ]);
   expect(await declared("kicad")).toEqual([]);
 });

@@ -122,7 +122,7 @@ export async function claimedResources(
         entry.kind === "ble-device"
           ? entry.address
           : entry.kind === "linux-board"
-            ? `${entry.user}@${entry.host}:${entry.port}`
+            ? `${entry.user}@${entry.host}:${entry.port ?? 22}`
             : entry.resource,
       keys: Object.freeze(labResourceKeys(entry)),
     });

@@ -9,11 +9,12 @@
 """Projects, tasks and user services on a Linux board (Raspberry Pi) for VERA (program `pi-tool` of the
 raspberry-pi-linux plugin).
 
-Operations: capabilities, check-host-key, install-helper, identify, inspect-project, deploy-candidate, apply-candidate,
-run-task, task-status, stop-owned, service-status, service-start, service-stop, collect-logs, report. The board is a
-`linux-board` entry of lab/resources.json ($PI_REGISTRY): SSH with a pinned host key and a key of the system SSH agent;
-on the board only the installed remote helper acts, reached through two constant commands. Exit codes: 0 pass, 1 fail,
-2 blocked, 3 incomplete or error.
+Operations: capabilities, check-host-key, trust-host-key, install-helper, identify, inspect-project, compare, deploy,
+deploy-candidate, apply-candidate, run-task, exec, task-status, stop-owned, service-status, service-start,
+service-stop, collect-logs, fetch, report. The board is a `linux-board` entry of lab/resources.json ($PI_REGISTRY),
+reached as `ssh` reaches it: a host key learned on first use and a key of the SSH agent or of ~/.ssh; on the board the
+remote helper acts, reached through two constant commands. Exit codes: 0 pass, 1 fail, 2 blocked, 3 incomplete or
+error.
 """
 
 import os

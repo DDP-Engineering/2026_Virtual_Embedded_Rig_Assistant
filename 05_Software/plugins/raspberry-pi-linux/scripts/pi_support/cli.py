@@ -14,10 +14,12 @@ from .lifecycle import Lifecycle
 from .report import Ended, Refused, problem
 
 BOARD_OPERATIONS = (
-    "check-host-key", "install-helper", "identify", "deploy-candidate", "apply-candidate", "run-task", "task-status",
-    "stop-owned", "service-status", "service-start", "service-stop", "collect-logs",
+    "check-host-key", "trust-host-key", "install-helper", "identify", "compare", "deploy", "deploy-candidate", "apply-candidate",
+    "run-task", "exec", "task-status", "stop-owned", "service-status", "service-start", "service-stop", "collect-logs", "fetch",
 )
 OPERATIONS = ("capabilities", "inspect-project", "report", *BOARD_OPERATIONS)
+# Looks at the board and leaves no files behind: no run folder.
+WITHOUT_RUN_FOLDER = ("check-host-key", "trust-host-key", "identify", "compare", "task-status", "service-status")
 
 
 class Parser(argparse.ArgumentParser):
@@ -28,7 +30,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def _parser() -> Parser:
-    parser = Parser(prog=TOOL, description="Projects, tasks and user services on a Linux board (Raspberry Pi) over verified SSH.", allow_abbrev=False)
+    parser = Parser(prog=TOOL, description="Projects, tasks, commands and user services on a Linux board (Raspberry Pi) over SSH.", allow_abbrev=False)
     parser.add_argument("--version", action="version", version=f"{TOOL} {VERSION}")
     sub = parser.add_subparsers(dest="operation", required=True, parser_class=Parser)
     sub.add_parser("capabilities", help="versions, supported matrix, operations and limits", allow_abbrev=False)
@@ -41,10 +43,18 @@ def _parser() -> Parser:
         command = sub.add_parser(name, allow_abbrev=False)
         command.add_argument("--board", required=True, metavar="ALIAS")
         commands.append(command)
-        if name in ("deploy-candidate", "run-task", "service-status", "service-start", "service-stop", "collect-logs"):
+        if name in ("compare", "deploy", "deploy-candidate", "run-task", "service-status", "service-start", "service-stop", "collect-logs"):
             command.add_argument("--project", required=True, metavar="FILE")
+        if name in ("exec", "fetch"):
+            command.add_argument("--project", metavar="FILE")
+        if name == "exec":
+            command.add_argument("--command", required=True, metavar="LINE")
+            command.add_argument("--budget", type=int, default=operations.EXEC_BUDGET_S, metavar="SECONDS")
+        if name == "fetch":
+            command.add_argument("--path", required=True, metavar="REMOTE")
         if name == "apply-candidate":
             command.add_argument("--candidate", required=True, metavar="FILE")
+        if name in ("apply-candidate", "deploy"):
             command.add_argument("--overwrite", action="append", default=[], metavar="PATH")
         if name == "run-task":
             command.add_argument("--task", required=True, metavar="NAME")
@@ -63,10 +73,20 @@ def _parser() -> Parser:
     return parser
 
 
-async def _board(args: Any, document: dict[str, Any], lifecycle: Lifecycle, folder: Path, cwd: Path, spelled: Path) -> None:
+async def _board(args: Any, document: dict[str, Any], lifecycle: Lifecycle, folder: Any, cwd: Path, spelled: Path) -> None:
     operation = args.operation
     if operation == "check-host-key":
         await operations.check_host_key(args, document, lifecycle)
+    elif operation == "trust-host-key":
+        await operations.trust_host_key(args, document, lifecycle)
+    elif operation == "compare":
+        await operations.compare(args, document, lifecycle, cwd, spelled)
+    elif operation == "deploy":
+        await operations.deploy(args, document, lifecycle, folder, cwd, spelled)
+    elif operation == "exec":
+        await operations.exec_command(args, document, lifecycle, folder, cwd, spelled)
+    elif operation == "fetch":
+        await operations.fetch(args, document, lifecycle, folder, cwd, spelled)
     elif operation == "install-helper":
         await operations.install_helper(args, document, lifecycle)
     elif operation == "identify":
@@ -82,7 +102,7 @@ async def _board(args: Any, document: dict[str, Any], lifecycle: Lifecycle, fold
     elif operation == "stop-owned":
         await operations.stop_owned(args, document, lifecycle)
     elif operation.startswith("service-"):
-        await operations.service(args, document, lifecycle, cwd, spelled, operation.removeprefix("service-"))
+        await operations.service(args, document, lifecycle, folder, cwd, spelled, operation.removeprefix("service-"))
     elif operation == "collect-logs":
         await operations.collect_logs(args, document, lifecycle, folder, cwd, spelled)
 
@@ -121,7 +141,8 @@ def main(argv: list[str]) -> int:
             operations.report_runs(args, document, cwd, spelled)
             folder = _folder(cwd, spelled, args, document)
         else:
-            folder = _folder(cwd, spelled, args, document)
+            if args.operation not in WITHOUT_RUN_FOLDER:
+                folder = _folder(cwd, spelled, args, document)
             asyncio.run(_board(args, document, lifecycle, folder, cwd, spelled))
         code = 0
     except Refused as refusal:

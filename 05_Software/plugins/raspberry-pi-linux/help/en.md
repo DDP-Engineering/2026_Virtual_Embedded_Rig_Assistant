@@ -1,36 +1,38 @@
 # Raspberry Pi Linux projects
 
-This plugin lets the agent deploy projects, run finite tasks and manage user services on a Raspberry Pi that VERA reaches over SSH. Every connection checks the board's pinned host key, identity, user and remote root. A small helper on the board applies only approved files, runs declared tasks with a time budget, and starts, stops and reads listed user services. There is no shell, sudo, system service, raw GPIO, I2C or SPI access or reboot.
+This plugin lets the agent work on a Raspberry Pi that VERA reaches over SSH: deploy a project, run its tasks and see their output, run a command, install Python and system packages, manage services that start at boot, read the board's health and bring files back. VERA connects the way `ssh` does, with the key you already use.
 
 ## What it needs
 
 - **pi-tool**, a Python script that VERA installs itself with **Install dependencies**.
-- **A Raspberry Pi** with Raspberry Pi OS 12 (Bookworm) 64-bit, an unprivileged user with a systemd user manager and Python 3.9 or newer.
-- **The bench registry** `lab/resources.json` in the workbench (required), which declares the board as a `linux-board`: host, user, pinned host key fingerprints, agent key, serial or machine id and remote root folder.
-- **A project manifest** `vera-pi.json` in a project folder (optional): the files to deploy, the tasks and the user services.
-- **The system SSH agent** holding your login key (on Windows the OpenSSH Authentication Agent or Pageant). VERA never handles a password or key file.
+- **A Raspberry Pi** with Raspberry Pi OS 12 (Bookworm) 64-bit, SSH enabled and Python 3.9 or newer.
+- **The bench registry** `lab/resources.json` in the workbench (required), which declares the board as a `linux-board`. The host and the user are enough; the agent writes the entry when you name them.
+- **An SSH key**: a key in the SSH agent, or a private key in `~/.ssh` that needs no passphrase, whose public half is authorized on the board. VERA never handles a password or a passphrase.
+- **A project manifest** `vera-pi.json` in a project folder (optional): the files to deploy, the Python requirements, the tasks and the services.
 
 The plugin page's **Configuration** section shows the state of each.
 
 ## How to use it
 
-The agent uses the `raspberry-pi-projects` and `raspberry-pi-tasks` skills. Compare the host key on the board's own console before you pin it.
+The agent uses the `raspberry-pi-projects` and `raspberry-pi-tasks` skills.
 
-- "Check the host key of the board pi, then install the helper and identify the board."
-- "Stage blink/vera-pi.json on pi and show me which files change."
-- "Run the selftest task of blink-demo on pi."
-- "Start blink-demo.service and collect its logs."
+- "My Pi is raspberrypi.local, user pi. Connect to it and tell me how it is doing."
+- "Run the blink project on pi."
+- "Install i2c-tools on pi and scan the I2C bus."
+- "Make blink start at boot and show me its logs."
+
+The first connection saves the board's host key. If you install the board's system again, the key changes and VERA refuses it until you tell the agent to trust the new one.
 
 ## Risk and approvals
 
 - **Safe** (runs without asking): offline manifest checks and reports.
-- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): checking the host key, identifying the board, task and service status and logs.
-- **Device write** (asks in **Ask** and **Auto-edit**): installing the helper, staging and applying files (none is deleted), running a task, starting or stopping a service, and VERA's cleanup. Project code may drive hardware attached to the board.
-- **Irreversible** (asks, and you type the confirmation word shown on the card): applying with `--overwrite`, which replaces files edited on the board; those edits are lost. In **Bypass — full access** this runs without asking.
+- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): checking the host key, identity and health, comparing a project with the board, task and service status, logs, and fetching a file.
+- **Device write** (asks in **Ask** and **Auto-edit**): deploying files (none is deleted), running a task or a command, starting or stopping a service, trusting a new host key, and VERA's cleanup. Project code and commands may drive hardware attached to the board. **Always allow** on the card lets a command such as `pi-tool run-task` run without asking in **Auto-edit**.
+- **Irreversible** (asks, and you type the confirmation word shown on the card): deploying with `--overwrite`, which replaces files edited on the board; those edits are lost. In **Bypass — full access** this runs without asking.
 
 ## Limits
 
-- VERA runs on Windows x64 or Linux x64; other boards are not claimed.
-- A changed host key is refused, never accepted.
-- A service that keeps running after the session needs `loginctl enable-linger <user>` on the board, which VERA never runs.
+- VERA runs on Windows x64 or Linux x64; boards other than a Raspberry Pi are not claimed.
+- A command that needs `sudo` works only where the board allows it without a password, as the default user of Raspberry Pi OS does.
+- `~/.ssh/config` is not read: name the board's real host and user in the registry.
 - The plugin has not yet run against a real Raspberry Pi.

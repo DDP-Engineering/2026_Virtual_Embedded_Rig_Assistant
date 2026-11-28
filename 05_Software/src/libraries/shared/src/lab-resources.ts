@@ -126,8 +126,9 @@ const fingerprint = z.string().regex(/^SHA256:[A-Za-z0-9+/]{43}$/, "Use SHA256:<
 const rootSegment = /^[A-Za-z0-9._-]+$/;
 /**
  * Kind `linux-board` (spec REQ-DATA-f2cbfc23 §1): a Linux board (a Raspberry Pi) the raspberry-pi-linux plugin reaches
- * over SSH as an unprivileged `user`, accepting only a host key whose fingerprint `hostKeys` pins, checking the board's
- * `identity` and working below the absolute remote `root`.
+ * over SSH as an unprivileged `user`. `host` and `user` are enough: the port is 22, the host key is learned on first
+ * use as `ssh` learns it and projects go to `~/vera-projects`. `hostKeys` pins the key by fingerprint instead,
+ * `identity` makes the plugin check which board answers, and `root` names another absolute projects folder.
  */
 const linuxBoardEntrySchema = z.strictObject({
   alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
@@ -138,12 +139,12 @@ const linuxBoardEntrySchema = z.strictObject({
       /^(?:[A-Za-z0-9](?:[A-Za-z0-9.-]{0,252})|[0-9A-Fa-f:.]{2,45})$/,
       "Use a host name, an IPv4 address or an IPv6 address without brackets.",
     ),
-  port: z.number().int().min(1).max(65_535),
+  port: z.number().int().min(1).max(65_535).optional(),
   user: z
     .string()
     .regex(/^[a-z_][a-z0-9_-]{0,31}$/, "Use a lower-case login name.")
     .refine((user) => user !== "root", "Use an unprivileged user; root is refused."),
-  hostKeys: z.array(fingerprint).max(4),
+  hostKeys: z.array(fingerprint).max(4).optional(),
   agentKey: fingerprint.optional(),
   identity: z
     .strictObject({
@@ -157,9 +158,7 @@ const linuxBoardEntrySchema = z.strictObject({
         .optional(),
       model: printable(128).optional(),
     })
-    .refine((identity) => identity.serial !== undefined || identity.machineId !== undefined, {
-      message: "Declare the board's serial or machine id.",
-    }),
+    .optional(),
   root: z
     .string()
     .max(256)
@@ -171,7 +170,8 @@ const linuxBoardEntrySchema = z.strictObject({
         segments.length <= 17 &&
         segments.slice(1).every((segment) => rootSegment.test(segment) && segment !== "." && segment !== "..")
       );
-    }, "Use an absolute path of 2 to 16 segments of letters, digits, dot, underscore and dash, without . or ..."),
+    }, "Use an absolute path of 2 to 16 segments of letters, digits, dot, underscore and dash, without . or ...")
+    .optional(),
   note: z.string().max(256).optional(),
 });
 export const labResourceSchema = z.union([
@@ -303,6 +303,6 @@ export function labResourceKeys(entry: LabResource): string[] {
   if (entry.kind === "bus-adapter")
     return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
   if (entry.kind === "ble-device") return [`ble:${entry.address.toLowerCase()}`];
-  if (entry.kind === "linux-board") return [`ssh:${entry.host.toLowerCase()}:${entry.port}`];
+  if (entry.kind === "linux-board") return [`ssh:${entry.host.toLowerCase()}:${entry.port ?? 22}`];
   return visaResourceKeys(entry.resource, entry.serial);
 }

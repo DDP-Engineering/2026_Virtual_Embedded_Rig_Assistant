@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-SEC-da232972"
 
-title = "Refuse a host key that is not pinned before authenticating"
+title = "Refuse a host key that is not the trusted one before authenticating"
 
 status = "active"
 
-requirement = "When the SSH server presents a host key whose SHA-256 fingerprint is not among the registry entry's hostKeys, pi-tool shall end blocked with code host-key-changed (host-key-unpinned when the list is empty), naming the presented fingerprint, without authenticating or sending any request."
+requirement = "When the SSH server presents a host key, pi-tool shall accept it only when its SHA-256 fingerprint is among the registry entry's hostKeys, or, for an entry without hostKeys, equals the key pi-tool saved for that host and port, or else one of the keys ~/.ssh/known_hosts holds for it; a host with none of these is accepted once and its key saved, and any other key shall end blocked with code host-key-changed, naming the presented fingerprint and the remedy, without authenticating or sending any request, until trust-host-key saves the presented key; before a key counts as changed the server is asked for its Ed25519, ECDSA and RSA key in turn."
 
-verification = "Test SSH server with a second host key: identify ends host-key-changed exit 2 naming the new fingerprint, also when no agent is reachable, and the server log has no authentication attempt and no exec; with hostKeys [] check-host-key ends host-key-unpinned; known_hosts is a callable returning no key and config=None, so no ~/.ssh file is consulted."
+verification = "Test SSH servers: identify of a pinned entry against a second host key ends host-key-changed exit 2 naming the new fingerprint, also when no key is available, and the server log has no authentication attempt and no exec; an entry of host and user alone saves the key on its first identify, refuses another saved fingerprint until trust-host-key, and follows a known_hosts line of the folder standing in for ~/.ssh; trust-host-key on a pinned entry ends host-key-pinned; a server with an RSA and an Ed25519 key presents the Ed25519 one, and an entry pinning the RSA fingerprint connects."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

@@ -24,8 +24,8 @@ offline evidence plus one opt-in real scan, not proof of a device. Its workspace
 circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugin program runner](plugins-runner.md).
 
 For raspberry-pi-linux, start at plugins/raspberry-pi-linux/plugin.yaml, scripts/pi_tool.py and scripts/pi_support/ (cli.py
-dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py the pinned host key, agent
-authentication and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
+dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py host-key trust, login keys
+and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
 board-side scripts/remote/vera_pi_remote.py, with spec .agentic/specs/REQ-DATA-44547a17.md;
 tests/plugins/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
 SSH protocol and real-Linux evidence (WSL on Windows), never proof of a Raspberry Pi. Its workspace.py and lifecycle.py
@@ -98,43 +98,54 @@ installs, classifies, approves and runs these programs is [Plugins](plugins.md);
   Evidence: the fake Bleak and one real passive scan on Windows 11; no real device read, notify, write or
   pairing yet, native Ubuntu/BlueZ not run.
 
-- `raspberry-pi-linux` 0.2.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
+- `raspberry-pi-linux` 0.3.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
   activities `testing`, `debug`), Windows x64 and Linux x64; VERA stays on the host and reaches the board over SSH.
   Program `pi-tool` = `scripts/pi_tool.py` (PEP 723, `asyncssh==2.24.1`, `cryptography==49.0.0`,
   `typing-extensions==4.16.0`), env `PI_REGISTRY`, `resources {option: --board, kinds: [linux-board], grace: 10,
   cleanup: [stop-owned], cleanupTimeout: 60}`, `sshAgent: true`, timeout 120 s. Rules: capabilities, inspect-project,
-  report safe; check-host-key, identify, task-status, service-status, collect-logs device-read; install-helper,
-  deploy-candidate, apply-candidate (600 s), run-task (3600 s), service-start/stop, stop-owned device-write;
-  apply-candidate `--overwrite` irreversible. The host key is accepted only when its SHA-256 fingerprint is in the
-  entry's hostKeys (callable known_hosts, `~/.ssh/known_hosts` and `~/.ssh/config` never read, no host certificates):
-  otherwise `host-key-unpinned`/`host-key-changed` before authentication; check-host-key stops before login.
-  Authentication is public key from the system agent only (SSH_AUTH_SOCK, else Pageant or the OpenSSH pipe on Windows,
-  `agentKey` filters), codes `agent-unavailable`, `agent-key-missing`, `auth-failed`, `unreachable`, `timeout`. Exec
-  requests are only `/usr/bin/python3 -I -c '<install stub>'` and `... '<run stub>'` built from the helper version and
-  SHA-256; requests and file bytes go on stdin. install-helper writes `~/.local/share/vera-pi/1.0.0/vera_pi_remote.py`
-  (0600, hash-checked; installed / already-installed / replaced); the run stub refuses `helper-missing` /
-  `helper-changed`. The helper checks the login user (not root), the declared serial/machine id/model
-  (`identity-mismatch`) and the root (exists, not a link, owned, not group/world-writable: `root-invalid`). vera-pi.json:
-  name, files (folders expand, `exclude`, no `..`/absolute/backslash/`.vera-pi`/links, 512 files, 16 MiB each, 64 MiB),
-  hardware, tasks (argv[0] `python3` or a listed file, else `command-not-allowed`; budgetS 1-3500, output 1 KiB-16 MiB,
-  extraArgs, actuates) and services (user `.service` units). deploy-candidate stages into
-  `<root>/.vera-pi/candidates/<id>/` and classifies new/changed/unchanged/conflict (neither the candidate's nor the last
-  applied hash) plus remoteOnly; candidate.json in the run folder. apply-candidate checks the board's own plan, staged
-  hashes (`candidate-changed`) and base hashes (`conflict`) before renaming new/changed/`--overwrite` files, records
-  `projects/<name>.json`, unlinks only its staged files and never deletes a project file. run-task: a detached supervisor
-  (new session) starts the task in its own process group, copies stdout/stderr through itself up to the limit, ends the
-  group at budget/limit/stop file (SIGTERM, SIGKILL after 3 s) and records handle, PID, `/proc` start time, boot id
-  and the end; states exited, budget-exceeded, output-limit, stopped, start-failed, supervisor-lost, lost-by-reboot
-  (never signalled). pi-tool polls task-wait, forwards VERA's stop file (remote `confirmed` or `unknown`), and on a
-  lost connection ends `connection-lost` with remote unknown; stop-owned retries an unreachable board 3 times, 3 s
-  apart. Services: `systemctl --user --no-ask-password start|stop|show` on listed units only (`service-not-allowed`),
-  results report `linger` (/var/lib/systemd/linger/<user>) and keepRunning warns `keeps-running`, or `no-linger` when
-  the service would stop with the SSH session; a starting record whose supervisor is gone is start-failed; group members
-  that outlive a lost supervisor keep the task running and pi-tool ends them (`supervisor-lost`); staging removes the
-  project's earlier candidates and its own partial folder; an ELF built on Windows deploys 0755; collect-logs writes `journalctl --user -o json -n N -u UNIT` lines (N 1-2000) and
-  task log tails. Results `pi-tool-result`, `report.md`, report.html for report; exit 0/1/2/3. Evidence: the
-  local asyncssh test server with commands in WSL Ubuntu 24.04 (systemd user manager); no Raspberry Pi, native Ubuntu
-  not run.
+  report safe; check-host-key, identify, compare, task-status, service-status, collect-logs, fetch device-read;
+  trust-host-key, install-helper, deploy (1800 s), deploy-candidate, apply-candidate (600 s), run-task and exec
+  (3600 s), service-start/stop (1800 s), stop-owned device-write; deploy and apply-candidate `--overwrite`
+  irreversible. A board entry needs host and user only (port 22, root `~/vera-projects` created by the helper).
+  Host key (ssh.py `trust`): the entry's hostKeys, else the key saved in `lab/linux-board-keys.json` (keyed
+  `host:port`), else `~/.ssh/known_hosts`, else first use: accepted and saved (`host-key-saved`); another key is
+  `host-key-changed` before authentication until `trust-host-key`. Algorithms of the trusted keys are asked for
+  first, then Ed25519, ECDSA, RSA, and each other kind is tried before a key counts as changed (a board holds one key
+  of each kind and shows the one asked for first). Login (`_keys`): agent keys when an agent answers, then the keys
+  of `~/.ssh` without a passphrase, at most six; `agentKey` restricts to one agent key; `$PI_SSH_DIR` replaces
+  `~/.ssh` in tests; codes `no-key`, `agent-unavailable`, `agent-key-missing`, `auth-failed`, `unreachable`,
+  `timeout`; `~/.ssh/config` is not read. Exec requests are only `/usr/bin/python3 -I -c '<install stub>'` and
+  `... '<run stub>'` built from the helper version and SHA-256; requests and file bytes go on stdin. `Session.call`
+  installs the helper once on `helper-missing`/`helper-changed` (`helper-installed`). The helper checks the login user
+  (not root), each declared serial/machine id/model (`identity-mismatch`) and the root (created when missing; not a
+  link, owned, not world-writable: `root-invalid`); it uses `$HOME` for the default root and the account's home for
+  systemd units. vera-pi.json: name, files (folders expand, `exclude` names or fnmatch patterns, `.venv`,
+  `__pycache__`, `.git` never, no `..`/absolute/backslash/`.vera-pi`/links, 512 files, 16 MiB each, 64 MiB; a `#!`
+  file with CR LF is sent with LF), `requirements`, hardware, tasks (argv[0] a project file, an absolute path or a
+  program on PATH, else `command-not-found`; budgetS 1-3500 default 600, output 1 KiB-16 MiB, extraArgs, actuates) and
+  services (user `.service` units, `file` = the unit file to install). `_deploy` (deploy, run-task, service-start):
+  helper op `plan`, then `deploy` (= stage + apply in one helper call) with the bytes of only new and changed files;
+  conflicts stay unless `--overwrite`; unchanged files get their mode repaired. `_venv`: when `requirements` is new or
+  changed, a supervised shell command `setup` creates `.venv` (`--system-site-packages`), runs pip and writes the
+  file's hash to `.venv/.vera-requirements` (`setup-failed`). `_supervise` runs a task (`argv`) or an `exec` command
+  (`shell`, bash else sh) through helper `task-start`: a detached supervisor (new session) starts it in its own
+  process group with the project's `.venv/bin` first on PATH and `PYTHONUNBUFFERED=1`, copies stdout/stderr up to the
+  limit, ends the group at budget/limit/stop file (SIGTERM, SIGKILL after 3 s) and records handle, PID, `/proc` start
+  time, boot id and the end; task-start prunes finished task folders beyond 20. pi-tool polls `task-wait` with log
+  offsets and writes the new output to stderr (stdout carries the one result document), forwards VERA's stop file
+  (remote `confirmed` or `unknown`), and on a lost connection ends `connection-lost` with remote unknown; stop-owned
+  retries an unreachable board 3 times, 3 s apart. States exited, budget-exceeded, output-limit, stopped,
+  start-failed, supervisor-lost, lost-by-reboot (never signalled). Results show a short log whole, else head and tail.
+  Services: listed units only (`service-not-allowed`); start installs the unit `file` into
+  `~/.config/systemd/user`, turns lingering on for keepRunning (`loginctl enable-linger`, else `sudo -n`), restarts
+  and enables; stop also disables a keepRunning unit; a oneshot that ended well passes with warning `exited`.
+  collect-logs reads `journalctl --user -u UNIT`, else `--user-unit=UNIT` (`journal-empty` when neither has lines).
+  identify adds `health` (temperature, `vcgencmd get_throttled` decoded, memory, disk, load, uptime, running tasks)
+  with warnings `under-voltage`, `hot`, `disk-low`. fetch copies one file (8 MiB) into the run folder with a text
+  preview. Run folders (`raspberry-pi-results/<run-id>`) only for operations that leave files. deploy-candidate and
+  apply-candidate remain as the two-step deploy with a candidate.json bound by hash. Evidence: the local asyncssh
+  test server with commands in WSL Ubuntu 24.04 (systemd user manager); no Raspberry Pi, no real OpenSSH server,
+  native Ubuntu not run; throttling, the system-journal fallback and linger through sudo are unexercised.
 
 ## Invariants
 

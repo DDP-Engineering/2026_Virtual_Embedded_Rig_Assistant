@@ -67,10 +67,13 @@ const audited: Record<string, Record<string, string[]>> = {
   },
   "raspberry-pi-linux": {
     "pi-tool": [
+      "trust-host-key",
       "install-helper",
+      "deploy",
       "deploy-candidate",
       "apply-candidate",
       "run-task",
+      "exec",
       "service-start",
       "service-stop",
       "stop-owned",

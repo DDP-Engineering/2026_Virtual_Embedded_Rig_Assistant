@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-38952891"
 
-title = "Identify the board, operating system, architecture, user and remote root"
+title = "Identify the board, its health, operating system, architecture, user and remote root"
 
 status = "active"
 
-requirement = "When identify runs on a verified connection, pi-tool shall report the board model, serial number, machine id, OS identity and version, architecture, kernel, Python version, login user and uid, boot id, helper version and the remote root checks, and shall end blocked with identity-mismatch when the serial, machine id or model differs from the registry entry, and (a defensive check behind the server's own refusal of another user) when the login user differs or is root."
+requirement = "When identify runs on a trusted connection, pi-tool shall report the board model, serial number, machine id, OS identity and version, architecture, kernel, Python version, login user and uid, boot id, helper version, the remote root check with its path and the board's health (temperature, decoded throttling state, memory, disk, load, uptime and running VERA tasks, with warnings for under-voltage, 80 C or more and less than 200 MB free), and shall end blocked with identity-mismatch when a declared serial, machine id or model differs from the board's, and (a defensive check behind the server's own refusal of another user) when the login user differs or is root."
 
-verification = "identify in the WSL remote reports machine id, architecture, OS id, the user and uid with rootCheck ok; a registry machineId differing by one digit and a declared model the board lacks give identity-mismatch; a registry user the server does not accept ends auth-failed before the helper runs."
+verification = "identify in the WSL remote reports machine id, architecture, OS id, the user and uid, rootCheck ok with the folder's path and a health block with memory and disk; a registry machineId differing by one digit and a declared model the board lacks give identity-mismatch; a registry user the server does not accept ends auth-failed before the helper runs. The throttling state needs a Raspberry Pi and is not exercised."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

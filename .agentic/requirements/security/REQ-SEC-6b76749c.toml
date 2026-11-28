@@ -6,9 +6,9 @@ title = "Send only constant remote commands and keep arguments on stdin"
 
 status = "active"
 
-requirement = "pi-tool shall send as SSH exec requests only the constant install and run commands of its bundled remote helper version, carrying every operation, argument, path and file content in the request on stdin, so no agent-supplied text reaches the remote shell."
+requirement = "pi-tool shall send as SSH exec requests only the constant install and run commands of its bundled remote helper version, carrying every operation, argument, path, file content and command line in the request on stdin, so no text reaches the board's login shell; the helper starts tasks from an argv list and hands only the command line of an exec operation, which the user approved as such, to a shell."
 
-verification = "Over install, deploys and run-task calls with arguments holding spaces, `; touch` and `$(id)`, the test server's exec log holds exactly two distinct commands, both `/usr/bin/python3 -I -c '...'`; no pwned file exists below the test home and the task prints each argument literally."
+verification = "Over deploys, run-task calls with arguments holding spaces, `; touch` and `$(id)` and exec calls, the test server's exec log holds exactly two distinct commands, both `/usr/bin/python3 -I -c '...'`; no pwned file exists below the test home and the task prints each argument literally."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py", "05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

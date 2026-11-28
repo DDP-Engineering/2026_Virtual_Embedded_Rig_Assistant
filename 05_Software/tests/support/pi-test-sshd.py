@@ -1,6 +1,6 @@
 """A local SSH server standing in for a Raspberry Pi's sshd in the raspberry-pi-linux tests (asyncssh 2.24.1).
 
-It listens on 127.0.0.1, presents the host key --host-key, accepts only --user with a key from --authorized (no
+It listens on 127.0.0.1, presents the host keys --host-key (one of each kind, as a board has), accepts only --user with a key from --authorized (no
 password or keyboard-interactive method) and runs each exec request the way OpenSSH's sshd does: the command string
 goes to `sh -c` as the user, in the user's home. --remote local runs that shell on this Linux host; --remote wsl runs
 it in the default WSL distribution (Windows), so the remote helper meets a real Linux kernel, /proc and systemd.
@@ -86,10 +86,10 @@ async def handle(args: argparse.Namespace, process: asyncssh.SSHServerProcess) -
 
 
 def keygen(folder: str) -> None:
-    """Writes the test keys (host, host2, user, other) and prints their SHA-256 fingerprints."""
+    """Writes the test keys (host, host2, host-rsa, user, other) and prints their SHA-256 fingerprints."""
     found = {}
-    for name in ("host", "host2", "user", "other"):
-        key = asyncssh.generate_private_key("ssh-ed25519")
+    for name in ("host", "host2", "host-rsa", "user", "other"):
+        key = asyncssh.generate_private_key("ssh-rsa" if name.endswith("-rsa") else "ssh-ed25519")
         key.write_private_key(f"{folder}/{name}")
         key.write_public_key(f"{folder}/{name}.pub")
         found[name] = key.get_fingerprint("sha256")
@@ -101,7 +101,7 @@ async def main() -> None:
         keygen(sys.argv[2])
         return
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host-key", required=True)
+    parser.add_argument("--host-key", action="append", required=True)
     parser.add_argument("--authorized", action="append", required=True)
     parser.add_argument("--user", required=True)
     parser.add_argument("--home", required=True)
@@ -115,7 +115,7 @@ async def main() -> None:
         lambda: Server(args, keys),
         "127.0.0.1",
         args.port,
-        server_host_keys=[args.host_key],
+        server_host_keys=args.host_key,
         process_factory=lambda process: handle(args, process),
         encoding=None,
         allow_scp=False,

@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-cf78987c"
 
-title = "Run a declared task under a remote supervisor with a handle, PID and budget"
+title = "Run a declared task under a remote supervisor with a handle, PID, budget and live output"
 
 status = "active"
 
-requirement = "When run-task runs, the remote helper shall start the declared task through a detached supervisor that records a handle, the task's PID, process start time and boot id, the budget and output limit, and pi-tool shall wait for its end and report exit code or signal, duration and the stdout and stderr logs."
+requirement = "When run-task runs, pi-tool shall first send the project's new and changed files and install changed requirements, then the remote helper shall start the declared task through a detached supervisor that records a handle, the task's PID, process start time and boot id, the budget and output limit, and pi-tool shall pass the task's output on while it runs, wait for its end and report exit code or signal, duration and the stdout and stderr logs, showing all of a short log and the beginning and end of a long one."
 
-verification = "run-task of the fixture task passes with exit 0, a PID, the handle and logs holding its output; a task exiting 3 ends fail with exit code 3."
+verification = "run-task of the fixture task passes with exit 0, a PID, the handle and logs holding its output; after an edit of app.py one run-task call reports the file applied and prints the new output, which also arrives on stderr; a task exiting 3 ends fail with exit code 3; a task ended at its budget keeps what it had printed."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

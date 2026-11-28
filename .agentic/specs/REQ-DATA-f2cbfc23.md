@@ -39,11 +39,11 @@ One registry lookup at `lab/resources.json` relative to the approved program inp
   colon-separated hex octets), `addressType` `public` or `random` (a random address must be static: the first octet's two
   most significant bits set), `profile` (`^[a-z0-9][a-z0-9-]{0,63}$`), optional `serial` (1...64 printable ASCII),
   `adapter` (`hci0`...`hci99`) and `note`. Kind `linux-board` (REQ-DATA-6c8b61c9, the raspberry-pi-linux plugin): `host`
-  (a name or IPv4 address, or an IPv6 address without brackets), `port` 1...65535, `user` (`^[a-z_][a-z0-9_-]{0,31}$`,
-  never `root`), `hostKeys` (0...4 `SHA256:<43 base64>` fingerprints), optional `agentKey` (one such fingerprint),
-  `identity` `{serial? 8...32 hex, machineId? 32 lower-case hex, model? 1...128 printable ASCII}` with a serial or a
-  machine id, `root` (an absolute POSIX path of 2...16 segments `[A-Za-z0-9._-]`, never `.` or `..`, at most 256
-  characters) and `note`. Unknown keys are refused. Later identity kinds (NIC,
+  (a name or IPv4 address, or an IPv6 address without brackets) and `user` (`^[a-z_][a-z0-9_-]{0,31}$`, never
+  `root`), and optionally `port` 1...65535 (22 when absent), `hostKeys` (0...4 `SHA256:<43 base64>` fingerprints),
+  `agentKey` (one such fingerprint), `identity` `{serial? 8...32 hex, machineId? 32 lower-case hex, model? 1...128
+  printable ASCII}`, `root` (an absolute POSIX path of 2...16 segments `[A-Za-z0-9._-]`, never `.` or `..`, at most
+  256 characters) and `note`. Unknown keys are refused. Later identity kinds (NIC,
   endpoint, lab host) add a schema branch and a key function; they never add a second registry or lease folder.
 - The host reads only alias, kind and identity fields for leases; the whole entry is validated so a plugin never reads
   an entry the host refused.

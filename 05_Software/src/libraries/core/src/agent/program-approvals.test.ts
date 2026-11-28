@@ -479,6 +479,18 @@ describe("program commands allowed for the workbench", () => {
     expect(t.rows().at(-1)).toMatchObject({ decision: "approved", decided_by: "mode" });
     t.gate.consume(again);
 
+    // A command that reserves a bench resource (a board, an instrument) is granted like any other.
+    const reserved = {
+      ...(await t.prepare(["write", "build/app.bin"])),
+      resources: [
+        { alias: "pi", kind: "linux-board", resource: "vera@pi.local:22", keys: ["ssh:pi.local:22"] },
+      ],
+      registry: { path: "lab/resources.json", sha256: "0".repeat(64) },
+    } as Awaited<ReturnType<typeof t.prepare>>;
+    expect(await t.gate.request(reserved, signal())).toBe("approved");
+    expect(t.rows().at(-1)).toMatchObject({ decision: "approved", decided_by: "mode" });
+    t.gate.consume(reserved);
+
     // An irreversible command keeps its typed word and cannot be granted.
     const burn = t.gate.request(await t.prepare(["burn", "key.bin"]), signal());
     expect(await settled(burn)).toBe("pending");

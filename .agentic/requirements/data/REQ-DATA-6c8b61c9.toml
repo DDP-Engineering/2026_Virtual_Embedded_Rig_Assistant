@@ -6,9 +6,9 @@ title = "Declare a Raspberry Pi as a linux-board registry entry keyed by host an
 
 status = "active"
 
-requirement = "The lab registry shall accept entries of kind linux-board with an alias, a host name or IP address, a port, a user other than root, 0 to 4 SHA-256 host-key fingerprints, an optional agent-key fingerprint, an expected identity of at least a serial or a machine id with an optional model, an absolute remote root and an optional note, refusing unknown fields, and shall key each such entry `ssh:<host lower-case>:<port>`."
+requirement = "The lab registry shall accept entries of kind linux-board with an alias, a host name or IP address and a user other than root, and optionally a port (22 when absent), 0 to 4 SHA-256 host-key fingerprints, an agent-key fingerprint, an expected identity of serial, machine id and model, an absolute remote root and a note, refusing unknown fields, and shall key each such entry `ssh:<host lower-case>:<port>`."
 
-verification = "lab-resources tests validate an entry and see the key ssh:pi.local:22, and refuse user root, a relative, `..` or one-segment root, a fingerprint without SHA256:, an entry without serial and machine id and an unknown field; pi-tool's own registry check refuses user root and a relative root with code registry."
+verification = "lab-resources tests validate a full entry and an entry of alias, kind, host and user alone and see the keys ssh:pi.local:22 and ssh:raspberrypi.local:22, and refuse user root, a relative, `..` or one-segment root, a fingerprint without SHA256:, a malformed serial and an unknown field; pi-tool's own registry check refuses user root and a relative root with code registry."
 
 affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/registry.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

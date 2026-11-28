@@ -8,6 +8,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- raspberry-pi-linux 0.3.0: Run a command on the board with `exec`: install packages, scan I2C, read the camera list, reboot.
+- raspberry-pi-linux 0.3.0: Install a project's Python requirements into its own virtual environment on the board.
+- raspberry-pi-linux 0.3.0: Report the board's temperature, under-voltage, free disk and memory.
+- raspberry-pi-linux 0.3.0: Fetch a file from the board into the workbench.
+- raspberry-pi-linux 0.3.0: Install a service's unit file from the project and start it at boot.
+- raspberry-pi-linux 0.3.0: Show a task's output while it runs.
 - probe-rs 0.3.0: Add skills that run on-target tests and profile where firmware spends its time.
 - probe-rs 0.3.0: Catch a HardFault or an unexpected reset with its stack trace while following the RTT log.
 - probe-rs 0.3.0: Back up the firmware on the board before flashing.
@@ -25,6 +31,13 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- raspberry-pi-linux 0.3.0: Connect like `ssh`: log in with a key from the SSH agent or `~/.ssh`, and learn the board's host key on the first connection.
+- raspberry-pi-linux 0.3.0: Declare a board with its host and user alone.
+- raspberry-pi-linux 0.3.0: Send changed files and run a task in one step with one approval.
+- raspberry-pi-linux 0.3.0: Let a task run any program on the board, with a default time budget.
+- raspberry-pi-linux 0.3.0: Install the board helper automatically and create the projects folder.
+- raspberry-pi-linux 0.3.0: Write results to `raspberry-pi-results`, and only for calls that leave files.
+- Offer **Always allow** for commands that reserve a bench resource, such as a board or an instrument.
 - probe-rs 0.3.0: Flash, verify and restart in one run with one approval.
 - probe-rs 0.3.0: Let flashing, memory reads and profiling run 30 minutes, tests and logs one hour.
 - probe-rs 0.3.0: Run `chip info` and the help of every command without asking.
@@ -56,6 +69,13 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- raspberry-pi-linux 0.3.0: Connect to a board that holds an RSA and an Ed25519 host key.
+- raspberry-pi-linux 0.3.0: Start a script that was saved with Windows line ends.
+- raspberry-pi-linux 0.3.0: Keep the output of a Python task that was stopped or ran out of time.
+- raspberry-pi-linux 0.3.0: Restore a file's executable permission when its content is unchanged.
+- raspberry-pi-linux 0.3.0: Read service logs on a board that keeps its journal in memory.
+- raspberry-pi-linux 0.3.0: Remove old task folders from the board.
+- raspberry-pi-linux 0.3.0: Name the real cause when a file name differs only in letter case or a service does not answer.
 - Fail a HIL plan's probe-rs verify step when the flash does not match; probe-rs reports that with exit code 0.
 - probe-rs 0.3.0: Judge a verification by its result line, not by the exit code.
 - serial-monitor 0.3.0: Return the whole line that `--until` matched.

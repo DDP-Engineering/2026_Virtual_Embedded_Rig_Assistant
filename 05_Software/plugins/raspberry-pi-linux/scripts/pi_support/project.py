@@ -3,10 +3,14 @@
 Paths are judged by their text first (the remote helper judges them again): relative, `/`-separated, no `.` or `..`
 segment, no control character or backslash, never VERA's `.vera-pi` state folder. Spaces and shell characters are
 ordinary characters: nothing on the board passes them through a shell.
+
+A script with a `#!` line saved with Windows line ends would not start on the board ("No such file or directory":
+the kernel looks for an interpreter named `sh\r`), so such a file is deployed with Unix line ends.
 """
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import os
@@ -25,13 +29,16 @@ FILE_BYTES = 16 * 1024 * 1024
 TOTAL_BYTES = 64 * 1024 * 1024
 # The longest task budget: pi-tool waits at most 30 s more, within the 3600 s limit of a VERA run.
 BUDGET_S = 3500
+DEFAULT_BUDGET_S = 600
+# Never project files: a virtual environment or cache made on this computer is of no use on the board.
+ALWAYS_EXCLUDED = (".venv", "__pycache__", ".git")
 SEGMENT = re.compile(r"[^/\\\x00-\x1f\x7f]{1,128}")
 NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 TASK = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 UNIT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.@-]{0,118}\.service")
-KEYS = {"format", "kind", "name", "files", "exclude", "hardware", "tasks", "services"}
+KEYS = {"format", "kind", "name", "files", "exclude", "requirements", "hardware", "tasks", "services"}
 TASK_KEYS = {"argv", "budgetS", "outputLimitBytes", "extraArgs", "actuates", "note"}
-SERVICE_KEYS = {"keepRunning", "actuates", "note"}
+SERVICE_KEYS = {"file", "keepRunning", "actuates", "note"}
 
 
 @dataclass(frozen=True)
@@ -41,9 +48,15 @@ class File:
     size: int
     sha256: str
     mode: str
+    unix_line_ends: bool = False
 
     def entry(self) -> dict[str, Any]:
         return {"path": self.path, "size": self.size, "sha256": self.sha256, "mode": self.mode}
+
+    def read(self) -> bytes:
+        """The bytes the board receives."""
+        data = self.absolute.read_bytes()
+        return data.replace(b"\r\n", b"\n") if self.unix_line_ends else data
 
 
 @dataclass(frozen=True)
@@ -56,6 +69,7 @@ class Project:
     tasks: dict[str, dict[str, Any]]
     services: dict[str, dict[str, Any]]
     hardware: dict[str, Any]
+    requirements: File | None = None
 
     def summary(self) -> dict[str, Any]:
         return {"name": self.name, "manifest": self.shown, "sha256": self.sha256}
@@ -94,24 +108,41 @@ def _hash(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _collect(folder: Path, entries: list[str], exclude: set[str]) -> list[File]:
+def _file(relative: str, absolute: Path, info: os.stat_result) -> File:
+    mode = _mode(absolute, info)
+    with absolute.open("rb") as handle:
+        first = handle.readline(512)
+    if first.startswith(b"#!") and first.endswith(b"\r\n"):
+        data = absolute.read_bytes().replace(b"\r\n", b"\n")
+        return File(relative, absolute, len(data), hashlib.sha256(data).hexdigest(), mode, True)
+    return File(relative, absolute, info.st_size, _hash(absolute), mode)
+
+
+def _collect(folder: Path, entries: list[str], exclude: list[str]) -> list[File]:
     found: dict[str, File] = {}
+
+    def excluded(name: str) -> bool:
+        return name in ALWAYS_EXCLUDED or any(fnmatch.fnmatchcase(name, pattern) for pattern in exclude)
 
     def add(relative: str) -> None:
         segments = check_path(relative, "A project file")
-        if any(part in exclude for part in segments):
+        if any(excluded(part) for part in segments):
             return
         absolute = folder.joinpath(*segments)
         try:
             info = absolute.lstat()
         except OSError as error:
             raise refused("path", f"The project file {relative[:120]!r} cannot be read: {error.strerror or error}.") from error
-        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or os.path.realpath(absolute) != os.path.abspath(absolute):
+        real, named = os.path.realpath(absolute), os.path.abspath(absolute)
+        if real != named and os.path.normcase(real) == os.path.normcase(named):
+            # Windows opens the file under either spelling; the board would not.
+            raise refused("path", f"The project file {relative[:120]!r} is spelled {os.path.basename(real)!r} on disk; a Linux board tells upper and lower case apart, so use the same spelling.")
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or real != named:
             raise refused("path", f"The project file {relative[:120]!r} is not a regular file inside the project folder (links are refused).")
         if info.st_size > FILE_BYTES:
             raise refused("path", f"The project file {relative[:120]!r} is larger than 16 MiB.")
         if relative not in found:
-            found[relative] = File(relative, absolute, info.st_size, _hash(absolute), _mode(absolute, info))
+            found[relative] = _file(relative, absolute, info)
         if len(found) > FILES:
             raise refused("manifest", f"A project deploys at most {FILES} files.")
 
@@ -122,7 +153,7 @@ def _collect(folder: Path, entries: list[str], exclude: set[str]) -> list[File]:
             if os.path.realpath(absolute) != os.path.abspath(absolute):
                 raise refused("path", f"The project folder {entry[:120]!r} lies behind a link.")
             for current, dirs, names in os.walk(absolute, followlinks=False):
-                dirs[:] = sorted(name for name in dirs if name not in exclude)
+                dirs[:] = sorted(name for name in dirs if not excluded(name))
                 for name in sorted(names):
                     add(Path(os.path.relpath(Path(current) / name, folder)).as_posix())
         else:
@@ -173,13 +204,16 @@ def load(cwd: Path, spelled: Path, raw_path: str) -> Project:
         raise refused("manifest", f"files lists 1 to {FILES} paths.")
     exclude = document.get("exclude", [])
     if not isinstance(exclude, list) or len(exclude) > 32 or not all(isinstance(item, str) and SEGMENT.fullmatch(item) for item in exclude):
-        raise refused("manifest", "exclude lists at most 32 file or folder names.")
+        raise refused("manifest", "exclude lists at most 32 file or folder names or patterns such as *.pyc.")
     hardware = document.get("hardware", {})
     if not isinstance(hardware, dict) or not set(hardware) <= {"actuates", "note"}:
         raise refused("manifest", "hardware is {actuates, note}.")
     hardware = {"actuates": _flag(hardware, "actuates", "hardware"), "note": _note(hardware, "hardware")}
-    files = _collect(manifest.parent, entries, set(exclude))
-    listed = {item.path for item in files}
+    files = _collect(manifest.parent, entries, list(exclude))
+    listed = {item.path: item for item in files}
+    requirements = document.get("requirements")
+    if requirements is not None and requirements not in listed:
+        raise refused("manifest", "requirements names a file that files lists, such as requirements.txt.")
     tasks: dict[str, dict[str, Any]] = {}
     raw_tasks = document.get("tasks", {})
     if not isinstance(raw_tasks, dict) or len(raw_tasks) > 16:
@@ -191,10 +225,7 @@ def load(cwd: Path, spelled: Path, raw_path: str) -> Project:
         argv = raw.get("argv")
         if not isinstance(argv, list) or not 1 <= len(argv) <= 32 or not all(isinstance(a, str) and 0 < len(a) <= 1024 and "\x00" not in a for a in argv):
             raise refused("manifest", f"{where}.argv is 1 to 32 arguments of 1 to 1024 characters.")
-        if argv[0] != "python3":
-            if argv[0] not in listed:
-                raise refused("command-not-allowed", f"{where} runs {argv[0][:120]!r}: a task runs python3 or a file the project deploys, never sudo, a shell or a system program.")
-        budget, limit = raw.get("budgetS"), raw.get("outputLimitBytes", 1024 * 1024)
+        budget, limit = raw.get("budgetS", DEFAULT_BUDGET_S), raw.get("outputLimitBytes", 1024 * 1024)
         if not isinstance(budget, int) or isinstance(budget, bool) or not 1 <= budget <= BUDGET_S:
             raise refused("manifest", f"{where}.budgetS is 1 to {BUDGET_S} seconds.")
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1024 <= limit <= FILE_BYTES:
@@ -208,5 +239,8 @@ def load(cwd: Path, spelled: Path, raw_path: str) -> Project:
         where = f"services.{unit[:64]}"
         if not UNIT.fullmatch(unit) or not isinstance(raw, dict) or not set(raw) <= SERVICE_KEYS:
             raise refused("manifest", f"{where} must be a user unit name ending in .service holding only {', '.join(sorted(SERVICE_KEYS))}.")
-        services[unit] = {"keepRunning": _flag(raw, "keepRunning", where), "actuates": _flag(raw, "actuates", where), "note": _note(raw, where)}
-    return Project(name, manifest, workspace.relative(cwd, manifest), hashlib.sha256(data).hexdigest(), tuple(files), tasks, services, hardware)
+        unit_file = raw.get("file")
+        if unit_file is not None and unit_file not in listed:
+            raise refused("manifest", f"{where}.file names a unit file that files lists, such as {unit}.")
+        services[unit] = {"file": unit_file, "keepRunning": _flag(raw, "keepRunning", where), "actuates": _flag(raw, "actuates", where), "note": _note(raw, where)}
+    return Project(name, manifest, workspace.relative(cwd, manifest), hashlib.sha256(data).hexdigest(), tuple(files), tasks, services, hardware, listed.get(requirements) if requirements else None)

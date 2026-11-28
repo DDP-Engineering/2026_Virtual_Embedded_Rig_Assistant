@@ -180,8 +180,7 @@ export function ApprovalCard({
       : approval.tool === "run_program" &&
           program?.risk === "device-write" &&
           !program.trial &&
-          !program.explicitUserApproval &&
-          !program.resources
+          !program.explicitUserApproval
         ? programPrefixes(program.program, program.args)
         : [];
   const [chosenPrefix, setChosenPrefix] = useState<string>();

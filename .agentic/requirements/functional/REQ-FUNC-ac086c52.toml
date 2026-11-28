@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-ac086c52"
 
-title = "Install the remote helper only as an explicit operation"
+title = "Install the remote helper when it is missing or differs"
 
 status = "active"
 
-requirement = "When install-helper runs, pi-tool shall write the bundled remote helper to `~/.local/share/vera-pi/<version>/vera_pi_remote.py` on the board through the constant install command, which checks the received bytes against the bundled SHA-256 before writing, and shall report installed or already-installed with the path and hash; no other operation installs or updates it."
+requirement = "When a board call finds the remote helper missing or different from the bundled one, pi-tool shall write the bundled helper to `~/.local/share/vera-pi/<version>/vera_pi_remote.py` on the board through the constant install command, which checks the received bytes against the bundled SHA-256 before writing, repeat the call once and report the warning helper-installed; install-helper does the same on request and reports installed, replaced or already-installed with the path and hash."
 
-verification = "install-helper against the test server creates the file with the bundled hash and mode 0600; a second call reports already-installed, and after the file changed it reports replaced; identify before install ends helper-missing."
+verification = "The first identify against the test server creates the file with the bundled hash and mode 0600 and warns helper-installed; install-helper then reports already-installed; after the file changed, the next identify passes, warns helper-installed and the file holds the bundled hash again."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

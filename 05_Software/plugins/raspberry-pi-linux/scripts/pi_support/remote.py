@@ -12,7 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 
 HELPER = Path(__file__).resolve().parent.parent / "remote" / "vera_pi_remote.py"
-HELPER_VERSION = "0.2.0"
+HELPER_VERSION = "0.3.0"
 HELPER_LIMIT = 512 * 1024
 PYTHON = "/usr/bin/python3"
 
@@ -72,10 +72,10 @@ def run_command() -> str:
         "try:\n"
         " b=open(p,\"rb\").read()\n"
         "except OSError:\n"
-        " out({\"ok\":False,\"code\":\"helper-missing\",\"message\":\"The VERA helper %s is not installed on the board; run install-helper first.\"})\n"
+        " out({\"ok\":False,\"code\":\"helper-missing\",\"message\":\"The VERA helper %s is not installed on the board.\"})\n"
         "h=hashlib.sha256(b).hexdigest()\n"
         "if h!=\"%s\":\n"
-        " out({\"ok\":False,\"code\":\"helper-changed\",\"found\":h,\"message\":\"The installed VERA helper differs from version %s; run install-helper again.\"})\n"
+        " out({\"ok\":False,\"code\":\"helper-changed\",\"found\":h,\"message\":\"The installed VERA helper differs from version %s.\"})\n"
         "g={\"__name__\":\"__vera_pi__\",\"__file__\":p,\"__vera_source__\":b}\n"
         "exec(compile(b,p,\"exec\"),g)\n"
         "sys.exit(g[\"main\"]())\n"

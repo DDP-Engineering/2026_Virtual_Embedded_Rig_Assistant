@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-SEC-0513894a"
 
-title = "Authenticate only with a key held by the system SSH agent"
+title = "Authenticate with a key of the SSH agent or of ~/.ssh, never a password"
 
 status = "active"
 
-requirement = "pi-tool shall authenticate by public key through the system SSH agent only (SSH_AUTH_SOCK, else Pageant or the OpenSSH agent pipe on Windows), offering only the key whose fingerprint the entry names in agentKey when it names one, never a password, keyboard-interactive, GSS or a key file, and shall end blocked with agent-unavailable, agent-key-missing or auth-failed when the agent cannot be reached, lacks the key or the server refuses it, unless the board's host key is not pinned, which is reported first."
+requirement = "pi-tool shall authenticate by public key only, offering the keys of the system SSH agent when one answers (SSH_AUTH_SOCK, else the OpenSSH agent pipe on Windows) and then the private keys of ~/.ssh that load without a passphrase, at most six, or only the agent key whose fingerprint the entry names in agentKey; it shall never use or ask for a password, a passphrase, keyboard-interactive or GSS, and shall end blocked with no-key, agent-unavailable, agent-key-missing or auth-failed when no key is usable, the named agent key cannot be had or the server refuses the keys, naming the command that authorizes a key on the board, unless the board's host key is not the trusted one, which is reported first."
 
-verification = "Test agent and server: identify passes the host key and the agent log shows one sign request with the user key; an agentKey the agent lacks gives agent-key-missing; an unknown agent path gives agent-unavailable; a user the server does not accept gives auth-failed; every public-key attempt the server logs carries the user key; Inspection: ssh.connect passes password_auth, kbdint_auth and gss_host off and client_keys from the agent only."
+verification = "Test agent and server: identify passes and the agent log shows one sign request with the user key; with no agent and the key as a file in the folder standing in for ~/.ssh identify passes; with neither it ends no-key naming ssh-keygen; an agentKey the agent lacks gives agent-key-missing and without an agent agent-unavailable; a user the server does not accept gives auth-failed naming authorized_keys; every public-key attempt the server logs carries the user key; Inspection: ssh.connect passes password_auth, kbdint_auth and gss_host off."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

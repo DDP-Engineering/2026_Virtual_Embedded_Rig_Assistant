@@ -6,9 +6,9 @@ title = "Show the host key a board presents without authenticating"
 
 status = "active"
 
-requirement = "When check-host-key runs, pi-tool shall connect, record the presented host key's type and SHA-256 fingerprint and whether it is pinned, and close the connection before authentication, ending pass when it is pinned and blocked with host-key-changed or host-key-unpinned otherwise."
+requirement = "When check-host-key runs, pi-tool shall connect, record the presented host key's type and SHA-256 fingerprint, whether it is trusted and from where (pinned, saved, known_hosts or first-use), and close the connection before authentication without saving anything, ending pass when the key is trusted or the board was not seen before and blocked with host-key-changed otherwise."
 
-verification = "check-host-key against the test server reports the fingerprint of its generated key with pinned true; an entry with hostKeys [] ends host-key-unpinned naming that fingerprint; the server log shows no public-key attempt."
+verification = "check-host-key against the test server reports the fingerprint of its generated key with trusted true and trust pinned; an entry without hostKeys and without a saved key passes with trust first-use, the warning host-key-new and no key file written; the server log shows no public-key attempt."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

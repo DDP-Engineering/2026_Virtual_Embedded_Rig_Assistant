@@ -14,7 +14,7 @@ from typing import Any
 from . import FORMAT, KIND, TOOL, VERSION, workspace
 
 OUTPUT_LIMIT = 11000
-DEFAULT_RESULTS = "arduino-iot-results"
+DEFAULT_RESULTS = "raspberry-pi-results"
 EXIT = {"pass": 0, "fail": 1, "blocked": 2, "incomplete": 3, "error": 3}
 
 
@@ -119,7 +119,8 @@ def markdown(document: dict[str, Any]) -> str:
     if isinstance(remote, dict):
         lines.append(f"- Remote state: {remote.get('state')}")
     lines.append("")
-    plan = (document.get("candidate") or {}).get("files") if isinstance(document.get("candidate"), dict) else None
+    holder = document.get("candidate") if isinstance(document.get("candidate"), dict) else document.get("deploy")
+    plan = holder.get("files") if isinstance(holder, dict) else None
     if plan:
         lines += ["| File | Action | Size | SHA-256 |", "|---|---|---|---|"]
         lines += [f"| `{_cell(item.get('path'))}` | {item.get('action')} | {item.get('size')} | `{item.get('sha256')}` |" for item in plan]
@@ -161,16 +162,20 @@ def emit(document: dict[str, Any]) -> None:
     def size() -> int:
         return len(render().encode("utf-16-le")) // 2
 
-    for holder, key in ((shown.get("candidate"), "files"), (shown.get("candidate"), "remoteOnly"), (shown, "files"), (shown, "logs"), (shown, "runs"), (shown, "tasks"), (shown, "warnings"), (shown, "errors")):
+    for holder, key in ((shown.get("candidate"), "files"), (shown.get("candidate"), "remoteOnly"), (shown.get("deploy"), "files"), (shown.get("deploy"), "remoteOnly"), (shown, "files"), (shown, "logs"), (shown, "runs"), (shown, "tasks"), (shown, "warnings"), (shown, "errors")):
         items = holder.get(key) if isinstance(holder, dict) else None
         while isinstance(items, list) and items and size() > OUTPUT_LIMIT:
             shown.setdefault("omittedFromOutput", {})[key] = shown.get("omittedFromOutput", {}).get(key, 0) + 1
             items.pop()
-    task = shown.get("task")
-    if isinstance(task, dict) and size() > OUTPUT_LIMIT:
-        for stream in ("stdout", "stderr"):
-            if isinstance(task.get(stream), dict):
-                task[stream]["text"] = task[stream].get("text", "")[-1000:]
+    for key in ("task", "setup"):
+        task = shown.get(key)
+        if isinstance(task, dict) and size() > OUTPUT_LIMIT:
+            for stream in ("stdout", "stderr"):
+                if isinstance(task.get(stream), dict):
+                    task[stream]["text"] = task[stream].get("text", "")[-1000:]
+    fetched = shown.get("file")
+    if isinstance(fetched, dict) and size() > OUTPUT_LIMIT:
+        fetched["preview"] = str(fetched.get("preview") or "")[:500]
     sys.stdout.write(render())
     sys.stdout.flush()
 

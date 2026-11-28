@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-SEC-c2cd454d"
 
-title = "Refuse a remote root that is missing, linked, foreign-owned or writable by others"
+title = "Create a missing remote root and refuse one that is linked, foreign-owned or world-writable"
 
 status = "active"
 
-requirement = "When the registry's remote root does not exist, is not a directory, is a symbolic link or lies below one, is not owned by the login user or is writable by group or others, the remote helper shall refuse every project operation with code root-invalid."
+requirement = "When the remote root (the entry's, else ~/vera-projects) does not exist the remote helper shall create it with mode 0755, and when it is not a directory, is a symbolic link or lies below one, is not owned by the login user or is writable by every user it shall refuse every project operation with code root-invalid."
 
-verification = "Remote tests: a missing root, a root replaced by a link and a root with mode 0777 each give root-invalid and change nothing."
+verification = "Remote tests: a missing root is created with mode 755; a root replaced by a link and a root with mode 0777 each give root-invalid and change nothing; an entry without root works in ~/vera-projects."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

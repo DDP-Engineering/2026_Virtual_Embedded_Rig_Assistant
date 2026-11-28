@@ -3,7 +3,8 @@ linux-board), read from $PI_REGISTRY.
 
 VERA validates the whole document before it reserves the board; pi-tool validates its own entries again (it runs
 without VERA in tests) and ignores entries of other kinds. A registry whose bytes differ from the approved hash
-($VERA_REGISTRY_SHA256) is refused before any connection.
+($VERA_REGISTRY_SHA256) is refused before any connection. An entry needs only `alias`, `kind`, `host` and `user`:
+the port is 22, the projects folder ~/vera-projects, and the host key is learned as `ssh` learns it.
 """
 
 from __future__ import annotations
@@ -39,11 +40,15 @@ class Board:
     host_keys: tuple[str, ...]
     agent_key: str | None
     identity: dict[str, str]
-    root: str
+    root: str | None
     note: str
 
     def summary(self, host_key: str | None = None) -> dict[str, Any]:
-        return {"alias": self.alias, "host": self.host, "port": self.port, "user": self.user, "root": self.root, "hostKey": host_key}
+        return {"alias": self.alias, "host": self.host, "port": self.port, "user": self.user, "root": self.root or "~/vera-projects", "hostKey": host_key}
+
+    def address(self) -> str:
+        """The name the host key is remembered under."""
+        return f"{self.host.lower()}:{self.port}"
 
     def expect(self) -> dict[str, str]:
         return {"user": self.user, **self.identity}
@@ -61,7 +66,7 @@ class Registry:
             return self.boards[alias]
         if alias in self.others:
             raise refused("board-unknown", f"The alias {alias} is a {self.others[alias]} resource, not a Linux board.")
-        raise refused("board-unknown", f"The alias {alias} is not declared in lab/resources.json.")
+        raise refused("board-unknown", f'The alias {alias} is not declared in lab/resources.json; add {{"alias": "{alias}", "kind": "linux-board", "host": "<name or address>", "user": "<login>"}} to its resources.')
 
 
 def valid_root(root: object) -> bool:
@@ -77,35 +82,33 @@ def _board(raw: dict, where: str) -> Board:
 
     if not set(raw) <= KEYS:
         raise refused("registry", f"lab/resources.json {where} has unknown fields {', '.join(sorted(set(raw) - KEYS))}.")
-    host, port, user = raw.get("host"), raw.get("port"), raw.get("user")
+    host, port, user = raw.get("host"), raw.get("port", 22), raw.get("user")
     if not isinstance(host, str) or not HOST.fullmatch(host):
         raise bad("host", "must be a host name, an IPv4 address or an IPv6 address without brackets")
     if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
         raise bad("port", "must be 1 to 65535")
     if not isinstance(user, str) or not USER.fullmatch(user) or user == "root":
         raise bad("user", "must be a lower-case login name other than root")
-    keys = raw.get("hostKeys")
+    keys = raw.get("hostKeys", [])
     if not isinstance(keys, list) or len(keys) > 4 or not all(isinstance(key, str) and FINGERPRINT.fullmatch(key) for key in keys):
         raise bad("hostKeys", "must list 0 to 4 SHA256:<43 base64> fingerprints")
     agent = raw.get("agentKey")
     if agent is not None and (not isinstance(agent, str) or not FINGERPRINT.fullmatch(agent)):
         raise bad("agentKey", "must be one SHA256:<43 base64> fingerprint")
-    identity = raw.get("identity")
+    identity = raw.get("identity", {})
     if not isinstance(identity, dict) or not set(identity) <= {"serial", "machineId", "model"}:
         raise bad("identity", "must be {serial?, machineId?, model?}")
     rules = {"serial": SERIAL, "machineId": MACHINE_ID, "model": MODEL}
     for key, value in identity.items():
         if not isinstance(value, str) or not rules[key].fullmatch(value):
             raise bad(f"identity.{key}", "is malformed")
-    if "serial" not in identity and "machineId" not in identity:
-        raise bad("identity", "must declare the board's serial or machine id")
     root = raw.get("root")
-    if not valid_root(root):
+    if root is not None and not valid_root(root):
         raise bad("root", "must be an absolute path of 2 to 16 segments [A-Za-z0-9._-] without . or ..")
     note = raw.get("note", "")
     if not isinstance(note, str) or len(note) > 256:
         raise bad("note", "must be text of at most 256 characters")
-    return Board(str(raw["alias"]), host, port, user, tuple(keys), agent, dict(identity), str(root), note)
+    return Board(str(raw["alias"]), host, port, user, tuple(keys), agent, dict(identity), root, note)
 
 
 def load() -> Registry:
@@ -115,7 +118,7 @@ def load() -> Registry:
     path = Path(raw_path)
     try:
         if not path.is_file():
-            raise refused("registry", "lab/resources.json is missing; declare the board there first.")
+            raise refused("registry", 'lab/resources.json is missing; declare the board there first: {"format": 1, "resources": [{"alias": "pi", "kind": "linux-board", "host": "<name or address>", "user": "<login>"}]}.')
         if path.stat().st_size > LIMIT_BYTES:
             raise refused("registry", "lab/resources.json is larger than 256 KiB.")
         data = path.read_bytes()

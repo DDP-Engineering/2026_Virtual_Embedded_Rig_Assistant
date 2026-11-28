@@ -50,8 +50,8 @@ values as `probe:<selector>` keys, so a run naming a probe a plan holds is BUSY.
   backend `bus-pirate-bpio2`, resource and terminal (COM<n> or
   /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?; kind
   `ble-device`: alias, address (six hex octets), addressType public|random (random only static), profile, serial?,
-  adapter? hci0-hci99, note?; kind `linux-board`: alias, host, port, user (not root), hostKeys 0-4 `SHA256:` fingerprints,
-  agentKey?, identity {serial?, machineId?, model?} with serial or machineId, root (absolute, 2-16 safe segments), note?),
+  adapter? hci0-hci99, note?; kind `linux-board`: alias, host, user (not root), port? (22), hostKeys? 0-4 `SHA256:` fingerprints,
+  agentKey?, identity? {serial?, machineId?, model?}, root? (absolute, 2-16 safe segments; the plugin's default is ~/vera-projects), note?),
   `labResourceKindSchema` (`visa`, `probe`, `power-monitor`, `bus-adapter`, `ble-device`, `linux-board`),
   `visaResourceKeys(resource, serial?)`, `probeResourceKeys(resource)`, `powerMonitorResourceKeys(resource)`,
   `labResourceKeys(entry)` (bus-adapter: `serial:<resource>`, `serial:<terminal>`,

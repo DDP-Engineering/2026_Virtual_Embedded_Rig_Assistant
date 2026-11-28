@@ -1,20 +1,20 @@
 format: 1
 id: raspberry-pi-linux
-version: 0.2.1
+version: 0.3.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Raspberry Pi Linux projects
-summary: Run projects, finite tasks and user services on a Raspberry Pi over a pinned SSH connection.
-description: Projects, finite tasks and user services on a Raspberry Pi (Raspberry Pi OS 12 64-bit) that VERA reaches over SSH from this computer - the board is a linux-board entry of lab/resources.json whose host key is pinned by fingerprint (a changed key is refused, never accepted), whose identity, unprivileged user and remote root are checked, and whose login uses a key of the system SSH agent. A small helper installed explicitly on the board performs finite operations - deploy a hashed candidate and apply only approved files, run a declared task with a remote handle, PID and budget, start, stop and read listed user services and their logs. No shell, sudo, system service, raw GPIO/I2C/SPI, OS provisioning or reboot.
+summary: Deploy and run projects, commands and user services on a Raspberry Pi over SSH, with the keys ssh already uses.
+description: Projects, tasks, commands and user services on a Raspberry Pi (Raspberry Pi OS 12 64-bit) that VERA reaches over SSH from this computer - the board is a linux-board entry of lab/resources.json that needs only a host and a user. VERA connects as ssh does, with a key of the SSH agent or of ~/.ssh and a host key learned on the first connection (a changed key is refused until you accept it). One call sends the changed files and runs a declared task under a supervisor on the board with a time budget, live output and a confirmed Stop. A command line runs with exec (apt, pip, I2C and GPIO tools), a project's requirements go into its own virtual environment, user services are installed from the project, started, stopped and read, the board reports its temperature and power health, and files are fetched back. No password is ever handled.
 translations:
   ro:
-    summary: "Rulează proiecte, sarcini finite și servicii de utilizator pe un Raspberry Pi, printr-o conexiune SSH fixată."
-    description: "Proiecte, sarcini finite și servicii de utilizator pe un Raspberry Pi (Raspberry Pi OS 12 pe 64 de biți) pe care VERA îl accesează prin SSH de pe acest computer - placa este o intrare linux-board din lab/resources.json, cu cheia de host fixată prin amprentă (o cheie schimbată este refuzată, niciodată acceptată), cu identitatea, utilizatorul neprivilegiat și folderul rădăcină la distanță verificate și cu autentificare printr-o cheie din agentul SSH al sistemului. Un helper mic, instalat explicit pe placă, face operații finite - implementează un candidat cu hash și aplică doar fișierele aprobate, rulează o sarcină declarată cu un handle la distanță, PID și buget, pornește, oprește și citește serviciile de utilizator listate și logurile lor. Fără shell, sudo, servicii de sistem, GPIO/I2C/SPI brut, provizionare de sistem sau repornire."
+    summary: "Trimite și rulează proiecte, comenzi și servicii de utilizator pe un Raspberry Pi prin SSH, cu cheile pe care ssh le folosește deja."
+    description: "Proiecte, sarcini, comenzi și servicii de utilizator pe un Raspberry Pi (Raspberry Pi OS 12 pe 64 de biți) pe care VERA îl accesează prin SSH de pe acest computer - placa este o intrare linux-board din lab/resources.json, pentru care ajung un host și un utilizator. VERA se conectează ca ssh, cu o cheie din agentul SSH sau din ~/.ssh și cu o cheie de host învățată la prima conectare (o cheie schimbată este refuzată până o accepți). Un singur apel trimite fișierele modificate și rulează o sarcină declarată sub un supervizor de pe placă, cu buget de timp, output pe parcurs și oprire confirmată. O linie de comandă rulează cu exec (apt, pip, unelte I2C și GPIO), dependențele unui proiect ajung în propriul mediu virtual, serviciile de utilizator sunt instalate din proiect, pornite, oprite și citite, placa își raportează temperatura și starea alimentării, iar fișierele pot fi aduse înapoi. Nu se lucrează niciodată cu parole."
   de:
-    summary: "Projekte, begrenzte Aufgaben und Benutzerdienste auf einem Raspberry Pi über eine festgelegte SSH-Verbindung ausführen."
-    description: "Projekte, begrenzte Aufgaben und Benutzerdienste auf einem Raspberry Pi (Raspberry Pi OS 12, 64-Bit), den VERA von diesem Computer über SSH erreicht - das Board ist ein linux-board-Eintrag in lab/resources.json, dessen Host-Schlüssel per Fingerabdruck festgelegt ist (ein geänderter Schlüssel wird abgelehnt, nie akzeptiert), dessen Identität, nicht privilegierter Benutzer und Remote-Stammordner geprüft werden und dessen Anmeldung einen Schlüssel des SSH-Agenten des Systems nutzt. Ein explizit auf dem Board installiertes Hilfsprogramm führt begrenzte Operationen aus: einen gehashten Kandidaten übertragen und nur freigegebene Dateien anwenden, eine deklarierte Aufgabe mit Remote-Handle, PID und Budget ausführen, aufgelistete Benutzerdienste starten, stoppen und samt Logs lesen. Keine Shell, kein sudo, keine Systemdienste, kein Raw-GPIO/I2C/SPI, keine OS-Einrichtung und kein Neustart."
+    summary: "Projekte, Befehle und Benutzerdienste per SSH auf einem Raspberry Pi bereitstellen und ausführen, mit den Schlüsseln, die ssh bereits nutzt."
+    description: "Projekte, Aufgaben, Befehle und Benutzerdienste auf einem Raspberry Pi (Raspberry Pi OS 12, 64-Bit), den VERA von diesem Computer über SSH erreicht - das Board ist ein linux-board-Eintrag in lab/resources.json, für den ein Host und ein Benutzer genügen. VERA verbindet sich wie ssh, mit einem Schlüssel des SSH-Agenten oder aus ~/.ssh und einem Host-Schlüssel, der bei der ersten Verbindung gelernt wird (ein geänderter Schlüssel wird abgelehnt, bis Sie ihn annehmen). Ein einziger Aufruf überträgt die geänderten Dateien und führt eine deklarierte Aufgabe unter einem Supervisor auf dem Board aus, mit Zeitbudget, laufender Ausgabe und bestätigtem Stopp. Eine Befehlszeile läuft mit exec (apt, pip, I2C- und GPIO-Werkzeuge), die Abhängigkeiten eines Projekts kommen in dessen eigene virtuelle Umgebung, Benutzerdienste werden aus dem Projekt installiert, gestartet, gestoppt und gelesen, das Board meldet Temperatur und Zustand der Stromversorgung, und Dateien lassen sich zurückholen. Passwörter werden nie verarbeitet."
   fr:
-    summary: "Exécutez des projets, des tâches finies et des services utilisateur sur un Raspberry Pi via une connexion SSH épinglée."
-    description: "Projets, tâches finies et services utilisateur sur un Raspberry Pi (Raspberry Pi OS 12 64 bits) que VERA joint en SSH depuis cet ordinateur - la carte est une entrée linux-board de lab/resources.json dont la clé d’hôte est épinglée par empreinte (une clé modifiée est refusée, jamais acceptée), dont l’identité, l’utilisateur non privilégié et la racine distante sont vérifiés, et dont la connexion utilise une clé de l’agent SSH du système. Un petit utilitaire installé explicitement sur la carte effectue des opérations finies - déployer un candidat haché et n’appliquer que les fichiers approuvés, exécuter une tâche déclarée avec un handle distant, un PID et un budget, démarrer, arrêter et lire les services utilisateur listés et leurs journaux. Pas de shell, sudo, service système, GPIO/I2C/SPI brut, provisionnement du système ni redémarrage."
+    summary: "Déployez et exécutez des projets, des commandes et des services utilisateur sur un Raspberry Pi en SSH, avec les clés que ssh utilise déjà."
+    description: "Projets, tâches, commandes et services utilisateur sur un Raspberry Pi (Raspberry Pi OS 12 64 bits) que VERA joint en SSH depuis cet ordinateur - la carte est une entrée linux-board de lab/resources.json pour laquelle un hôte et un utilisateur suffisent. VERA se connecte comme ssh, avec une clé de l’agent SSH ou de ~/.ssh et une clé d’hôte apprise à la première connexion (une clé modifiée est refusée tant que vous ne l’acceptez pas). Un seul appel envoie les fichiers modifiés et exécute une tâche déclarée sous un superviseur sur la carte, avec un budget de temps, la sortie en direct et un arrêt confirmé. Une ligne de commande s’exécute avec exec (apt, pip, outils I2C et GPIO), les dépendances d’un projet vont dans son propre environnement virtuel, les services utilisateur sont installés depuis le projet, démarrés, arrêtés et lus, la carte indique sa température et l’état de son alimentation, et des fichiers peuvent être récupérés. Aucun mot de passe n’est jamais manipulé."
 ecosystem: linux
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.raspberrypi.com/documentation/computers/remote-access.html", "https://pypi.org/project/asyncssh/2.24.1/"]
@@ -23,49 +23,60 @@ settings:
     kind: workbench-file
     path: lab/resources.json
     format: lab-resources
-    description: The bench registry; declares the board (linux-board) with its host, pinned host key, user, identity and remote root that calls name by alias.
+    description: The bench registry; declares the board (linux-board) by host and user. Port, pinned host key, identity and projects folder are optional.
   pi-project:
     kind: workbench-file
     path: "*/vera-pi.json"
     format: json
     optional: true
-    description: A project manifest in a project folder of the workbench - the files to deploy, the tasks it may run and the user services it may start.
-  ssh-agent:
+    description: A project manifest in a project folder of the workbench - the files to deploy, its Python requirements, the tasks it runs and the user services it starts.
+  ssh-keys:
     kind: value
-    value: System SSH agent (SSH_AUTH_SOCK; on Windows the OpenSSH Authentication Agent or Pageant)
-    description: The login key stays in the system SSH agent; VERA never handles a password or a key file.
+    value: A key of the SSH agent, or a private key in ~/.ssh that needs no passphrase
+    description: VERA logs in as ssh does and never handles a password or a passphrase; a key protected by a passphrase goes into the SSH agent (ssh-add).
 programs:
   pi-tool:
-    subcommandHelp: { flag: --help, commands: [install-helper, deploy-candidate, apply-candidate, run-task, service-start, service-stop, stop-owned] }
+    subcommandHelp: { flag: --help, commands: [trust-host-key, install-helper, deploy, deploy-candidate, apply-candidate, run-task, exec, service-start, service-stop, stop-owned] }
     install: { script: scripts/pi_tool.py }
     version: { args: [--version], match: '^pi-tool (\d+\.\d+\.\d+)' }
     timeout: 120
     env:
       PI_REGISTRY: "${workbench}/lab/resources.json"
     resources: { option: --board, kinds: [linux-board], grace: 10, cleanup: [stop-owned], cleanupTimeout: 60 }
-    # The login key stays in the system SSH agent; pi-tool receives only SSH_AUTH_SOCK (on Windows it also finds
-    # Pageant or the OpenSSH agent pipe) and never a password or key file.
+    # pi-tool logs in with a key of the SSH agent (it receives SSH_AUTH_SOCK; on Windows it also finds the OpenSSH
+    # agent pipe) or with a key file of ~/.ssh, and never with a password.
     sshAgent: true
-# Every board call verifies the pinned host key before authenticating, then runs one of two constant commands on the
-# board (install or run the helper of this version); operations, paths and arguments travel on stdin and never reach
-# the board's shell. Project code a task or service runs may actuate hardware: the project manifest classifies it.
+# Every board call checks the board's host key before logging in, then runs one of two constant commands on the
+# board (install or run the helper of this version); operations, paths and arguments travel on stdin. Only a command
+# the user asks for with exec is handed to a shell there. Project code and commands may actuate hardware.
 rules:
   - { match: "pi-tool {--version,--help,-h}", risk: safe }
   - match: "pi-tool {capabilities,inspect-project,report} *"
     risk: safe
     note: Offline. Describes the tool, reads a project manifest and hashes its files, or summarizes run folders into a new run folder; nothing is contacted.
-  - match: "pi-tool {check-host-key,identify,task-status,service-status,collect-logs} *"
+  - match: "pi-tool {check-host-key,identify,compare,task-status,service-status,collect-logs,fetch} *"
     risk: device-read
-    note: Connects to the declared board over SSH (check-host-key stops before logging in) and reads facts, task or service state and logs; nothing on the board is changed.
+    note: Connects to the declared board over SSH and reads - its host key (check-host-key stops before logging in), its identity and health, how the project differs from the board's copy, task or service state, logs, or one file that fetch copies into the run folder. The first connection saves the board's host key and installs VERA's small helper in the board user's home.
+  - match: "pi-tool trust-host-key *"
+    risk: device-write
+    note: Saves the host key the board presents now as the trusted one, replacing the key saved before. For a board whose system was installed again; nothing on the board changes.
   - match: "pi-tool install-helper *"
     risk: device-write
-    note: Writes VERA's remote helper of this version into ~/.local/share/vera-pi/ of the board user's home, after checking its SHA-256. No download on the board and no shell script.
+    note: Writes VERA's remote helper of this version into ~/.local/share/vera-pi/ of the board user's home, after checking its SHA-256. Other calls do this by themselves when the helper is missing.
+  - match: "pi-tool deploy *"
+    risk: device-write
+    note: Sends the project's new and changed files to the board's project folder and installs changed requirements into the project's virtual environment. A file edited on the board is left as it is there, and no file is deleted.
+    timeout: 1800
+  - match: "pi-tool deploy * --overwrite *"
+    risk: irreversible
+    note: Also replaces the named files that were edited on the board since VERA last applied them; those edits are lost.
+    timeout: 1800
   - match: "pi-tool deploy-candidate *"
     risk: device-write
     note: Uploads the project's files into a staging folder below the board's remote root (.vera-pi/candidates) and compares them with the deployed project; no project file on the board is changed.
   - match: "pi-tool apply-candidate *"
     risk: device-write
-    note: Replaces the new and changed files of the approved candidate.json in the board's project folder after checking every hash; files changed on the board meanwhile are left alone, and no file is deleted. Show the user the candidate's file list first.
+    note: Replaces the new and changed files of the approved candidate.json in the board's project folder after checking every hash; a file edited on the board meanwhile stops it, and no file is deleted. Show the user the candidate's file list first.
     timeout: 600
   - match: "pi-tool apply-candidate * --overwrite *"
     risk: irreversible
@@ -73,11 +84,16 @@ rules:
     timeout: 600
   - match: "pi-tool run-task *"
     risk: device-write
-    note: Runs a task the project manifest declares in the board's project folder under a remote supervisor with the declared budget; project code can move, switch or drive hardware attached to the board (see the manifest's hardware classification). Stop ends the task and confirms it.
+    note: Sends the project's changed files to the board, installs changed requirements, then runs a task the project manifest declares under a supervisor with the declared budget; project code can move, switch or drive hardware attached to the board (see the manifest's hardware classification). Stop ends the task and confirms it.
+    timeout: 3600
+  - match: "pi-tool exec *"
+    risk: device-write
+    note: Runs one command line in a shell on the board as the login user, under a supervisor with a time budget. It can install packages, use sudo where the board allows it, drive hardware or reboot the board. Stop ends it.
     timeout: 3600
   - match: "pi-tool {service-start,service-stop} *"
     risk: device-write
-    note: Starts or stops a user service the project manifest lists (systemctl --user, never sudo or a system service); a started service may keep running after the run and may actuate hardware.
+    note: service-start sends the project's changed files, installs the unit file the manifest names into the user's systemd folder and restarts the service; a service declared keepRunning also starts at boot and keeps running after the session. service-stop stops it. Always systemctl --user, never a system service.
+    timeout: 1800
   - match: "pi-tool stop-owned *"
     risk: device-write
     note: Stops every task VERA started below the board's remote root that still runs, after checking each recorded PID, start time and boot; VERA runs it as the cleanup after Stop, timeout or a lost connection.

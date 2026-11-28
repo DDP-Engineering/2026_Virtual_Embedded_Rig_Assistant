@@ -60,8 +60,9 @@ function policyOf(
   if (request.tool !== "run_program") return undefined;
   const policy = programPolicy(mode, request.risk, request.trial);
   if (request.explicitUserApproval) return policy === "run" || policy === "mode" ? "user" : policy;
-  // A command the user allowed for this workbench runs in Auto-edit as a device read does. Irreversible
-  // commands keep their typed word, and a trial plugin and a test plan are approved each time.
+  // A command the user allowed for this workbench runs in Auto-edit as a device read does, also when it
+  // reserves a bench resource. Irreversible commands keep their typed word, and a trial plugin and a test
+  // plan are approved each time.
   return policy === "user" &&
     mode === "auto-edit" &&
     grantable(request) &&
@@ -70,11 +71,7 @@ function policyOf(
     : policy;
 }
 const grantable = (request: ChangeRequest) =>
-  request.tool === "run_program" &&
-  !request.trial &&
-  !request.explicitUserApproval &&
-  !request.plan &&
-  !request.resources;
+  request.tool === "run_program" && !request.trial && !request.explicitUserApproval && !request.plan;
 interface Pending {
   request: ChangeRequest;
   digest: string;

@@ -194,7 +194,14 @@ describe("linux-board entries (REQ-DATA-6c8b61c9)", () => {
     expect(labResourceKeys(parsed.resources[1] as never)).toEqual(["ssh:pi.local:22"]);
     expect(labResourceKeys(parsed.resources[2] as never)).toEqual(["ssh:127.0.0.1:2222"]);
   });
-  it("refuses root, unsafe roots, malformed fingerprints, a missing identity and unknown keys", () => {
+  it("accepts a board declared by host and user alone: port 22, key learned on first use, default folder", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [{ alias: "pi", kind: "linux-board", host: "raspberrypi.local", user: "pi" }],
+    });
+    expect(labResourceKeys(parsed.resources[0] as never)).toEqual(["ssh:raspberrypi.local:22"]);
+  });
+  it("refuses root, unsafe roots, malformed fingerprints and unknown keys", () => {
     const bad = [
       board({ user: "root" }),
       board({ user: "Vera" }),
@@ -207,8 +214,6 @@ describe("linux-board entries (REQ-DATA-6c8b61c9)", () => {
       board({ hostKeys: ["poL9IyoPcWFvRhSsEZrF7kHtkUwKG1XT7/5iI+t95OQ"] }),
       board({ hostKeys: [FP, FP, FP, FP, FP] }),
       board({ agentKey: "MD5:aa" }),
-      board({ identity: {} }),
-      board({ identity: { model: "Raspberry Pi 5" } }),
       board({ identity: { serial: "xyz" } }),
       board({ port: 0 }),
       board({ host: "pi;rm -rf" }),

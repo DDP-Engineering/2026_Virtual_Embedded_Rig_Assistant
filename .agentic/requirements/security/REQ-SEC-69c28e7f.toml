@@ -6,7 +6,7 @@ title = "Rate pi-tool operations by their effect on the board"
 
 status = "active"
 
-requirement = "The raspberry-pi-linux manifest shall rate capabilities, inspect-project and report safe, check-host-key, identify, task-status, service-status and collect-logs device-read, install-helper, deploy-candidate, apply-candidate, run-task, service-start, service-stop and stop-owned device-write, and apply-candidate with --overwrite irreversible."
+requirement = "The raspberry-pi-linux manifest shall rate capabilities, inspect-project and report safe, check-host-key, identify, compare, task-status, service-status, collect-logs and fetch device-read, trust-host-key, install-helper, deploy, deploy-candidate, apply-candidate, run-task, exec, service-start, service-stop and stop-owned device-write, and deploy and apply-candidate with --overwrite irreversible."
 
 verification = "classifyCommand over the manifest rules returns each listed risk."
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-28

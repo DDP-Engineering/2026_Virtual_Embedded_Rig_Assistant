@@ -8,7 +8,7 @@ status = "active"
 
 requirement = "The raspberry-pi-linux plugin's pi-tool shall accept exactly the operations, options, registry entry, project manifest, candidate and result documents of its specification and end every run with one JSON document and exit code 0 pass, 1 fail, 2 blocked or 3 incomplete or error."
 
-verification = "Integration tests run each operation and check the documented fields; an unknown operation, an unknown option (--password) and a missing --board each end blocked with code usage and exit 2."
+verification = "Integration tests run each operation, deploy, exec, fetch and compare included, and check the documented fields; an unknown operation, an unknown option (--password) and a missing --board each end blocked with code usage and exit 2."
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/cli.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/__init__.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/lifecycle.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/workspace.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_tool.py"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-15
+updated = 2026-11-28
